@@ -17,10 +17,17 @@ on:
         type: boolean
         default: false
 
+# Least-privilege default for every job; 'test' overrides to write because it
+# commits the refreshed dist package back to dev.
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Test ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     env:
       # Scheduled runs leave this '0'; a manual dispatch can force package.py
       # to rebuild and re-test everything despite matching dist digests.

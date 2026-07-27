@@ -101,15 +101,13 @@ static void generate_price_data(int n) {
 
 /* ---- JSON helpers ---- */
 
-static int json_write_double_array(char *buf, int sz, const TA_Real *arr, int n) {
-    int pos = 0;
-    pos += snprintf(buf+pos, sz-pos, "[");
+static int json_write_double_array(char *buf, int sz, int pos, const TA_Real *arr, int n) {
+    pos = codegen_appendc(buf, sz, pos, '[');
     for( int i = 0; i < n; i++ ) {
-        if( i > 0 ) pos += snprintf(buf+pos, sz-pos, ",");
-        pos += snprintf(buf+pos, sz-pos, "%.10g", arr[i]);
+        if( i > 0 ) pos = codegen_appendc(buf, sz, pos, ',');
+        pos = codegen_appendf(buf, sz, pos, "%.10g", arr[i]);
     }
-    pos += snprintf(buf+pos, sz-pos, "]");
-    return pos;
+    return codegen_appendc(buf, sz, pos, ']');
 }
 
 static const char *json_find_field(const char *json, const char *field, int *len) {
@@ -153,19 +151,19 @@ static BenchLanguage LANGUAGES[] = {
 /* ---- Send load_data ---- */
 
 static int send_load_data(BenchLanguage *lang, char *buf, int sz, char *resp, int rsz) {
-    int pos = snprintf(buf, sz, "{\"method\":\"load_data\",\"params\":{\"open\":");
-    pos += json_write_double_array(buf+pos, sz-pos, g_open, g_nPoints);
-    pos += snprintf(buf+pos, sz-pos, ",\"high\":");
-    pos += json_write_double_array(buf+pos, sz-pos, g_high, g_nPoints);
-    pos += snprintf(buf+pos, sz-pos, ",\"low\":");
-    pos += json_write_double_array(buf+pos, sz-pos, g_low, g_nPoints);
-    pos += snprintf(buf+pos, sz-pos, ",\"close\":");
-    pos += json_write_double_array(buf+pos, sz-pos, g_close, g_nPoints);
-    pos += snprintf(buf+pos, sz-pos, ",\"volume\":");
-    pos += json_write_double_array(buf+pos, sz-pos, g_volume, g_nPoints);
-    pos += snprintf(buf+pos, sz-pos, ",\"openInterest\":");
-    pos += json_write_double_array(buf+pos, sz-pos, g_oi, g_nPoints);
-    pos += snprintf(buf+pos, sz-pos, "}}");
+    int pos = codegen_appendf(buf, sz, 0, "{\"method\":\"load_data\",\"params\":{\"open\":");
+    pos = json_write_double_array(buf, sz, pos, g_open, g_nPoints);
+    pos = codegen_appendf(buf, sz, pos, ",\"high\":");
+    pos = json_write_double_array(buf, sz, pos, g_high, g_nPoints);
+    pos = codegen_appendf(buf, sz, pos, ",\"low\":");
+    pos = json_write_double_array(buf, sz, pos, g_low, g_nPoints);
+    pos = codegen_appendf(buf, sz, pos, ",\"close\":");
+    pos = json_write_double_array(buf, sz, pos, g_close, g_nPoints);
+    pos = codegen_appendf(buf, sz, pos, ",\"volume\":");
+    pos = json_write_double_array(buf, sz, pos, g_volume, g_nPoints);
+    pos = codegen_appendf(buf, sz, pos, ",\"openInterest\":");
+    pos = json_write_double_array(buf, sz, pos, g_oi, g_nPoints);
+    pos = codegen_appendf(buf, sz, pos, "}}");
     if( codegen_pipe_call(&lang->cp, buf, resp, rsz) != TA_TEST_PASS ) return -1;
     return (strstr(resp, "\"ok\"") != NULL) ? 0 : -1;
 }
@@ -177,7 +175,7 @@ static int g_period_override = 0;
 
 static int build_bench_request(char *buf, int sz, const TA_FuncInfo *fi,
                                 int startIdx, int endIdx, int iters) {
-    int pos = snprintf(buf, sz,
+    int pos = codegen_appendf(buf, sz, 0,
         "{\"method\":\"TA_%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d,\"use_preloaded\":1,\"iters\":%d",
         fi->name, startIdx, endIdx, iters);
 
@@ -186,17 +184,17 @@ static int build_bench_request(char *buf, int sz, const TA_FuncInfo *fi,
         const TA_OptInputParameterInfo *optInfo;
         TA_GetOptInputParameterInfo(fi->handle, i, &optInfo);
         if( optInfo->type == TA_OptInput_RealRange ) {
-            pos += snprintf(buf+pos, sz-pos, ",\"%s\":%.15g",
+            pos = codegen_appendf(buf, sz, pos, ",\"%s\":%.15g",
                             optInfo->paramName, optInfo->defaultValue);
         } else {
             int val = (int)optInfo->defaultValue;
             if( g_period_override > 0 && strcmp(optInfo->paramName, "optInTimePeriod") == 0 )
                 val = g_period_override;
-            pos += snprintf(buf+pos, sz-pos, ",\"%s\":%d",
+            pos = codegen_appendf(buf, sz, pos, ",\"%s\":%d",
                             optInfo->paramName, val);
         }
     }
-    pos += snprintf(buf+pos, sz-pos, "}}");
+    pos = codegen_appendf(buf, sz, pos, "}}");
     return pos;
 }
 

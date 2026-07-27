@@ -448,6 +448,7 @@ pub fn generate_c_server(funcs: &[FuncDef]) -> String {
     s.push_str(" */\n");
     s.push_str("#include <stdio.h>\n");
     s.push_str("#include <stdlib.h>\n");
+    s.push_str("#include <stdarg.h>\n");
     s.push_str("#include <string.h>\n");
     s.push_str("#include <math.h>\n");
     s.push_str("#include <time.h>\n");
@@ -525,6 +526,38 @@ fn generate_c_json_helpers() -> String {
 
 #define MAX_ARRAY_SIZE 200000
 
+/* Bounded append helpers.
+ *
+ * `pos += snprintf(buf + pos, buf_size - pos, ...)` lets `pos` run past
+ * `buf_size` as soon as one call truncates; the next call then passes a
+ * negative size that converts to a huge size_t and writes past the buffer
+ * (CodeQL cpp/overflowing-snprintf). These helpers saturate `pos` at
+ * `buf_size - 1` instead, so the buffer stays NUL-terminated and in bounds.
+ * All of them take and return an absolute write position. */
+static int json_appendf(char *buf, int buf_size, int pos, const char *fmt, ...) {
+    va_list ap;
+    int avail, n;
+    if( buf_size <= 0 ) return 0;
+    if( pos < 0 ) pos = 0;
+    if( pos >= buf_size - 1 ) return buf_size - 1;
+    avail = buf_size - pos;
+    va_start(ap, fmt);
+    n = vsnprintf(buf + pos, (size_t)avail, fmt, ap);
+    va_end(ap);
+    if( n < 0 ) return pos;
+    if( n >= avail ) return buf_size - 1;
+    return pos + n;
+}
+
+static int json_appendc(char *buf, int buf_size, int pos, char c) {
+    if( buf_size <= 0 ) return 0;
+    if( pos < 0 ) pos = 0;
+    if( pos >= buf_size - 1 ) return buf_size - 1;
+    buf[pos++] = c;
+    buf[pos] = '\0';
+    return pos;
+}
+
 static int json_find_int(const char *json, const char *field) {
     char pattern[256];
     snprintf(pattern, sizeof(pattern), "\"%s\":", field);
@@ -601,30 +634,24 @@ static const char *json_find_string(const char *json, const char *field,
     return start;
 }
 
-static int json_write_double_array(char *buf, int buf_size,
+static int json_write_double_array(char *buf, int buf_size, int pos,
                                     const double *data, int count) {
-    int pos = 0;
-    buf[pos++] = '[';
+    pos = json_appendc(buf, buf_size, pos, '[');
     for( int i = 0; i < count; i++ ) {
-        if( i > 0 ) pos += snprintf(buf + pos, buf_size - pos, ",");
-        pos += snprintf(buf + pos, buf_size - pos, "%.15g", data[i]);
+        if( i > 0 ) pos = json_appendc(buf, buf_size, pos, ',');
+        pos = json_appendf(buf, buf_size, pos, "%.15g", data[i]);
     }
-    buf[pos++] = ']';
-    buf[pos] = '\0';
-    return pos;
+    return json_appendc(buf, buf_size, pos, ']');
 }
 
-static int json_write_int_array(char *buf, int buf_size,
+static int json_write_int_array(char *buf, int buf_size, int pos,
                                  const int *data, int count) {
-    int pos = 0;
-    buf[pos++] = '[';
+    pos = json_appendc(buf, buf_size, pos, '[');
     for( int i = 0; i < count; i++ ) {
-        if( i > 0 ) pos += snprintf(buf + pos, buf_size - pos, ",");
-        pos += snprintf(buf + pos, buf_size - pos, "%d", data[i]);
+        if( i > 0 ) pos = json_appendc(buf, buf_size, pos, ',');
+        pos = json_appendf(buf, buf_size, pos, "%d", data[i]);
     }
-    buf[pos++] = ']';
-    buf[pos] = '\0';
-    return pos;
+    return json_appendc(buf, buf_size, pos, ']');
 }
 
 static long get_nanotime(void) {
@@ -790,7 +817,7 @@ fn emit_sv_batch_fail_tail(s: &mut String, candle: bool) {
         s.push_str("            if( rd + 1 < rounds ) continue;\n");
         s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
         s.push_str("            TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );\n");
-        s.push_str("            pos += snprintf(resp + pos, resp_size - pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);\n");
+        s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);\n");
     } else {
         s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
         s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"legs\\\":0,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":1}\", (int)rc, svNb, openRejects, openRejects);\n");
@@ -1302,7 +1329,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
                 .collect()
         };
         if candle {
-            s.push_str("        pos = snprintf(resp, resp_size, \"{\\\"retCode\\\":0\");\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, 0, \"{\\\"retCode\\\":0\");\n");
             s.push_str("        for( rd = 0; rd < rounds; rd++ ) {\n");
             s.push_str("        if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );\n");
             s.push_str("        if( rd > 0 ) sv_candle_avg(rd - 1);\n");
@@ -1462,7 +1489,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         s.push_str("            if( !seen ) pref[npref++] = P;\n");
         s.push_str("        }\n");
         if !candle {
-            s.push_str("        pos = snprintf(resp, resp_size, \"{\\\"retCode\\\":0,\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d\", svBeg, svNb, npref);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, 0, \"{\\\"retCode\\\":0,\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d\", svBeg, svNb, npref);\n");
         }
 
         // Per-leg: open on prefix, update the rest, peek spot-asserts,
@@ -1522,14 +1549,14 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         s.push_str("            }\n");
         s.push_str(&format!("            if( st ) TA_{name}_Close(st);\n"));
         if candle {
-            s.push_str("            pos += snprintf(resp + pos, resp_size - pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", lgi, P, lgi, ok, lgi, pkOk);\n");
-            s.push_str("            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, \",\\\"bar%d\\\":%d,\\\"out%d\\\":%d,\\\"batchv%d\\\":\\\"%a\\\",\\\"streamv%d\\\":\\\"%a\\\"\", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }\n");
+            s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", lgi, P, lgi, ok, lgi, pkOk);\n");
+            s.push_str("            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, \",\\\"bar%d\\\":%d,\\\"out%d\\\":%d,\\\"batchv%d\\\":\\\"%a\\\",\\\"streamv%d\\\":\\\"%a\\\"\", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }\n");
             s.push_str("            if( !pkOk ) peekAll = 0;\n");
             s.push_str("            lgi++;\n");
             s.push_str("        }\n");
         } else {
-            s.push_str("            pos += snprintf(resp + pos, resp_size - pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", li, P, li, ok, li, pkOk);\n");
-            s.push_str("            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, \",\\\"bar%d\\\":%d,\\\"out%d\\\":%d,\\\"batchv%d\\\":\\\"%a\\\",\\\"streamv%d\\\":\\\"%a\\\"\", li, badBar, li, badOut, li, bv, li, sv); }\n");
+            s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", li, P, li, ok, li, pkOk);\n");
+            s.push_str("            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, \",\\\"bar%d\\\":%d,\\\"out%d\\\":%d,\\\"batchv%d\\\":\\\"%a\\\",\\\"streamv%d\\\":\\\"%a\\\"\", li, badBar, li, badOut, li, bv, li, sv); }\n");
             s.push_str("            if( !pkOk ) peekAll = 0;\n");
             s.push_str("        }\n");
         }
@@ -1582,9 +1609,9 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         // even if the driver's fill check ever regresses.
         s.push_str("        if( fillChecked && !fillOk ) allOk = 0;\n");
         if candle {
-            s.push_str("        pos += snprintf(resp + pos, resp_size - pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);\n");
         } else {
-            s.push_str("        pos += snprintf(resp + pos, resp_size - pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", fillChecked, fillOk, allOk, peekAll);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", fillChecked, fillOk, allOk, peekAll);\n");
         }
         s.push_str("        return;\n");
         s.push_str("    }\n");
@@ -1878,7 +1905,7 @@ fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
         s.push_str("        }\n");
 
         // Build response with correct key names and serialisers per output type.
-        s.push_str("        int pos = snprintf(resp, resp_size,\n");
+        s.push_str("        int pos = json_appendf(resp, resp_size, 0,\n");
         s.push_str("            \"{\\\"retCode\\\":%d,\\\"outBegIdx\\\":%d,\\\"outNBElement\\\":%d,\\\"timing_ns\\\":%ld\",\n");
         s.push_str("            (int)rc, outBegIdx, outNBElement, elapsed_ns);\n");
         {
@@ -1887,22 +1914,22 @@ fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
             for (k, out) in outputs.iter().enumerate() {
                 let key = output_json_key(outputs, k);
                 s.push_str(&format!(
-                    "        pos += snprintf(resp + pos, resp_size - pos, \",\\\"{key}\\\":\");\n"
+                    "        pos = json_appendf(resp, resp_size, pos, \",\\\"{key}\\\":\");\n"
                 ));
                 if out.param_type == ParamType::Integer {
                     s.push_str(&format!(
-                        "        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf{int_idx}, outNBElement);\n"
+                        "        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf{int_idx}, outNBElement);\n"
                     ));
                     int_idx += 1;
                 } else {
                     s.push_str(&format!(
-                        "        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf{real_idx}, outNBElement);\n"
+                        "        pos = json_write_double_array(resp, resp_size, pos, g_outBuf{real_idx}, outNBElement);\n"
                     ));
                     real_idx += 1;
                 }
             }
         }
-        s.push_str("        pos += snprintf(resp + pos, resp_size - pos, \",\\\"timing_ns_unguarded\\\":%ld}\", elapsed_ns_ung);\n");
+        s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"timing_ns_unguarded\\\":%ld}\", elapsed_ns_ung);\n");
 
         s.push_str("    }\n");
     }
@@ -1959,15 +1986,15 @@ fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
 
     // list_functions method — returns {"functions":["TA_SMA","TA_RSI",...]}
     s.push_str("    else if ( methodLen == 14 && strncmp(method, \"list_functions\", 14) == 0 ) {\n");
-    s.push_str("        int pos = snprintf(resp, resp_size, \"{\\\"functions\\\":[\");\n");
+    s.push_str("        int pos = json_appendf(resp, resp_size, 0, \"{\\\"functions\\\":[\");\n");
     for (i, func) in funcs.iter().enumerate() {
         let comma = if i > 0 { "," } else { "" };
         s.push_str(&format!(
-            "        pos += snprintf(resp + pos, resp_size - pos, \"{}\\\"TA_{}\\\"\");\n",
+            "        pos = json_appendf(resp, resp_size, pos, \"{}\\\"TA_{}\\\"\");\n",
             comma, func.name
         ));
     }
-    s.push_str("        snprintf(resp + pos, resp_size - pos, \"]}\");\n");
+    s.push_str("        json_appendf(resp, resp_size, pos, \"]}\");\n");
     s.push_str("    }\n");
 
     // set_unstable_period method — {"method":"set_unstable_period","params":{"id":21,"period":10}}
@@ -2008,9 +2035,9 @@ fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
         c_predicate_expr(SpecialBuiltin::IsZero, &["v".to_string()])
     ));
     s.push_str("        }\n");
-    s.push_str("        int _pp = snprintf(resp, resp_size, \"{\\\"outInteger\\\":\");\n");
-    s.push_str("        _pp += json_write_int_array(resp + _pp, resp_size - _pp, _pr, _pn);\n");
-    s.push_str("        snprintf(resp + _pp, resp_size - _pp, \"}\");\n");
+    s.push_str("        int _pp = json_appendf(resp, resp_size, 0, \"{\\\"outInteger\\\":\");\n");
+    s.push_str("        _pp = json_write_int_array(resp, resp_size, _pp, _pr, _pn);\n");
+    s.push_str("        json_appendf(resp, resp_size, _pp, \"}\");\n");
     s.push_str("    }\n");
 
     // abstract_call — generic function call via ta_abstract

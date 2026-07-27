@@ -34,4 +34,19 @@ ErrorNumber codegen_pipe_call(CodegenPipe *cp,
  */
 void codegen_pipe_close(CodegenPipe *cp);
 
+/* Bounded append into a JSON request/response buffer.
+ *
+ * `pos += snprintf(buf + pos, buf_size - pos, ...)` lets `pos` run past
+ * `buf_size` as soon as one call truncates; the next call then passes a
+ * negative size that converts to a huge size_t and writes past the buffer
+ * (CodeQL cpp/overflowing-snprintf). These saturate `pos` at `buf_size - 1`
+ * instead, so the buffer stays NUL-terminated and in bounds.
+ *
+ * Both take and return an ABSOLUTE write position: use
+ *   pos = codegen_appendf(buf, buf_size, pos, fmt, ...);
+ * in place of the `pos +=` idiom.
+ */
+int codegen_appendf(char *buf, int buf_size, int pos, const char *fmt, ...);
+int codegen_appendc(char *buf, int buf_size, int pos, char c);
+
 #endif

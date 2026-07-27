@@ -14,6 +14,10 @@ name: Release (step 1)
 on:
   workflow_dispatch:
 
+# Pushes the release tag and creates/updates the draft release + its assets.
+permissions:
+  contents: write
+
 jobs:
   process_draft_release:
     runs-on: ubuntu-latest

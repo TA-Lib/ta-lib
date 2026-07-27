@@ -10,6 +10,10 @@ on:
 
   workflow_dispatch:
 
+# Read-only: this workflow never pushes, releases, or comments.
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Test ${{ matrix.os }}

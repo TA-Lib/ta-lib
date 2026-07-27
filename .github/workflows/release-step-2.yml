@@ -8,6 +8,10 @@ name: Release (step 2)
 on:
   workflow_dispatch:
 
+# Flips the draft release to public via the Releases API.
+permissions:
+  contents: write
+
 jobs:
   upgrade_draft_to_official:
     runs-on: ubuntu-latest

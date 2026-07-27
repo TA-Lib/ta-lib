@@ -4,6 +4,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <math.h>
 #include <time.h>
@@ -195,6 +196,38 @@
 
 #define MAX_ARRAY_SIZE 200000
 
+/* Bounded append helpers.
+ *
+ * `pos += snprintf(buf + pos, buf_size - pos, ...)` lets `pos` run past
+ * `buf_size` as soon as one call truncates; the next call then passes a
+ * negative size that converts to a huge size_t and writes past the buffer
+ * (CodeQL cpp/overflowing-snprintf). These helpers saturate `pos` at
+ * `buf_size - 1` instead, so the buffer stays NUL-terminated and in bounds.
+ * All of them take and return an absolute write position. */
+static int json_appendf(char *buf, int buf_size, int pos, const char *fmt, ...) {
+    va_list ap;
+    int avail, n;
+    if( buf_size <= 0 ) return 0;
+    if( pos < 0 ) pos = 0;
+    if( pos >= buf_size - 1 ) return buf_size - 1;
+    avail = buf_size - pos;
+    va_start(ap, fmt);
+    n = vsnprintf(buf + pos, (size_t)avail, fmt, ap);
+    va_end(ap);
+    if( n < 0 ) return pos;
+    if( n >= avail ) return buf_size - 1;
+    return pos + n;
+}
+
+static int json_appendc(char *buf, int buf_size, int pos, char c) {
+    if( buf_size <= 0 ) return 0;
+    if( pos < 0 ) pos = 0;
+    if( pos >= buf_size - 1 ) return buf_size - 1;
+    buf[pos++] = c;
+    buf[pos] = '\0';
+    return pos;
+}
+
 static int json_find_int(const char *json, const char *field) {
     char pattern[256];
     snprintf(pattern, sizeof(pattern), "\"%s\":", field);
@@ -271,30 +304,24 @@ static const char *json_find_string(const char *json, const char *field,
     return start;
 }
 
-static int json_write_double_array(char *buf, int buf_size,
+static int json_write_double_array(char *buf, int buf_size, int pos,
                                     const double *data, int count) {
-    int pos = 0;
-    buf[pos++] = '[';
+    pos = json_appendc(buf, buf_size, pos, '[');
     for( int i = 0; i < count; i++ ) {
-        if( i > 0 ) pos += snprintf(buf + pos, buf_size - pos, ",");
-        pos += snprintf(buf + pos, buf_size - pos, "%.15g", data[i]);
+        if( i > 0 ) pos = json_appendc(buf, buf_size, pos, ',');
+        pos = json_appendf(buf, buf_size, pos, "%.15g", data[i]);
     }
-    buf[pos++] = ']';
-    buf[pos] = '\0';
-    return pos;
+    return json_appendc(buf, buf_size, pos, ']');
 }
 
-static int json_write_int_array(char *buf, int buf_size,
+static int json_write_int_array(char *buf, int buf_size, int pos,
                                  const int *data, int count) {
-    int pos = 0;
-    buf[pos++] = '[';
+    pos = json_appendc(buf, buf_size, pos, '[');
     for( int i = 0; i < count; i++ ) {
-        if( i > 0 ) pos += snprintf(buf + pos, buf_size - pos, ",");
-        pos += snprintf(buf + pos, buf_size - pos, "%d", data[i]);
+        if( i > 0 ) pos = json_appendc(buf, buf_size, pos, ',');
+        pos = json_appendf(buf, buf_size, pos, "%d", data[i]);
     }
-    buf[pos++] = ']';
-    buf[pos] = '\0';
-    return pos;
+    return json_appendc(buf, buf_size, pos, ']');
 }
 
 static long get_nanotime(void) {
@@ -455,7 +482,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -478,8 +505,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v2, sv_b2[t - svBeg]) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
             }
             if( st ) TA_ACCBANDS_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -506,7 +533,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ACOS", 7) == 0 ) {
@@ -552,7 +579,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -569,8 +596,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ACOS_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -593,7 +620,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_AD", 5) == 0 ) {
@@ -639,7 +666,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -656,8 +683,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_AD_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -680,7 +707,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_ADD", 6) == 0 ) {
@@ -726,7 +753,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -743,8 +770,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ADD_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -767,7 +794,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_ADOSC", 8) == 0 ) {
@@ -817,7 +844,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -834,8 +861,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ADOSC_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -859,7 +886,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_ADX", 6) == 0 ) {
@@ -908,7 +935,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -925,8 +952,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ADX_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -950,7 +977,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(0, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ADXR", 7) == 0 ) {
@@ -999,7 +1026,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -1016,8 +1043,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ADXR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -1041,7 +1068,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(0, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_APO", 6) == 0 ) {
@@ -1098,7 +1125,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -1115,8 +1142,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_APO_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -1143,7 +1170,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_AROON", 8) == 0 ) {
@@ -1198,7 +1225,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -1218,8 +1245,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v1, sv_b1[t - svBeg]) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
             if( st ) TA_AROON_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -1244,7 +1271,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_AROONOSC", 11) == 0 ) {
@@ -1291,7 +1318,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -1308,8 +1335,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_AROONOSC_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -1332,7 +1359,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ASIN", 7) == 0 ) {
@@ -1378,7 +1405,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -1395,8 +1422,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ASIN_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -1419,7 +1446,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ATAN", 7) == 0 ) {
@@ -1465,7 +1492,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -1482,8 +1509,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ATAN_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -1506,7 +1533,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_ATR", 6) == 0 ) {
@@ -1555,7 +1582,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -1572,8 +1599,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ATR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -1597,7 +1624,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(2, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_AVGDEV", 9) == 0 ) {
@@ -1644,7 +1671,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -1661,8 +1688,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_AVGDEV_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -1685,7 +1712,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_AVGPRICE", 11) == 0 ) {
@@ -1731,7 +1758,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -1748,8 +1775,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_AVGPRICE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -1772,7 +1799,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_BBANDS", 9) == 0 ) {
@@ -1839,7 +1866,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -1862,8 +1889,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v2, sv_b2[t - svBeg]) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
             }
             if( st ) TA_BBANDS_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -1894,7 +1921,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_BETA", 7) == 0 ) {
@@ -1941,7 +1968,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -1958,8 +1985,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_BETA_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -1982,7 +2009,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_BOP", 6) == 0 ) {
@@ -2028,7 +2055,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -2045,8 +2072,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_BOP_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -2069,7 +2096,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_CCI", 6) == 0 ) {
@@ -2116,7 +2143,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -2133,8 +2160,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_CCI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -2157,7 +2184,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDL2CROWS", 12) == 0 ) {
@@ -2166,7 +2193,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -2180,7 +2207,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -2220,8 +2247,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDL2CROWS_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -2247,7 +2274,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDL3BLACKCROWS", 17) == 0 ) {
@@ -2256,7 +2283,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -2270,7 +2297,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -2310,8 +2337,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDL3BLACKCROWS_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -2337,7 +2364,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDL3INSIDE", 13) == 0 ) {
@@ -2346,7 +2373,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -2360,7 +2387,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -2400,8 +2427,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDL3INSIDE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -2427,7 +2454,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDL3LINESTRIKE", 17) == 0 ) {
@@ -2436,7 +2463,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -2450,7 +2477,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -2490,8 +2517,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDL3LINESTRIKE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -2517,7 +2544,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDL3OUTSIDE", 14) == 0 ) {
@@ -2526,7 +2553,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -2540,7 +2567,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -2580,8 +2607,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDL3OUTSIDE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -2607,7 +2634,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDL3STARSINSOUTH", 19) == 0 ) {
@@ -2616,7 +2643,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -2630,7 +2657,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -2670,8 +2697,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDL3STARSINSOUTH_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -2697,7 +2724,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDL3WHITESOLDIERS", 20) == 0 ) {
@@ -2706,7 +2733,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -2720,7 +2747,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -2760,8 +2787,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDL3WHITESOLDIERS_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -2787,7 +2814,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDLABANDONEDBABY", 19) == 0 ) {
@@ -2797,7 +2824,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -2811,7 +2838,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -2851,8 +2878,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLABANDONEDBABY_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -2878,7 +2905,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLADVANCEBLOCK", 18) == 0 ) {
@@ -2887,7 +2914,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -2901,7 +2928,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -2941,8 +2968,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLADVANCEBLOCK_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -2968,7 +2995,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLBELTHOLD", 14) == 0 ) {
@@ -2977,7 +3004,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -2991,7 +3018,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -3031,8 +3058,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLBELTHOLD_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -3058,7 +3085,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLBREAKAWAY", 15) == 0 ) {
@@ -3067,7 +3094,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -3081,7 +3108,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -3121,8 +3148,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLBREAKAWAY_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -3148,7 +3175,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLCLOSINGMARUBOZU", 21) == 0 ) {
@@ -3157,7 +3184,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -3171,7 +3198,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -3211,8 +3238,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLCLOSINGMARUBOZU_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -3238,7 +3265,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_CDLCONCEALBABYSWALL", 22) == 0 ) {
@@ -3247,7 +3274,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -3261,7 +3288,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -3301,8 +3328,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLCONCEALBABYSWALL_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -3328,7 +3355,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDLCOUNTERATTACK", 19) == 0 ) {
@@ -3337,7 +3364,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -3351,7 +3378,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -3391,8 +3418,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLCOUNTERATTACK_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -3418,7 +3445,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLDARKCLOUDCOVER", 20) == 0 ) {
@@ -3428,7 +3455,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -3442,7 +3469,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -3482,8 +3509,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLDARKCLOUDCOVER_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -3509,7 +3536,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_CDLDOJI", 10) == 0 ) {
@@ -3518,7 +3545,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -3532,7 +3559,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -3572,8 +3599,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLDOJI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -3599,7 +3626,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLDOJISTAR", 14) == 0 ) {
@@ -3608,7 +3635,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -3622,7 +3649,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -3662,8 +3689,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLDOJISTAR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -3689,7 +3716,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDLDRAGONFLYDOJI", 19) == 0 ) {
@@ -3698,7 +3725,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -3712,7 +3739,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -3752,8 +3779,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLDRAGONFLYDOJI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -3779,7 +3806,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLENGULFING", 15) == 0 ) {
@@ -3788,7 +3815,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -3802,7 +3829,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -3842,8 +3869,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLENGULFING_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -3869,7 +3896,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLEVENINGDOJISTAR", 21) == 0 ) {
@@ -3879,7 +3906,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -3893,7 +3920,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -3933,8 +3960,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLEVENINGDOJISTAR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -3960,7 +3987,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLEVENINGSTAR", 17) == 0 ) {
@@ -3970,7 +3997,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -3984,7 +4011,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -4024,8 +4051,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLEVENINGSTAR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -4051,7 +4078,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_CDLGAPSIDESIDEWHITE", 22) == 0 ) {
@@ -4060,7 +4087,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -4074,7 +4101,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -4114,8 +4141,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLGAPSIDESIDEWHITE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -4141,7 +4168,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLGRAVESTONEDOJI", 20) == 0 ) {
@@ -4150,7 +4177,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -4164,7 +4191,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -4204,8 +4231,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLGRAVESTONEDOJI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -4231,7 +4258,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLHAMMER", 12) == 0 ) {
@@ -4240,7 +4267,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -4254,7 +4281,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -4294,8 +4321,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLHAMMER_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -4321,7 +4348,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 16 && strncmp(fn, "TA_CDLHANGINGMAN", 16) == 0 ) {
@@ -4330,7 +4357,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -4344,7 +4371,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -4384,8 +4411,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLHANGINGMAN_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -4411,7 +4438,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLHARAMI", 12) == 0 ) {
@@ -4420,7 +4447,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -4434,7 +4461,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -4474,8 +4501,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLHARAMI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -4501,7 +4528,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLHARAMICROSS", 17) == 0 ) {
@@ -4510,7 +4537,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -4524,7 +4551,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -4564,8 +4591,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLHARAMICROSS_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -4591,7 +4618,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLHIGHWAVE", 14) == 0 ) {
@@ -4600,7 +4627,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -4614,7 +4641,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -4654,8 +4681,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLHIGHWAVE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -4681,7 +4708,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDLHIKKAKE", 13) == 0 ) {
@@ -4690,7 +4717,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -4704,7 +4731,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -4744,8 +4771,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLHIKKAKE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -4771,7 +4798,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 16 && strncmp(fn, "TA_CDLHIKKAKEMOD", 16) == 0 ) {
@@ -4780,7 +4807,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -4794,7 +4821,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -4834,8 +4861,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLHIKKAKEMOD_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -4861,7 +4888,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLHOMINGPIGEON", 18) == 0 ) {
@@ -4870,7 +4897,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -4884,7 +4911,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -4924,8 +4951,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLHOMINGPIGEON_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -4951,7 +4978,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLIDENTICAL3CROWS", 21) == 0 ) {
@@ -4960,7 +4987,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -4974,7 +5001,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -5014,8 +5041,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLIDENTICAL3CROWS_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -5041,7 +5068,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLINNECK", 12) == 0 ) {
@@ -5050,7 +5077,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -5064,7 +5091,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -5104,8 +5131,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLINNECK_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -5131,7 +5158,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLINVERTEDHAMMER", 20) == 0 ) {
@@ -5140,7 +5167,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -5154,7 +5181,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -5194,8 +5221,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLINVERTEDHAMMER_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -5221,7 +5248,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDLKICKING", 13) == 0 ) {
@@ -5230,7 +5257,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -5244,7 +5271,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -5284,8 +5311,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLKICKING_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -5311,7 +5338,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLKICKINGBYLENGTH", 21) == 0 ) {
@@ -5320,7 +5347,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -5334,7 +5361,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -5374,8 +5401,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLKICKINGBYLENGTH_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -5401,7 +5428,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLLADDERBOTTOM", 18) == 0 ) {
@@ -5410,7 +5437,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -5424,7 +5451,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -5464,8 +5491,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLLADDERBOTTOM_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -5491,7 +5518,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLLONGLEGGEDDOJI", 20) == 0 ) {
@@ -5500,7 +5527,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -5514,7 +5541,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -5554,8 +5581,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLLONGLEGGEDDOJI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -5581,7 +5608,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLLONGLINE", 14) == 0 ) {
@@ -5590,7 +5617,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -5604,7 +5631,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -5644,8 +5671,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLLONGLINE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -5671,7 +5698,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLMARUBOZU", 14) == 0 ) {
@@ -5680,7 +5707,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -5694,7 +5721,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -5734,8 +5761,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLMARUBOZU_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -5761,7 +5788,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLMATCHINGLOW", 17) == 0 ) {
@@ -5770,7 +5797,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -5784,7 +5811,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -5824,8 +5851,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLMATCHINGLOW_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -5851,7 +5878,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDLMATHOLD", 13) == 0 ) {
@@ -5861,7 +5888,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -5875,7 +5902,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -5915,8 +5942,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLMATHOLD_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -5942,7 +5969,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLMORNINGDOJISTAR", 21) == 0 ) {
@@ -5952,7 +5979,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -5966,7 +5993,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -6006,8 +6033,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLMORNINGDOJISTAR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -6033,7 +6060,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLMORNINGSTAR", 17) == 0 ) {
@@ -6043,7 +6070,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -6057,7 +6084,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -6097,8 +6124,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLMORNINGSTAR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -6124,7 +6151,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLONNECK", 12) == 0 ) {
@@ -6133,7 +6160,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -6147,7 +6174,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -6187,8 +6214,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLONNECK_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -6214,7 +6241,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLPIERCING", 14) == 0 ) {
@@ -6223,7 +6250,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -6237,7 +6264,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -6277,8 +6304,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLPIERCING_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -6304,7 +6331,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLRICKSHAWMAN", 17) == 0 ) {
@@ -6313,7 +6340,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -6327,7 +6354,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -6367,8 +6394,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLRICKSHAWMAN_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -6394,7 +6421,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_CDLRISEFALL3METHODS", 22) == 0 ) {
@@ -6403,7 +6430,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -6417,7 +6444,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -6457,8 +6484,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLRISEFALL3METHODS_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -6484,7 +6511,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLSEPARATINGLINES", 21) == 0 ) {
@@ -6493,7 +6520,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -6507,7 +6534,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -6547,8 +6574,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLSEPARATINGLINES_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -6574,7 +6601,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLSHOOTINGSTAR", 18) == 0 ) {
@@ -6583,7 +6610,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -6597,7 +6624,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -6637,8 +6664,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLSHOOTINGSTAR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -6664,7 +6691,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLSHORTLINE", 15) == 0 ) {
@@ -6673,7 +6700,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -6687,7 +6714,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -6727,8 +6754,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLSHORTLINE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -6754,7 +6781,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLSPINNINGTOP", 17) == 0 ) {
@@ -6763,7 +6790,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -6777,7 +6804,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -6817,8 +6844,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLSPINNINGTOP_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -6844,7 +6871,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLSTALLEDPATTERN", 20) == 0 ) {
@@ -6853,7 +6880,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -6867,7 +6894,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -6907,8 +6934,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLSTALLEDPATTERN_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -6934,7 +6961,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDLSTICKSANDWICH", 19) == 0 ) {
@@ -6943,7 +6970,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -6957,7 +6984,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -6997,8 +7024,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLSTICKSANDWICH_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -7024,7 +7051,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLTAKURI", 12) == 0 ) {
@@ -7033,7 +7060,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -7047,7 +7074,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -7087,8 +7114,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLTAKURI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -7114,7 +7141,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLTASUKIGAP", 15) == 0 ) {
@@ -7123,7 +7150,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -7137,7 +7164,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -7177,8 +7204,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLTASUKIGAP_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -7204,7 +7231,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLTHRUSTING", 15) == 0 ) {
@@ -7213,7 +7240,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -7227,7 +7254,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -7267,8 +7294,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLTHRUSTING_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -7294,7 +7321,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDLTRISTAR", 13) == 0 ) {
@@ -7303,7 +7330,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -7317,7 +7344,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -7357,8 +7384,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLTRISTAR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -7384,7 +7411,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLUNIQUE3RIVER", 18) == 0 ) {
@@ -7393,7 +7420,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -7407,7 +7434,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -7447,8 +7474,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLUNIQUE3RIVER_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -7474,7 +7501,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLUPSIDEGAP2CROWS", 21) == 0 ) {
@@ -7483,7 +7510,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -7497,7 +7524,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -7537,8 +7564,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLUPSIDEGAP2CROWS_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -7564,7 +7591,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_CDLXSIDEGAP3METHODS", 22) == 0 ) {
@@ -7573,7 +7600,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int fillOk = 1, fillChecked = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
-        pos = snprintf(resp, resp_size, "{\"retCode\":0");
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
         for( rd = 0; rd < rounds; rd++ ) {
         if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         if( rd > 0 ) sv_candle_avg(rd - 1);
@@ -7587,7 +7614,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos += snprintf(resp + pos, resp_size - pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);
             return;
         }
         {
@@ -7627,8 +7654,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_CDLXSIDEGAP3METHODS_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
@@ -7654,7 +7681,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_CEIL", 7) == 0 ) {
@@ -7700,7 +7727,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7717,8 +7744,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_CEIL_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -7741,7 +7768,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_CMF", 6) == 0 ) {
@@ -7788,7 +7815,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7805,8 +7832,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_CMF_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -7829,7 +7856,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_CMO", 6) == 0 ) {
@@ -7878,7 +7905,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7895,8 +7922,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_CMO_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -7920,7 +7947,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(3, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_CMOU", 7) == 0 ) {
@@ -7967,7 +7994,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7984,8 +8011,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_CMOU_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -8008,7 +8035,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_CORREL", 9) == 0 ) {
@@ -8055,7 +8082,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8072,8 +8099,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_CORREL_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -8096,7 +8123,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_COS", 6) == 0 ) {
@@ -8142,7 +8169,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8159,8 +8186,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_COS_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -8183,7 +8210,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_COSH", 7) == 0 ) {
@@ -8229,7 +8256,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8246,8 +8273,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_COSH_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -8270,7 +8297,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_DEMA", 7) == 0 ) {
@@ -8319,7 +8346,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8336,8 +8363,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_DEMA_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -8361,7 +8388,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_DIV", 6) == 0 ) {
@@ -8407,7 +8434,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8424,8 +8451,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_DIV_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -8448,7 +8475,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_DX", 5) == 0 ) {
@@ -8497,7 +8524,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8514,8 +8541,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_DX_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -8539,7 +8566,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(4, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_EMA", 6) == 0 ) {
@@ -8588,7 +8615,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8605,8 +8632,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_EMA_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -8630,7 +8657,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_EXP", 6) == 0 ) {
@@ -8676,7 +8703,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8693,8 +8720,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_EXP_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -8717,7 +8744,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_FLOOR", 8) == 0 ) {
@@ -8763,7 +8790,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8780,8 +8807,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_FLOOR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -8804,7 +8831,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_HMA", 6) == 0 ) {
@@ -8851,7 +8878,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8868,8 +8895,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_HMA_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -8892,7 +8919,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_HT_DCPERIOD", 14) == 0 ) {
@@ -8940,7 +8967,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8957,8 +8984,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_HT_DCPERIOD_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -8982,7 +9009,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(6, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_HT_DCPHASE", 13) == 0 ) {
@@ -9030,7 +9057,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -9047,8 +9074,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_HT_DCPHASE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -9072,7 +9099,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(7, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_HT_PHASOR", 12) == 0 ) {
@@ -9128,7 +9155,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -9148,8 +9175,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v1, sv_b1[t - svBeg]) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
             if( st ) TA_HT_PHASOR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -9175,7 +9202,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(8, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_HT_SINE", 10) == 0 ) {
@@ -9231,7 +9258,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -9251,8 +9278,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v1, sv_b1[t - svBeg]) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
             if( st ) TA_HT_SINE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -9278,7 +9305,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(9, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_HT_TRENDLINE", 15) == 0 ) {
@@ -9326,7 +9353,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -9343,8 +9370,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_HT_TRENDLINE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -9368,7 +9395,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(10, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_HT_TRENDMODE", 15) == 0 ) {
@@ -9409,7 +9436,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -9426,8 +9453,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_HT_TRENDMODE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -9451,7 +9478,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(11, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_IMI", 6) == 0 ) {
@@ -9498,7 +9525,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -9515,8 +9542,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_IMI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -9539,7 +9566,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_KAMA", 7) == 0 ) {
@@ -9588,7 +9615,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -9605,8 +9632,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_KAMA_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -9630,7 +9657,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(13, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_LINEARREG", 12) == 0 ) {
@@ -9677,7 +9704,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -9694,8 +9721,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_LINEARREG_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -9718,7 +9745,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_LINEARREG_ANGLE", 18) == 0 ) {
@@ -9765,7 +9792,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -9782,8 +9809,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_LINEARREG_ANGLE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -9806,7 +9833,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_LINEARREG_INTERCEPT", 22) == 0 ) {
@@ -9853,7 +9880,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -9870,8 +9897,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_LINEARREG_INTERCEPT_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -9894,7 +9921,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_LINEARREG_SLOPE", 18) == 0 ) {
@@ -9941,7 +9968,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -9958,8 +9985,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_LINEARREG_SLOPE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -9982,7 +10009,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_LN", 5) == 0 ) {
@@ -10028,7 +10055,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -10045,8 +10072,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_LN_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -10069,7 +10096,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_LOG10", 8) == 0 ) {
@@ -10115,7 +10142,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -10132,8 +10159,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_LOG10_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -10156,7 +10183,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_MA", 5) == 0 ) {
@@ -10212,7 +10239,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -10229,8 +10256,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_MA_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -10257,7 +10284,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_MACD", 7) == 0 ) {
@@ -10317,7 +10344,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -10340,8 +10367,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v2, sv_b2[t - svBeg]) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
             }
             if( st ) TA_MACD_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -10369,7 +10396,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_MACDEXT", 10) == 0 ) {
@@ -10438,7 +10465,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -10461,8 +10488,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v2, sv_b2[t - svBeg]) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
             }
             if( st ) TA_MACDEXT_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -10493,7 +10520,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_MACDFIX", 10) == 0 ) {
@@ -10551,7 +10578,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -10574,8 +10601,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v2, sv_b2[t - svBeg]) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
             }
             if( st ) TA_MACDFIX_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -10603,7 +10630,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_MAMA", 7) == 0 ) {
@@ -10661,7 +10688,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -10681,8 +10708,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v1, sv_b1[t - svBeg]) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
             if( st ) TA_MAMA_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -10708,7 +10735,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(14, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_MAVP", 7) == 0 ) {
@@ -10766,7 +10793,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -10783,8 +10810,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_MAVP_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -10811,7 +10838,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_MAX", 6) == 0 ) {
@@ -10858,7 +10885,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -10875,8 +10902,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_MAX_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -10899,7 +10926,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MAXINDEX", 11) == 0 ) {
@@ -10939,7 +10966,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -10956,8 +10983,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_MAXINDEX_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -10980,7 +11007,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MEDPRICE", 11) == 0 ) {
@@ -11026,7 +11053,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -11043,8 +11070,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_MEDPRICE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -11067,7 +11094,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_MFI", 6) == 0 ) {
@@ -11114,7 +11141,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -11131,8 +11158,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_MFI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -11155,7 +11182,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MIDPOINT", 11) == 0 ) {
@@ -11202,7 +11229,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -11219,8 +11246,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_MIDPOINT_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -11243,7 +11270,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MIDPRICE", 11) == 0 ) {
@@ -11290,7 +11317,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -11307,8 +11334,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_MIDPRICE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -11331,7 +11358,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_MIN", 6) == 0 ) {
@@ -11378,7 +11405,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -11395,8 +11422,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_MIN_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -11419,7 +11446,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MININDEX", 11) == 0 ) {
@@ -11459,7 +11486,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -11476,8 +11503,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
             if( st ) TA_MININDEX_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -11500,7 +11527,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_MINMAX", 9) == 0 ) {
@@ -11555,7 +11582,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -11575,8 +11602,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v1, sv_b1[t - svBeg]) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
             if( st ) TA_MINMAX_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -11601,7 +11628,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_MINMAXINDEX", 14) == 0 ) {
@@ -11649,7 +11676,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -11669,8 +11696,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v1 != sv_ib1[t - svBeg] ) { ok = 0; badBar = t; badOut = 1; bv = (double)sv_ib1[t - svBeg]; sv = (double)v1; }
             }
             if( st ) TA_MINMAXINDEX_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -11695,7 +11722,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MINUS_DI", 11) == 0 ) {
@@ -11744,7 +11771,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -11761,8 +11788,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_MINUS_DI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -11786,7 +11813,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(16, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MINUS_DM", 11) == 0 ) {
@@ -11835,7 +11862,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -11852,8 +11879,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_MINUS_DM_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -11877,7 +11904,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(17, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_MOM", 6) == 0 ) {
@@ -11924,7 +11951,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -11941,8 +11968,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_MOM_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -11965,7 +11992,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_MULT", 7) == 0 ) {
@@ -12011,7 +12038,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -12028,8 +12055,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_MULT_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -12052,7 +12079,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_NATR", 7) == 0 ) {
@@ -12101,7 +12128,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -12118,8 +12145,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_NATR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -12143,7 +12170,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(18, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_NVI", 6) == 0 ) {
@@ -12189,7 +12216,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -12206,8 +12233,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_NVI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -12230,7 +12257,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_OBV", 6) == 0 ) {
@@ -12276,7 +12303,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -12293,8 +12320,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_OBV_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -12317,7 +12344,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_PLUS_DI", 10) == 0 ) {
@@ -12366,7 +12393,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -12383,8 +12410,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_PLUS_DI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -12408,7 +12435,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(19, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_PLUS_DM", 10) == 0 ) {
@@ -12457,7 +12484,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -12474,8 +12501,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_PLUS_DM_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -12499,7 +12526,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(20, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_PPO", 6) == 0 ) {
@@ -12556,7 +12583,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -12573,8 +12600,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_PPO_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -12601,7 +12628,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_PVI", 6) == 0 ) {
@@ -12647,7 +12674,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -12664,8 +12691,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_PVI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -12688,7 +12715,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_PVO", 6) == 0 ) {
@@ -12745,7 +12772,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -12762,8 +12789,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_PVO_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -12790,7 +12817,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_ROC", 6) == 0 ) {
@@ -12837,7 +12864,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -12854,8 +12881,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ROC_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -12878,7 +12905,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ROCP", 7) == 0 ) {
@@ -12925,7 +12952,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -12942,8 +12969,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ROCP_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -12966,7 +12993,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ROCR", 7) == 0 ) {
@@ -13013,7 +13040,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -13030,8 +13057,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ROCR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -13054,7 +13081,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_ROCR100", 10) == 0 ) {
@@ -13101,7 +13128,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -13118,8 +13145,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ROCR100_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -13142,7 +13169,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_RSI", 6) == 0 ) {
@@ -13191,7 +13218,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -13208,8 +13235,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_RSI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -13233,7 +13260,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(21, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SAR", 6) == 0 ) {
@@ -13281,7 +13308,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -13298,8 +13325,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_SAR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -13322,7 +13349,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_SAREXT", 9) == 0 ) {
@@ -13376,7 +13403,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -13393,8 +13420,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_SAREXT_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -13417,7 +13444,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SIN", 6) == 0 ) {
@@ -13463,7 +13490,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -13480,8 +13507,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_SIN_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -13504,7 +13531,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_SINH", 7) == 0 ) {
@@ -13550,7 +13577,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -13567,8 +13594,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_SINH_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -13591,7 +13618,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SMA", 6) == 0 ) {
@@ -13638,7 +13665,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -13655,8 +13682,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_SMA_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -13679,7 +13706,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_SQRT", 7) == 0 ) {
@@ -13725,7 +13752,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -13742,8 +13769,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_SQRT_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -13766,7 +13793,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_STDDEV", 9) == 0 ) {
@@ -13814,7 +13841,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -13831,8 +13858,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_STDDEV_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -13855,7 +13882,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_STOCH", 8) == 0 ) {
@@ -13922,7 +13949,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -13942,8 +13969,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v1, sv_b1[t - svBeg]) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
             if( st ) TA_STOCH_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -13972,7 +13999,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_STOCHF", 9) == 0 ) {
@@ -14037,7 +14064,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -14057,8 +14084,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v1, sv_b1[t - svBeg]) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
             if( st ) TA_STOCHF_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -14087,7 +14114,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_STOCHRSI", 11) == 0 ) {
@@ -14155,7 +14182,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -14175,8 +14202,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v1, sv_b1[t - svBeg]) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
             if( st ) TA_STOCHRSI_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -14206,7 +14233,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(21, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SUB", 6) == 0 ) {
@@ -14252,7 +14279,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -14269,8 +14296,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_SUB_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -14293,7 +14320,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SUM", 6) == 0 ) {
@@ -14340,7 +14367,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -14357,8 +14384,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_SUM_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -14381,7 +14408,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_T3", 5) == 0 ) {
@@ -14431,7 +14458,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -14448,8 +14475,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_T3_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -14473,7 +14500,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(23, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_TAN", 6) == 0 ) {
@@ -14519,7 +14546,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -14536,8 +14563,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_TAN_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -14560,7 +14587,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_TANH", 7) == 0 ) {
@@ -14606,7 +14633,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -14623,8 +14650,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_TANH_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -14647,7 +14674,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_TEMA", 7) == 0 ) {
@@ -14696,7 +14723,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -14713,8 +14740,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_TEMA_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -14738,7 +14765,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_TRANGE", 9) == 0 ) {
@@ -14784,7 +14811,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -14801,8 +14828,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_TRANGE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -14825,7 +14852,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_TRIMA", 8) == 0 ) {
@@ -14872,7 +14899,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -14889,8 +14916,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_TRIMA_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -14913,7 +14940,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_TRIX", 7) == 0 ) {
@@ -14962,7 +14989,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -14979,8 +15006,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_TRIX_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -15004,7 +15031,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_TSF", 6) == 0 ) {
@@ -15051,7 +15078,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -15068,8 +15095,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_TSF_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -15092,7 +15119,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_TYPPRICE", 11) == 0 ) {
@@ -15138,7 +15165,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -15155,8 +15182,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_TYPPRICE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -15179,7 +15206,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_ULTOSC", 9) == 0 ) {
@@ -15228,7 +15255,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -15245,8 +15272,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_ULTOSC_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -15269,7 +15296,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_VAR", 6) == 0 ) {
@@ -15317,7 +15344,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -15334,8 +15361,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_VAR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -15358,7 +15385,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_VWMA", 7) == 0 ) {
@@ -15405,7 +15432,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -15422,8 +15449,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_VWMA_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -15446,7 +15473,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_WCLPRICE", 11) == 0 ) {
@@ -15492,7 +15519,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -15509,8 +15536,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_WCLPRICE_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -15533,7 +15560,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_WILLR", 8) == 0 ) {
@@ -15580,7 +15607,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -15597,8 +15624,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_WILLR_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -15621,7 +15648,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_WMA", 6) == 0 ) {
@@ -15668,7 +15695,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
-        pos = snprintf(resp, resp_size, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -15685,8 +15712,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_bitne(v0, sv_b0[t - svBeg]) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
             if( st ) TA_WMA_Close(st);
-            pos += snprintf(resp + pos, resp_size - pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos += snprintf(resp + pos, resp_size - pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
         {
@@ -15709,7 +15736,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
-        pos += snprintf(resp + pos, resp_size - pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d}", fillChecked, fillOk, allOk, peekAll);
         return;
     }
     TA_SetCompatibility((TA_Compatibility)savedCompat);
@@ -15825,16 +15852,16 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal2\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf2, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal2\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf2, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_ACOS", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -15896,12 +15923,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 5 && strncmp(method, "TA_AD", 5) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -15981,12 +16008,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_ADD", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -16054,12 +16081,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_ADOSC", 8) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -16149,12 +16176,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_ADX", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -16234,12 +16261,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_ADXR", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -16318,12 +16345,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_APO", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -16400,12 +16427,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_AROON", 8) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -16479,14 +16506,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_AROONOSC", 11) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -16559,12 +16586,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_ASIN", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -16626,12 +16653,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_ATAN", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -16693,12 +16720,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_ATR", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -16778,12 +16805,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_AVGDEV", 9) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -16850,12 +16877,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_AVGPRICE", 11) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -16935,12 +16962,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_BBANDS", 9) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -17024,16 +17051,16 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal2\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf2, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal2\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf2, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_BETA", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -17106,12 +17133,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_BOP", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -17191,12 +17218,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_CCI", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -17275,12 +17302,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_CDL2CROWS", 12) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -17360,12 +17387,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDL3BLACKCROWS", 17) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -17445,12 +17472,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 13 && strncmp(method, "TA_CDL3INSIDE", 13) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -17530,12 +17557,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDL3LINESTRIKE", 17) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -17615,12 +17642,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDL3OUTSIDE", 14) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -17700,12 +17727,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 19 && strncmp(method, "TA_CDL3STARSINSOUTH", 19) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -17785,12 +17812,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_CDL3WHITESOLDIERS", 20) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -17870,12 +17897,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 19 && strncmp(method, "TA_CDLABANDONEDBABY", 19) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -17960,12 +17987,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_CDLADVANCEBLOCK", 18) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -18045,12 +18072,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDLBELTHOLD", 14) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -18130,12 +18157,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_CDLBREAKAWAY", 15) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -18215,12 +18242,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLCLOSINGMARUBOZU", 21) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -18300,12 +18327,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 22 && strncmp(method, "TA_CDLCONCEALBABYSWALL", 22) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -18385,12 +18412,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 19 && strncmp(method, "TA_CDLCOUNTERATTACK", 19) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -18470,12 +18497,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_CDLDARKCLOUDCOVER", 20) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -18560,12 +18587,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_CDLDOJI", 10) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -18645,12 +18672,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDLDOJISTAR", 14) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -18730,12 +18757,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 19 && strncmp(method, "TA_CDLDRAGONFLYDOJI", 19) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -18815,12 +18842,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_CDLENGULFING", 15) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -18900,12 +18927,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLEVENINGDOJISTAR", 21) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -18990,12 +19017,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDLEVENINGSTAR", 17) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -19080,12 +19107,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 22 && strncmp(method, "TA_CDLGAPSIDESIDEWHITE", 22) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -19165,12 +19192,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_CDLGRAVESTONEDOJI", 20) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -19250,12 +19277,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_CDLHAMMER", 12) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -19335,12 +19362,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 16 && strncmp(method, "TA_CDLHANGINGMAN", 16) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -19420,12 +19447,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_CDLHARAMI", 12) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -19505,12 +19532,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDLHARAMICROSS", 17) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -19590,12 +19617,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDLHIGHWAVE", 14) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -19675,12 +19702,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 13 && strncmp(method, "TA_CDLHIKKAKE", 13) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -19760,12 +19787,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 16 && strncmp(method, "TA_CDLHIKKAKEMOD", 16) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -19845,12 +19872,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_CDLHOMINGPIGEON", 18) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -19930,12 +19957,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLIDENTICAL3CROWS", 21) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -20015,12 +20042,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_CDLINNECK", 12) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -20100,12 +20127,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_CDLINVERTEDHAMMER", 20) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -20185,12 +20212,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 13 && strncmp(method, "TA_CDLKICKING", 13) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -20270,12 +20297,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLKICKINGBYLENGTH", 21) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -20355,12 +20382,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_CDLLADDERBOTTOM", 18) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -20440,12 +20467,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_CDLLONGLEGGEDDOJI", 20) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -20525,12 +20552,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDLLONGLINE", 14) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -20610,12 +20637,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDLMARUBOZU", 14) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -20695,12 +20722,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDLMATCHINGLOW", 17) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -20780,12 +20807,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 13 && strncmp(method, "TA_CDLMATHOLD", 13) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -20870,12 +20897,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLMORNINGDOJISTAR", 21) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -20960,12 +20987,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDLMORNINGSTAR", 17) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -21050,12 +21077,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_CDLONNECK", 12) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -21135,12 +21162,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDLPIERCING", 14) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -21220,12 +21247,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDLRICKSHAWMAN", 17) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -21305,12 +21332,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 22 && strncmp(method, "TA_CDLRISEFALL3METHODS", 22) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -21390,12 +21417,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLSEPARATINGLINES", 21) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -21475,12 +21502,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_CDLSHOOTINGSTAR", 18) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -21560,12 +21587,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_CDLSHORTLINE", 15) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -21645,12 +21672,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDLSPINNINGTOP", 17) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -21730,12 +21757,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_CDLSTALLEDPATTERN", 20) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -21815,12 +21842,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 19 && strncmp(method, "TA_CDLSTICKSANDWICH", 19) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -21900,12 +21927,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_CDLTAKURI", 12) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -21985,12 +22012,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_CDLTASUKIGAP", 15) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -22070,12 +22097,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_CDLTHRUSTING", 15) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -22155,12 +22182,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 13 && strncmp(method, "TA_CDLTRISTAR", 13) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -22240,12 +22267,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_CDLUNIQUE3RIVER", 18) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -22325,12 +22352,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLUPSIDEGAP2CROWS", 21) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -22410,12 +22437,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 22 && strncmp(method, "TA_CDLXSIDEGAP3METHODS", 22) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -22495,12 +22522,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_CEIL", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -22562,12 +22589,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_CMF", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -22652,12 +22679,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_CMO", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -22725,12 +22752,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_CMOU", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -22797,12 +22824,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_CORREL", 9) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -22875,12 +22902,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_COS", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -22942,12 +22969,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_COSH", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23009,12 +23036,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_DEMA", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23081,12 +23108,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_DIV", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23154,12 +23181,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 5 && strncmp(method, "TA_DX", 5) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23239,12 +23266,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_EMA", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23312,12 +23339,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_EXP", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23379,12 +23406,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_FLOOR", 8) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23446,12 +23473,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_HMA", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23518,12 +23545,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_HT_DCPERIOD", 14) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23586,12 +23613,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 13 && strncmp(method, "TA_HT_DCPHASE", 13) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23654,12 +23681,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_HT_PHASOR", 12) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23723,14 +23750,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_HT_SINE", 10) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23794,14 +23821,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_HT_TRENDLINE", 15) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23864,12 +23891,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_HT_TRENDMODE", 15) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -23932,12 +23959,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_IMI", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24010,12 +24037,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_KAMA", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24083,12 +24110,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_LINEARREG", 12) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24155,12 +24182,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_LINEARREG_ANGLE", 18) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24227,12 +24254,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 22 && strncmp(method, "TA_LINEARREG_INTERCEPT", 22) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24299,12 +24326,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_LINEARREG_SLOPE", 18) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24371,12 +24398,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 5 && strncmp(method, "TA_LN", 5) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24438,12 +24465,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_LOG10", 8) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24505,12 +24532,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 5 && strncmp(method, "TA_MA", 5) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24582,12 +24609,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_MACD", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24666,16 +24693,16 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal2\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf2, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal2\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf2, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_MACDEXT", 10) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24769,16 +24796,16 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal2\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf2, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal2\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf2, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_MACDFIX", 10) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24847,16 +24874,16 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal2\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf2, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal2\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf2, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_MAMA", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -24930,14 +24957,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_MAVP", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25020,12 +25047,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_MAX", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25092,12 +25119,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MAXINDEX", 11) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25164,12 +25191,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MEDPRICE", 11) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25237,12 +25264,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_MFI", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25327,12 +25354,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MIDPOINT", 11) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25399,12 +25426,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MIDPRICE", 11) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25477,12 +25504,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_MIN", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25549,12 +25576,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MININDEX", 11) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25621,12 +25648,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_MINMAX", 9) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25694,14 +25721,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_MINMAXINDEX", 14) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25769,14 +25796,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outIntBuf0, g_outIntBuf1);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outInteger1\":");
-        pos += json_write_int_array(resp + pos, resp_size - pos, g_outIntBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger1\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MINUS_DI", 11) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25856,12 +25883,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MINUS_DM", 11) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -25935,12 +25962,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_MOM", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26007,12 +26034,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_MULT", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26080,12 +26107,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_NATR", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26165,12 +26192,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_NVI", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26238,12 +26265,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_OBV", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26311,12 +26338,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_PLUS_DI", 10) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26396,12 +26423,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_PLUS_DM", 10) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26475,12 +26502,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_PPO", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26557,12 +26584,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_PVI", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26630,12 +26657,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_PVO", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26712,12 +26739,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_ROC", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26784,12 +26811,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_ROCP", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26856,12 +26883,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_ROCR", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -26928,12 +26955,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_ROCR100", 10) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27000,12 +27027,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_RSI", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27073,12 +27100,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_SAR", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27156,12 +27183,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_SAREXT", 9) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27269,12 +27296,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_SIN", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27336,12 +27363,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_SINH", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27403,12 +27430,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_SMA", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27475,12 +27502,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_SQRT", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27542,12 +27569,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_STDDEV", 9) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27619,12 +27646,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_STOCH", 8) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27724,14 +27751,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_STOCHF", 9) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27821,14 +27848,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_STOCHRSI", 11) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27911,14 +27938,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal1\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf1, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_SUB", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -27986,12 +28013,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_SUM", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28058,12 +28085,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 5 && strncmp(method, "TA_T3", 5) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28136,12 +28163,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_TAN", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28203,12 +28230,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_TANH", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28270,12 +28297,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_TEMA", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28342,12 +28369,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_TRANGE", 9) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28421,12 +28448,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_TRIMA", 8) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28493,12 +28520,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_TRIX", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28565,12 +28592,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_TSF", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28637,12 +28664,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_TYPPRICE", 11) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28716,12 +28743,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_ULTOSC", 9) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28810,12 +28837,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_VAR", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28887,12 +28914,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_VWMA", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -28965,12 +28992,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_WCLPRICE", 11) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -29044,12 +29071,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_WILLR", 8) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -29128,12 +29155,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_WMA", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
@@ -29200,12 +29227,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 &outBegIdx, &outNBElement, g_outBuf0);
 #endif /* TA_REF_SERVE */
         }
-        int pos = snprintf(resp, resp_size,
+        int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"outReal\":");
-        pos += json_write_double_array(resp + pos, resp_size - pos, g_outBuf0, outNBElement);
-        pos += snprintf(resp + pos, resp_size - pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_ACCBANDS_Lookback", 20) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
@@ -30170,176 +30197,176 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             "{\"lookback\":%d}", lookback);
     }
     else if ( methodLen == 14 && strncmp(method, "list_functions", 14) == 0 ) {
-        int pos = snprintf(resp, resp_size, "{\"functions\":[");
-        pos += snprintf(resp + pos, resp_size - pos, "\"TA_ACCBANDS\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ACOS\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_AD\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ADD\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ADOSC\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ADX\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ADXR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_APO\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_AROON\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_AROONOSC\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ASIN\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ATAN\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ATR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_AVGDEV\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_AVGPRICE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_BBANDS\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_BETA\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_BOP\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CCI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDL2CROWS\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDL3BLACKCROWS\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDL3INSIDE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDL3LINESTRIKE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDL3OUTSIDE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDL3STARSINSOUTH\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDL3WHITESOLDIERS\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLABANDONEDBABY\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLADVANCEBLOCK\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLBELTHOLD\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLBREAKAWAY\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLCLOSINGMARUBOZU\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLCONCEALBABYSWALL\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLCOUNTERATTACK\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLDARKCLOUDCOVER\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLDOJI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLDOJISTAR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLDRAGONFLYDOJI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLENGULFING\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLEVENINGDOJISTAR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLEVENINGSTAR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLGAPSIDESIDEWHITE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLGRAVESTONEDOJI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLHAMMER\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLHANGINGMAN\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLHARAMI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLHARAMICROSS\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLHIGHWAVE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLHIKKAKE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLHIKKAKEMOD\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLHOMINGPIGEON\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLIDENTICAL3CROWS\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLINNECK\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLINVERTEDHAMMER\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLKICKING\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLKICKINGBYLENGTH\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLLADDERBOTTOM\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLLONGLEGGEDDOJI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLLONGLINE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLMARUBOZU\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLMATCHINGLOW\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLMATHOLD\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLMORNINGDOJISTAR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLMORNINGSTAR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLONNECK\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLPIERCING\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLRICKSHAWMAN\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLRISEFALL3METHODS\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLSEPARATINGLINES\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLSHOOTINGSTAR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLSHORTLINE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLSPINNINGTOP\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLSTALLEDPATTERN\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLSTICKSANDWICH\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLTAKURI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLTASUKIGAP\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLTHRUSTING\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLTRISTAR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLUNIQUE3RIVER\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLUPSIDEGAP2CROWS\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CDLXSIDEGAP3METHODS\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CEIL\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CMF\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CMO\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CMOU\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_CORREL\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_COS\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_COSH\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_DEMA\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_DIV\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_DX\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_EMA\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_EXP\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_FLOOR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_HMA\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_HT_DCPERIOD\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_HT_DCPHASE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_HT_PHASOR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_HT_SINE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_HT_TRENDLINE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_HT_TRENDMODE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_IMI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_KAMA\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_LINEARREG\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_LINEARREG_ANGLE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_LINEARREG_INTERCEPT\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_LINEARREG_SLOPE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_LN\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_LOG10\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MA\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MACD\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MACDEXT\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MACDFIX\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MAMA\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MAVP\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MAX\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MAXINDEX\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MEDPRICE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MFI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MIDPOINT\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MIDPRICE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MIN\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MININDEX\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MINMAX\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MINMAXINDEX\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MINUS_DI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MINUS_DM\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MOM\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_MULT\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_NATR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_NVI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_OBV\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_PLUS_DI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_PLUS_DM\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_PPO\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_PVI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_PVO\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ROC\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ROCP\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ROCR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ROCR100\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_RSI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_SAR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_SAREXT\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_SIN\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_SINH\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_SMA\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_SQRT\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_STDDEV\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_STOCH\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_STOCHF\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_STOCHRSI\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_SUB\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_SUM\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_T3\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_TAN\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_TANH\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_TEMA\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_TRANGE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_TRIMA\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_TRIX\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_TSF\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_TYPPRICE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_ULTOSC\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_VAR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_VWMA\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_WCLPRICE\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_WILLR\"");
-        pos += snprintf(resp + pos, resp_size - pos, ",\"TA_WMA\"");
-        snprintf(resp + pos, resp_size - pos, "]}");
+        int pos = json_appendf(resp, resp_size, 0, "{\"functions\":[");
+        pos = json_appendf(resp, resp_size, pos, "\"TA_ACCBANDS\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ACOS\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_AD\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ADD\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ADOSC\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ADX\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ADXR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_APO\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_AROON\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_AROONOSC\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ASIN\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ATAN\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ATR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_AVGDEV\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_AVGPRICE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_BBANDS\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_BETA\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_BOP\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CCI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDL2CROWS\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDL3BLACKCROWS\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDL3INSIDE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDL3LINESTRIKE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDL3OUTSIDE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDL3STARSINSOUTH\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDL3WHITESOLDIERS\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLABANDONEDBABY\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLADVANCEBLOCK\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLBELTHOLD\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLBREAKAWAY\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLCLOSINGMARUBOZU\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLCONCEALBABYSWALL\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLCOUNTERATTACK\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLDARKCLOUDCOVER\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLDOJI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLDOJISTAR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLDRAGONFLYDOJI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLENGULFING\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLEVENINGDOJISTAR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLEVENINGSTAR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLGAPSIDESIDEWHITE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLGRAVESTONEDOJI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLHAMMER\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLHANGINGMAN\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLHARAMI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLHARAMICROSS\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLHIGHWAVE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLHIKKAKE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLHIKKAKEMOD\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLHOMINGPIGEON\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLIDENTICAL3CROWS\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLINNECK\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLINVERTEDHAMMER\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLKICKING\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLKICKINGBYLENGTH\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLLADDERBOTTOM\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLLONGLEGGEDDOJI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLLONGLINE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLMARUBOZU\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLMATCHINGLOW\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLMATHOLD\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLMORNINGDOJISTAR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLMORNINGSTAR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLONNECK\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLPIERCING\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLRICKSHAWMAN\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLRISEFALL3METHODS\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLSEPARATINGLINES\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLSHOOTINGSTAR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLSHORTLINE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLSPINNINGTOP\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLSTALLEDPATTERN\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLSTICKSANDWICH\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLTAKURI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLTASUKIGAP\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLTHRUSTING\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLTRISTAR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLUNIQUE3RIVER\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLUPSIDEGAP2CROWS\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CDLXSIDEGAP3METHODS\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CEIL\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CMF\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CMO\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CMOU\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_CORREL\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_COS\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_COSH\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_DEMA\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_DIV\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_DX\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_EMA\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_EXP\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_FLOOR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_HMA\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_HT_DCPERIOD\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_HT_DCPHASE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_HT_PHASOR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_HT_SINE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_HT_TRENDLINE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_HT_TRENDMODE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_IMI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_KAMA\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_LINEARREG\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_LINEARREG_ANGLE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_LINEARREG_INTERCEPT\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_LINEARREG_SLOPE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_LN\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_LOG10\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MA\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MACD\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MACDEXT\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MACDFIX\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MAMA\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MAVP\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MAX\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MAXINDEX\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MEDPRICE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MFI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MIDPOINT\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MIDPRICE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MIN\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MININDEX\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MINMAX\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MINMAXINDEX\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MINUS_DI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MINUS_DM\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MOM\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_MULT\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_NATR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_NVI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_OBV\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_PLUS_DI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_PLUS_DM\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_PPO\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_PVI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_PVO\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ROC\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ROCP\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ROCR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ROCR100\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_RSI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_SAR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_SAREXT\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_SIN\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_SINH\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_SMA\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_SQRT\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_STDDEV\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_STOCH\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_STOCHF\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_STOCHRSI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_SUB\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_SUM\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_T3\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_TAN\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_TANH\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_TEMA\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_TRANGE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_TRIMA\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_TRIX\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_TSF\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_TYPPRICE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_ULTOSC\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_VAR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_VWMA\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_WCLPRICE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_WILLR\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_WMA\"");
+        json_appendf(resp, resp_size, pos, "]}");
     }
     else if ( methodLen == 19 && strncmp(method, "set_unstable_period", 19) == 0 ) {
         int id = json_find_int(json, "id");
@@ -30364,9 +30391,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             else if( _pw == 2 ) _pr[i] = ( TA_IS_ZERO_OR_NEG(v) ) ? 1 : 0;
             else                _pr[i] = ( TA_IS_ZERO(v) ) ? 1 : 0;
         }
-        int _pp = snprintf(resp, resp_size, "{\"outInteger\":");
-        _pp += json_write_int_array(resp + _pp, resp_size - _pp, _pr, _pn);
-        snprintf(resp + _pp, resp_size - _pp, "}");
+        int _pp = json_appendf(resp, resp_size, 0, "{\"outInteger\":");
+        _pp = json_write_int_array(resp, resp_size, _pp, _pr, _pn);
+        json_appendf(resp, resp_size, _pp, "}");
     }
     else if ( methodLen == 13 && strncmp(method, "abstract_call", 13) == 0 ) {
         handle_abstract_call(json, resp, resp_size);
