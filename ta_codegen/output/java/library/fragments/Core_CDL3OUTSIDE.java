@@ -12,6 +12,15 @@
  *  121104 AC   Creation
  */
 
+   /**
+    * Number of leading input bars {@link Core#cdl3Outside} consumes before it
+    * can produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int cdl3OutsideLookback( )
    {
       return 3 ;
@@ -196,6 +205,44 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   /**
+    * A three-candle pattern: an engulfing pair (candle 2's body fully engulfs
+    * candle 1's body) followed by a third candle that confirms in the engulfing
+    * direction. Signals a bullish reversal (Three Outside Up) or bearish
+    * reversal (Three Outside Down). +100 = bullish reversal (Three Outside Up);
+    * -100 = bearish reversal (Three Outside Down).
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#cdl3OutsideLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inOpen Open price of each bar.
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param outInteger +100 for Three Outside Up (bullish), -100 for Three
+    *        Outside Down (bearish), 0 when no pattern. Emits both signs; value is
+    *        candle i-1's color * 100. Must hold at least {@code endIdx - startIdx + 1}
+    *        values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#cdl3Inside
+    * @see Core#cdlEngulfing
+    * @see Core#cdl3LineStrike
+    */
    public OutRange cdl3Outside( int startIdx,
                                 int endIdx,
                                 double inOpen[],
@@ -212,6 +259,25 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * A three-candle pattern: an engulfing pair (candle 2's body fully engulfs
+    * candle 1's body) followed by a third candle that confirms in the engulfing
+    * direction. Signals a bullish reversal (Three Outside Up) or bearish
+    * reversal (Three Outside Down). +100 = bullish reversal (Three Outside Up);
+    * -100 = bearish reversal (Three Outside Down). — <b>unchecked</b> variant
+    * of {@link Core#cdl3Outside}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange cdl3OutsideUnguarded( int startIdx,
                                          int endIdx,
                                          double inOpen[],
@@ -225,6 +291,47 @@
       cdl3OutsideUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * A three-candle pattern: an engulfing pair (candle 2's body fully engulfs
+    * candle 1's body) followed by a third candle that confirms in the engulfing
+    * direction. Signals a bullish reversal (Three Outside Up) or bearish
+    * reversal (Three Outside Down). +100 = bullish reversal (Three Outside Up);
+    * -100 = bearish reversal (Three Outside Down).
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#cdl3OutsideLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inOpen Open price of each bar.
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param outInteger +100 for Three Outside Up (bullish), -100 for Three
+    *        Outside Down (bearish), 0 when no pattern. Emits both signs; value is
+    *        candle i-1's color * 100. Must hold at least {@code endIdx - startIdx + 1}
+    *        values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#cdl3Inside
+    * @see Core#cdlEngulfing
+    * @see Core#cdl3LineStrike
+    */
    public OutRange cdl3Outside( int startIdx,
                                 int endIdx,
                                 float inOpen[],
@@ -241,6 +348,26 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * A three-candle pattern: an engulfing pair (candle 2's body fully engulfs
+    * candle 1's body) followed by a third candle that confirms in the engulfing
+    * direction. Signals a bullish reversal (Three Outside Up) or bearish
+    * reversal (Three Outside Down). +100 = bullish reversal (Three Outside Up);
+    * -100 = bearish reversal (Three Outside Down). — <b>unchecked</b> variant
+    * of {@link Core#cdl3Outside}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange cdl3OutsideUnguarded( int startIdx,
                                          int endIdx,
                                          float inOpen[],

@@ -12,6 +12,15 @@
  *  100204 AC   Creation
  */
 
+   /**
+    * Number of leading input bars {@link Core#cdlDojiStar} consumes before it
+    * can produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int cdlDojiStarLookback( )
    {
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
@@ -314,6 +323,51 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   /**
+    * A two-candle reversal pattern: a long real body followed by a doji whose
+    * real body gaps away from it (up after a white body, down after a black
+    * body). Signals a potential reversal of the prevailing trend. A hit flags a
+    * likely trend reversal; true direction depends on the prevailing trend
+    * (bullish in a downtrend, bearish in an uptrend), which the code does not
+    * itself verify.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * Two candles. Candle 1: long real body (realbody > BodyLong average). Candle 2: doji (realbody <= BodyDoji average). Gap: either candle 1 white (color==1) AND candle 2 real body gaps up above it (the real bodies gap up), or candle 1 black (color==-1) AND candle 2 real body gaps down below it (the real bodies gap down).
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#cdlDojiStarLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inOpen Open price of each bar.
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param outInteger Emits +100 or -100 on a hit, 0 otherwise. Value is
+    *        -candlecolor(candle1)*100: -100 when candle 1 is white (gap up), +100 when
+    *        candle 1 is black (gap down) Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#cdlMorningDojiStar
+    * @see Core#cdlEveningDojiStar
+    * @see Core#cdlDoji
+    * @see Core#cdlMorningStar
+    * @see Core#cdlEveningStar
+    */
    public OutRange cdlDojiStar( int startIdx,
                                 int endIdx,
                                 double inOpen[],
@@ -330,6 +384,25 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * A two-candle reversal pattern: a long real body followed by a doji whose
+    * real body gaps away from it (up after a white body, down after a black
+    * body). Signals a potential reversal of the prevailing trend. A hit flags a
+    * likely trend reversal; true direction depends on the prevailing trend
+    * (bullish in a downtrend, bearish in an uptrend), which the code does not
+    * itself verify. — <b>unchecked</b> variant of {@link Core#cdlDojiStar}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange cdlDojiStarUnguarded( int startIdx,
                                          int endIdx,
                                          double inOpen[],
@@ -343,6 +416,54 @@
       cdlDojiStarUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * A two-candle reversal pattern: a long real body followed by a doji whose
+    * real body gaps away from it (up after a white body, down after a black
+    * body). Signals a potential reversal of the prevailing trend. A hit flags a
+    * likely trend reversal; true direction depends on the prevailing trend
+    * (bullish in a downtrend, bearish in an uptrend), which the code does not
+    * itself verify.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * Two candles. Candle 1: long real body (realbody > BodyLong average). Candle 2: doji (realbody <= BodyDoji average). Gap: either candle 1 white (color==1) AND candle 2 real body gaps up above it (the real bodies gap up), or candle 1 black (color==-1) AND candle 2 real body gaps down below it (the real bodies gap down).
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#cdlDojiStarLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inOpen Open price of each bar.
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param outInteger Emits +100 or -100 on a hit, 0 otherwise. Value is
+    *        -candlecolor(candle1)*100: -100 when candle 1 is white (gap up), +100 when
+    *        candle 1 is black (gap down) Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#cdlMorningDojiStar
+    * @see Core#cdlEveningDojiStar
+    * @see Core#cdlDoji
+    * @see Core#cdlMorningStar
+    * @see Core#cdlEveningStar
+    */
    public OutRange cdlDojiStar( int startIdx,
                                 int endIdx,
                                 float inOpen[],
@@ -359,6 +480,26 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * A two-candle reversal pattern: a long real body followed by a doji whose
+    * real body gaps away from it (up after a white body, down after a black
+    * body). Signals a potential reversal of the prevailing trend. A hit flags a
+    * likely trend reversal; true direction depends on the prevailing trend
+    * (bullish in a downtrend, bearish in an uptrend), which the code does not
+    * itself verify. — <b>unchecked</b> variant of {@link Core#cdlDojiStar}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange cdlDojiStarUnguarded( int startIdx,
                                          int endIdx,
                                          float inOpen[],

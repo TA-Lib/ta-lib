@@ -492,10 +492,10 @@ pub fn generate(
     out.push_str(&gen_func(func, true, false, enums, registry, helpers)); // single-precision guarded
     out.push_str(&gen_func(func, true, true, enums, registry, helpers)); // single-precision logic (unguarded)
     // Public surface: OutRange-returning wrappers over the cores above.
-    out.push_str(&gen_public_wrapper(func, false, false));
-    out.push_str(&gen_public_wrapper(func, false, true));
-    out.push_str(&gen_public_wrapper(func, true, false));
-    out.push_str(&gen_public_wrapper(func, true, true));
+    out.push_str(&gen_public_wrapper(func, false, false, enums, registry));
+    out.push_str(&gen_public_wrapper(func, false, true, enums, registry));
+    out.push_str(&gen_public_wrapper(func, true, false, enums, registry));
+    out.push_str(&gen_public_wrapper(func, true, true, enums, registry));
     // Streaming API section (only for YAML-declared streamable functions).
     if func.streaming {
         out.push_str(&super::java_stream::generate(func, enums, registry, helpers));
@@ -617,8 +617,9 @@ fn gen_lookback(
         None => format!("{validation}      return 0;"),
     };
 
+    let docs = super::java_doc::lookback_docs(func, &name, enums);
     format!(
-        "   public int {name}Lookback({param_str})\n\
+        "{docs}   public int {name}Lookback({param_str})\n\
          \x20  {{\n\
          {body}\n\
          \x20  }}\n"
@@ -676,7 +677,13 @@ fn internal_core_name(base: &str, unguarded: bool) -> String {
 /// **A short range is not an error.** A valid range shorter than the lookback
 /// returns `Success` with `outNBElement == 0`, which becomes an `OutRange` whose
 /// `count` is 0 — exactly C's contract, never an exception.
-fn gen_public_wrapper(func: &FuncDef, single_precision: bool, unguarded: bool) -> String {
+fn gen_public_wrapper(
+    func: &FuncDef,
+    single_precision: bool,
+    unguarded: bool,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+) -> String {
     let base_name = to_java_method_name(&func.name, func.camel_case.as_deref());
     let core = internal_core_name(&base_name, unguarded);
     let public_name = if unguarded {
@@ -719,6 +726,13 @@ fn gen_public_wrapper(func: &FuncDef, single_precision: bool, unguarded: bool) -
     }
 
     let mut out = String::new();
+    if unguarded {
+        out.push_str(&super::java_doc::unguarded_docs(func, &base_name, single_precision));
+    } else {
+        out.push_str(&super::java_doc::guarded_docs(
+            func, &base_name, single_precision, enums, registry,
+        ));
+    }
     let sig_prefix = format!("   public OutRange {public_name}( ");
     let indent = " ".repeat(sig_prefix.len());
     out.push_str(&sig_prefix);

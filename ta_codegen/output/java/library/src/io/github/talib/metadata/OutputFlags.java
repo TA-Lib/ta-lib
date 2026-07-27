@@ -69,10 +69,10 @@ public final class OutputFlags {
    /** -200..-100 = bearish, 100..200 = bullish. */
    public static final int PATTERN_STRENGTH = 0x00000080;
 
-   /** Always >= 0. */
+   /** Always &gt;= 0. */
    public static final int POSITIVE = 0x00000100;
 
-   /** Always <= 0. */
+   /** Always &lt;= 0. */
    public static final int NEGATIVE = 0x00000200;
 
    /** Zero is a meaningful reference level. */

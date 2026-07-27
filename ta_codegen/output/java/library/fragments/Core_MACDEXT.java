@@ -15,6 +15,30 @@
  *                when all three MA types are EMA (bit-exact).
  */
 
+   /**
+    * Number of leading input bars {@link Core#macdExt} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInFastPeriod Period of the fast MA (default 12; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
+    *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
+    *        10=DISABLED).
+    * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
+    *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
+    *        10=DISABLED).
+    * @param optInSignalPeriod Period of the signal-line MA (default 9; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int macdExtLookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
       if( optInFastPeriod == Integer.MIN_VALUE ) {
@@ -494,6 +518,68 @@
       outNBElement.value = outNbElement2.value;
       return RetCode.Success ;
    }
+   /**
+    * MACD variant where the fast, slow, and signal moving averages each use a
+    * user-selectable MA type. Outputs the MACD line, its signal line, and their
+    * difference (histogram). Hist sign change (MACD crossing its signal line)
+    * flags momentum shifts.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * MACD = MA_fast(inReal) - MA_slow(inReal)
+    * Signal = MA_signal(MACD)
+    * Hist = MACD - Signal
+    * (each MA_* uses its own MA type and period)
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>If the slow period is set smaller than the fast period, the fast and slow periods and their MA types are swapped so the slow moving average is always the longer one.</li>
+    * <li>A signal period of 1 disables signal-line smoothing for every signal MAType: the signal equals the MACD line and the histogram is zero.</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#macdExtLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Source series.
+    * @param optInFastPeriod Period of the fast MA (default 12; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
+    *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
+    *        10=DISABLED).
+    * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
+    *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
+    *        10=DISABLED).
+    * @param optInSignalPeriod Period of the signal-line MA (default 9; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outMACDSignal Signal line: MA of the MACD line. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outMACDHist Histogram: MACD minus signal. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#macd
+    * @see Core#macdFix
+    * @see Core#movingAverage
+    * @see Core#ema
+    * @see Core#apo
+    * @see Core#ppo
+    */
    public OutRange macdExt( int startIdx,
                             int endIdx,
                             double inReal[],
@@ -515,6 +601,23 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * MACD variant where the fast, slow, and signal moving averages each use a
+    * user-selectable MA type. Outputs the MACD line, its signal line, and their
+    * difference (histogram). Hist sign change (MACD crossing its signal line)
+    * flags momentum shifts. — <b>unchecked</b> variant of {@link Core#macdExt}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange macdExtUnguarded( int startIdx,
                                      int endIdx,
                                      double inReal[],
@@ -533,6 +636,71 @@
       macdExtUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * MACD variant where the fast, slow, and signal moving averages each use a
+    * user-selectable MA type. Outputs the MACD line, its signal line, and their
+    * difference (histogram). Hist sign change (MACD crossing its signal line)
+    * flags momentum shifts.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * MACD = MA_fast(inReal) - MA_slow(inReal)
+    * Signal = MA_signal(MACD)
+    * Hist = MACD - Signal
+    * (each MA_* uses its own MA type and period)
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>If the slow period is set smaller than the fast period, the fast and slow periods and their MA types are swapped so the slow moving average is always the longer one.</li>
+    * <li>A signal period of 1 disables signal-line smoothing for every signal MAType: the signal equals the MACD line and the histogram is zero.</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#macdExtLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Source series.
+    * @param optInFastPeriod Period of the fast MA (default 12; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
+    *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
+    *        10=DISABLED).
+    * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
+    *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
+    *        10=DISABLED).
+    * @param optInSignalPeriod Period of the signal-line MA (default 9; range
+    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outMACDSignal Signal line: MA of the MACD line. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outMACDHist Histogram: MACD minus signal. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#macd
+    * @see Core#macdFix
+    * @see Core#movingAverage
+    * @see Core#ema
+    * @see Core#apo
+    * @see Core#ppo
+    */
    public OutRange macdExt( int startIdx,
                             int endIdx,
                             float inReal[],
@@ -554,6 +722,24 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * MACD variant where the fast, slow, and signal moving averages each use a
+    * user-selectable MA type. Outputs the MACD line, its signal line, and their
+    * difference (histogram). Hist sign change (MACD crossing its signal line)
+    * flags momentum shifts. — <b>unchecked</b> variant of {@link Core#macdExt}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange macdExtUnguarded( int startIdx,
                                      int endIdx,
                                      float inReal[],

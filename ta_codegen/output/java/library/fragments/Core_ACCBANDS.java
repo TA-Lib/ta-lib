@@ -20,6 +20,17 @@
  *                v0.6.4).
  */
 
+   /**
+    * Number of leading input bars {@link Core#accbands} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInTimePeriod SMA smoothing period for all three bands (default
+    *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int accbandsLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
@@ -432,6 +443,46 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   /**
+    * Acceleration Bands: three overlap lines around price. The middle band is
+    * an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
+    * by an intraday-range factor.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * factor = 4*(H-L)/(H+L)
+    * upperRaw = H*(1+factor), lowerRaw = L*(1-factor)
+    * Upper = SMA(upperRaw, N), Middle = SMA(Close, N), Lower = SMA(lowerRaw, N)
+    * }</pre>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#accbandsLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param optInTimePeriod SMA smoothing period for all three bands (default
+    *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outRealUpperBand SMA of the range-scaled high band. Must hold at
+    *        least {@code endIdx - startIdx + 1} values.
+    * @param outRealMiddleBand SMA of the close. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outRealLowerBand SMA of the range-scaled low band. Must hold at
+    *        least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#sma
+    * @see Core#bbands
+    */
    public OutRange accbands( int startIdx,
                              int endIdx,
                              double inHigh[],
@@ -450,6 +501,23 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Acceleration Bands: three overlap lines around price. The middle band is
+    * an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
+    * by an intraday-range factor. — <b>unchecked</b> variant of
+    * {@link Core#accbands}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange accbandsUnguarded( int startIdx,
                                       int endIdx,
                                       double inHigh[],
@@ -465,6 +533,49 @@
       accbandsUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Acceleration Bands: three overlap lines around price. The middle band is
+    * an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
+    * by an intraday-range factor.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * factor = 4*(H-L)/(H+L)
+    * upperRaw = H*(1+factor), lowerRaw = L*(1-factor)
+    * Upper = SMA(upperRaw, N), Middle = SMA(Close, N), Lower = SMA(lowerRaw, N)
+    * }</pre>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#accbandsLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param optInTimePeriod SMA smoothing period for all three bands (default
+    *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outRealUpperBand SMA of the range-scaled high band. Must hold at
+    *        least {@code endIdx - startIdx + 1} values.
+    * @param outRealMiddleBand SMA of the close. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outRealLowerBand SMA of the range-scaled low band. Must hold at
+    *        least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#sma
+    * @see Core#bbands
+    */
    public OutRange accbands( int startIdx,
                              int endIdx,
                              float inHigh[],
@@ -483,6 +594,24 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Acceleration Bands: three overlap lines around price. The middle band is
+    * an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
+    * by an intraday-range factor. — <b>unchecked</b> variant of
+    * {@link Core#accbands}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange accbandsUnguarded( int startIdx,
                                       int endIdx,
                                       float inHigh[],

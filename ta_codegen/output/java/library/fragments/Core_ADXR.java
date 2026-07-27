@@ -19,6 +19,18 @@
  *                streamable-source form (a sub-output lag ring).
  */
 
+   /**
+    * Number of leading input bars {@link Core#adxr} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInTimePeriod Smoothing period, also the bar gap between the two
+    *        averaged ADX values (default 14; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int adxrLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
@@ -227,6 +239,48 @@
       outNBElement.value = nbElement;
       return RetCode.Success ;
    }
+   /**
+    * Smoothed variant of ADX: the average of the current ADX value and the ADX
+    * value from (period-1) bars earlier. Further damps ADX to gauge trend
+    * strength. Higher values mean a stronger trend; smoother and more lagging
+    * than ADX.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Wilder's original integer rounding is not applied (unreliable when values are near 1).</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#adxrLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param optInTimePeriod Smoothing period, also the bar gap between the two
+    *        averaged ADX values (default 14; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outReal ADXR line (averaged ADX) Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#adx
+    * @see Core#dx
+    * @see Core#plusDI
+    * @see Core#minusDI
+    */
    public OutRange adxr( int startIdx,
                          int endIdx,
                          double inHigh[],
@@ -243,6 +297,23 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Smoothed variant of ADX: the average of the current ADX value and the ADX
+    * value from (period-1) bars earlier. Further damps ADX to gauge trend
+    * strength. Higher values mean a stronger trend; smoother and more lagging
+    * than ADX. — <b>unchecked</b> variant of {@link Core#adxr}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange adxrUnguarded( int startIdx,
                                   int endIdx,
                                   double inHigh[],
@@ -256,6 +327,51 @@
       adxrUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Smoothed variant of ADX: the average of the current ADX value and the ADX
+    * value from (period-1) bars earlier. Further damps ADX to gauge trend
+    * strength. Higher values mean a stronger trend; smoother and more lagging
+    * than ADX.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Wilder's original integer rounding is not applied (unreliable when values are near 1).</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#adxrLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param optInTimePeriod Smoothing period, also the bar gap between the two
+    *        averaged ADX values (default 14; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outReal ADXR line (averaged ADX) Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#adx
+    * @see Core#dx
+    * @see Core#plusDI
+    * @see Core#minusDI
+    */
    public OutRange adxr( int startIdx,
                          int endIdx,
                          float inHigh[],
@@ -272,6 +388,24 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Smoothed variant of ADX: the average of the current ADX value and the ADX
+    * value from (period-1) bars earlier. Further damps ADX to gauge trend
+    * strength. Higher values mean a stronger trend; smoother and more lagging
+    * than ADX. — <b>unchecked</b> variant of {@link Core#adxr}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange adxrUnguarded( int startIdx,
                                   int endIdx,
                                   float inHigh[],

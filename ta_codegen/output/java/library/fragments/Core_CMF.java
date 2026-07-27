@@ -12,6 +12,17 @@
  *  072126 MF,CC  First version (issue #134).
  */
 
+   /**
+    * Number of leading input bars {@link Core#cmf} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInTimePeriod Number of bars in the window (default 20; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int cmfLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
@@ -454,6 +465,68 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   /**
+    * Chaikin Money Flow: over a trailing window of {@code optInTimePeriod}
+    * bars, the sum of each bar's money flow volume divided by the sum of its
+    * volume. The result is a ratio in {@code [-1, +1]}. A bar's money flow
+    * volume is its volume scaled by where the close sat inside the bar's range:
+    * a close at the high contributes the full volume, a close at the low
+    * contributes minus the full volume, and a close at the midpoint contributes
+    * nothing. Summing that over a window and dividing by the window's volume
+    * answers "over these N bars, what share of the traded volume closed near
+    * the top of its range?" Above zero is accumulation, below zero is
+    * distribution, and the distance from zero measures conviction. Because the
+    * divisor is the window's own volume, the output is comparable across
+    * instruments and across time in a way a raw accumulation total is not.
+    * Created by Marc Chaikin, who also authored the [{@code AD}](/functions/ad)
+    * line this shares its per-bar multiplier with. CMF is that same multiplier
+    * summed over a fixed window and normalised, where AD accumulates it from
+    * the start of the series without bound.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * t = high[i] - low[i]
+    * mfv[i] = ((close[i] - low[i]) - (high[i] - close[i])) / t * volume[i], or 0 when t is not positive
+    * CMF[i] = ( sum_{k=i-N+1..i} mfv[k] ) / ( sum_{k=i-N+1..i} volume[k] ), N = optInTimePeriod
+    * There is no seeding and no recursion, hence no unstable period. Each output depends only on the N bars in its own window.
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The output is the raw ratio in {@code [-1, +1]}, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.</li>
+    * <li>Each bar's close is expected to lie within its own {@code [low, high]}, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as [{@code AD}](/functions/ad) does.</li>
+    * <li>A bar whose high equals its low has no range for the close to sit inside, so it contributes exactly zero money flow volume rather than dividing by zero. Its volume still counts toward the divisor.</li>
+    * <li>A window whose volume is entirely zero has no money flow to distribute and reports 0.0. Published references are silent here and other implementations divide by zero; TA-Lib does not return NaN from a successful call.</li>
+    * <li>Bars where the low exceeds the high are malformed rather than degenerate, and also contribute zero.</li>
+    * <li>The default period of 20 follows the original write-up, which describes 20 or 21 bars.</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#cmfLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param inVolume Volume of each bar.
+    * @param optInTimePeriod Number of bars in the window (default 20; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outReal Chaikin money flow, in the range -1 to +1. Must hold at
+    *        least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#ad
+    * @see Core#adOsc
+    * @see Core#mfi
+    * @see Core#obv
+    */
    public OutRange cmf( int startIdx,
                         int endIdx,
                         double inHigh[],
@@ -471,6 +544,36 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Chaikin Money Flow: over a trailing window of {@code optInTimePeriod}
+    * bars, the sum of each bar's money flow volume divided by the sum of its
+    * volume. The result is a ratio in {@code [-1, +1]}. A bar's money flow
+    * volume is its volume scaled by where the close sat inside the bar's range:
+    * a close at the high contributes the full volume, a close at the low
+    * contributes minus the full volume, and a close at the midpoint contributes
+    * nothing. Summing that over a window and dividing by the window's volume
+    * answers "over these N bars, what share of the traded volume closed near
+    * the top of its range?" Above zero is accumulation, below zero is
+    * distribution, and the distance from zero measures conviction. Because the
+    * divisor is the window's own volume, the output is comparable across
+    * instruments and across time in a way a raw accumulation total is not.
+    * Created by Marc Chaikin, who also authored the [{@code AD}](/functions/ad)
+    * line this shares its per-bar multiplier with. CMF is that same multiplier
+    * summed over a fixed window and normalised, where AD accumulates it from
+    * the start of the series without bound. — <b>unchecked</b> variant of
+    * {@link Core#cmf}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange cmfUnguarded( int startIdx,
                                  int endIdx,
                                  double inHigh[],
@@ -485,6 +588,71 @@
       cmfUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Chaikin Money Flow: over a trailing window of {@code optInTimePeriod}
+    * bars, the sum of each bar's money flow volume divided by the sum of its
+    * volume. The result is a ratio in {@code [-1, +1]}. A bar's money flow
+    * volume is its volume scaled by where the close sat inside the bar's range:
+    * a close at the high contributes the full volume, a close at the low
+    * contributes minus the full volume, and a close at the midpoint contributes
+    * nothing. Summing that over a window and dividing by the window's volume
+    * answers "over these N bars, what share of the traded volume closed near
+    * the top of its range?" Above zero is accumulation, below zero is
+    * distribution, and the distance from zero measures conviction. Because the
+    * divisor is the window's own volume, the output is comparable across
+    * instruments and across time in a way a raw accumulation total is not.
+    * Created by Marc Chaikin, who also authored the [{@code AD}](/functions/ad)
+    * line this shares its per-bar multiplier with. CMF is that same multiplier
+    * summed over a fixed window and normalised, where AD accumulates it from
+    * the start of the series without bound.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * t = high[i] - low[i]
+    * mfv[i] = ((close[i] - low[i]) - (high[i] - close[i])) / t * volume[i], or 0 when t is not positive
+    * CMF[i] = ( sum_{k=i-N+1..i} mfv[k] ) / ( sum_{k=i-N+1..i} volume[k] ), N = optInTimePeriod
+    * There is no seeding and no recursion, hence no unstable period. Each output depends only on the N bars in its own window.
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The output is the raw ratio in {@code [-1, +1]}, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.</li>
+    * <li>Each bar's close is expected to lie within its own {@code [low, high]}, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as [{@code AD}](/functions/ad) does.</li>
+    * <li>A bar whose high equals its low has no range for the close to sit inside, so it contributes exactly zero money flow volume rather than dividing by zero. Its volume still counts toward the divisor.</li>
+    * <li>A window whose volume is entirely zero has no money flow to distribute and reports 0.0. Published references are silent here and other implementations divide by zero; TA-Lib does not return NaN from a successful call.</li>
+    * <li>Bars where the low exceeds the high are malformed rather than degenerate, and also contribute zero.</li>
+    * <li>The default period of 20 follows the original write-up, which describes 20 or 21 bars.</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#cmfLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param inVolume Volume of each bar.
+    * @param optInTimePeriod Number of bars in the window (default 20; range
+    *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outReal Chaikin money flow, in the range -1 to +1. Must hold at
+    *        least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#ad
+    * @see Core#adOsc
+    * @see Core#mfi
+    * @see Core#obv
+    */
    public OutRange cmf( int startIdx,
                         int endIdx,
                         float inHigh[],
@@ -502,6 +670,37 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Chaikin Money Flow: over a trailing window of {@code optInTimePeriod}
+    * bars, the sum of each bar's money flow volume divided by the sum of its
+    * volume. The result is a ratio in {@code [-1, +1]}. A bar's money flow
+    * volume is its volume scaled by where the close sat inside the bar's range:
+    * a close at the high contributes the full volume, a close at the low
+    * contributes minus the full volume, and a close at the midpoint contributes
+    * nothing. Summing that over a window and dividing by the window's volume
+    * answers "over these N bars, what share of the traded volume closed near
+    * the top of its range?" Above zero is accumulation, below zero is
+    * distribution, and the distance from zero measures conviction. Because the
+    * divisor is the window's own volume, the output is comparable across
+    * instruments and across time in a way a raw accumulation total is not.
+    * Created by Marc Chaikin, who also authored the [{@code AD}](/functions/ad)
+    * line this shares its per-bar multiplier with. CMF is that same multiplier
+    * summed over a fixed window and normalised, where AD accumulates it from
+    * the start of the series without bound. — <b>unchecked</b> variant of
+    * {@link Core#cmf}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange cmfUnguarded( int startIdx,
                                  int endIdx,
                                  float inHigh[],

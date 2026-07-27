@@ -18,6 +18,30 @@
  *               in-place ma() destroyed the smoothed K before the final copy.
  */
 
+   /**
+    * Number of leading input bars {@link Core#stoch} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInFastK_Period Lookback window for the raw %K high-low range
+    *        (default 5; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowK_Period Smoothing period turning FastK into SlowK
+    *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
+    *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param optInSlowD_Period Smoothing period for the SlowD signal line
+    *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int stochLookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
    {
       if( optInFastK_Period == Integer.MIN_VALUE ) {
@@ -680,6 +704,63 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   /**
+    * Slow Stochastic oscillator: locates the close within the high-low range
+    * over a lookback period, then double-smooths it. Returns the Slow-%K and
+    * Slow-%D lines. SlowK/SlowD &gt; 80 overbought, &lt; 20 oversold; %K
+    * crossing %D signals momentum shifts.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
+    * SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
+    * SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#stochLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param optInFastK_Period Lookback window for the raw %K high-low range
+    *        (default 5; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowK_Period Smoothing period turning FastK into SlowK
+    *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
+    *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param optInSlowD_Period Smoothing period for the SlowD signal line
+    *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
+    *        at least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#stochF
+    * @see Core#stochRsi
+    * @see Core#movingAverage
+    */
    public OutRange stoch( int startIdx,
                           int endIdx,
                           double inHigh[],
@@ -701,6 +782,24 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Slow Stochastic oscillator: locates the close within the high-low range
+    * over a lookback period, then double-smooths it. Returns the Slow-%K and
+    * Slow-%D lines. SlowK/SlowD &gt; 80 overbought, &lt; 20 oversold; %K
+    * crossing %D signals momentum shifts. — <b>unchecked</b> variant of
+    * {@link Core#stoch}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange stochUnguarded( int startIdx,
                                    int endIdx,
                                    double inHigh[],
@@ -719,6 +818,66 @@
       stochUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Slow Stochastic oscillator: locates the close within the high-low range
+    * over a lookback period, then double-smooths it. Returns the Slow-%K and
+    * Slow-%D lines. SlowK/SlowD &gt; 80 overbought, &lt; 20 oversold; %K
+    * crossing %D signals momentum shifts.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
+    * SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
+    * SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#stochLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param optInFastK_Period Lookback window for the raw %K high-low range
+    *        (default 5; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowK_Period Smoothing period turning FastK into SlowK
+    *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
+    *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param optInSlowD_Period Smoothing period for the SlowD signal line
+    *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
+    *        at least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#stochF
+    * @see Core#stochRsi
+    * @see Core#movingAverage
+    */
    public OutRange stoch( int startIdx,
                           int endIdx,
                           float inHigh[],
@@ -740,6 +899,25 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Slow Stochastic oscillator: locates the close within the high-low range
+    * over a lookback period, then double-smooths it. Returns the Slow-%K and
+    * Slow-%D lines. SlowK/SlowD &gt; 80 overbought, &lt; 20 oversold; %K
+    * crossing %D signals momentum shifts. — <b>unchecked</b> variant of
+    * {@link Core#stoch}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange stochUnguarded( int startIdx,
                                    int endIdx,
                                    float inHigh[],

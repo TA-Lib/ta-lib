@@ -19,6 +19,22 @@
  *                streamable, and index-safe.
  */
 
+   /**
+    * Number of leading input bars {@link Core#apo} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInFastPeriod Period of the fast moving average (default 12;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow moving average (default 26;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int apoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       if( optInFastPeriod == Integer.MIN_VALUE ) {
@@ -227,6 +243,48 @@
       }
       return RetCode.Success ;
    }
+   /**
+    * Absolute Price Oscillator: the difference between a fast and a slow moving
+    * average of the input, in price units. Measures short- vs long-term
+    * momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
+    * otherwise.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * $APO = MA_{fast}(inReal) - MA_{slow}(inReal)$, both MAs of type optInMAType
+    * The standard form is exponential — APO with EMA and periods 12/26 is the fast-minus-slow EMA construction underlying the MACD (in price units). `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
+    * }</pre>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#apoLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Source data series.
+    * @param optInFastPeriod Period of the fast moving average (default 12;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow moving average (default 26;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param outReal Fast MA minus slow MA. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#ppo
+    * @see Core#macd
+    * @see Core#movingAverage
+    * @see Core#ema
+    * @see Core#sma
+    */
    public OutRange apo( int startIdx,
                         int endIdx,
                         double inReal[],
@@ -243,6 +301,23 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Absolute Price Oscillator: the difference between a fast and a slow moving
+    * average of the input, in price units. Measures short- vs long-term
+    * momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
+    * otherwise. — <b>unchecked</b> variant of {@link Core#apo}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange apoUnguarded( int startIdx,
                                  int endIdx,
                                  double inReal[],
@@ -256,6 +331,51 @@
       apoUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Absolute Price Oscillator: the difference between a fast and a slow moving
+    * average of the input, in price units. Measures short- vs long-term
+    * momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
+    * otherwise.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * $APO = MA_{fast}(inReal) - MA_{slow}(inReal)$, both MAs of type optInMAType
+    * The standard form is exponential — APO with EMA and periods 12/26 is the fast-minus-slow EMA construction underlying the MACD (in price units). `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
+    * }</pre>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#apoLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Source data series.
+    * @param optInFastPeriod Period of the fast moving average (default 12;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow moving average (default 26;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param outReal Fast MA minus slow MA. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#ppo
+    * @see Core#macd
+    * @see Core#movingAverage
+    * @see Core#ema
+    * @see Core#sma
+    */
    public OutRange apo( int startIdx,
                         int endIdx,
                         float inReal[],
@@ -272,6 +392,24 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Absolute Price Oscillator: the difference between a fast and a slow moving
+    * average of the input, in price units. Measures short- vs long-term
+    * momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
+    * otherwise. — <b>unchecked</b> variant of {@link Core#apo}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange apoUnguarded( int startIdx,
                                  int endIdx,
                                  float inReal[],

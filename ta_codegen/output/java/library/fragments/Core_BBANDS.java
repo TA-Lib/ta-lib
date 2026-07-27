@@ -30,6 +30,24 @@
  *                TA_MAType_DISABLED); required for streaming (issue #93).
  */
 
+   /**
+    * Number of leading input bars {@link Core#bbands} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInTimePeriod Periods for the MA and standard deviation (default
+    *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInNbDevUp Standard-deviation multiplier for the upper band
+    *        (default 2; {@code -4e37} selects the default).
+    * @param optInNbDevDn Standard-deviation multiplier for the lower band
+    *        (default 2; {@code -4e37} selects the default).
+    * @param optInMAType Moving-average type for the middle band (default 0 =
+    *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int bbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
@@ -869,6 +887,64 @@
       }
       return RetCode.Success ;
    }
+   /**
+    * Bollinger Bands: a moving-average middle band with upper and lower bands
+    * offset by a multiple of the standard deviation. Used to gauge relative
+    * price volatility.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * $$
+    * \begin{aligned}
+    * \text{middle}_t &= \operatorname{MA}(X, n, \text{matype})_t \\
+    * \sigma_t &= \operatorname{STDDEV}(X, n)_t \\
+    * \text{upper}_t &= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
+    * \text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
+    * \end{aligned}
+    * $$
+    * where $X$ is the input series, $n$ the period, $\text{matype}$ the moving-average type,
+    * and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</li>
+    * <li>$\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are independent — $\sigma$ depends only on the price window, so changing the middle band re-centres the bands without resizing them.</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#bbandsLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Input data series.
+    * @param optInTimePeriod Periods for the MA and standard deviation (default
+    *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInNbDevUp Standard-deviation multiplier for the upper band
+    *        (default 2; {@code -4e37} selects the default).
+    * @param optInNbDevDn Standard-deviation multiplier for the lower band
+    *        (default 2; {@code -4e37} selects the default).
+    * @param optInMAType Moving-average type for the middle band (default 0 =
+    *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
+    *        hold at least {@code endIdx - startIdx + 1} values.
+    * @param outRealMiddleBand The moving average. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outRealLowerBand Middle band minus nbDevDn standard deviations.
+    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#movingAverage
+    * @see Core#stdDev
+    * @see Core#sma
+    */
    public OutRange bbands( int startIdx,
                            int endIdx,
                            double inReal[],
@@ -888,6 +964,22 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Bollinger Bands: a moving-average middle band with upper and lower bands
+    * offset by a multiple of the standard deviation. Used to gauge relative
+    * price volatility. — <b>unchecked</b> variant of {@link Core#bbands}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange bbandsUnguarded( int startIdx,
                                     int endIdx,
                                     double inReal[],
@@ -904,6 +996,67 @@
       bbandsUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Bollinger Bands: a moving-average middle band with upper and lower bands
+    * offset by a multiple of the standard deviation. Used to gauge relative
+    * price volatility.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * $$
+    * \begin{aligned}
+    * \text{middle}_t &= \operatorname{MA}(X, n, \text{matype})_t \\
+    * \sigma_t &= \operatorname{STDDEV}(X, n)_t \\
+    * \text{upper}_t &= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
+    * \text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
+    * \end{aligned}
+    * $$
+    * where $X$ is the input series, $n$ the period, $\text{matype}$ the moving-average type,
+    * and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</li>
+    * <li>$\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are independent — $\sigma$ depends only on the price window, so changing the middle band re-centres the bands without resizing them.</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#bbandsLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Input data series.
+    * @param optInTimePeriod Periods for the MA and standard deviation (default
+    *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInNbDevUp Standard-deviation multiplier for the upper band
+    *        (default 2; {@code -4e37} selects the default).
+    * @param optInNbDevDn Standard-deviation multiplier for the lower band
+    *        (default 2; {@code -4e37} selects the default).
+    * @param optInMAType Moving-average type for the middle band (default 0 =
+    *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
+    *        hold at least {@code endIdx - startIdx + 1} values.
+    * @param outRealMiddleBand The moving average. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outRealLowerBand Middle band minus nbDevDn standard deviations.
+    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#movingAverage
+    * @see Core#stdDev
+    * @see Core#sma
+    */
    public OutRange bbands( int startIdx,
                            int endIdx,
                            float inReal[],
@@ -923,6 +1076,23 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Bollinger Bands: a moving-average middle band with upper and lower bands
+    * offset by a multiple of the standard deviation. Used to gauge relative
+    * price volatility. — <b>unchecked</b> variant of {@link Core#bbands}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange bbandsUnguarded( int startIdx,
                                     int endIdx,
                                     float inReal[],
