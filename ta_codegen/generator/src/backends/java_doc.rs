@@ -43,7 +43,7 @@ pub fn guarded_docs(
         for line in formula.lines() {
             let t = line.trim();
             if !t.is_empty() {
-                b.raw(&format!(" * {t}").trim_start_matches(" * ").to_string());
+                b.raw(format!(" * {t}").trim_start_matches(" * "));
             }
         }
         b.raw("}</pre>");
@@ -362,7 +362,7 @@ impl Block {
     }
 
     fn blank(&mut self) {
-        if !self.lines.last().map_or(true, |l| l.is_empty()) {
+        if !self.lines.last().is_none_or(String::is_empty) {
             self.lines.push(String::new());
         }
     }
