@@ -93,10 +93,11 @@ TA_RetCode mavp(int startIdx, int endIdx,
 
    /* Output indices grouped by clamped period (counting sort below). */
    sortedIdx = malloc((outputSize) * sizeof(int));
-   if( sortedIdx == NULL )
+   if( localOutputArray == NULL || localPeriodArray == NULL || sortedIdx == NULL )
    {
       free(localOutputArray);
       free(localPeriodArray);
+      free(sortedIdx);
       *outBegIdx = 0;
       *outNBElement = 0;
       return TA_ALLOC_ERR;
@@ -111,6 +112,15 @@ TA_RetCode mavp(int startIdx, int endIdx,
    {
       finalIsAllocated = 1;
       localFinalArray = malloc((outputSize) * sizeof(double));
+      if( localFinalArray == NULL )
+      {
+         free(localOutputArray);
+         free(localPeriodArray);
+         free(sortedIdx);
+         *outBegIdx = 0;
+         *outNBElement = 0;
+         return TA_ALLOC_ERR;
+      }
    }
    else
    {
