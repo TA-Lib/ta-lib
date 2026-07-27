@@ -17,6 +17,32 @@
  *  122104 MF,CF Fix#1089506 for out-of-bound access to ep_temp.
  */
 
+   /**
+    * Number of leading input bars {@link Core#sarExt} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
+    *        value, &lt;0 start short at |value| (default 0; {@code -4e37} selects the
+    *        default).
+    * @param optInOffsetOnReverse Fractional offset applied to the stop on each
+    *        reversal (default 0; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationInitLong Initial acceleration factor when long
+    *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationLong AF increment per new long extreme (default
+    *        0.02; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationMaxLong Cap on the long acceleration factor
+    *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationInitShort Initial acceleration factor when short
+    *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationShort AF increment per new short extreme (default
+    *        0.02; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationMaxShort Cap on the short acceleration factor
+    *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int sarExtLookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
       if( optInStartValue == -4e37 ) {
@@ -1000,6 +1026,56 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   /**
+    * Extended Parabolic SAR (stop and reverse) giving the caller full control
+    * over the initial state and separate acceleration factors for long and
+    * short positions. Unlike SAR, it returns negative values while short so
+    * reversals are distinguishable. Sign flip of the output marks a trend
+    * reversal (positive=long stop, negative=short stop).
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's range. On penetration, reverse: set SAR=EP (clamped), reset AF to its Init value, EP=extreme of the new direction. Output is +SAR when long, -SAR when short. On reversal an optional offset is applied: long->short SAR*(1+offset), short->long SAR*(1-offset).
+    * }</pre>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#sarExtLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
+    *        value, &lt;0 start short at |value| (default 0; {@code -4e37} selects the
+    *        default).
+    * @param optInOffsetOnReverse Fractional offset applied to the stop on each
+    *        reversal (default 0; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationInitLong Initial acceleration factor when long
+    *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationLong AF increment per new long extreme (default
+    *        0.02; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationMaxLong Cap on the long acceleration factor
+    *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationInitShort Initial acceleration factor when short
+    *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationShort AF increment per new short extreme (default
+    *        0.02; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationMaxShort Cap on the short acceleration factor
+    *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+    * @param outReal SAR stop level; positive while long, negative while short.
+    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#sar
+    * @see Core#minusDM
+    */
    public OutRange sarExt( int startIdx,
                            int endIdx,
                            double inHigh[],
@@ -1022,6 +1098,25 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Extended Parabolic SAR (stop and reverse) giving the caller full control
+    * over the initial state and separate acceleration factors for long and
+    * short positions. Unlike SAR, it returns negative values while short so
+    * reversals are distinguishable. Sign flip of the output marks a trend
+    * reversal (positive=long stop, negative=short stop). — <b>unchecked</b>
+    * variant of {@link Core#sarExt}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange sarExtUnguarded( int startIdx,
                                     int endIdx,
                                     double inHigh[],
@@ -1041,6 +1136,59 @@
       sarExtUnguardedInternal(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Extended Parabolic SAR (stop and reverse) giving the caller full control
+    * over the initial state and separate acceleration factors for long and
+    * short positions. Unlike SAR, it returns negative values while short so
+    * reversals are distinguishable. Sign flip of the output marks a trend
+    * reversal (positive=long stop, negative=short stop).
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's range. On penetration, reverse: set SAR=EP (clamped), reset AF to its Init value, EP=extreme of the new direction. Output is +SAR when long, -SAR when short. On reversal an optional offset is applied: long->short SAR*(1+offset), short->long SAR*(1-offset).
+    * }</pre>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#sarExtLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
+    *        value, &lt;0 start short at |value| (default 0; {@code -4e37} selects the
+    *        default).
+    * @param optInOffsetOnReverse Fractional offset applied to the stop on each
+    *        reversal (default 0; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationInitLong Initial acceleration factor when long
+    *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationLong AF increment per new long extreme (default
+    *        0.02; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationMaxLong Cap on the long acceleration factor
+    *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationInitShort Initial acceleration factor when short
+    *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationShort AF increment per new short extreme (default
+    *        0.02; minimum 0; {@code -4e37} selects the default).
+    * @param optInAccelerationMaxShort Cap on the short acceleration factor
+    *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+    * @param outReal SAR stop level; positive while long, negative while short.
+    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#sar
+    * @see Core#minusDM
+    */
    public OutRange sarExt( int startIdx,
                            int endIdx,
                            float inHigh[],
@@ -1063,6 +1211,26 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Extended Parabolic SAR (stop and reverse) giving the caller full control
+    * over the initial state and separate acceleration factors for long and
+    * short positions. Unlike SAR, it returns negative values while short so
+    * reversals are distinguishable. Sign flip of the output marks a trend
+    * reversal (positive=long stop, negative=short stop). — <b>unchecked</b>
+    * variant of {@link Core#sarExt}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange sarExtUnguarded( int startIdx,
                                     int endIdx,
                                     float inHigh[],

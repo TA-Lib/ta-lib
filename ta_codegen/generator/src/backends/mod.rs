@@ -13,6 +13,7 @@ pub mod func_list;
 pub mod java;
 pub mod java_abstract;
 pub mod java_stream;
+pub mod java_doc;
 pub mod java_enums;
 pub mod java_metadata;
 pub mod java_shipped;

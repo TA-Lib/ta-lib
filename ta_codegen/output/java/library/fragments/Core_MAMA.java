@@ -14,6 +14,22 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  */
 
+   /**
+    * Number of leading input bars {@link Core#mama} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    * <p>This function is recursive, so the result also includes this
+    * {@code Core}'s unstable-period setting — which is why it is an instance
+    * method.
+    *
+    * @param optInFastLimit Upper bound on the adaptive smoothing factor
+    *        (default 0.5; range 0.01..0.99; {@code -4e37} selects the default).
+    * @param optInSlowLimit Lower bound on the adaptive smoothing factor
+    *        (default 0.05; range 0.01..0.99; {@code -4e37} selects the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int mamaLookback( double optInFastLimit, double optInSlowLimit )
    {
       if( optInFastLimit == -4e37 ) {
@@ -1408,6 +1424,47 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   /**
+    * MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is
+    * driven by the dominant-cycle phase rate measured with a Hilbert transform.
+    * Emits two lines, MAMA and its slower follower FAMA. MAMA crossing above
+    * FAMA is bullish; crossing below is bearish.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * phase = atan(Q1/I1) in degrees; deltaPhase = max(1, prevPhase - phase)
+    * alpha = max(fastLimit/deltaPhase, slowLimit) if deltaPhase>1 else fastLimit
+    * MAMA = alpha*price + (1-alpha)*MAMA_prev
+    * FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
+    * }</pre>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#mamaLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Price series to smooth.
+    * @param optInFastLimit Upper bound on the adaptive smoothing factor
+    *        (default 0.5; range 0.01..0.99; {@code -4e37} selects the default).
+    * @param optInSlowLimit Lower bound on the adaptive smoothing factor
+    *        (default 0.05; range 0.01..0.99; {@code -4e37} selects the default).
+    * @param outMAMA Adaptive moving average (fast line) Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outFAMA Following adaptive moving average, using half the alpha
+    *        (slow line) Must hold at least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#movingAverage
+    * @see Core#wma
+    * @see Core#htDcPeriod
+    */
    public OutRange mama( int startIdx,
                          int endIdx,
                          double inReal[],
@@ -1424,6 +1481,24 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is
+    * driven by the dominant-cycle phase rate measured with a Hilbert transform.
+    * Emits two lines, MAMA and its slower follower FAMA. MAMA crossing above
+    * FAMA is bullish; crossing below is bearish. — <b>unchecked</b> variant of
+    * {@link Core#mama}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange mamaUnguarded( int startIdx,
                                   int endIdx,
                                   double inReal[],
@@ -1437,6 +1512,50 @@
       mamaUnguardedInternal(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is
+    * driven by the dominant-cycle phase rate measured with a Hilbert transform.
+    * Emits two lines, MAMA and its slower follower FAMA. MAMA crossing above
+    * FAMA is bullish; crossing below is bearish.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * phase = atan(Q1/I1) in degrees; deltaPhase = max(1, prevPhase - phase)
+    * alpha = max(fastLimit/deltaPhase, slowLimit) if deltaPhase>1 else fastLimit
+    * MAMA = alpha*price + (1-alpha)*MAMA_prev
+    * FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
+    * }</pre>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#mamaLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Price series to smooth.
+    * @param optInFastLimit Upper bound on the adaptive smoothing factor
+    *        (default 0.5; range 0.01..0.99; {@code -4e37} selects the default).
+    * @param optInSlowLimit Lower bound on the adaptive smoothing factor
+    *        (default 0.05; range 0.01..0.99; {@code -4e37} selects the default).
+    * @param outMAMA Adaptive moving average (fast line) Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outFAMA Following adaptive moving average, using half the alpha
+    *        (slow line) Must hold at least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#movingAverage
+    * @see Core#wma
+    * @see Core#htDcPeriod
+    */
    public OutRange mama( int startIdx,
                          int endIdx,
                          float inReal[],
@@ -1453,6 +1572,25 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is
+    * driven by the dominant-cycle phase rate measured with a Hilbert transform.
+    * Emits two lines, MAMA and its slower follower FAMA. MAMA crossing above
+    * FAMA is bullish; crossing below is bearish. — <b>unchecked</b> variant of
+    * {@link Core#mama}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange mamaUnguarded( int startIdx,
                                   int endIdx,
                                   float inReal[],

@@ -18,6 +18,20 @@
  *  122204 MF,CF Fix #1090231. Issues when period is 1.
  */
 
+   /**
+    * Number of leading input bars {@link Core#minusDI} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    * <p>This function is recursive, so the result also includes this
+    * {@code Core}'s unstable-period setting — which is why it is an instance
+    * method.
+    *
+    * @param optInTimePeriod Smoothing/lookback period for -DM and TR (default
+    *        14; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int minusDILookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
@@ -917,6 +931,49 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   /**
+    * Wilder's Minus Directional Indicator: the Wilder-smoothed downward
+    * directional movement (-DM) normalized by smoothed True Range. Measures the
+    * strength of downward price movement. Higher -DI indicates a stronger
+    * downtrend; compared against +DI to gauge directional dominance.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * -DM1 = (prevLow - low) if (prevLow-low)>0 and (high-prevHigh)<(prevLow-low), else 0. Seed -DM/TR = sum of first (period-1) -DM1/TR1, then Wilder-smooth each: X = X - X/period + today. -DI = 100 * (-DM / TR); TR from ta_true_range. If period<=1: -DI1 = -DM1/TR1 (no ×100).
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Wilder's original integer rounding is not applied (it was removed as unreliable when values are near 1).</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#minusDILookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param optInTimePeriod Smoothing/lookback period for -DM and TR (default
+    *        14; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outReal The Minus Directional Indicator (-DI) line. Must hold at
+    *        least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#plusDI
+    * @see Core#minusDM
+    * @see Core#dx
+    * @see Core#adx
+    * @see Core#adxr
+    * @see Core#trueRange
+    */
    public OutRange minusDI( int startIdx,
                             int endIdx,
                             double inHigh[],
@@ -933,6 +990,24 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Wilder's Minus Directional Indicator: the Wilder-smoothed downward
+    * directional movement (-DM) normalized by smoothed True Range. Measures the
+    * strength of downward price movement. Higher -DI indicates a stronger
+    * downtrend; compared against +DI to gauge directional dominance. —
+    * <b>unchecked</b> variant of {@link Core#minusDI}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange minusDIUnguarded( int startIdx,
                                      int endIdx,
                                      double inHigh[],
@@ -946,6 +1021,52 @@
       minusDIUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Wilder's Minus Directional Indicator: the Wilder-smoothed downward
+    * directional movement (-DM) normalized by smoothed True Range. Measures the
+    * strength of downward price movement. Higher -DI indicates a stronger
+    * downtrend; compared against +DI to gauge directional dominance.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * -DM1 = (prevLow - low) if (prevLow-low)>0 and (high-prevHigh)<(prevLow-low), else 0. Seed -DM/TR = sum of first (period-1) -DM1/TR1, then Wilder-smooth each: X = X - X/period + today. -DI = 100 * (-DM / TR); TR from ta_true_range. If period<=1: -DI1 = -DM1/TR1 (no ×100).
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Wilder's original integer rounding is not applied (it was removed as unreliable when values are near 1).</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#minusDILookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param optInTimePeriod Smoothing/lookback period for -DM and TR (default
+    *        14; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outReal The Minus Directional Indicator (-DI) line. Must hold at
+    *        least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#plusDI
+    * @see Core#minusDM
+    * @see Core#dx
+    * @see Core#adx
+    * @see Core#adxr
+    * @see Core#trueRange
+    */
    public OutRange minusDI( int startIdx,
                             int endIdx,
                             float inHigh[],
@@ -962,6 +1083,25 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Wilder's Minus Directional Indicator: the Wilder-smoothed downward
+    * directional movement (-DM) normalized by smoothed True Range. Measures the
+    * strength of downward price movement. Higher -DI indicates a stronger
+    * downtrend; compared against +DI to gauge directional dominance. —
+    * <b>unchecked</b> variant of {@link Core#minusDI}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange minusDIUnguarded( int startIdx,
                                      int endIdx,
                                      float inHigh[],

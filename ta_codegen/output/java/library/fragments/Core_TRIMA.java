@@ -20,6 +20,17 @@
  *                for every period where the int product fits.
  */
 
+   /**
+    * Number of leading input bars {@link Core#trima} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInTimePeriod Number of bars in the averaging window (default 30;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int trimaLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
@@ -652,6 +663,45 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   /**
+    * Triangular Moving Average: a double-smoothed moving average that weights
+    * prices toward the middle of the window most heavily. Equivalent to an SMA
+    * of an SMA, computed here via an incremental triangular-weighted running
+    * numerator.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * Weights rise then fall (4-period: (1a+2b+2c+1d)/6; 5-period: (1a+2b+3c+2d+1e)/9). With n = period>>1: odd divides by (n+1)^2, even by n(n+1). Equivalent to odd: SMA(SMA(x,(period+1)/2),(period+1)/2); even: SMA(SMA(x,period/2),period/2+1).
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Follows the generally accepted (Metastock) definition rather than the TradeStation variant.</li>
+    * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#trimaLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Source price series.
+    * @param optInTimePeriod Number of bars in the averaging window (default 30;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outReal Triangular moving average. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#sma
+    * @see Core#wma
+    * @see Core#movingAverage
+    */
    public OutRange trima( int startIdx,
                           int endIdx,
                           double inReal[],
@@ -666,6 +716,23 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Triangular Moving Average: a double-smoothed moving average that weights
+    * prices toward the middle of the window most heavily. Equivalent to an SMA
+    * of an SMA, computed here via an incremental triangular-weighted running
+    * numerator. — <b>unchecked</b> variant of {@link Core#trima}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange trimaUnguarded( int startIdx,
                                    int endIdx,
                                    double inReal[],
@@ -677,6 +744,48 @@
       trimaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Triangular Moving Average: a double-smoothed moving average that weights
+    * prices toward the middle of the window most heavily. Equivalent to an SMA
+    * of an SMA, computed here via an incremental triangular-weighted running
+    * numerator.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * Weights rise then fall (4-period: (1a+2b+2c+1d)/6; 5-period: (1a+2b+3c+2d+1e)/9). With n = period>>1: odd divides by (n+1)^2, even by n(n+1). Equivalent to odd: SMA(SMA(x,(period+1)/2),(period+1)/2); even: SMA(SMA(x,period/2),period/2+1).
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Follows the generally accepted (Metastock) definition rather than the TradeStation variant.</li>
+    * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#trimaLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Source price series.
+    * @param optInTimePeriod Number of bars in the averaging window (default 30;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outReal Triangular moving average. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#sma
+    * @see Core#wma
+    * @see Core#movingAverage
+    */
    public OutRange trima( int startIdx,
                           int endIdx,
                           float inReal[],
@@ -691,6 +800,24 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Triangular Moving Average: a double-smoothed moving average that weights
+    * prices toward the middle of the window most heavily. Equivalent to an SMA
+    * of an SMA, computed here via an incremental triangular-weighted running
+    * numerator. — <b>unchecked</b> variant of {@link Core#trima}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange trimaUnguarded( int startIdx,
                                    int endIdx,
                                    float inReal[],

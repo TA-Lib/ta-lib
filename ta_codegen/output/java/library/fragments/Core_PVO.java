@@ -12,6 +12,22 @@
  *  071626 MF,CC  Template creation.
  */
 
+   /**
+    * Number of leading input bars {@link Core#pvo} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInFastPeriod Period of the fast MA (default 12; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int pvoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       if( optInFastPeriod == Integer.MIN_VALUE ) {
@@ -244,6 +260,49 @@
       }
       return RetCode.Success ;
    }
+   /**
+    * Percentage Volume Oscillator: a variation of the [Percentage Price
+    * Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
+    * **volume** series instead of price. It is the difference between a fast
+    * and slow moving average of volume, expressed as a percentage of the slow
+    * MA. Positive when short-term volume is above its longer-term average
+    * (rising participation), negative when below. The default periods (12, 26)
+    * match MACD and PPO.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
+    * The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volume - 26-day EMA of Volume) / 26-day EMA of Volume) * 100, i.e. the PPO/MACD oscillator computed on volume. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
+    * }</pre>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#pvoLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inVolume Volume of each bar.
+    * @param optInFastPeriod Period of the fast MA (default 12; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param outReal PVO value in percent. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#ppo
+    * @see Core#obv
+    * @see Core#macd
+    */
    public OutRange pvo( int startIdx,
                         int endIdx,
                         double inVolume[],
@@ -260,6 +319,26 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Percentage Volume Oscillator: a variation of the [Percentage Price
+    * Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
+    * **volume** series instead of price. It is the difference between a fast
+    * and slow moving average of volume, expressed as a percentage of the slow
+    * MA. Positive when short-term volume is above its longer-term average
+    * (rising participation), negative when below. The default periods (12, 26)
+    * match MACD and PPO. — <b>unchecked</b> variant of {@link Core#pvo}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange pvoUnguarded( int startIdx,
                                  int endIdx,
                                  double inVolume[],
@@ -273,6 +352,52 @@
       pvoUnguardedInternal(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Percentage Volume Oscillator: a variation of the [Percentage Price
+    * Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
+    * **volume** series instead of price. It is the difference between a fast
+    * and slow moving average of volume, expressed as a percentage of the slow
+    * MA. Positive when short-term volume is above its longer-term average
+    * (rising participation), negative when below. The default periods (12, 26)
+    * match MACD and PPO.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
+    * The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volume - 26-day EMA of Volume) / 26-day EMA of Volume) * 100, i.e. the PPO/MACD oscillator computed on volume. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
+    * }</pre>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#pvoLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inVolume Volume of each bar.
+    * @param optInFastPeriod Period of the fast MA (default 12; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
+    *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+    *        8=T3, 9=HMA, 10=DISABLED).
+    * @param outReal PVO value in percent. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#ppo
+    * @see Core#obv
+    * @see Core#macd
+    */
    public OutRange pvo( int startIdx,
                         int endIdx,
                         float inVolume[],
@@ -289,6 +414,27 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Percentage Volume Oscillator: a variation of the [Percentage Price
+    * Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
+    * **volume** series instead of price. It is the difference between a fast
+    * and slow moving average of volume, expressed as a percentage of the slow
+    * MA. Positive when short-term volume is above its longer-term average
+    * (rising participation), negative when below. The default periods (12, 26)
+    * match MACD and PPO. — <b>unchecked</b> variant of {@link Core#pvo}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange pvoUnguarded( int startIdx,
                                  int endIdx,
                                  float inVolume[],

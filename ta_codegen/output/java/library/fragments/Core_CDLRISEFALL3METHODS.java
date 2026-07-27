@@ -12,6 +12,15 @@
  *  020605 AC   Creation
  */
 
+   /**
+    * Number of leading input bars {@link Core#cdlRiseFall3Methods} consumes
+    * before it can produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int cdlRiseFall3MethodsLookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -370,6 +379,47 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
+   /**
+    * A five-candle continuation pattern: a long candle, three small
+    * counter-color candles that stay partly within the first candle's high-low
+    * range, then a long same-color candle that resumes the trend. Bullish
+    * (rising) or bearish (falling) continuation signal. A hit signals trend
+    * continuation: +100 = bullish (rising three methods), -100 = bearish
+    * (falling three methods).
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</li>
+    * <li>The middle candles need only partially overlap the first candle's range, not be fully contained within it.</li>
+    * <li>The prior trend the continuation reading assumes is not verified.</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#cdlRiseFall3MethodsLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inOpen Open price of each bar.
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param outInteger +100 when candle 1 is white (rising/bullish
+    *        continuation), -100 when candle 1 is black (falling/bearish continuation),
+    *        0 otherwise. Sign = 100 * color of candle 1. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#cdlXSideGap3Methods
+    * @see Core#cdl3Inside
+    * @see Core#cdl3Outside
+    */
    public OutRange cdlRiseFall3Methods( int startIdx,
                                         int endIdx,
                                         double inOpen[],
@@ -386,6 +436,26 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * A five-candle continuation pattern: a long candle, three small
+    * counter-color candles that stay partly within the first candle's high-low
+    * range, then a long same-color candle that resumes the trend. Bullish
+    * (rising) or bearish (falling) continuation signal. A hit signals trend
+    * continuation: +100 = bullish (rising three methods), -100 = bearish
+    * (falling three methods). — <b>unchecked</b> variant of
+    * {@link Core#cdlRiseFall3Methods}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange cdlRiseFall3MethodsUnguarded( int startIdx,
                                                  int endIdx,
                                                  double inOpen[],
@@ -399,6 +469,50 @@
       cdlRiseFall3MethodsUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * A five-candle continuation pattern: a long candle, three small
+    * counter-color candles that stay partly within the first candle's high-low
+    * range, then a long same-color candle that resumes the trend. Bullish
+    * (rising) or bearish (falling) continuation signal. A hit signals trend
+    * continuation: +100 = bullish (rising three methods), -100 = bearish
+    * (falling three methods).
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</li>
+    * <li>The middle candles need only partially overlap the first candle's range, not be fully contained within it.</li>
+    * <li>The prior trend the continuation reading assumes is not verified.</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#cdlRiseFall3MethodsLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inOpen Open price of each bar.
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param inClose Close price of each bar.
+    * @param outInteger +100 when candle 1 is white (rising/bullish
+    *        continuation), -100 when candle 1 is black (falling/bearish continuation),
+    *        0 otherwise. Sign = 100 * color of candle 1. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#cdlXSideGap3Methods
+    * @see Core#cdl3Inside
+    * @see Core#cdl3Outside
+    */
    public OutRange cdlRiseFall3Methods( int startIdx,
                                         int endIdx,
                                         float inOpen[],
@@ -415,6 +529,27 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * A five-candle continuation pattern: a long candle, three small
+    * counter-color candles that stay partly within the first candle's high-low
+    * range, then a long same-color candle that resumes the trend. Bullish
+    * (rising) or bearish (falling) continuation signal. A hit signals trend
+    * continuation: +100 = bullish (rising three methods), -100 = bearish
+    * (falling three methods). — <b>unchecked</b> variant of
+    * {@link Core#cdlRiseFall3Methods}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange cdlRiseFall3MethodsUnguarded( int startIdx,
                                                  int endIdx,
                                                  float inOpen[],

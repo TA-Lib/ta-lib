@@ -1257,6 +1257,41 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
         );
     }
 
+    // Javadoc doclint: the "do the docs actually build" gate. The Javadoc on the
+    // batch API is generated from the canonical `<name>.md` prose, so a stray `<`
+    // or an unresolvable `@see` would otherwise ship silently — javac does not
+    // look inside comments. `-missing` is off: the streaming handles and the
+    // internal cores are deliberately undocumented.
+    print!("  Checking Java javadoc (doclint)... ");
+    let doc_dir = bin_dir.join("ta_codegen_java_doc");
+    let _ = std::fs::remove_dir_all(&doc_dir);
+    let mut jdoc = std::process::Command::new("javadoc");
+    jdoc.arg("-Xdoclint:all,-missing")
+        .arg("-quiet")
+        .arg("--release")
+        .arg(JAVA_RELEASE)
+        .arg("-d")
+        .arg(&doc_dir);
+    for src in &sources {
+        // Test sources are not part of the published API surface.
+        if !src.to_string_lossy().contains("/test/") {
+            jdoc.arg(src);
+        }
+    }
+    match jdoc.output() {
+        Ok(o) if o.status.success() => println!("OK"),
+        Ok(o) => {
+            println!("FAILED (exit {})", o.status.code().unwrap_or(-1));
+            print!("{}", String::from_utf8_lossy(&o.stderr));
+            return false;
+        }
+        Err(e) => {
+            // javadoc ships with the JDK; if it is absent so is javac, and the
+            // compile above would already have failed.
+            println!("SKIPPED (javadoc not found: {e})");
+        }
+    }
+
     // Run every test class DISCOVERED in the sources, not a hardcoded list: a
     // hardcoded roster is how the retired `AllTests` suite went vacuous (it
     // named one class, which a later change deleted, and `ant test` kept

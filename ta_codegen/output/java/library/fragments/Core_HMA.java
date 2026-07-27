@@ -15,6 +15,18 @@
  *                CIRCBUF, no whole-range temporaries (issue #139).
  */
 
+   /**
+    * Number of leading input bars {@link Core#hma} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInTimePeriod Number of bars in the full-period WMA; the half and
+    *        square-root periods derive from it (default 20; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
    public int hmaLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
@@ -718,6 +730,57 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
+   /**
+    * Hull Moving Average, published by Alan Hull in 2005: a moving average
+    * built to track price with far less lag than an
+    * [{@code SMA}](/functions/sma), [{@code WMA}](/functions/wma) or
+    * [{@code EMA}](/functions/ema) of the same length while staying smooth. It
+    * first removes lag by doubling a half-period [{@code WMA}](/functions/wma)
+    * and subtracting the full-period one — extrapolating the average toward
+    * current price — then smooths that de-lagged series with a final WMA over
+    * the square root of the period. HMA is also selectable as a moving-average
+    * type ({@code TA_MAType_HMA}) wherever an {@code optInMAType} parameter is
+    * accepted ([{@code MA}](/functions/ma),
+    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
+    * [{@code MACDEXT}](/functions/macdext), ...).
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * HMA(n) = WMA( 2 * WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
+    * All three averages are the standard linearly-weighted moving average (TA-Lib's WMA). Every output is a closed-form weighted sum of the input window: there is no seeding, no recursion, hence no unstable period.
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are **truncated** to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
+    * <li>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default TA-Lib matches charting platforms regardless of their rounding convention.</li>
+    * <li>The period range starts at 2: a period of 1 would make the half-period WMA degenerate ({@code Integer(1/2) = 0}).</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#hmaLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Source price series, close by convention.
+    * @param optInTimePeriod Number of bars in the full-period WMA; the half and
+    *        square-root periods derive from it (default 20; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outReal Hull moving average of the input. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#wma
+    * @see Core#movingAverage
+    * @see Core#sma
+    * @see Core#ema
+    */
    public OutRange hma( int startIdx,
                         int endIdx,
                         double inReal[],
@@ -732,6 +795,32 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Hull Moving Average, published by Alan Hull in 2005: a moving average
+    * built to track price with far less lag than an
+    * [{@code SMA}](/functions/sma), [{@code WMA}](/functions/wma) or
+    * [{@code EMA}](/functions/ema) of the same length while staying smooth. It
+    * first removes lag by doubling a half-period [{@code WMA}](/functions/wma)
+    * and subtracting the full-period one — extrapolating the average toward
+    * current price — then smooths that de-lagged series with a final WMA over
+    * the square root of the period. HMA is also selectable as a moving-average
+    * type ({@code TA_MAType_HMA}) wherever an {@code optInMAType} parameter is
+    * accepted ([{@code MA}](/functions/ma),
+    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
+    * [{@code MACDEXT}](/functions/macdext), ...). — <b>unchecked</b> variant of
+    * {@link Core#hma}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange hmaUnguarded( int startIdx,
                                  int endIdx,
                                  double inReal[],
@@ -743,6 +832,60 @@
       hmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Hull Moving Average, published by Alan Hull in 2005: a moving average
+    * built to track price with far less lag than an
+    * [{@code SMA}](/functions/sma), [{@code WMA}](/functions/wma) or
+    * [{@code EMA}](/functions/ema) of the same length while staying smooth. It
+    * first removes lag by doubling a half-period [{@code WMA}](/functions/wma)
+    * and subtracting the full-period one — extrapolating the average toward
+    * current price — then smooths that de-lagged series with a final WMA over
+    * the square root of the period. HMA is also selectable as a moving-average
+    * type ({@code TA_MAType_HMA}) wherever an {@code optInMAType} parameter is
+    * accepted ([{@code MA}](/functions/ma),
+    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
+    * [{@code MACDEXT}](/functions/macdext), ...).
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * HMA(n) = WMA( 2 * WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
+    * All three averages are the standard linearly-weighted moving average (TA-Lib's WMA). Every output is a closed-form weighted sum of the input window: there is no seeding, no recursion, hence no unstable period.
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are **truncated** to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
+    * <li>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default TA-Lib matches charting platforms regardless of their rounding convention.</li>
+    * <li>The period range starts at 2: a period of 1 would make the half-period WMA degenerate ({@code Integer(1/2) = 0}).</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#hmaLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Source price series, close by convention.
+    * @param optInTimePeriod Number of bars in the full-period WMA; the half and
+    *        square-root periods derive from it (default 20; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outReal Hull moving average of the input. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#wma
+    * @see Core#movingAverage
+    * @see Core#sma
+    * @see Core#ema
+    */
    public OutRange hma( int startIdx,
                         int endIdx,
                         float inReal[],
@@ -757,6 +900,33 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
+   /**
+    * Hull Moving Average, published by Alan Hull in 2005: a moving average
+    * built to track price with far less lag than an
+    * [{@code SMA}](/functions/sma), [{@code WMA}](/functions/wma) or
+    * [{@code EMA}](/functions/ema) of the same length while staying smooth. It
+    * first removes lag by doubling a half-period [{@code WMA}](/functions/wma)
+    * and subtracting the full-period one — extrapolating the average toward
+    * current price — then smooths that de-lagged series with a final WMA over
+    * the square root of the period. HMA is also selectable as a moving-average
+    * type ({@code TA_MAType_HMA}) wherever an {@code optInMAType} parameter is
+    * accepted ([{@code MA}](/functions/ma),
+    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
+    * [{@code MACDEXT}](/functions/macdext), ...). — <b>unchecked</b> variant of
+    * {@link Core#hma}.
+    * <p>Validates nothing and never throws. The caller guarantees: non-negative
+    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
+    * arrays distinct from each other, and every optional parameter already
+    * resolved and within its documented range — a sentinel such as
+    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
+    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
+    * output rather than a diagnostic. (C and Rust return a status code from
+    * this tier, so their callers can detect it; this one has nowhere to report
+    * it.) Use the guarded method unless the arguments are already known good.
+    * <p>This is the {@code float[]} overload; see the guarded method.
+    *
+    * @return The range written, exactly as the guarded method reports it.
+    */
    public OutRange hmaUnguarded( int startIdx,
                                  int endIdx,
                                  float inReal[],
