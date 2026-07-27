@@ -221,7 +221,7 @@ ta-lib/
 ├── ta_codegen/output/        # Generated per-language products, each split library/ (shipped) + tools/ (server/bench)
 │   ├── c/tools/              # C server + bench (the C library ships from src/ — the backcompat exception)
 │   ├── rust/{library,tools}/ # library/ = ta-lib crate; tools/ = server/bench (a Cargo workspace)
-│   ├── java/{library,tools}/ # library/ = shipped Java package + hand-written meta/; tools/ = JSON-RPC server
+│   ├── java/{library,tools}/ # library/ = shipped io.github.talib package + generated metadata registry; tools/ = JSON-RPC server
 │   └── dotnet/tools/         # .NET P/Invoke server (tools-only; no managed library)
 ├── ta_codegen/generator/         # The Rust code generator (see its CLAUDE.md)
 ├── src/
