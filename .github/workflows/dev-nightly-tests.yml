@@ -324,6 +324,14 @@ jobs:
         shell: bash
         run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
 
+      # The Core/CoreBuilder API tests live in templates/rust/types.rs and ship
+      # inside the crate, but no job ran them: clippy --all-targets only builds
+      # the test target, and --doc skips it. They are the only gate on the Rust
+      # public-API contract (issue #144).
+      - name: Run the generated crate's unit tests
+        shell: bash
+        run: cargo test --lib -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+
   # Bit-exact regression gate vs the last release (v0.6.4): diff every function
   # at period>=2, fail on any real divergence. C-only, gated on 'test'.
   # fetch-depth: 0 so the v0.6.4 tag is available. See ta_regtest/CLAUDE.md.

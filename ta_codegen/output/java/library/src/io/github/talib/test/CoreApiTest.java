@@ -312,6 +312,11 @@ public class CoreApiTest {
         checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.getUnstablePeriod(FuncUnstId.None),
             "FuncUnstId.None is not a function -> IAE");
+        // The setter accepts All (set-all wildcard) but must reject None the same
+        // way the getter does, rather than indexing off the end of the array.
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.builder().unstablePeriod(FuncUnstId.None, 5),
+            "FuncUnstId.None as a setter target -> IAE");
     }
 
     /**

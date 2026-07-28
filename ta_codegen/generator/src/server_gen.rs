@@ -2140,15 +2140,19 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // FuncUnstId and Compatibility enums (referenced by generated Core methods).
     // FuncUnstId is emitted from enums.yaml (source of truth), 6 names per line,
-    // plus the server-side `None` sentinel (distinct from the shipped enum's `All`).
+    // plus BOTH sentinels, in the shipped enum's order: `All` (the set-all
+    // wildcard, ordinal == the real-variant count == C's TA_FUNC_UNST_ALL) then
+    // `None`. Emitting only `None` here used to put it where `All` belongs, so
+    // the wildcard test below compared against 25 while the driver sends 24 and
+    // "set all" silently wrote the unused sentinel slot instead (#144).
     s.push_str("enum FuncUnstId {\n");
     {
         let names = func_unst_pascal_names(enums);
         let nchunks = names.chunks(6).count().max(1);
         for (idx, chunk) in names.chunks(6).enumerate() {
             if idx + 1 == nchunks {
-                // Last line carries the server-side `None` sentinel and the `;`.
-                s.push_str(&format!("    {}, None;\n", chunk.join(", ")));
+                // Last line carries the two sentinels and the `;`.
+                s.push_str(&format!("    {}, All, None;\n", chunk.join(", ")));
             } else {
                 s.push_str(&format!("    {},\n", chunk.join(", ")));
             }
@@ -2194,7 +2198,9 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // Core class — method bodies are inlined by the caller via inline_java_core_methods()
     s.push_str("class Core {\n");
-    s.push_str("    int[] unstablePeriod = new int[FuncUnstId.values().length];\n");
+    // Sized by the wildcard's ordinal, i.e. the real-variant count, so the two
+    // sentinels get no slot -- matching the shipped CoreBuilder (#144).
+    s.push_str("    int[] unstablePeriod = new int[FuncUnstId.All.ordinal()];\n");
     // candleSettings[] in CandleSettingType ordinal order. Defaults from
     // TA_RestoreCandleDefaultSettings in ta_global.c. RangeType: 0=RealBody, 1=HighLow, 2=Shadows.
     s.push_str("    CandleSetting[] candleSettings = {\n");
@@ -2403,8 +2409,8 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        else if (json.contains(\"\\\"set_unstable_period\\\"\")) {\n");
     s.push_str("            int id = jsonInt(json, \"id\");\n");
     s.push_str("            int period = jsonInt(json, \"period\");\n");
-    // id == length is the "set all" sentinel (matches C TA_SetUnstablePeriod).
-    s.push_str("            if (id == core.unstablePeriod.length) {\n");
+    // FuncUnstId.All is the "set all" sentinel (matches C TA_SetUnstablePeriod).
+    s.push_str("            if (id == FuncUnstId.All.ordinal()) {\n");
     s.push_str("                for (int i = 0; i < core.unstablePeriod.length; i++) core.unstablePeriod[i] = period;\n");
     s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\"; \n");
     s.push_str("            }\n");

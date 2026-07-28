@@ -2577,6 +2577,111 @@ static ErrorNumber test_predicate_parity(CodegenPipe *cp, const CodegenLanguage 
     return TA_TEST_PASS;
 }
 
+/* set_unstable_period's set-all wildcard (id == TA_FUNC_UNST_ALL) must really
+ * reach every function on every server (issue #144).
+ *
+ * Nothing proved that before: server_verify sends the wildcard exactly once, to
+ * reset to *zero*, which a server that mishandles the sentinel answers
+ * identically because its array is already zero. The Java server did mishandle
+ * it — it sized `unstablePeriod` by the enum's length (a slot per sentinel) and
+ * compared the wildcard against that length, so the driver's id 24 landed in an
+ * unread slot and "set all" was inert.
+ *
+ * ADOSC is the probe because it is the rare shape that can observe the server's
+ * *stored* state: it carries no `unstablePeriod` request field of its own (so
+ * the call cannot re-set what it is meant to read), yet its lookback is
+ * TA_EMA_Lookback, which adds EMA's unstable period. The expected outBegIdx is
+ * taken from the in-process C library under the same setting rather than
+ * hardcoded, and the two legs are asserted to differ so a lookback that stopped
+ * depending on the unstable period turns into a failure, not a silent pass. */
+static ErrorNumber test_unstable_wildcard(CodegenPipe *cp, const CodegenLanguage *lang,
+                                          char *reqBuf, char *respBuf)
+{
+    #define UW_NBBAR 60
+    #define UW_FAST  3
+    #define UW_SLOW  10
+    TA_Real h[UW_NBBAR], l[UW_NBBAR], c[UW_NBBAR], v[UW_NBBAR];
+    const int periods[2] = { 5, 0 };   /* non-zero first, then restore to zero */
+    int expected[2];
+
+    for( int i = 0; i < UW_NBBAR; i++ )
+    {
+        double base = 100.0 + (double)((i * 7) % 13);
+        h[i] = base + 2.0;
+        l[i] = base - 2.0;
+        c[i] = base + 0.5;
+        v[i] = 1000.0 + (double)((i * 3) % 17) * 10.0;
+    }
+
+    /* Non-vacuity: the probe is only meaningful if the two settings really do
+     * move ADOSC's lookback in the C library. */
+    for( int k = 0; k < 2; k++ )
+    {
+        TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, (unsigned int)periods[k]);
+        expected[k] = TA_ADOSC_Lookback(UW_FAST, UW_SLOW);
+    }
+    TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+    if( expected[0] == expected[1] || expected[0] < 0 || expected[1] < 0 )
+    {
+        printf("  UNSTABLE WILDCARD [%s]: probe is vacuous — ADOSC lookback is %d for "
+               "unstable %d and %d\n", lang->display, expected[0], periods[0], periods[1]);
+        return TA_UNSTABLE_WILDCARD_VACUOUS;
+    }
+
+    for( int k = 0; k < 2; k++ )
+    {
+        codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
+                "{\"method\":\"set_unstable_period\",\"params\":{\"id\":%d,\"period\":%d}}",
+                (int)TA_FUNC_UNST_ALL, periods[k]);
+        if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS
+            || json_is_error(respBuf) )
+        {
+            printf("  UNSTABLE WILDCARD [%s]: set_unstable_period(ALL, %d) failed: %s\n",
+                   lang->display, periods[k], respBuf);
+            return TA_UNSTABLE_WILDCARD_CALL_FAILED;
+        }
+
+        int pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
+                "{\"method\":\"TA_ADOSC\",\"params\":{\"startIdx\":0,\"endIdx\":%d,"
+                "\"optInFastPeriod\":%d,\"optInSlowPeriod\":%d,\"inHigh\":",
+                UW_NBBAR - 1, UW_FAST, UW_SLOW);
+        pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, h, UW_NBBAR, 0);
+        pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, ",\"inLow\":");
+        pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, l, UW_NBBAR, 0);
+        pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, ",\"inClose\":");
+        pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, c, UW_NBBAR, 0);
+        pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, ",\"inVolume\":");
+        pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, v, UW_NBBAR, 0);
+        codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, "}}");
+
+        if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS
+            || json_is_error(respBuf) )
+        {
+            printf("  UNSTABLE WILDCARD [%s]: TA_ADOSC call failed: %s\n",
+                   lang->display, respBuf);
+            return TA_UNSTABLE_WILDCARD_CALL_FAILED;
+        }
+        int rc     = json_get_int(respBuf, "retCode");
+        int begIdx = json_get_int(respBuf, "outBegIdx");
+        if( rc != (int)TA_SUCCESS || begIdx != expected[k] )
+        {
+            printf("  UNSTABLE WILDCARD [%s]: after set_unstable_period(ALL, %d), "
+                   "ADOSC outBegIdx = %d (retCode %d) but C says %d — the wildcard did "
+                   "not reach every function\n",
+                   lang->display, periods[k], begIdx, rc, expected[k]);
+            return TA_UNSTABLE_WILDCARD_MISMATCH;
+        }
+    }
+
+    printf("  Unstable-period wildcard: set-all reaches EMA (ADOSC outBegIdx %d at "
+           "unstable %d, %d at %d)\n",
+           expected[0], periods[0], expected[1], periods[1]);
+    return TA_TEST_PASS;
+    #undef UW_NBBAR
+    #undef UW_FAST
+    #undef UW_SLOW
+}
+
 /* Fuzz-port self-check for stream-capable servers (capability-gated): a
  * server that PORTS fuzz_gen (Java FuzzData, Rust fuzz.rs) must reproduce the
  * driver's inputs byte-identically, or every stream leg silently exercises
@@ -2715,6 +2820,18 @@ static ErrorNumber test_codegen_for_language(
         if( predErr != TA_TEST_PASS )
         {
             ctx.error = predErr;
+            ctx.failed++;
+        }
+    }
+
+    /* set_unstable_period's set-all wildcard actually reaches every function
+     * (#144). Leaves the server back at all-zeros for the passes below. */
+    if( ctx.error == TA_TEST_PASS )
+    {
+        ErrorNumber unstErr = test_unstable_wildcard(&cp, lang, requestBuf, responseBuf);
+        if( unstErr != TA_TEST_PASS )
+        {
+            ctx.error = unstErr;
             ctx.failed++;
         }
     }
