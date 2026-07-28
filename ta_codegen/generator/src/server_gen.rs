@@ -432,6 +432,7 @@ pub fn generate_c_private_header(funcs: &[FuncDef]) -> String {
 ///
 /// The generated file #includes the generated ta_*.c files and provides
 /// a `main()` loop that reads JSON-RPC from stdin.
+#[allow(clippy::implicit_hasher)]
 pub fn generate_c_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 
@@ -2748,6 +2749,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 /// library (`ta_codegen_funcs`), reads JSON-RPC requests from stdin, dispatches to
 /// the imported TA functions, and writes JSON responses to stdout.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
+#[allow(clippy::implicit_hasher)]
 pub fn generate_dotnet_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 
