@@ -33,7 +33,7 @@ enum FuncUnstId {
     Natr, PlusDI, PlusDM, Rsi, Unused22, T3,
     All;
     static final int COUNT = 24;
-    int value() { return this == All ? 0x7FFFFFFF : ordinal(); }
+    int value() { return this == All ? 65535 : ordinal(); }
 }
 
 enum MAType {

@@ -79,9 +79,9 @@ pub enum FuncUnstId {
     T3,
     /// Wildcard: set the unstable period for all functions at once.
     ///
-    /// Pinned at `i32::MAX` rather than one past the last function id, so that
-    /// adding an indicator can never move it. Mirrors C's `TA_FUNC_UNST_ALL`.
-    FuncUnstAll = 0x7FFF_FFFF,
+    /// Pinned rather than sitting one past the last function id, so that adding
+    /// an indicator can never move it. Mirrors C's `TA_FUNC_UNST_ALL`.
+    FuncUnstAll = 65535,
 }
 
 /// Number of [`FuncUnstId`] function ids — the size of the unstable-period

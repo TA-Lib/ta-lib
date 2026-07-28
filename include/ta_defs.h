@@ -193,7 +193,7 @@ typedef enum {
     TA_FUNC_UNST_RSI          = 21,
     TA_FUNC_UNST_UNUSED_22    = 22,
     TA_FUNC_UNST_T3           = 23,
-    TA_FUNC_UNST_ALL          = 0x7FFFFFFF
+    TA_FUNC_UNST_ALL          = 65535
 } TA_FuncUnstId;
 
 /* Number of function ids above (NOT an id, and NOT TA_FUNC_UNST_ALL).

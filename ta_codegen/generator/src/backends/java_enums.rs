@@ -44,7 +44,7 @@ pub fn generate(enums: &HashMap<String, EnumDef>, path: &Path) {
     body.push_str("\n");
     body.push_str("\t  /** Wildcard: sets the unstable period for every function at once.\n");
     body.push_str("\t   *  Pinned, so adding an indicator can never move it. */\n");
-    body.push_str("\t             All(0x7FFFFFFF);\n");
+    body.push_str("\t             All(65535);\n");
     body.push_str("\n");
     body.push_str("\t/** Number of function ids — the size of the unstable-period table.\n");
     body.push_str("\t *  Not an id, and not {@link #All}. Mirrors C's TA_FUNC_UNST_COUNT. */\n");

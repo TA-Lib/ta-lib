@@ -311,8 +311,8 @@ public class CoreApiTest {
             "FuncUnstId.All has no single value to read -> IAE");
         // The setter accepts All (set-all wildcard) but must reject None the same
         // way the getter does, rather than indexing off the end of the array.
-        check(FuncUnstId.All.value() == 0x7FFFFFFF && FuncUnstId.COUNT == FuncUnstId.values().length - 1,
-            "FuncUnstId.All is pinned at 0x7FFFFFFF and COUNT covers every function id");
+        check(FuncUnstId.All.value() == 65535 && FuncUnstId.COUNT == FuncUnstId.values().length - 1,
+            "FuncUnstId.All is pinned at 65535 and COUNT covers every function id");
     }
 
     /**
