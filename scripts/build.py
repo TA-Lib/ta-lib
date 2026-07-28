@@ -99,6 +99,10 @@ def show_help():
     servers             Generate all source + compile JSON-RPC language servers
     format              Re-indent the ta_codegen/input/ C source of truth
     format-check        Verify inputs are formatted (fails if not); writes nothing
+    clippy              Lint both Rust crates as the dev nightly does
+                        (--all-targets -D warnings). Dev profile, so it shares
+                        no artifacts with the --release targets and does not
+                        trigger rebuilds.
 
   Testing:
     test                C reference regression tests
@@ -136,6 +140,31 @@ def run_codegen(root_dir: str, *cargo_args: str):
     """
     codegen_dir = os.path.join(root_dir, "ta_codegen", "generator")
     subprocess.run(['cargo', *cargo_args], check=True, cwd=codegen_dir)
+
+def run_clippy(root_dir: str):
+    """Lint both Rust crates exactly as the dev nightly's clippy job does.
+
+    `-D warnings` is not optional here. The generator already denies
+    clippy::pedantic on itself, but the remaining lints are warn-level: without
+    the flag a local run prints them and still exits 0, so it would not be the
+    same gate CI applies and a "clean" local run could still fail the nightly.
+
+    Deliberately the dev profile, not --release. Clippy fingerprints differ from
+    a plain build, so `cargo clippy --release` would share target/release with
+    `build.py generate` and force a full rebuild on every alternation between
+    the two. On the dev profile they use separate trees and neither invalidates
+    the other (measured: build/clippy/build alternates in well under a second
+    when nothing changed).
+    """
+    for manifest in ('ta_codegen/generator/Cargo.toml',
+                     'ta_codegen/output/rust/Cargo.toml'):
+        print(f"  Clippy {manifest} ...")
+        subprocess.run(
+            ['cargo', 'clippy', '--all-targets', '--manifest-path', manifest,
+             '--', '-D', 'warnings'],
+            check=True, cwd=root_dir)
+    print("  Clippy clean (generator + generated crate).")
+
 
 def build_servers(root_dir: str):
     """Generate the JSON-RPC language servers and compile them (cargo)."""
@@ -246,7 +275,7 @@ def check_regtest_source_lists(root_dir: str) -> bool:
     return True
 
 # Rust targets run cargo directly (no CMake).
-CARGO_TARGETS = {'ta_codegen', 'generate', 'servers', 'format', 'format-check'}
+CARGO_TARGETS = {'ta_codegen', 'generate', 'servers', 'format', 'format-check', 'clippy'}
 
 # C targets map to a cmake target.
 SIMPLE_TARGETS = {
@@ -264,6 +293,7 @@ TARGET_PREREQS = {
     'generate':     PREREQS_BUILD_CODEGEN,
     'format':       PREREQS_BUILD_CODEGEN,
     'format-check': PREREQS_BUILD_CODEGEN,
+    'clippy':       PREREQS_BUILD_CODEGEN,
     'servers':      PREREQS_BUILD_SERVERS,
     'test':         PREREQS_BUILD_BASIC,
     'regtest':      PREREQS_BUILD_SERVERS,
@@ -338,6 +368,8 @@ def main():
             run_codegen(root_dir, 'run', '--release', '--', 'format')
         elif args.target == 'format-check':
             run_codegen(root_dir, 'run', '--release', '--', 'format', '--check')
+        elif args.target == 'clippy':
+            run_clippy(root_dir)
         else:  # servers
             build_servers(root_dir)
         return
