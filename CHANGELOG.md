@@ -38,6 +38,12 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.
 - (#4,#14) API: `TA_FUNC_UNST_MFI` and `TA_FUNC_UNST_IMI` enum constants removed
 - (#129) API: `TA_FUNC_UNST_ADXR` and `TA_FUNC_UNST_STOCHRSI` enum constants removed.
+- (#144) API: `TA_FUNC_UNST_ALL` is now `0x7FFFFFFF` instead of tracking the number of
+  functions. It previously moved every time an indicator gained an unstable period,
+  silently breaking callers that had recorded the old value; it is now fixed forever.
+  Use the new `TA_FUNC_UNST_COUNT` macro to size a table of unstable periods.
+- (#144) API: `TA_FUNC_UNST_NONE` enum constant removed. It could not be passed in
+  (it is rejected) and was never returned, so it had no use in the public API.
 - (#122) Removed the `ide/` directory (Visual Studio/Xcode/MSVC project files). Use autotools, CMake and vcpkg instead.
 
 ### Deprecated

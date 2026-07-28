@@ -288,7 +288,7 @@ static ErrorNumber do_test( const TA_History *history,
     * across any startIdx/endIdx. This sweep was previously disabled with a
     * "the test might be wrong!?" note, but the test was right: it was catching
     * fix #98 (the unstable period used to grow the summation window). With
-    * that fixed, compare as TA_FUNC_UNST_NONE to enforce the exactness.
+    * that fixed, compare as TA_TEST_UNST_NONE to enforce the exactness.
     */
    testParam.test  = test;
    testParam.close = history->close;
@@ -303,7 +303,7 @@ static ErrorNumber do_test( const TA_History *history,
       errNb = doRangeTestEx(
                            rangeTestFunction,
                            TA_STABLE_EXACT,
-                           TA_FUNC_UNST_NONE,
+                           TA_TEST_UNST_NONE,
                            (void *)&testParam, 1, 0 );
       if( errNb != TA_TEST_PASS )
          return errNb;

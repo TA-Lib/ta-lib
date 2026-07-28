@@ -164,6 +164,16 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
 #define MAX_RANGE_SIZE 252
 #define MAX_RANGE_END  (MAX_RANGE_SIZE-1)
 
+/* "This function has no unstable period" marker for the test tables.
+ *
+ * This was TA_FUNC_UNST_NONE, which the library used to publish. It was
+ * useless in the public contract -- it is rejected as input and the library
+ * never returns a TA_FuncUnstId -- so it was removed, and the only consumer
+ * left was this harness. Any value outside 0..TA_FUNC_UNST_COUNT-1 that is
+ * not the wildcard works; -1 keeps the tables reading as they did.
+ */
+#define TA_TEST_UNST_NONE ((TA_FuncUnstId)-1)
+
 typedef TA_RetCode (*RangeTestFunction)( TA_Integer    startIdx,
                                          TA_Integer    endIdx,
                                          TA_Real      *outputBuffer,

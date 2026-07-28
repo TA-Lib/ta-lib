@@ -336,7 +336,7 @@ static ErrorNumber do_test( const TA_History *history,
       testParam.volume = history->volume;
 
       errNb = doRangeTest( rangeTestFunction,
-                           TA_FUNC_UNST_NONE,
+                           TA_TEST_UNST_NONE,
                            (void *)&testParam, 1,
                            TA_DO_NOT_COMPARE );
       if( errNb != TA_TEST_PASS )

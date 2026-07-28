@@ -282,7 +282,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"HT_TRENDMODE", TA_FUNC_UNST_HT_TRENDMODE},
     /* IMI and MFI are NOT listed here on purpose. Both are finite
      * sliding-window indicators, not recursive/converging ones, so their
-     * range sweep must use the tight TA_FUNC_UNST_NONE tolerance (IMI is
+     * range sweep must use the tight TA_TEST_UNST_NONE tolerance (IMI is
      * bit-exact; MFI drifts only ~1e-13 via its running accumulator), not
      * the loose convergence envelope this map selects. Their TA_FUNC_UNST_*
      * enum entries are retained for ABI but no longer advertise instability.
@@ -320,7 +320,7 @@ static TA_FuncUnstId get_unst_id(const char *funcName)
         if( strcmp(funcName, UNSTABLE_MAP[i].name) == 0 )
             return UNSTABLE_MAP[i].id;
     }
-    return TA_FUNC_UNST_NONE;
+    return TA_TEST_UNST_NONE;
 }
 
 /* ---- Generic CodegenRangeTestParam (Task 6) ---- */
@@ -604,7 +604,7 @@ static int build_json_request(CodegenRangeTestParam *p,
     /* Unstable period (for functions with TA_FUNC_FLG_UNST_PER) */
     if( fi->flags & TA_FUNC_FLG_UNST_PER )
     {
-        int unstPeriod = (p->unstId != TA_FUNC_UNST_NONE)
+        int unstPeriod = (p->unstId != TA_TEST_UNST_NONE)
                          ? (int)TA_GetUnstablePeriod(p->unstId) : 0;
         pos = codegen_appendf(buf, bufSize, pos, ",\"unstablePeriod\":%d", unstPeriod);
     }
@@ -890,7 +890,7 @@ static TA_RetCode codegen_range_generic(
     /* Unstable integer outputs (HT_TRENDMODE) go through the real-path
      * comparator, like the hand tests' FREE_INT_BUFFER conversion. */
     *isOutputInteger = (unsigned int)p->outputIsInteger[outputNb];
-    if( p->outputIsInteger[outputNb] && p->unstId != TA_FUNC_UNST_NONE )
+    if( p->outputIsInteger[outputNb] && p->unstId != TA_TEST_UNST_NONE )
         *isOutputInteger = 0;
 
     /* Get lookback */
@@ -1148,7 +1148,7 @@ static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
         if( strcmp(funcInfo->name, epsilon[i]) == 0 )
             return TA_STABLE_EPSILON;
 
-    if( get_unst_id(funcInfo->name) != TA_FUNC_UNST_NONE )
+    if( get_unst_id(funcInfo->name) != TA_TEST_UNST_NONE )
         return TA_STABLE_CONVERGING;
 
     /* Default: a finite-window function without an unstable period compares at
@@ -2017,7 +2017,7 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * but with no unstable flag this variant no longer runs for it at all. */
     if( params.codegenError == TA_TEST_PASS &&
         (funcInfo->flags & TA_FUNC_FLG_UNST_PER) &&
-        params.unstId != TA_FUNC_UNST_NONE )
+        params.unstId != TA_TEST_UNST_NONE )
     {
         TA_SetUnstablePeriod(params.unstId, 3);
         variants += sweep_run_variant(&params);
@@ -2324,7 +2324,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * unstable dependency (DEMA/TEMA/TRIX/MACD map to EMA in UNSTABLE_MAP —
      * their stream values depend on EMA's ambient K). */
     isUnstable = (funcInfo->flags & TA_FUNC_FLG_UNST_PER) != 0 ||
-                 get_unst_id(funcInfo->name) != TA_FUNC_UNST_NONE;
+                 get_unst_id(funcInfo->name) != TA_TEST_UNST_NONE;
     nvec = stream_build_vectors(funcInfo, vec, vecIsEnum, vecIsMin, &vecOverflow);
 
     /* Silent truncation would quietly stop testing params beyond the cap. */

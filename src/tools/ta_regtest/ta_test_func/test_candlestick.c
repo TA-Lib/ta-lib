@@ -1441,7 +1441,7 @@ static ErrorNumber do_test( const TA_History *history,
    {
 
       errNb = doRangeTest( rangeTestFunction,
-                           TA_FUNC_UNST_NONE,
+                           TA_TEST_UNST_NONE,
                            (void *)&testParam, 1, 0 );
 
       if( testParam.paramHolder )

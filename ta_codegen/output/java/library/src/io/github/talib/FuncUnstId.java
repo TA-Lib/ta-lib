@@ -48,30 +48,43 @@ package io.github.talib;
 
 public enum FuncUnstId {
 	
-	  /* 000 */  Adx,
-	  /* 001 */  Unused1,
-	  /* 002 */  Atr,
-	  /* 003 */  Cmo,
-	  /* 004 */  Dx,
-	  /* 005 */  Ema,
-	  /* 006 */  HtDcPeriod,
-	  /* 007 */  HtDcPhase,
-	  /* 008 */  HtPhasor,
-	  /* 009 */  HtSine,
-	  /* 010 */  HtTrendline,
-	  /* 011 */  HtTrendMode,
-	  /* 012 */  Unused12,
-	  /* 013 */  Kama,
-	  /* 014 */  Mama,
-	  /* 015 */  Unused15,
-	  /* 016 */  MinusDI,
-	  /* 017 */  MinusDM,
-	  /* 018 */  Natr,
-	  /* 019 */  PlusDI,
-	  /* 020 */  PlusDM,
-	  /* 021 */  Rsi,
-	  /* 022 */  Unused22,
-	  /* 023 */  T3,
-                 All,
-                 None
+	  /* 000 */  Adx(0),
+	  /* 001 */  Unused1(1),
+	  /* 002 */  Atr(2),
+	  /* 003 */  Cmo(3),
+	  /* 004 */  Dx(4),
+	  /* 005 */  Ema(5),
+	  /* 006 */  HtDcPeriod(6),
+	  /* 007 */  HtDcPhase(7),
+	  /* 008 */  HtPhasor(8),
+	  /* 009 */  HtSine(9),
+	  /* 010 */  HtTrendline(10),
+	  /* 011 */  HtTrendMode(11),
+	  /* 012 */  Unused12(12),
+	  /* 013 */  Kama(13),
+	  /* 014 */  Mama(14),
+	  /* 015 */  Unused15(15),
+	  /* 016 */  MinusDI(16),
+	  /* 017 */  MinusDM(17),
+	  /* 018 */  Natr(18),
+	  /* 019 */  PlusDI(19),
+	  /* 020 */  PlusDM(20),
+	  /* 021 */  Rsi(21),
+	  /* 022 */  Unused22(22),
+	  /* 023 */  T3(23),
+
+	  /** Wildcard: sets the unstable period for every function at once.
+	   *  Pinned, so adding an indicator can never move it. */
+	             All(0x7FFFFFFF);
+
+	/** Number of function ids — the size of the unstable-period table.
+	 *  Not an id, and not {@link #All}. Mirrors C's TA_FUNC_UNST_COUNT. */
+	public static final int COUNT = 24;
+
+	private final int value;
+
+	FuncUnstId(int value) { this.value = value; }
+
+	/** The C {@code TA_FuncUnstId} value for this id. */
+	public int value() { return value; }
 };

@@ -78,8 +78,16 @@ pub enum FuncUnstId {
     Unused22,
     T3,
     /// Wildcard: set the unstable period for all functions at once.
-    FuncUnstAll,
+    ///
+    /// Pinned at `i32::MAX` rather than one past the last function id, so that
+    /// adding an indicator can never move it. Mirrors C's `TA_FUNC_UNST_ALL`.
+    FuncUnstAll = 0x7FFF_FFFF,
 }
+
+/// Number of [`FuncUnstId`] function ids — the size of the unstable-period
+/// table. Not an id, and not [`FuncUnstId::FuncUnstAll`]. Mirrors C's
+/// `TA_FUNC_UNST_COUNT`.
+pub const FUNC_UNST_COUNT: usize = 24;
 
 /// A single candlestick setting entry.
 #[derive(Debug, Clone, Copy)]
@@ -174,7 +182,7 @@ pub enum CandleSettingType {
 #[derive(Debug, Clone)]
 pub struct Core {
     /// Unstable period for each function identified by [`FuncUnstId`].
-    pub(crate) unstable_period: [i32; FuncUnstId::FuncUnstAll as usize],
+    pub(crate) unstable_period: [i32; FUNC_UNST_COUNT],
     /// Compatibility mode (default: `Compatibility::Default`).
     pub(crate) compatibility: Compatibility,
     /// Candlestick pattern settings.
@@ -187,7 +195,7 @@ impl Core {
     /// Equivalent to `Core::builder().build()`.
     pub fn new() -> Self {
         Self {
-            unstable_period: [0; FuncUnstId::FuncUnstAll as usize],
+            unstable_period: [0; FUNC_UNST_COUNT],
             compatibility: Compatibility::Default,
             candle_settings: CandleSettings::default_settings(),
         }
@@ -220,7 +228,7 @@ impl Core {
     /// no single function, so there is no value to return.
     pub fn get_unstable_period(&self, id: FuncUnstId) -> i32 {
         assert!(
-            (id as usize) < FuncUnstId::FuncUnstAll as usize,
+            (id as usize) < FUNC_UNST_COUNT,
             "{id:?} is a wildcard, not a function with an unstable period"
         );
         self.unstable_period[id as usize]
@@ -275,7 +283,7 @@ impl Default for Core {
 /// ```
 #[derive(Debug, Clone)]
 pub struct CoreBuilder {
-    unstable_period: [i32; FuncUnstId::FuncUnstAll as usize],
+    unstable_period: [i32; FUNC_UNST_COUNT],
     compatibility: Compatibility,
     candle_settings: CandleSettings,
 }
@@ -284,7 +292,7 @@ impl CoreBuilder {
     /// Create a builder initialized with TA-Lib defaults.
     pub fn new() -> Self {
         Self {
-            unstable_period: [0; FuncUnstId::FuncUnstAll as usize],
+            unstable_period: [0; FUNC_UNST_COUNT],
             compatibility: Compatibility::Default,
             candle_settings: CandleSettings::default_settings(),
         }
@@ -296,7 +304,7 @@ impl CoreBuilder {
     /// function at once (mirroring the C `TA_SetUnstablePeriod` wildcard).
     #[must_use]
     pub fn unstable_period(mut self, id: FuncUnstId, period: i32) -> Self {
-        if id as usize == FuncUnstId::FuncUnstAll as usize {
+        if id == FuncUnstId::FuncUnstAll {
             for slot in self.unstable_period.iter_mut() {
                 *slot = period;
             }

@@ -193,9 +193,13 @@ typedef enum {
     TA_FUNC_UNST_RSI          = 21,
     TA_FUNC_UNST_UNUSED_22    = 22,
     TA_FUNC_UNST_T3           = 23,
-    TA_FUNC_UNST_ALL          = 24,
-    TA_FUNC_UNST_NONE         = -1
+    TA_FUNC_UNST_ALL          = 0x7FFFFFFF
 } TA_FuncUnstId;
+
+/* Number of function ids above (NOT an id, and NOT TA_FUNC_UNST_ALL).
+ * Sizes the unstable-period table; grows when an indicator is added.
+ */
+#define TA_FUNC_UNST_COUNT 24
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 

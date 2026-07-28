@@ -803,17 +803,17 @@ static ErrorNumber do_test( const TA_History *history,
          /* MFI is a finite sliding-window sum (SMA-like), not an unstable/
           * recursive function: its running add/subtract accumulator drifts
           * by only ~1e-14, far inside the 1e-9 stable-comparison band. Test
-          * it as TA_FUNC_UNST_NONE to enforce that stability across ranges.
+          * it as TA_TEST_UNST_NONE to enforce that stability across ranges.
           */
          errNb = doRangeTest( rangeTestFunction,
-                              TA_FUNC_UNST_NONE,
+                              TA_TEST_UNST_NONE,
                               (void *)&testParam, 1, 0 );
          if( errNb != TA_TEST_PASS )
             return errNb;
          break;
       case TA_AD_TEST:
          errNb = doRangeTest( rangeTestFunction,
-                              TA_FUNC_UNST_NONE,
+                              TA_TEST_UNST_NONE,
                               (void *)&testParam, 1,
                               TA_DO_NOT_COMPARE );
          if( errNb != TA_TEST_PASS )
