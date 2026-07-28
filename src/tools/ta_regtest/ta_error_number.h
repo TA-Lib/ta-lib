@@ -251,6 +251,10 @@ typedef enum
   TA_INTERNAL_APPEND_FAIL_7         = 719,
   TA_INTERNAL_APPEND_FAIL_8         = 720,
   TA_INTERNAL_APPEND_VACUOUS        = 721,
+  TA_INTERNAL_UNST_BOUND_FAIL_0     = 722,
+  TA_INTERNAL_UNST_BOUND_FAIL_1     = 723,
+  TA_INTERNAL_UNST_BOUND_FAIL_2     = 724,
+  TA_INTERNAL_UNST_BOUND_FAIL_3     = 725,
 
   /* Error code related to CSI data source tests. */
   TA_CSI_ADDDATASOURCE_FAILED    = 800,
@@ -354,6 +358,11 @@ typedef enum
   /* Cross-language boolean-builtin (IS_ZERO family) parity */
   TA_PREDICATE_PARITY_CALL_FAILED  = 1520,
   TA_PREDICATE_PARITY_MISMATCH     = 1521,
+
+  /* Cross-language set_unstable_period wildcard (#144) */
+  TA_UNSTABLE_WILDCARD_CALL_FAILED = 1530,
+  TA_UNSTABLE_WILDCARD_MISMATCH    = 1531,
+  TA_UNSTABLE_WILDCARD_VACUOUS     = 1532,
 
   TA_LAST_VALID_ERROR = 0xFFFF
 } ErrorNumber;

@@ -30,7 +30,7 @@ enum FuncUnstId {
     Adx, Unused1, Atr, Cmo, Dx, Ema,
     HtDcPeriod, HtDcPhase, HtPhasor, HtSine, HtTrendline, HtTrendMode,
     Unused12, Kama, Mama, Unused15, MinusDI, MinusDM,
-    Natr, PlusDI, PlusDM, Rsi, Unused22, T3, None;
+    Natr, PlusDI, PlusDM, Rsi, Unused22, T3, All, None;
 }
 
 enum MAType {
@@ -55,7 +55,7 @@ enum CandleSettingType {
 }
 
 class Core {
-    int[] unstablePeriod = new int[FuncUnstId.values().length];
+    int[] unstablePeriod = new int[FuncUnstId.All.ordinal()];
     CandleSetting[] candleSettings = {
         new CandleSetting(RangeType.RealBody, 10, 1.0),   // BodyLong
         new CandleSetting(RangeType.RealBody, 10, 3.0),   // BodyVeryLong
@@ -185942,7 +185942,7 @@ public class TaCodegenServe {
         else if (json.contains("\"set_unstable_period\"")) {
             int id = jsonInt(json, "id");
             int period = jsonInt(json, "period");
-            if (id == core.unstablePeriod.length) {
+            if (id == FuncUnstId.All.ordinal()) {
                 for (int i = 0; i < core.unstablePeriod.length; i++) core.unstablePeriod[i] = period;
                 return "{\"status\":\"ok\"}"; 
             }

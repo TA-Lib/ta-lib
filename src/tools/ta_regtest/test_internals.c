@@ -82,6 +82,7 @@
 /**** Local functions declarations.    ****/
 static ErrorNumber testCircularBuffer( void );
 static ErrorNumber testBoundedAppend( void );
+static ErrorNumber testUnstablePeriodBounds( void );
 
 static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer );
 
@@ -113,7 +114,120 @@ ErrorNumber test_internals( void )
       return retValue;
    }
 
+   retValue = testUnstablePeriodBounds();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Unstable period bound tests (%d)\n", retValue );
+      return retValue;
+   }
+
    return TA_TEST_PASS; /* Success. */
+}
+
+/* TA_Set/GetUnstablePeriod index TA_Globals->unstablePeriod[id] after a bound
+ * check that used to test only the upper end. TA_FUNC_UNST_NONE is -1 and makes
+ * the enum signed, so every negative id slipped past and read/wrote off the
+ * front of the array -- onto TA_Globals->compatibility, which sits immediately
+ * before it. The setter still returned TA_SUCCESS while silently corrupting the
+ * global (issue #144).
+ *
+ * Asserted here: both sentinels and an arbitrary negative are rejected, the
+ * wildcard still sets every function, and a normal id still round-trips.
+ * Non-vacuity: the setter half is caught by the returned TA_BAD_PARAM, and the
+ * getter half only because compatibility is parked at a non-zero value first --
+ * otherwise an out-of-bounds read of it returns 0 and looks correct.
+ */
+static ErrorNumber testUnstablePeriodBounds( void )
+{
+   ErrorNumber retValue;
+   TA_RetCode retCode;
+   int id;
+
+   retValue = allocLib();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Can't initialize the library\n" );
+      return retValue;
+   }
+
+   /* Park a non-zero value in the field that unstablePeriod[-1] aliases, so the
+    * assertions below can tell a real guard from an accidental zero. Without
+    * this the getter checks pass even with the guard reverted, because a fresh
+    * TA_Initialize leaves compatibility == 0 and an out-of-bounds read of it
+    * looks exactly like the correct answer.
+    */
+   TA_SetCompatibility( TA_COMPATIBILITY_METASTOCK );
+
+   /* Out-of-range ids must be refused, not indexed. */
+   if( TA_SetUnstablePeriod( TA_FUNC_UNST_NONE, 99 ) != TA_BAD_PARAM ||
+       TA_SetUnstablePeriod( (TA_FuncUnstId)-1000000, 99 ) != TA_BAD_PARAM ||
+       TA_SetUnstablePeriod( (TA_FuncUnstId)(TA_FUNC_UNST_ALL+1), 99 ) != TA_BAD_PARAM )
+   {
+      printf( "\nFailed: out-of-range TA_SetUnstablePeriod id not rejected\n" );
+      return TA_INTERNAL_UNST_BOUND_FAIL_0;
+   }
+
+   /* ...and must not have written anything. TA_Globals->compatibility is the
+    * field the id == -1 write landed on.
+    */
+   if( TA_GetCompatibility() != TA_COMPATIBILITY_METASTOCK )
+   {
+      printf( "\nFailed: rejected TA_SetUnstablePeriod id corrupted compatibility\n" );
+      return TA_INTERNAL_UNST_BOUND_FAIL_1;
+   }
+
+   /* Reads of the sentinels are defined as 0, never an out-of-bounds load. With
+    * compatibility == METASTOCK (1) above, an unguarded read of [-1] yields 1
+    * and fails here.
+    */
+   if( TA_GetUnstablePeriod( TA_FUNC_UNST_NONE ) != 0 ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_ALL ) != 0 ||
+       TA_GetUnstablePeriod( (TA_FuncUnstId)-1000000 ) != 0 )
+   {
+      printf( "\nFailed: sentinel TA_GetUnstablePeriod did not read as 0\n" );
+      return TA_INTERNAL_UNST_BOUND_FAIL_2;
+   }
+
+   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+
+   /* The valid range still works: the wildcard sets every function, a single
+    * id round-trips, and neither disturbs compatibility.
+    */
+   retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 7 );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nFailed: TA_SetUnstablePeriod wildcard RetCode = %d\n", retCode );
+      return TA_INTERNAL_UNST_BOUND_FAIL_3;
+   }
+   for( id=0; id < (int)TA_FUNC_UNST_ALL; id++ )
+   {
+      if( TA_GetUnstablePeriod( (TA_FuncUnstId)id ) != 7 )
+      {
+         printf( "\nFailed: TA_SetUnstablePeriod wildcard missed id %d\n", id );
+         return TA_INTERNAL_UNST_BOUND_FAIL_3;
+      }
+   }
+
+   retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_RSI, 3 );
+   if( retCode != TA_SUCCESS ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_RSI ) != 3 ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_EMA ) != 7 ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_ADX ) != 7 ||
+       TA_GetCompatibility() != TA_COMPATIBILITY_DEFAULT )
+   {
+      printf( "\nFailed: single-id TA_SetUnstablePeriod round-trip\n" );
+      return TA_INTERNAL_UNST_BOUND_FAIL_3;
+   }
+
+   /* Pairs with the allocLib() above (as testCircularBuffer does) -- shutting
+    * down zeroes TA_Globals, so the periods set here cannot leak into any
+    * later test.
+    */
+   retValue = freeLib();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   return TA_TEST_PASS;
 }
 
 /* codegen_appendf/codegen_appendc replaced the

@@ -45,6 +45,7 @@
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  123004 RM,MF  Adapt code to work with Visual Studio 2005
  *  071926 MF,CC  Remove dead .NET/Java preprocessor branches (plain C only)
+ *  072726 MF,CC  Bound TA_Set/GetUnstablePeriod below as well as above (#144)
  *
  */
 
@@ -57,7 +58,14 @@ TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
 {
    int i;
 
-   if( id > TA_FUNC_UNST_ALL )
+   /* TA_FUNC_UNST_NONE (-1) forces a signed underlying type for the enum, so a
+    * signed-only "id > ALL" lets every negative id through to
+    * unstablePeriod[id] -- an out-of-bounds write onto the adjacent
+    * TA_Globals->compatibility. Comparing as unsigned wraps negatives past ALL,
+    * so one test covers both ends and stays correct whether the compiler picks
+    * a signed or unsigned type (any width up to unsigned int).
+    */
+   if( (unsigned int)id > (unsigned int)TA_FUNC_UNST_ALL )
       return TA_BAD_PARAM;
 
    if( id == TA_FUNC_UNST_ALL )
@@ -77,7 +85,10 @@ TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
 
 unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id )
 {
-   if( id >= TA_FUNC_UNST_ALL )
+   /* Unsigned compare -- see TA_SetUnstablePeriod above. Both sentinels and any
+    * out-of-range id read as 0 rather than off the end of the array.
+    */
+   if( (unsigned int)id >= (unsigned int)TA_FUNC_UNST_ALL )
 	   return 0;
 
    return TA_Globals->unstablePeriod[id];

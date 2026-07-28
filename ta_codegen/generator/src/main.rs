@@ -815,7 +815,10 @@ fn generate_servers(func_filter: Option<&str>, backend_filter: Option<&str>) {
     // The server FuncUnstId enums are emitted from enums.yaml below; the Rust
     // crate enum is a hand-maintained copy, so guard it here too (this command
     // can run without `generate`, e.g. `build.py servers`).
-    verify_hand_maintained_funcunstid(&enums, &root.join("ta_codegen/input"));
+    // The repo root, not the input dir: the callee appends the template's full
+    // repo-relative path, so an input-relative root made it read a path that
+    // never exists and return silently, leaving this call site inert (#144).
+    verify_hand_maintained_funcunstid(&enums, &root);
 
     for backend in &backends_to_run {
         match backends::get(backend) {
