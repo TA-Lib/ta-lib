@@ -586,7 +586,7 @@ static ErrorNumber test_cmf_range( const TA_History *history )
    param.volume = history->volume;
 
    return doRangeTestEx( cmfRangeTestFunction,
-                         TA_STABLE_EPSILON, TA_FUNC_UNST_NONE,
+                         TA_STABLE_EPSILON, TA_TEST_UNST_NONE,
                          (void *)&param, 1, 0 );
 }
 

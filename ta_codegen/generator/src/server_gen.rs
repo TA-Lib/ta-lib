@@ -145,33 +145,23 @@ fn price_input_to_rust_ref(name: &str) -> Option<&'static str> {
     }
 }
 
-/// Map function name to its unstable period ID (integer value).
-/// Returns None for functions without unstable period.
-/// IDs must match the `TA_FuncUnstId` enum in `include/ta_defs.h`.
-fn func_unst_id(name: &str) -> Option<i32> {
-    match name {
-        "ADX" => Some(0),        // TA_FUNC_UNST_ADX
-        "ATR" => Some(2),        // TA_FUNC_UNST_ATR
-        "CMO" => Some(3),        // TA_FUNC_UNST_CMO
-        "DX" => Some(4),         // TA_FUNC_UNST_DX
-        "EMA" => Some(5),        // TA_FUNC_UNST_EMA
-        "HT_DCPERIOD" => Some(6), // TA_FUNC_UNST_HT_DCPERIOD
-        "HT_DCPHASE" => Some(7), // TA_FUNC_UNST_HT_DCPHASE
-        "HT_PHASOR" => Some(8),  // TA_FUNC_UNST_HT_PHASOR
-        "HT_SINE" => Some(9),    // TA_FUNC_UNST_HT_SINE
-        "HT_TRENDLINE" => Some(10), // TA_FUNC_UNST_HT_TRENDLINE
-        "HT_TRENDMODE" => Some(11), // TA_FUNC_UNST_HT_TRENDMODE
-        "KAMA" => Some(13),      // TA_FUNC_UNST_KAMA
-        "MAMA" => Some(14),      // TA_FUNC_UNST_MAMA
-        "MINUS_DI" => Some(16),  // TA_FUNC_UNST_MINUS_DI
-        "MINUS_DM" => Some(17),  // TA_FUNC_UNST_MINUS_DM
-        "NATR" => Some(18),      // TA_FUNC_UNST_NATR
-        "PLUS_DI" => Some(19),   // TA_FUNC_UNST_PLUS_DI
-        "PLUS_DM" => Some(20),   // TA_FUNC_UNST_PLUS_DM
-        "RSI" => Some(21),       // TA_FUNC_UNST_RSI
-        "T3" => Some(23),        // TA_FUNC_UNST_T3
-        _ => None,
-    }
+/// Map a function name to its unstable-period id, derived from `enums.yaml`.
+///
+/// A function owns the id whose enumerator is `TA_FUNC_UNST_<NAME>` — the whole
+/// naming convention of the enum. This used to be a hardcoded `match` carrying a
+/// second copy of the numbering, which is exactly how ta-lib-python's ids came to
+/// mis-target after the 0.6.0 renumbering; a duplicated table drifts silently
+/// because both the writer and the reader use the same wrong value.
+///
+/// Retired slots (`TA_FUNC_UNST_UNUSED_*`) match no function and yield `None`.
+fn func_unst_id(name: &str, enums: &HashMap<String, EnumDef>) -> Option<i32> {
+    let target = format!("TA_FUNC_UNST_{name}");
+    enums
+        .get("FuncUnstId")?
+        .variants
+        .iter()
+        .find(|v| v.c_name == target)
+        .map(|v| v.value)
 }
 
 /// Replace @@`CORE_XXX`@@ markers in the Java server template with actual
@@ -438,7 +428,7 @@ pub fn generate_c_private_header(funcs: &[FuncDef]) -> String {
 ///
 /// The generated file #includes the generated ta_*.c files and provides
 /// a `main()` loop that reads JSON-RPC from stdin.
-pub fn generate_c_server(funcs: &[FuncDef]) -> String {
+pub fn generate_c_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 
     // Header
@@ -498,10 +488,10 @@ pub fn generate_c_server(funcs: &[FuncDef]) -> String {
     // `#pragma STDC FP_CONTRACT OFF` must not alter indicator contraction.
     // Absent entirely under TA_REF_SERVE (frozen libs have no stream symbols).
     s.push_str("#ifndef TA_REF_SERVE\n#include \"fuzz_data.h\"\n#endif\n\n");
-    s.push_str(&generate_c_stream_verify(funcs));
+    s.push_str(&generate_c_stream_verify(funcs, enums));
 
     // Dispatch function
-    s.push_str(&generate_c_dispatch(funcs));
+    s.push_str(&generate_c_dispatch(funcs, enums));
 
     // Main loop
     s.push_str("int main(void) {\n");
@@ -939,7 +929,7 @@ fn emit_sv_dispatch_precheck(
 /// ma_lookback -> ema_lookback -> EMA). Composed/dispatch functions honor
 /// ambient K only through the callees' lookbacks, so the lookback closure
 /// covers exactly the sub-stream selection space.
-fn collect_pin_ids(func: &FuncDef, funcs: &[FuncDef]) -> Vec<i32> {
+fn collect_pin_ids(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> Vec<i32> {
     let mut pin_ids: Vec<i32> = Vec::new();
     let mut visited: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
     let mut queue: Vec<String> = vec![func.name.to_uppercase()];
@@ -947,7 +937,7 @@ fn collect_pin_ids(func: &FuncDef, funcs: &[FuncDef]) -> Vec<i32> {
         if !visited.insert(cur.clone()) {
             continue;
         }
-        if let Some(id) = func_unst_id(&cur) {
+        if let Some(id) = func_unst_id(&cur, enums) {
             if !pin_ids.contains(&id) {
                 pin_ids.push(id);
             }
@@ -1169,7 +1159,7 @@ fn sv_identity_guard_subst(
 }
 
 #[allow(clippy::too_many_lines)]
-fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
+fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
     s.push_str("/* ---- stream_verify: bitwise batch-vs-stream comparison ---- */\n");
     s.push_str("#ifndef TA_REF_SERVE\n");
@@ -1236,7 +1226,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
         // (DEMA/TEMA/TRIX/MACD call ema_lookback directly; STOCH/STOCHF
         // reach EMA/KAMA/T3 only through ma_lookback — a non-transitive
         // scan left their K-legs running vacuously at ambient K=0).
-        let pin_ids: Vec<i32> = collect_pin_ids(func, funcs);
+        let pin_ids: Vec<i32> = collect_pin_ids(func, funcs, enums);
 
 
         s.push_str(&format!(
@@ -1633,7 +1623,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef]) -> String {
 }
 
 #[allow(clippy::too_many_lines)]
-fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
+fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 
     // Global buffers and preload helper now emitted by generate_c_global_buffers()
@@ -1731,7 +1721,7 @@ fn generate_c_dispatch(funcs: &[FuncDef]) -> String {
         }
 
         // Apply unstable period if provided
-        if let Some(id) = func_unst_id(&func.name) {
+        if let Some(id) = func_unst_id(&func.name, enums) {
             s.push_str(&format!(
                 "        TA_SetUnstablePeriod({id}, json_find_int(json, \"unstablePeriod\"));\n"
             ));
@@ -2140,24 +2130,25 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // FuncUnstId and Compatibility enums (referenced by generated Core methods).
     // FuncUnstId is emitted from enums.yaml (source of truth), 6 names per line,
-    // plus BOTH sentinels, in the shipped enum's order: `All` (the set-all
-    // wildcard, ordinal == the real-variant count == C's TA_FUNC_UNST_ALL) then
-    // `None`. Emitting only `None` here used to put it where `All` belongs, so
-    // the wildcard test below compared against 25 while the driver sends 24 and
-    // "set all" silently wrote the unused sentinel slot instead (#144).
+    // plus the `All` wildcard carrying C's pinned TA_FUNC_UNST_ALL value. The
+    // ordinal cannot express that value, so the constants declare theirs and
+    // COUNT sizes the table (#144).
     s.push_str("enum FuncUnstId {\n");
     {
         let names = func_unst_pascal_names(enums);
         let nchunks = names.chunks(6).count().max(1);
         for (idx, chunk) in names.chunks(6).enumerate() {
             if idx + 1 == nchunks {
-                // Last line carries the two sentinels and the `;`.
-                s.push_str(&format!("    {}, All, None;\n", chunk.join(", ")));
+                // Last line carries the function ids; the wildcard follows.
+                s.push_str(&format!("    {},\n", chunk.join(", ")));
             } else {
                 s.push_str(&format!("    {},\n", chunk.join(", ")));
             }
         }
     }
+    s.push_str("    All;\n");
+    s.push_str(&format!("    static final int COUNT = {};\n", func_unst_pascal_names(enums).len()));
+    s.push_str("    int value() { return this == All ? 0x7FFFFFFF : ordinal(); }\n");
     s.push_str("}\n\n");
 
     // No Compatibility enum: the Java backend constant-folds the Metastock arms
@@ -2198,9 +2189,9 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // Core class — method bodies are inlined by the caller via inline_java_core_methods()
     s.push_str("class Core {\n");
-    // Sized by the wildcard's ordinal, i.e. the real-variant count, so the two
-    // sentinels get no slot -- matching the shipped CoreBuilder (#144).
-    s.push_str("    int[] unstablePeriod = new int[FuncUnstId.All.ordinal()];\n");
+    // Sized by the id count, so the wildcard gets no slot -- matching the
+    // shipped CoreBuilder (#144).
+    s.push_str("    int[] unstablePeriod = new int[FuncUnstId.COUNT];\n");
     // candleSettings[] in CandleSettingType ordinal order. Defaults from
     // TA_RestoreCandleDefaultSettings in ta_global.c. RangeType: 0=RealBody, 1=HighLow, 2=Shadows.
     s.push_str("    CandleSetting[] candleSettings = {\n");
@@ -2410,7 +2401,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            int id = jsonInt(json, \"id\");\n");
     s.push_str("            int period = jsonInt(json, \"period\");\n");
     // FuncUnstId.All is the "set all" sentinel (matches C TA_SetUnstablePeriod).
-    s.push_str("            if (id == FuncUnstId.All.ordinal()) {\n");
+    s.push_str("            if (id == FuncUnstId.All.value()) {\n");
     s.push_str("                for (int i = 0; i < core.unstablePeriod.length; i++) core.unstablePeriod[i] = period;\n");
     s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\"; \n");
     s.push_str("            }\n");
@@ -2549,7 +2540,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         }
 
         // Apply unstable period if provided
-        if let Some(id) = func_unst_id(&func.name) {
+        if let Some(id) = func_unst_id(&func.name, enums) {
             s.push_str(&format!(
                 "        core.unstablePeriod[{id}] = jsonInt(json, \"unstablePeriod\");\n"
             ));
@@ -2753,7 +2744,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 /// library (`ta_codegen_funcs`), reads JSON-RPC requests from stdin, dispatches to
 /// the imported TA functions, and writes JSON responses to stdout.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
-pub fn generate_dotnet_server(funcs: &[FuncDef]) -> String {
+pub fn generate_dotnet_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 
     s.push_str("// Auto-generated JSON-RPC server for ta_codegen .NET output.\n");
@@ -2947,7 +2938,7 @@ pub fn generate_dotnet_server(funcs: &[FuncDef]) -> String {
         }
 
         // Apply unstable period if provided
-        if let Some(id) = func_unst_id(&func.name) {
+        if let Some(id) = func_unst_id(&func.name, enums) {
             s.push_str("                int unstablePeriod = p.TryGetProperty(\"unstablePeriod\", out var _upVal) ? _upVal.GetInt32() : 0;\n");
             s.push_str(&format!(
                 "                TA_SetUnstablePeriod({id}, unstablePeriod);\n"
@@ -3519,7 +3510,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         }
 
         // Apply unstable period if provided
-        if let Some(id) = func_unst_id(&func.name) {
+        if let Some(id) = func_unst_id(&func.name, enums) {
             s.push_str("            if let Some(period) = params[\"unstablePeriod\"].as_i64() {\n");
             s.push_str(&format!(
                 "                apply_unstable_period(core, {id}, period as i32);\n"
@@ -4221,7 +4212,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // Pinned + configured core for this round. `mut` only when something below
     // actually reassigns it (no compatibility leg any more — the Rust crate
     // pins the mode to Default), otherwise rustc warns on every such function.
-    let pin_ids = collect_pin_ids(func, funcs);
+    let pin_ids = collect_pin_ids(func, funcs, enums);
     let cb_mut = if pin_ids.is_empty() && !candle { "" } else { "mut " };
     let _ = writeln!(s, "        let {cb_mut}cb = core.to_builder();");
     for id in pin_ids {
@@ -4612,7 +4603,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
 
     // Fresh, pinned, configured Core for this round (per-instance settings).
     s.push_str("            Core c2 = new Core();\n");
-    for id in collect_pin_ids(func, funcs) {
+    for id in collect_pin_ids(func, funcs, enums) {
         let _ = writeln!(s, "            c2.unstablePeriod[{id}] = svK;");
     }
     if candle {

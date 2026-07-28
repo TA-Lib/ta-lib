@@ -57,8 +57,18 @@ pub fn generate(enums: &HashMap<String, EnumDef>, ta_defs_path: &Path) {
         .get("FuncUnstId")
         .expect("FuncUnstId enum missing from enums.yaml");
 
-    // FuncUnstId carries two trailing sentinels after its variants; render it with
-    // all-comma variants + the appended ALL/NONE lines.
+    // FuncUnstId carries one trailing sentinel after its variants.
+    //
+    // TA_FUNC_UNST_ALL is pinned at INT_MAX rather than sitting immediately above
+    // the last function id. Deriving it from the variant count meant every new
+    // unstable indicator silently moved it, breaking any wrapper that had recorded
+    // the old value -- the same class of break as the 0.6.0 renumbering. At INT_MAX
+    // it never moves and never collides, the id space below it stays free to grow
+    // contiguously, and the enum cannot be narrowed below 4 bytes by -fshort-enums.
+    //
+    // The count that used to be spelled TA_FUNC_UNST_ALL is emitted separately as
+    // TA_FUNC_UNST_COUNT -- a macro, not an enumerator, so it can never be mistaken
+    // for an id. It is what sizes unstablePeriod[] and bounds the range checks.
     let fu_width = fu.variants.iter().map(|v| v.c_name.len()).max().unwrap_or(0);
     let mut fu_block = String::from("typedef enum {\n");
     for (i, v) in fu.variants.iter().enumerate() {
@@ -70,9 +80,12 @@ pub fn generate(enums: &HashMap<String, EnumDef>, ta_defs_path: &Path) {
         );
         fu_block.push_str(&enum_line(&v.c_name, v.value, fu_width, ","));
     }
-    fu_block.push_str(&enum_line("TA_FUNC_UNST_ALL", i32::try_from(fu.variants.len()).unwrap(), fu_width, ","));
-    fu_block.push_str(&format!("    {:<fu_width$} = -1\n", "TA_FUNC_UNST_NONE"));
-    fu_block.push_str("} TA_FuncUnstId;\n");
+    fu_block.push_str(&format!("    {:<fu_width$} = 0x7FFFFFFF\n", "TA_FUNC_UNST_ALL"));
+    fu_block.push_str("} TA_FuncUnstId;\n\n");
+    fu_block.push_str("/* Number of function ids above (NOT an id, and NOT TA_FUNC_UNST_ALL).\n");
+    fu_block.push_str(" * Sizes the unstable-period table; grows when an indicator is added.\n");
+    fu_block.push_str(" */\n");
+    fu_block.push_str(&format!("#define TA_FUNC_UNST_COUNT {}\n", fu.variants.len()));
 
     // TA_MAType then TA_FuncUnstId, separated by a blank line.
     let block = format!("\n{}\n{}", render_enum(ma, "TA_MAType"), fu_block);

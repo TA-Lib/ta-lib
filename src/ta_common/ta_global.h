@@ -104,7 +104,7 @@ typedef struct
    TA_Compatibility compatibility;
 
    /* For handling the unstable period of some TA function. */
-   unsigned int unstablePeriod[TA_FUNC_UNST_ALL];
+   unsigned int unstablePeriod[TA_FUNC_UNST_COUNT];
 
    /* For handling the candlestick global settings */
    TA_CandleSetting candleSettings[TA_AllCandleSettings];

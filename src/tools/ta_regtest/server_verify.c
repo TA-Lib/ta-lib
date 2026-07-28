@@ -84,7 +84,7 @@ static TA_FuncUnstId sv_func_unst_id(const char *name)
         if( strcmp(UNSTABLE_MAP[i].name, name) == 0 )
             return UNSTABLE_MAP[i].id;
     }
-    return TA_FUNC_UNST_NONE;
+    return TA_TEST_UNST_NONE;
 }
 
 /* ---- Minimal JSON helpers ----
@@ -114,7 +114,7 @@ static const PriceComponent PRICE_COMPONENTS[] = {
  * state syncs — a shared cache would let the first pipe consume the
  * "changed" delta and leave the other servers stale.
  */
-static unsigned int g_lastUnstPeriods[SV_MAX_PIPES][TA_FUNC_UNST_ALL];
+static unsigned int g_lastUnstPeriods[SV_MAX_PIPES][TA_FUNC_UNST_COUNT];
 static int          g_unstInitialized[SV_MAX_PIPES];
 
 /* ---- Init / shutdown ---- */
@@ -187,7 +187,7 @@ static ErrorNumber sync_unstable_periods(int pipeIdx)
     }
 
     /* Only sync IDs that have changed. */
-    for( int id = 0; id < (int)TA_FUNC_UNST_ALL; id++ )
+    for( int id = 0; id < TA_FUNC_UNST_COUNT; id++ )
     {
         unsigned int curPeriod = TA_GetUnstablePeriod((TA_FuncUnstId)id);
         if( curPeriod != g_lastUnstPeriods[pipeIdx][id] )
@@ -359,7 +359,7 @@ static int build_request(const char *funcName,
     if( fi->flags & TA_FUNC_FLG_UNST_PER )
     {
         TA_FuncUnstId unstId = sv_func_unst_id(funcName);
-        int unstPeriod = (unstId != TA_FUNC_UNST_NONE)
+        int unstPeriod = (unstId != TA_TEST_UNST_NONE)
                          ? (int)TA_GetUnstablePeriod(unstId) : 0;
         pos = codegen_appendf(g_reqBuf, SV_BUF_SIZE, pos,
                         ",\"unstablePeriod\":%d", unstPeriod);

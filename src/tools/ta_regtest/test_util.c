@@ -515,7 +515,7 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
  * integerTolerance). This reproduces the historical tolerance tiers exactly for
  * the hand-written call sites, which express intent through the unstId they pass:
  *   - integerTolerance == TA_DO_NOT_COMPARE -> TA_STABLE_SKIP
- *   - unstId != TA_FUNC_UNST_NONE           -> TA_STABLE_CONVERGING
+ *   - unstId != TA_TEST_UNST_NONE           -> TA_STABLE_CONVERGING
  *   - otherwise                             -> TA_STABLE_EPSILON
  * It never yields TA_STABLE_EXACT: a legacy site asking for the tight (~1e-9)
  * comparison is a safe superset of bit-exact, so nothing regresses. Sites that
@@ -527,7 +527,7 @@ static TA_RangeStability classify_range_stability( TA_FuncUnstId unstId,
 {
    if( integerTolerance == TA_DO_NOT_COMPARE )
       return TA_STABLE_SKIP;
-   if( unstId != TA_FUNC_UNST_NONE )
+   if( unstId != TA_TEST_UNST_NONE )
       return TA_STABLE_CONVERGING;
    return TA_STABLE_EPSILON;
 }
@@ -565,13 +565,13 @@ ErrorNumber doRangeTestEx( RangeTestFunction testFunction,
     *  - SKIP is exempt: an accumulation seeded at startIdx may still legitimately
     *    sweep an internal EMA's unstable period while its values are left
     *    uncompared (e.g. ADOSC passes unstId=EMA with TA_DO_NOT_COMPARE). */
-   if( stability == TA_STABLE_CONVERGING && unstId == TA_FUNC_UNST_NONE )
+   if( stability == TA_STABLE_CONVERGING && unstId == TA_TEST_UNST_NONE )
    {
       printf( "Fail: doRangeTest CONVERGING class has no unstable-period id\n" );
       return TA_TESTUTIL_DRT_STABILITY_MISMATCH;
    }
    if( (stability == TA_STABLE_EXACT || stability == TA_STABLE_EPSILON)
-       && unstId != TA_FUNC_UNST_NONE )
+       && unstId != TA_TEST_UNST_NONE )
    {
       printf( "Fail: doRangeTest %s class carries a non-NONE unstable-period id "
               "(unstId=%d). The function is classified finite-window but also maps "
@@ -648,7 +648,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
       return TA_TESTUTIL_DRT_ALLOC_ERR;
    }
 
-   if( unstId != TA_FUNC_UNST_NONE )
+   if( unstId != TA_TEST_UNST_NONE )
    {
       /* Caller wish to test for a range of unstable
        * period values. But the reference is calculated
@@ -701,7 +701,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
       /* When a function has an unstable period, verify some
        * unstable period between 0 and MAX_RANGE_SIZE.
        */
-      if( unstId == TA_FUNC_UNST_NONE )
+      if( unstId == TA_TEST_UNST_NONE )
       {
          errNb = doRangeTestFixSize( testFunction, opaqueData,
                                      refOutBeg, refOutNbElement, refLookback,

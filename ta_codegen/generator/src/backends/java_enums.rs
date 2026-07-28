@@ -30,17 +30,32 @@ pub fn generate(enums: &HashMap<String, EnumDef>, path: &Path) {
         .unwrap_or_else(|| panic!("'{ENUM_DECL}' missing in {}", path.display()));
     let head = &existing[..split];
 
-    // Each variant ordinal IS the enum ordinal the C/Java backends index
-    // unstablePeriod[] by; `All` follows the last variant (so it sizes the array)
-    // and `None` is the trailing no-index sentinel.
+    // Each variant's ordinal IS the index into unstablePeriod[], and for the
+    // function ids the ordinal equals the C value. `All` is the one exception:
+    // it carries C's pinned 0x7FFFFFFF, which no ordinal can express, so every
+    // constant declares its value explicitly and `value()` exposes it.
+    // `COUNT` sizes the table -- it is what `All` used to be worth.
     let mut body = String::from("public enum FuncUnstId {\n");
     body.push('\t');
     body.push('\n');
     for (i, v) in fu.variants.iter().enumerate() {
-        body.push_str(&format!("\t  /* {i:03} */  {},\n", v.pascal_name));
+        body.push_str(&format!("\t  /* {i:03} */  {}({i}),\n", v.pascal_name));
     }
-    body.push_str("                 All,\n");
-    body.push_str("                 None\n");
+    body.push_str("\n");
+    body.push_str("\t  /** Wildcard: sets the unstable period for every function at once.\n");
+    body.push_str("\t   *  Pinned, so adding an indicator can never move it. */\n");
+    body.push_str("\t             All(0x7FFFFFFF);\n");
+    body.push_str("\n");
+    body.push_str("\t/** Number of function ids — the size of the unstable-period table.\n");
+    body.push_str("\t *  Not an id, and not {@link #All}. Mirrors C's TA_FUNC_UNST_COUNT. */\n");
+    body.push_str(&format!("\tpublic static final int COUNT = {};\n", fu.variants.len()));
+    body.push_str("\n");
+    body.push_str("\tprivate final int value;\n");
+    body.push_str("\n");
+    body.push_str("\tFuncUnstId(int value) { this.value = value; }\n");
+    body.push_str("\n");
+    body.push_str("\t/** The C {@code TA_FuncUnstId} value for this id. */\n");
+    body.push_str("\tpublic int value() { return value; }\n");
     body.push_str("};\n");
 
     super::write_if_changed(path, &format!("{head}{body}"), "FuncUnstId.java", fu.variants.len());

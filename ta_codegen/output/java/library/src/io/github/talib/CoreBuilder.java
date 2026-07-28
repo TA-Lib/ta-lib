@@ -71,7 +71,7 @@ public class CoreBuilder {
 
    /** A builder seeded with TA-Lib's defaults. */
    public CoreBuilder() {
-      this.unstablePeriod = new int[FuncUnstId.All.ordinal()];
+      this.unstablePeriod = new int[FuncUnstId.COUNT];
       // CandleSetting is immutable, so the default instances are shared, not copied.
       this.candleSettings = Core.TA_CandleDefaultSettings.clone();
    }
@@ -88,12 +88,8 @@ public class CoreBuilder {
     * <p>Passing {@link FuncUnstId#All} sets it for <i>every</i> function at once,
     * mirroring the C {@code TA_SetUnstablePeriod} wildcard.
     *
-    * <p>{@link FuncUnstId#None} is not a valid target — it is the "no unstable
-    * period" marker, not a function.
-    *
     * @throws NullPointerException if {@code id} is null
-    * @throws IllegalArgumentException if {@code period} is negative, or if
-    *         {@code id} is {@link FuncUnstId#None}
+    * @throws IllegalArgumentException if {@code period} is negative
     */
    public CoreBuilder unstablePeriod(FuncUnstId id, int period) {
       if (id == null) {
@@ -101,10 +97,6 @@ public class CoreBuilder {
       }
       if (period < 0) {
          throw new IllegalArgumentException("unstablePeriod must be >= 0, got " + period);
-      }
-      if (id.ordinal() > FuncUnstId.All.ordinal()) {
-         throw new IllegalArgumentException(
-            id + " is a sentinel, not a function with an unstable period");
       }
       if (id == FuncUnstId.All) {
          java.util.Arrays.fill(unstablePeriod, period);

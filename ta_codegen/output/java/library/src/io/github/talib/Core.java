@@ -221,18 +221,18 @@ public class Core {
     * {@link CoreBuilder#unstablePeriod(FuncUnstId, int)}.
     *
     * @throws NullPointerException if {@code id} is null
-    * @throws IllegalArgumentException if {@code id} is a sentinel
-    *         ({@link FuncUnstId#All} / {@link FuncUnstId#None}) rather than a
-    *         function — {@code All} is a write-side wildcard with no single value
+    * @throws IllegalArgumentException if {@code id} is {@link FuncUnstId#All} —
+    *         a write-side wildcard naming no single function, so there is no
+    *         value to return
     */
    public int getUnstablePeriod(FuncUnstId id)
    {
       if (id == null) {
          throw new NullPointerException("id");
       }
-      if (id.ordinal() >= FuncUnstId.All.ordinal()) {
+      if (id == FuncUnstId.All) {
          throw new IllegalArgumentException(
-            id + " is a sentinel, not a function with an unstable period");
+            id + " is a wildcard, not a function with an unstable period");
       }
       return unstablePeriod[id.ordinal()];
    }

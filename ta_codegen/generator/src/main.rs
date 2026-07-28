@@ -925,6 +925,19 @@ fn verify_hand_maintained_funcunstid(
         .filter(|s| !s.is_empty())
         .collect();
 
+    // FUNC_UNST_COUNT sizes the crate's unstable-period array. The template is
+    // copied verbatim, so the literal cannot be interpolated -- check it here
+    // instead, or adding an indicator would leave the array one slot short.
+    let want_count = format!("pub const FUNC_UNST_COUNT: usize = {};", fu.variants.len());
+    if !src.contains(&want_count) {
+        eprintln!(
+            "Error: FUNC_UNST_COUNT in {} does not match enums.yaml.\n  expected: {}",
+            path.display(),
+            want_count
+        );
+        std::process::exit(1);
+    }
+
     if found != expected {
         eprintln!(
             "Error: the hand-maintained Rust FuncUnstId enum has drifted from \

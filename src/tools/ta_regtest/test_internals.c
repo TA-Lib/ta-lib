@@ -83,6 +83,7 @@
 static ErrorNumber testCircularBuffer( void );
 static ErrorNumber testBoundedAppend( void );
 static ErrorNumber testUnstablePeriodBounds( void );
+static ErrorNumber testEnumValueContract( void );
 
 static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer );
 
@@ -121,11 +122,122 @@ ErrorNumber test_internals( void )
       return retValue;
    }
 
+   retValue = testEnumValueContract();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Public enum value contract (%d)\n", retValue );
+      return retValue;
+   }
+
    return TA_TEST_PASS; /* Success. */
 }
 
+/* The published value of every enumerator that has ever shipped, pinned.
+ *
+ * TA_MAType and TA_FuncUnstId are ABI: wrappers record these numbers and pass
+ * them back as plain integers, so renumbering one silently re-points a caller at
+ * a different function. That is not hypothetical -- TA_FUNC_UNST_IMI was once
+ * inserted mid-enum, shifting every id above it, and ta-lib-python still targets
+ * the pre-0.6.0 numbering as a result. Nothing detected it, because both ends of
+ * a set/get pair use the same wrong id and round-trip perfectly.
+ *
+ * The contract is APPEND-ONLY: a new indicator adds a row here and to
+ * enums.yaml; an existing row must never change. The literals are deliberately
+ * hardcoded -- comparing an enumerator to itself would prove nothing.
+ *
+ * This pins C only, which is sufficient: every other surface (the Rust crate,
+ * the shipped Java enum, all four servers) is generated from the same
+ * enums.yaml that generates this header, and the generator already fails if the
+ * hand-maintained Rust copy drifts from it.
+ */
+static ErrorNumber testEnumValueContract( void )
+{
+   typedef struct { const char *name; int shipped; int current; } EnumPin;
+
+   /* Retired ids keep their slot forever (removing one renumbers the rest). */
+   static const EnumPin unstPins[] = {
+      { "TA_FUNC_UNST_ADX",           0, TA_FUNC_UNST_ADX },
+      { "TA_FUNC_UNST_UNUSED_1",      1, TA_FUNC_UNST_UNUSED_1 },
+      { "TA_FUNC_UNST_ATR",           2, TA_FUNC_UNST_ATR },
+      { "TA_FUNC_UNST_CMO",           3, TA_FUNC_UNST_CMO },
+      { "TA_FUNC_UNST_DX",            4, TA_FUNC_UNST_DX },
+      { "TA_FUNC_UNST_EMA",           5, TA_FUNC_UNST_EMA },
+      { "TA_FUNC_UNST_HT_DCPERIOD",   6, TA_FUNC_UNST_HT_DCPERIOD },
+      { "TA_FUNC_UNST_HT_DCPHASE",    7, TA_FUNC_UNST_HT_DCPHASE },
+      { "TA_FUNC_UNST_HT_PHASOR",     8, TA_FUNC_UNST_HT_PHASOR },
+      { "TA_FUNC_UNST_HT_SINE",       9, TA_FUNC_UNST_HT_SINE },
+      { "TA_FUNC_UNST_HT_TRENDLINE", 10, TA_FUNC_UNST_HT_TRENDLINE },
+      { "TA_FUNC_UNST_HT_TRENDMODE", 11, TA_FUNC_UNST_HT_TRENDMODE },
+      { "TA_FUNC_UNST_UNUSED_12",    12, TA_FUNC_UNST_UNUSED_12 },
+      { "TA_FUNC_UNST_KAMA",         13, TA_FUNC_UNST_KAMA },
+      { "TA_FUNC_UNST_MAMA",         14, TA_FUNC_UNST_MAMA },
+      { "TA_FUNC_UNST_UNUSED_15",    15, TA_FUNC_UNST_UNUSED_15 },
+      { "TA_FUNC_UNST_MINUS_DI",     16, TA_FUNC_UNST_MINUS_DI },
+      { "TA_FUNC_UNST_MINUS_DM",     17, TA_FUNC_UNST_MINUS_DM },
+      { "TA_FUNC_UNST_NATR",         18, TA_FUNC_UNST_NATR },
+      { "TA_FUNC_UNST_PLUS_DI",      19, TA_FUNC_UNST_PLUS_DI },
+      { "TA_FUNC_UNST_PLUS_DM",      20, TA_FUNC_UNST_PLUS_DM },
+      { "TA_FUNC_UNST_RSI",          21, TA_FUNC_UNST_RSI },
+      { "TA_FUNC_UNST_UNUSED_22",    22, TA_FUNC_UNST_UNUSED_22 },
+      { "TA_FUNC_UNST_T3",           23, TA_FUNC_UNST_T3 },
+      /* Pinned at INT_MAX so adding an indicator can never move it (#144). */
+      { "TA_FUNC_UNST_ALL",  0x7FFFFFFF, TA_FUNC_UNST_ALL }
+   };
+
+   static const EnumPin maPins[] = {
+      { "TA_MAType_SMA",       0, TA_MAType_SMA },
+      { "TA_MAType_EMA",       1, TA_MAType_EMA },
+      { "TA_MAType_WMA",       2, TA_MAType_WMA },
+      { "TA_MAType_DEMA",      3, TA_MAType_DEMA },
+      { "TA_MAType_TEMA",      4, TA_MAType_TEMA },
+      { "TA_MAType_TRIMA",     5, TA_MAType_TRIMA },
+      { "TA_MAType_KAMA",      6, TA_MAType_KAMA },
+      { "TA_MAType_MAMA",      7, TA_MAType_MAMA },
+      { "TA_MAType_T3",        8, TA_MAType_T3 },
+      { "TA_MAType_HMA",       9, TA_MAType_HMA },
+      { "TA_MAType_DISABLED", 10, TA_MAType_DISABLED }
+   };
+
+   unsigned int i;
+
+   for( i=0; i < sizeof(unstPins)/sizeof(unstPins[0]); i++ )
+   {
+      if( unstPins[i].current != unstPins[i].shipped )
+      {
+         printf( "\nFailed: %s is %d but shipped as %d. These values are ABI --\n"
+                 "        wrappers pass them back as integers. Append new ids, never renumber.\n",
+                 unstPins[i].name, unstPins[i].current, unstPins[i].shipped );
+         return TA_INTERNAL_ENUM_CONTRACT_FAIL_0;
+      }
+   }
+
+   for( i=0; i < sizeof(maPins)/sizeof(maPins[0]); i++ )
+   {
+      if( maPins[i].current != maPins[i].shipped )
+      {
+         printf( "\nFailed: %s is %d but shipped as %d. These values are ABI --\n"
+                 "        they are the optInMAType a caller passes. Append, never renumber.\n",
+                 maPins[i].name, maPins[i].current, maPins[i].shipped );
+         return TA_INTERNAL_ENUM_CONTRACT_FAIL_1;
+      }
+   }
+
+   /* The count sizes the unstable-period table. It may grow as indicators are
+    * added, but must never shrink below what has shipped, and must leave room
+    * for every pinned id above (all but the ALL wildcard).
+    */
+   if( TA_FUNC_UNST_COUNT < (int)(sizeof(unstPins)/sizeof(unstPins[0])) - 1 )
+   {
+      printf( "\nFailed: TA_FUNC_UNST_COUNT is %d, below the %d ids already shipped\n",
+              TA_FUNC_UNST_COUNT, (int)(sizeof(unstPins)/sizeof(unstPins[0])) - 1 );
+      return TA_INTERNAL_ENUM_CONTRACT_FAIL_2;
+   }
+
+   return TA_TEST_PASS;
+}
+
 /* TA_Set/GetUnstablePeriod index TA_Globals->unstablePeriod[id] after a bound
- * check that used to test only the upper end. TA_FUNC_UNST_NONE is -1 and makes
+ * check that used to test only the upper end. TA_TEST_UNST_NONE is -1 and makes
  * the enum signed, so every negative id slipped past and read/wrote off the
  * front of the array -- onto TA_Globals->compatibility, which sits immediately
  * before it. The setter still returned TA_SUCCESS while silently corrupting the
@@ -159,9 +271,9 @@ static ErrorNumber testUnstablePeriodBounds( void )
    TA_SetCompatibility( TA_COMPATIBILITY_METASTOCK );
 
    /* Out-of-range ids must be refused, not indexed. */
-   if( TA_SetUnstablePeriod( TA_FUNC_UNST_NONE, 99 ) != TA_BAD_PARAM ||
+   if( TA_SetUnstablePeriod( TA_TEST_UNST_NONE, 99 ) != TA_BAD_PARAM ||
        TA_SetUnstablePeriod( (TA_FuncUnstId)-1000000, 99 ) != TA_BAD_PARAM ||
-       TA_SetUnstablePeriod( (TA_FuncUnstId)(TA_FUNC_UNST_ALL+1), 99 ) != TA_BAD_PARAM )
+       TA_SetUnstablePeriod( (TA_FuncUnstId)TA_FUNC_UNST_COUNT, 99 ) != TA_BAD_PARAM )
    {
       printf( "\nFailed: out-of-range TA_SetUnstablePeriod id not rejected\n" );
       return TA_INTERNAL_UNST_BOUND_FAIL_0;
@@ -180,7 +292,7 @@ static ErrorNumber testUnstablePeriodBounds( void )
     * compatibility == METASTOCK (1) above, an unguarded read of [-1] yields 1
     * and fails here.
     */
-   if( TA_GetUnstablePeriod( TA_FUNC_UNST_NONE ) != 0 ||
+   if( TA_GetUnstablePeriod( TA_TEST_UNST_NONE ) != 0 ||
        TA_GetUnstablePeriod( TA_FUNC_UNST_ALL ) != 0 ||
        TA_GetUnstablePeriod( (TA_FuncUnstId)-1000000 ) != 0 )
    {
@@ -199,7 +311,7 @@ static ErrorNumber testUnstablePeriodBounds( void )
       printf( "\nFailed: TA_SetUnstablePeriod wildcard RetCode = %d\n", retCode );
       return TA_INTERNAL_UNST_BOUND_FAIL_3;
    }
-   for( id=0; id < (int)TA_FUNC_UNST_ALL; id++ )
+   for( id=0; id < TA_FUNC_UNST_COUNT; id++ )
    {
       if( TA_GetUnstablePeriod( (TA_FuncUnstId)id ) != 7 )
       {

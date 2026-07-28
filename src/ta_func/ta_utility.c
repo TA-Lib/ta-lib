@@ -46,6 +46,7 @@
  *  123004 RM,MF  Adapt code to work with Visual Studio 2005
  *  071926 MF,CC  Remove dead .NET/Java preprocessor branches (plain C only)
  *  072726 MF,CC  Bound TA_Set/GetUnstablePeriod below as well as above (#144)
+ *  072826 MF,CC  Range-check against TA_FUNC_UNST_COUNT; ALL is now INT_MAX
  *
  */
 
@@ -58,19 +59,20 @@ TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
 {
    int i;
 
-   /* TA_FUNC_UNST_NONE (-1) forces a signed underlying type for the enum, so a
-    * signed-only "id > ALL" lets every negative id through to
-    * unstablePeriod[id] -- an out-of-bounds write onto the adjacent
-    * TA_Globals->compatibility. Comparing as unsigned wraps negatives past ALL,
-    * so one test covers both ends and stays correct whether the compiler picks
-    * a signed or unsigned type (any width up to unsigned int).
+   /* The wildcard is INT_MAX, far above every id, so it is tested by value and
+    * everything else must land inside the table. The unsigned compare wraps a
+    * negative id past the count instead of indexing behind the array -- an
+    * out-of-bounds write onto the adjacent TA_Globals->compatibility (#144) --
+    * and stays correct whether the compiler gives the enum a signed or unsigned
+    * underlying type (any width up to unsigned int).
     */
-   if( (unsigned int)id > (unsigned int)TA_FUNC_UNST_ALL )
+   if( id != TA_FUNC_UNST_ALL &&
+       (unsigned int)id >= (unsigned int)TA_FUNC_UNST_COUNT )
       return TA_BAD_PARAM;
 
    if( id == TA_FUNC_UNST_ALL )
    {
-      for( i=0; i < (int)TA_FUNC_UNST_ALL; i++ )
+      for( i=0; i < TA_FUNC_UNST_COUNT; i++ )
 	  {
          TA_Globals->unstablePeriod[i] = unstablePeriod;
 	  }
@@ -85,10 +87,11 @@ TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
 
 unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id )
 {
-   /* Unsigned compare -- see TA_SetUnstablePeriod above. Both sentinels and any
-    * out-of-range id read as 0 rather than off the end of the array.
+   /* Unsigned compare -- see TA_SetUnstablePeriod above. The wildcard names no
+    * single function, so it and any out-of-range id read as 0 rather than off
+    * the end of the array.
     */
-   if( (unsigned int)id >= (unsigned int)TA_FUNC_UNST_ALL )
+   if( (unsigned int)id >= (unsigned int)TA_FUNC_UNST_COUNT )
 	   return 0;
 
    return TA_Globals->unstablePeriod[id];

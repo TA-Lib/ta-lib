@@ -119,7 +119,7 @@ public class CoreApiTest {
         for (Core core : new Core[] { Core.DEFAULT, new Core(), Core.builder().build() }) {
             boolean allZero = true;
             for (FuncUnstId id : FuncUnstId.values()) {
-                if (id.ordinal() >= FuncUnstId.All.ordinal()) {
+                if (id == FuncUnstId.All) {
                     continue;   // All / None are sentinels, not functions
                 }
                 if (core.getUnstablePeriod(id) != 0) {
@@ -142,7 +142,7 @@ public class CoreApiTest {
         Core core = Core.builder().unstablePeriod(FuncUnstId.All, 7).build();
         boolean everySlot = true;
         for (FuncUnstId id : FuncUnstId.values()) {
-            if (id.ordinal() < FuncUnstId.All.ordinal() && core.getUnstablePeriod(id) != 7) {
+            if (id != FuncUnstId.All && core.getUnstablePeriod(id) != 7) {
                 everySlot = false;
             }
         }
@@ -309,14 +309,10 @@ public class CoreApiTest {
         checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.getUnstablePeriod(FuncUnstId.All),
             "FuncUnstId.All has no single value to read -> IAE");
-        checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.getUnstablePeriod(FuncUnstId.None),
-            "FuncUnstId.None is not a function -> IAE");
         // The setter accepts All (set-all wildcard) but must reject None the same
         // way the getter does, rather than indexing off the end of the array.
-        checkThrows(IllegalArgumentException.class,
-            () -> Core.builder().unstablePeriod(FuncUnstId.None, 5),
-            "FuncUnstId.None as a setter target -> IAE");
+        check(FuncUnstId.All.value() == 0x7FFFFFFF && FuncUnstId.COUNT == FuncUnstId.values().length - 1,
+            "FuncUnstId.All is pinned at 0x7FFFFFFF and COUNT covers every function id");
     }
 
     /**

@@ -397,6 +397,6 @@ static ErrorNumber test_cmou_range( const TA_History *history )
    param.close  = history->close;
 
    return doRangeTestEx( cmouRangeTestFunction,
-                         TA_STABLE_EPSILON, TA_FUNC_UNST_NONE,
+                         TA_STABLE_EPSILON, TA_TEST_UNST_NONE,
                          (void *)&param, 1, 0 );
 }

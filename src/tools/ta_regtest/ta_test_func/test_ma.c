@@ -845,7 +845,7 @@ static ErrorNumber do_test_ma( const TA_History *history,
          break;
       default:
          errNb = doRangeTest( rangeTestFunction,
-                              TA_FUNC_UNST_NONE,
+                              TA_TEST_UNST_NONE,
                               (void *)&testParam, 1, 0 );
       }
 
