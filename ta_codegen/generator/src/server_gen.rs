@@ -156,8 +156,12 @@ fn price_input_to_rust_ref(name: &str) -> Option<&'static str> {
 /// Retired slots (`TA_FUNC_UNST_UNUSED_*`) match no function and yield `None`.
 fn func_unst_id(name: &str, enums: &HashMap<String, EnumDef>) -> Option<i32> {
     let target = format!("TA_FUNC_UNST_{name}");
+    // Expect, not `?`: an absent enum would hand every function `None`, emitting a
+    // server with no unstable-period wiring at all and exiting 0. The C backend has
+    // no other use for `enums`, so nothing else would catch it.
     enums
-        .get("FuncUnstId")?
+        .get("FuncUnstId")
+        .expect("FuncUnstId enum missing from enums.yaml")
         .variants
         .iter()
         .find(|v| v.c_name == target)
@@ -2148,7 +2152,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     }
     s.push_str("    All;\n");
     s.push_str(&format!("    static final int COUNT = {};\n", func_unst_pascal_names(enums).len()));
-    s.push_str("    int value() { return this == All ? 0x7FFFFFFF : ordinal(); }\n");
+    s.push_str("    int value() { return this == All ? 65535 : ordinal(); }\n");
     s.push_str("}\n\n");
 
     // No Compatibility enum: the Java backend constant-folds the Metastock arms

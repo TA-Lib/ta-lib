@@ -2584,8 +2584,8 @@ static ErrorNumber test_predicate_parity(CodegenPipe *cp, const CodegenLanguage 
  * reset to *zero*, which a server that mishandles the sentinel answers
  * identically because its array is already zero. The Java server did mishandle
  * it — it sized `unstablePeriod` by the enum's length (a slot per sentinel) and
- * compared the wildcard against that length, so the driver's id 24 landed in an
- * unread slot and "set all" was inert.
+ * compared the wildcard against that length, so the id the driver sent landed in
+ * an unread slot and "set all" was inert.
  *
  * ADOSC is the probe because it is the rare shape that can observe the server's
  * *stored* state: it carries no `unstablePeriod` request field of its own (so

@@ -75,7 +75,7 @@ public enum FuncUnstId {
 
 	  /** Wildcard: sets the unstable period for every function at once.
 	   *  Pinned, so adding an indicator can never move it. */
-	             All(0x7FFFFFFF);
+	             All(65535);
 
 	/** Number of function ids — the size of the unstable-period table.
 	 *  Not an id, and not {@link #All}. Mirrors C's TA_FUNC_UNST_COUNT. */

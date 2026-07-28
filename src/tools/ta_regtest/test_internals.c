@@ -180,8 +180,8 @@ static ErrorNumber testEnumValueContract( void )
       { "TA_FUNC_UNST_RSI",          21, TA_FUNC_UNST_RSI },
       { "TA_FUNC_UNST_UNUSED_22",    22, TA_FUNC_UNST_UNUSED_22 },
       { "TA_FUNC_UNST_T3",           23, TA_FUNC_UNST_T3 },
-      /* Pinned at INT_MAX so adding an indicator can never move it (#144). */
-      { "TA_FUNC_UNST_ALL",  0x7FFFFFFF, TA_FUNC_UNST_ALL }
+      /* Pinned so adding an indicator can never move it (#144). */
+      { "TA_FUNC_UNST_ALL",       65535, TA_FUNC_UNST_ALL }
    };
 
    static const EnumPin maPins[] = {
@@ -198,7 +198,45 @@ static ErrorNumber testEnumValueContract( void )
       { "TA_MAType_DISABLED", 10, TA_MAType_DISABLED }
    };
 
+   /* Returned to every caller and mapped by name in the wrappers (ta-lib-python
+    * hardcodes this whole list in _ta_check_success), so it is ABI too.
+    */
+   static const EnumPin retCodePins[] = {
+      { "TA_SUCCESS",                       0, TA_SUCCESS },
+      { "TA_LIB_NOT_INITIALIZE",            1, TA_LIB_NOT_INITIALIZE },
+      { "TA_BAD_PARAM",                     2, TA_BAD_PARAM },
+      { "TA_ALLOC_ERR",                     3, TA_ALLOC_ERR },
+      { "TA_GROUP_NOT_FOUND",               4, TA_GROUP_NOT_FOUND },
+      { "TA_FUNC_NOT_FOUND",                5, TA_FUNC_NOT_FOUND },
+      { "TA_INVALID_HANDLE",                6, TA_INVALID_HANDLE },
+      { "TA_INVALID_PARAM_HOLDER",          7, TA_INVALID_PARAM_HOLDER },
+      { "TA_INVALID_PARAM_HOLDER_TYPE",     8, TA_INVALID_PARAM_HOLDER_TYPE },
+      { "TA_INVALID_PARAM_FUNCTION",        9, TA_INVALID_PARAM_FUNCTION },
+      { "TA_INPUT_NOT_ALL_INITIALIZE",     10, TA_INPUT_NOT_ALL_INITIALIZE },
+      { "TA_OUTPUT_NOT_ALL_INITIALIZE",    11, TA_OUTPUT_NOT_ALL_INITIALIZE },
+      { "TA_OUT_OF_RANGE_START_INDEX",     12, TA_OUT_OF_RANGE_START_INDEX },
+      { "TA_OUT_OF_RANGE_END_INDEX",       13, TA_OUT_OF_RANGE_END_INDEX },
+      { "TA_INVALID_LIST_TYPE",            14, TA_INVALID_LIST_TYPE },
+      { "TA_BAD_OBJECT",                   15, TA_BAD_OBJECT },
+      { "TA_NOT_SUPPORTED",                16, TA_NOT_SUPPORTED },
+      { "TA_INTERNAL_ERROR",             5000, TA_INTERNAL_ERROR },
+      { "TA_UNKNOWN_ERR",              0xFFFF, TA_UNKNOWN_ERR }
+   };
+
+   /* Every pinned unstable id except the trailing ALL wildcard. */
+   const int nbUnstIds = (int)(sizeof(unstPins)/sizeof(unstPins[0])) - 1;
    unsigned int i;
+
+   for( i=0; i < sizeof(retCodePins)/sizeof(retCodePins[0]); i++ )
+   {
+      if( retCodePins[i].current != retCodePins[i].shipped )
+      {
+         printf( "\nFailed: %s is %d but shipped as %d. These values are ABI --\n"
+                 "        every wrapper maps them by number. Append, never renumber.\n",
+                 retCodePins[i].name, retCodePins[i].current, retCodePins[i].shipped );
+         return TA_INTERNAL_ENUM_CONTRACT_FAIL_3;
+      }
+   }
 
    for( i=0; i < sizeof(unstPins)/sizeof(unstPins[0]); i++ )
    {
@@ -222,14 +260,25 @@ static ErrorNumber testEnumValueContract( void )
       }
    }
 
-   /* The count sizes the unstable-period table. It may grow as indicators are
-    * added, but must never shrink below what has shipped, and must leave room
-    * for every pinned id above (all but the ALL wildcard).
+   /* The count must equal the number of ids pinned above -- not merely be no
+    * smaller. A ">=" test would let a newly added indicator sit unpinned
+    * indefinitely, which is exactly the protection this table exists to give:
+    * adding an id has to fail here until its row is added, or the contract only
+    * covers whatever someone remembered to write down.
     */
-   if( TA_FUNC_UNST_COUNT < (int)(sizeof(unstPins)/sizeof(unstPins[0])) - 1 )
+   if( TA_FUNC_UNST_COUNT != nbUnstIds )
    {
-      printf( "\nFailed: TA_FUNC_UNST_COUNT is %d, below the %d ids already shipped\n",
-              TA_FUNC_UNST_COUNT, (int)(sizeof(unstPins)/sizeof(unstPins[0])) - 1 );
+      printf( "\nFailed: TA_FUNC_UNST_COUNT is %d but %d ids are pinned. Add the new\n"
+              "        id's row to unstPins[] (append only -- never renumber).\n",
+              TA_FUNC_UNST_COUNT, nbUnstIds );
+      return TA_INTERNAL_ENUM_CONTRACT_FAIL_2;
+   }
+
+   /* Ids grow upward and the wildcard is fixed, so they must never meet. */
+   if( TA_FUNC_UNST_COUNT >= TA_FUNC_UNST_ALL )
+   {
+      printf( "\nFailed: TA_FUNC_UNST_COUNT (%d) has reached TA_FUNC_UNST_ALL (%d)\n",
+              TA_FUNC_UNST_COUNT, (int)TA_FUNC_UNST_ALL );
       return TA_INTERNAL_ENUM_CONTRACT_FAIL_2;
    }
 

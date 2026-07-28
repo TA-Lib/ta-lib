@@ -59,12 +59,16 @@ pub fn generate(enums: &HashMap<String, EnumDef>, ta_defs_path: &Path) {
 
     // FuncUnstId carries one trailing sentinel after its variants.
     //
-    // TA_FUNC_UNST_ALL is pinned at INT_MAX rather than sitting immediately above
+    // TA_FUNC_UNST_ALL is pinned at 65535 rather than sitting immediately above
     // the last function id. Deriving it from the variant count meant every new
     // unstable indicator silently moved it, breaking any wrapper that had recorded
-    // the old value -- the same class of break as the 0.6.0 renumbering. At INT_MAX
-    // it never moves and never collides, the id space below it stays free to grow
-    // contiguously, and the enum cannot be narrowed below 4 bytes by -fshort-enums.
+    // the old value -- the same class of break as the 0.6.0 renumbering. Pinned,
+    // it never moves and the id space below it stays free to grow contiguously.
+    //
+    // 65535 rather than INT_MAX so the value keeps arithmetic headroom: code that
+    // writes `TA_FUNC_UNST_ALL + 1` (this repo's own test did) would be signed
+    // overflow at INT_MAX, and a wrapper that narrows the id anywhere still holds
+    // 65535 exactly. It stays ~2700x above any plausible function count.
     //
     // The count that used to be spelled TA_FUNC_UNST_ALL is emitted separately as
     // TA_FUNC_UNST_COUNT -- a macro, not an enumerator, so it can never be mistaken
@@ -80,7 +84,7 @@ pub fn generate(enums: &HashMap<String, EnumDef>, ta_defs_path: &Path) {
         );
         fu_block.push_str(&enum_line(&v.c_name, v.value, fu_width, ","));
     }
-    fu_block.push_str(&format!("    {:<fu_width$} = 0x7FFFFFFF\n", "TA_FUNC_UNST_ALL"));
+    fu_block.push_str(&format!("    {:<fu_width$} = 65535\n", "TA_FUNC_UNST_ALL"));
     fu_block.push_str("} TA_FuncUnstId;\n\n");
     fu_block.push_str("/* Number of function ids above (NOT an id, and NOT TA_FUNC_UNST_ALL).\n");
     fu_block.push_str(" * Sizes the unstable-period table; grows when an indicator is added.\n");
