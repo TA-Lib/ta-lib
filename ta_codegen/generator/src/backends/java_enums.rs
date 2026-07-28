@@ -41,19 +41,19 @@ pub fn generate(enums: &HashMap<String, EnumDef>, path: &Path) {
     for (i, v) in fu.variants.iter().enumerate() {
         body.push_str(&format!("\t  /* {i:03} */  {}({i}),\n", v.pascal_name));
     }
-    body.push_str("\n");
+    body.push('\n');
     body.push_str("\t  /** Wildcard: sets the unstable period for every function at once.\n");
     body.push_str("\t   *  Pinned, so adding an indicator can never move it. */\n");
     body.push_str("\t             All(65535);\n");
-    body.push_str("\n");
+    body.push('\n');
     body.push_str("\t/** Number of function ids — the size of the unstable-period table.\n");
     body.push_str("\t *  Not an id, and not {@link #All}. Mirrors C's TA_FUNC_UNST_COUNT. */\n");
     body.push_str(&format!("\tpublic static final int COUNT = {};\n", fu.variants.len()));
-    body.push_str("\n");
+    body.push('\n');
     body.push_str("\tprivate final int value;\n");
-    body.push_str("\n");
+    body.push('\n');
     body.push_str("\tFuncUnstId(int value) { this.value = value; }\n");
-    body.push_str("\n");
+    body.push('\n');
     body.push_str("\t/** The C {@code TA_FuncUnstId} value for this id. */\n");
     body.push_str("\tpublic int value() { return value; }\n");
     body.push_str("};\n");
