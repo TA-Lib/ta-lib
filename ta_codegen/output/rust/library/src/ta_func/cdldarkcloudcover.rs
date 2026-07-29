@@ -72,10 +72,15 @@ impl Core {
     ///   penetrate below close\[i-1]; larger values require deeper penetration (default 0.5,
     ///   minimum 0)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
+    /// select their default value.
     #[inline]
     pub fn cdldarkcloudcover_lookback(&self, mut optInPenetration: f64) -> usize {
+        if optInPenetration == -4e37 {
+            optInPenetration = 5e-1;
+        } else if (optInPenetration < 0e0) || (optInPenetration > 1.7976931348623157e308) {
+            return usize::MAX;
+        }
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -108,6 +113,8 @@ impl Core {
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outInteger` — -100 when the pattern is detected (always bearish), 0 otherwise; never
     ///   emits +100.
+    ///
+    /// Real parameters accept `-4e37` to select their default value.
     ///
     /// # Errors
     ///
@@ -169,6 +176,11 @@ impl Core {
     ) -> RetCode {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
+        }
+        if optInPenetration == -4e37 {
+            optInPenetration = 5e-1;
+        } else if (optInPenetration < 0e0) || (optInPenetration > 1.7976931348623157e308) {
+            return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
         let mut BodyLongPeriodTotal: f64 = 0.0_f64;
@@ -524,6 +536,11 @@ impl Core {
         if inOpen.len() > i32::MAX as usize {
             return Err(RetCode::BadParam);
         }
+        if optInPenetration == -4e37 {
+            optInPenetration = 5e-1;
+        } else if (optInPenetration < 0e0) || (optInPenetration > 1.7976931348623157e308) {
+            return Err(RetCode::BadParam);
+        }
         let historyLen: usize = inOpen.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
@@ -742,6 +759,11 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if optInPenetration == -4e37 {
+            optInPenetration = 5e-1;
+        } else if (optInPenetration < 0e0) || (optInPenetration > 1.7976931348623157e308) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inOpen.len();
