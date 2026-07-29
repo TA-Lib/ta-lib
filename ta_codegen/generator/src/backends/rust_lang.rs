@@ -1018,22 +1018,51 @@ pub(crate) fn gen_opt_param_validation_with(opt: &OptInput, pad: &str, err_retur
     let mut out = String::new();
     let name = &opt.name;
 
-    if opt.param_type == ParamType::Integer {
-        if let Some(default) = opt.default {
-            out.push_str(&format!("{pad}if (({name}) as i32) == (i32::MIN) {{\n"));
-            #[allow(clippy::cast_possible_truncation)]
-            let default_i64 = default as i64;
-            out.push_str(&format!("{pad}    {name} = {default_i64};\n"));
+    match &opt.param_type {
+        ParamType::Integer => {
+            if let Some(default) = opt.default {
+                out.push_str(&format!("{pad}if (({name}) as i32) == (i32::MIN) {{\n"));
+                #[allow(clippy::cast_possible_truncation)]
+                let default_i64 = default as i64;
+                out.push_str(&format!("{pad}    {name} = {default_i64};\n"));
 
-            if let Some((lo, hi)) = opt.range {
-                out.push_str(&format!(
-                    "{pad}}} else if ((({name}) as i32) < {lo}) || ((({name}) as i32) > {hi}) {{\n"
-                ));
-                out.push_str(&format!("{pad}    {err_return}\n"));
+                if let Some((lo, hi)) = opt.range {
+                    out.push_str(&format!(
+                        "{pad}}} else if ((({name}) as i32) < {lo}) || ((({name}) as i32) > {hi}) {{\n"
+                    ));
+                    out.push_str(&format!("{pad}    {err_return}\n"));
+                }
+
+                out.push_str(&format!("{pad}}}\n"));
             }
-
-            out.push_str(&format!("{pad}}}\n"));
         }
+        ParamType::Real => {
+            if let Some(default) = opt.default {
+                // `-4e37` is the cross-language "use the default" sentinel (`TA_REAL_DEFAULT`);
+                // the bounds are emitted in exponent form so they are `f64` literals, not
+                // integers, on the comparison's right-hand side.
+                out.push_str(&format!("{pad}if {name} == -4e37 {{\n"));
+                out.push_str(&format!("{pad}    {name} = {default:e};\n"));
+
+                if let Some((lo, hi)) = opt.range {
+                    // Skip unbounded ranges: `TA_REAL_MIN`/`TA_REAL_MAX` reach the IR as
+                    // `f64::MIN`/`f64::MAX` and constrain nothing. Same magnitude test the
+                    // C and Java backends use.
+                    if lo > f64::MIN / 2.0 || hi < f64::MAX / 2.0 {
+                        out.push_str(&format!(
+                            "{pad}}} else if ({name} < {lo:e}) || ({name} > {hi:e}) {{\n"
+                        ));
+                        out.push_str(&format!("{pad}    {err_return}\n"));
+                    }
+                }
+
+                out.push_str(&format!("{pad}}}\n"));
+            }
+        }
+        // Enum optional params declare no `range:` in the YAML (see `doc_meta::RangeMeta`),
+        // so there is no bound to check. Price params expand to arrays validated
+        // separately; no scalar validation applies.
+        ParamType::Enum(_) | ParamType::Price(_) => {}
     }
 
     out

@@ -78,13 +78,9 @@ pub fn guarded_docs(
             output_desc(&output.name, doc)
         ));
     }
-    if func
-        .optional_inputs
-        .iter()
-        .any(|o| matches!(o.param_type, ParamType::Integer))
-    {
+    if let Some(sentence) = default_sentinel_sentence(func) {
         d.blank();
-        d.paragraph("Integer parameters accept `i32::MIN` to select their default value.");
+        d.paragraph(sentence);
     }
 
     d.blank();
@@ -174,13 +170,40 @@ pub fn lookback_docs(func: &FuncDef, snake: &str, enums: &HashMap<String, EnumDe
             d.bullet(&param_doc(opt, doc, enums));
         }
         d.blank();
-        d.paragraph(
-            "Returns `usize::MAX` when a parameter is out of range. Integer parameters \
-             accept `i32::MIN` to select their default value.",
-        );
+        let mut sentence = String::from("Returns `usize::MAX` when a parameter is out of range.");
+        if let Some(extra) = default_sentinel_sentence(func) {
+            sentence.push(' ');
+            sentence.push_str(extra);
+        }
+        d.paragraph(&sentence);
     }
 
     d.finish()
+}
+
+/// How a caller asks for a parameter's default value, phrased for whichever kinds
+/// the function actually takes. Gated per kind because the two sentinels differ and
+/// several functions take only one kind: SAR and MAMA have no integer optional
+/// parameter at all, so an unconditional `i32::MIN` sentence documents an API they
+/// do not have. Returns `None` for a function whose optional parameters are all
+/// enums (no sentinel substitution is emitted for those).
+fn default_sentinel_sentence(func: &FuncDef) -> Option<&'static str> {
+    let takes = |want: fn(&ParamType) -> bool| {
+        func.optional_inputs
+            .iter()
+            .any(|o| want(&o.param_type) && o.default.is_some())
+    };
+    let has_int = takes(|t| matches!(t, ParamType::Integer));
+    let has_real = takes(|t| matches!(t, ParamType::Real));
+    match (has_int, has_real) {
+        (true, true) => Some(
+            "Integer parameters accept `i32::MIN`, and real parameters `-4e37`, to select \
+             their default value.",
+        ),
+        (true, false) => Some("Integer parameters accept `i32::MIN` to select their default value."),
+        (false, true) => Some("Real parameters accept `-4e37` to select their default value."),
+        (false, false) => None,
+    }
 }
 
 /// Rustdoc block for the `_unguarded` / `_private` variants.
