@@ -3320,9 +3320,10 @@ static const char *const argv_064[] = {"./ta_064_serve", NULL};
                              * silently (it never reaches the FUZZ_MAX_VEC guard). */
 #define FUZZ_MAX_VEC  80    /* parameter vectors per function. MACDEXT is widest:
                              * 3 period ranges (~6 candidates each) + 3 MAType
-                             * lists (M-1 each) + the defaults vector = ~3*M+16 in
-                             * the MAType-list length M; M=11 today => 48. 80 gives
-                             * runway to M=21, matching STREAM_MAX_VEC.
+                             * lists (M-1 each) + 3 contract vectors per range param
+                             * + the defaults vector = ~3*M+25 in the MAType-list
+                             * length M; M=11 today => 58. 80 gives runway to M=18,
+                             * and still matches STREAM_MAX_VEC.
                              * fuzz_build_vectors reports any overflow (this cap or
                              * the cand cap) and the caller fails the run loudly. */
 #define FUZZ_MIN_PERIOD 2   /* period 1 is out of scope vs 0.6.4 (see CLAUDE.md) */
@@ -3445,46 +3446,19 @@ static unsigned long long fuzz_parse_hash(const char *resp)
     return strtoull(h, NULL, 16);
 }
 
-/* Parameter-contract vector classes (issue #148). A vector is either an ordinary
- * value sweep, or one of the two CONTRACT classes below -- the ones a correct
- * implementation must do something specific with rather than merely compute. */
+/* Parameter-contract vector classes (issue #148). */
 #define FUZZ_VEC_NORMAL   0
 #define FUZZ_VEC_REJECT   1  /* below-min / above-max: must be REJECTED          */
 #define FUZZ_VEC_SENTINEL 2  /* TA_*_DEFAULT: must resolve to the declared default */
 
-/* Out-of-range candidates for one bounded optional parameter: exactly the two
- * values the documented range excludes at its edges -- below-min and above-max.
- *
- * They are the ONLY candidates this builder produces that a correct
- * implementation must REJECT. Every other candidate is deliberately pulled
- * INSIDE the range (integers clamp to [min,max]; reals take suggested values,
- * which are in-range by construction, and `continue` otherwise), so the sweep
- * could only ever assert that VALUES agree -- never that REJECTIONS agree.
- * That blind spot is why #148 (the Rust backend emitting no validation at all
- * for `real` optional parameters, at any tier) survived every cross-language
- * gate in this file.
- *
- * Emitted for the current-vs-current path only (frozenOracle == 0). Error-path
- * parity against the frozen v0.6.4 binary is a separate question from the
- * numeric agreement that oracle exists to certify.
- *
- * A side is skipped when the metadata declares it unconstrained
- * (TA_INTEGER_MIN/TA_INTEGER_MAX, TA_REAL_MIN/TA_REAL_MAX): such a bound
- * reaches the backends as the widest representable value and every backend
- * skips the comparison for it (the shared "unbounded range" magnitude test in
- * backends/c.rs, rust_lang.rs and java.rs), so there is no rejection to
- * compare. optInPenetration is [0, TA_REAL_MAX]: below-min is a real gate,
- * above-max is not. Nothing emitted here can collide with the "use the
- * default" sentinels (TA_INTEGER_DEFAULT == INT_MIN, TA_REAL_DEFAULT ==
- * -4e37) -- both lie outside the clamps below.
- *
- * IntegerList/RealList (the MAType-style enums) declare no range at all, so
- * they have no bound to exceed and contribute nothing here; the equivalent
- * out-of-LIST injection lives in the stream vector builder. Range parameters
- * are exactly the population the "below-min / above-max" contract applies to.
- *
- * Metadata-driven: every bounded parameter is covered today, and any bounded
- * parameter added later is covered the day it lands, with no list to maintain. */
+/* Below-min / above-max for one bounded optional parameter — the only candidates
+ * this builder emits that a correct implementation must REJECT; every other one
+ * is deliberately pulled inside the range, which is how #148 (the Rust backend
+ * emitting no validation at all for `real` params) survived every gate in this
+ * file. A side declared unconstrained (TA_INTEGER_MIN/MAX, TA_REAL_MIN/MAX) is
+ * skipped: the backends emit no check there either, so there is no rejection to
+ * compare. Lists have no bound to exceed; their out-of-list arm lives in the
+ * stream vector builder. */
 static void fuzz_add_out_of_range(const TA_OptInputParameterInfo *oi,
                                   double cand[FUZZ_MAX_CAND],
                                   char candKind[FUZZ_MAX_CAND],
@@ -3527,33 +3501,12 @@ static void fuzz_add_out_of_range(const TA_OptInputParameterInfo *oi,
     }
 }
 
-/* The "use the default" sentinel for one optional parameter: TA_REAL_DEFAULT
- * (-4e37) for a real, TA_INTEGER_DEFAULT (INT_MIN) for an integer.
- *
- * This is the OTHER half of the parameter contract, and until #148 it was as
- * untested as the range half: no vector this builder produced was ever a
- * sentinel, so nothing anywhere asserted that `-4e37` resolves to the declared
- * default. It is also the half most likely to be "simplified" away by someone
- * reading the Rust API as sentinel-free -- Rust has no out-parameter convention
- * that makes a magic value look necessary, yet `Core::t3(x, 5, -4e37)` must
- * produce exactly `Core::t3(x, 5, 0.7)`, as `TA_T3` has always done
- * (src/ta_func/ta_T3.c:76-77).
- *
- * Unlike the reject class this is NOT an error-path assertion: the call
- * SUCCEEDS, and what must hold is that it succeeds with the default's result.
- * The driver asserts exactly that, by re-running the same call with the
- * parameter set explicitly to its default and requiring an identical result.
- *
- * Emitted for every Range parameter that declares a default, bounded or not --
- * which is what gates the five [TA_REAL_MIN, TA_REAL_MAX] reals
- * (BBANDS.optInNbDevUp/Dn, STDDEV/VAR.optInNbDev, SAREXT.optInStartValue): they
- * take sentinel substitution and no range check, so this is their ONLY contract.
- *
- * IntegerList (the MAType-style enums) is deliberately excluded: C maps
- * TA_INTEGER_DEFAULT to the declared default for them and the Rust backend does
- * not (its dispatch falls through to the `_` arm instead), a known residual
- * divergence tracked separately in ta_codegen/generator/CLAUDE.md. Asserting it
- * here would gate a different behavior change on a different set of functions. */
+/* The "use the default" sentinel for one optional parameter: t3(x, 5, -4e37) must
+ * give exactly t3(x, 5, 0.7), as TA_T3 always has. Emitted for every Range param,
+ * bounded or not — the five [TA_REAL_MIN, TA_REAL_MAX] reals (BBANDS nbDevUp/Dn,
+ * STDDEV/VAR nbDev, SAREXT startValue) get no range check, so this is their only
+ * contract. IntegerList is excluded: C substitutes the declared default there and
+ * Rust falls through to its `_` arm — tracked in ta_codegen/generator/CLAUDE.md. */
 static void fuzz_add_default_sentinel(const TA_OptInputParameterInfo *oi,
                                       double cand[FUZZ_MAX_CAND],
                                       char candKind[FUZZ_MAX_CAND],
@@ -3573,21 +3526,14 @@ static void fuzz_add_default_sentinel(const TA_OptInputParameterInfo *oi,
     cand[(*nc)++] = sentinel;
 }
 
-/* Parameter vectors: defaults + one-param-varied boundary/list sweeps, plus
- * (current-vs-current only) the two CONTRACT classes -- the out-of-range values
- * every tier must REJECT, and the sentinel every tier must resolve to the
- * declared default. */
+/* Parameter vectors: defaults + one-param-varied boundary/list sweeps, plus the
+ * two contract classes (see the !frozenOracle guard below). */
 /* frozenOracle: 1 when the vectors feed a frozen oracle (--fuzz-064's
  * ta_064_serve) -- IntegerList values the freeze predates are then excluded
- * (see FROZEN_ORACLE_MATYPE_MAX), and no out-of-range candidate is emitted at
- * all (see fuzz_add_out_of_range). --xlang-hash is current-vs-current and
+ * (see FROZEN_ORACLE_MATYPE_MAX). --xlang-hash is current-vs-current and
  * passes 0, so the new values stay bitwise-gated there.
  *
- * kind: optional, one FUZZ_VEC_* class per returned vector. FUZZ_VEC_REJECT
- * marks a vector the library must REJECT (TA_BAD_PARAM / an invalid lookback)
- * rather than compute; FUZZ_VEC_SENTINEL marks one it must resolve to the
- * declared default. The caller uses these both to assert the contract across
- * languages and to prove each leg is non-vacuous. Pass NULL when not needed. */
+ * kind: one FUZZ_VEC_* class per returned vector, or NULL if not needed. */
 static int fuzz_build_vectors(const TA_FuncInfo *fi,
                               double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT],
                               int *overflow,
@@ -4089,10 +4035,8 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT];
     int vecOverflow = 0;
-    /* frozenOracle=1: no contract candidates (out-of-range, sentinel) — the
-     * v0.6.4 oracle certifies NUMERIC agreement with a shipped binary; the
-     * parameter contract is deliberately left to the current-vs-current gate.
-     * NULL kind: nothing to flag. */
+    /* frozenOracle=1: no contract candidates — the 0.6.4 oracle certifies numbers,
+     * not the parameter contract. NULL kind: nothing to flag. */
     int nvec = fuzz_build_vectors(funcInfo, vec, &vecOverflow, 1, NULL);
     if( vecOverflow > 0 )
     {
@@ -4417,10 +4361,6 @@ typedef struct {
     long long    illcondSkipped;     /* Java HT_DCPHASE/HT_SINE calls skipped on
                                       * the zero-variance constant shape (phase of
                                       * a null signal — see xlang_java_illcond)    */
-    long long    oorGolden;          /* golden cases run on an out-of-range vector
-                                      * (subset of `comparisons`; they produce no
-                                      * output by design, so they are excluded from
-                                      * the nonEmpty ratio). Non-vacuity: must be >0 */
     long long    oorCases;           /* per-server comparisons on an out-of-range
                                       * parameter vector — the retCode-parity leg
                                       * (batch tier)                               */
@@ -4428,8 +4368,6 @@ typedef struct {
                                       * library ACCEPTED — the candidate was not
                                       * out of range, so its parity assertion was
                                       * vacuous. Fails the run.                    */
-    long long    sentGolden;         /* golden cases run on a default-sentinel
-                                      * vector. Non-vacuity: must be > 0.          */
     long long    sentCases;          /* per-server comparisons on a sentinel vector */
     long long    sentNotDefault;     /* sentinel vectors where the in-process C
                                       * library did NOT reproduce the explicit
@@ -5089,6 +5027,12 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
         for( int k = 0; k < nvec; k++ )
         {
+            /* A rejected vector's verdict comes from the parameter values alone —
+             * one dataset is all the discrimination it has. The sentinel class is
+             * NOT pruned: its assertion compares outputs, which only diverge on
+             * data where the wrong substituted value changes them. */
+            if( kind[k] == FUZZ_VEC_REJECT && (shape || si || zi) ) continue;
+
             xlang_set_opt_params(paramHolder, funcInfo, vec[k]);
 
             /* subranges: full + two deterministic random windows (as --fuzz-064) */
@@ -5109,13 +5053,8 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             for( int ri = 0; ri < 3; ri++ )
             {
                 int s = ranges[ri][0], e = ranges[ri][1];
-                /* The parameter contract is validated BEFORE any startIdx/endIdx
-                 * logic runs, so it is subrange-independent by construction:
-                 * sweeping the contract vectors across all three windows triples
-                 * their cost and adds no discrimination. Full range only —
-                 * shapes x seeds x sizes still repeats each 81 times, and the
-                 * full range is also the window most likely to produce real
-                 * output for the sentinel comparison to bite on. */
+                /* Same reason: validation runs before any startIdx/endIdx logic, so
+                 * the contract is subrange-independent too. */
                 if( kind[k] != FUZZ_VEC_NORMAL && ri != 0 ) continue;
                 TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
 
@@ -5127,13 +5066,10 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     else
                         TA_SetOutputParamRealPtr(paramHolder, o, p.outRealBufs[o]);
                 }
-                /* Sentinel leg (issue #148): run the SAME call with the
-                 * parameter set explicitly to its default first, so "the
-                 * sentinel selects the default" is asserted directly rather
-                 * than inferred. Without this the cross-language comparison
-                 * below would still pass if C stopped substituting too — both
-                 * sides equally wrong. Same buffers, so it must run BEFORE the
-                 * real call, whose hash is taken straight after. */
+                /* Sentinel leg (issue #148): the same call with the parameter set
+                 * explicitly to its default, so "the sentinel selects the default"
+                 * is asserted rather than inferred. Shares the output buffers, so
+                 * it must run BEFORE the real call. */
                 unsigned long long defHash = 0;
                 TA_RetCode defRc = TA_SUCCESS;
                 TA_Integer defBeg = 0, defNb = 0;
@@ -5143,24 +5079,15 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     defRc = TA_CallFunc(paramHolder, s, e, &defBeg, &defNb);
                     defHash = fuzz_hash_local(&p, (defRc == TA_SUCCESS) ? defNb : 0);
                     xlang_set_opt_params(paramHolder, funcInfo, vec[k]);
-                    for( unsigned int o = 0; o < funcInfo->nbOutput; o++ )
-                    {
-                        if( p.outputIsInteger[o] )
-                            TA_SetOutputParamIntegerPtr(paramHolder, o, p.outIntBufs[o]);
-                        else
-                            TA_SetOutputParamRealPtr(paramHolder, o, p.outRealBufs[o]);
-                    }
                 }
 
                 TA_RetCode curRc = TA_CallFunc(paramHolder, s, e, &curBeg, &curNb);
                 unsigned long long curHash =
                     fuzz_hash_local(&p, (curRc == TA_SUCCESS) ? curNb : 0);
-                if( curRc == TA_SUCCESS && curNb > 0 && kind[k] != FUZZ_VEC_REJECT )
-                    ctx->nonEmpty++;
+                if( curRc == TA_SUCCESS && curNb > 0 ) ctx->nonEmpty++;
 
                 if( kind[k] == FUZZ_VEC_SENTINEL )
                 {
-                    ctx->sentGolden++;
                     if( curRc != defRc || curBeg != defBeg || curNb != defNb ||
                         curHash != defHash )
                     {
@@ -5180,16 +5107,10 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     }
                 }
 
-                /* Self-check for the rejection leg (issue #148): an out-of-range
-                 * vector the C library ACCEPTS is not out of range, and the
-                 * retCode parity asserted on it below would be vacuous — the two
-                 * languages would merely agree on a successful call. Fail loudly.
-                 * (The parity assertion itself is codegen_hash_compare /
-                 * codegen_compare_tol: both diff retCode first and short-circuit
-                 * to MATCH once the two sides agree on the same non-success
-                 * code, so an implementation that returns Success where C
-                 * returns TA_BAD_PARAM is a hard mismatch.) */
-                if( kind[k] == FUZZ_VEC_REJECT ) ctx->oorGolden++;
+                /* An out-of-range vector C ACCEPTS is not out of range, and the
+                 * retCode parity below is then vacuous — fail loudly.
+                 * codegen_hash_compare and codegen_compare_tol both diff retCode
+                 * first, so Success where C returns TA_BAD_PARAM is a hard mismatch. */
                 if( kind[k] == FUZZ_VEC_REJECT && curRc != TA_BAD_PARAM )
                 {
                     ctx->oorNotRejected++;
@@ -5218,27 +5139,13 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     XlangServer *sv = &ctx->sv[sIdx];
                     if( !sv->open ) continue;
 
-                    /* ---- Sentinel leg (issue #148) --------------------
-                     * The contract is "TA_*_DEFAULT selects the declared
-                     * default", which is a property of ONE implementation, so
-                     * it is asserted INSIDE each server: the same call with the
-                     * sentinel and with the explicit default must agree
-                     * bit-for-bit. That is stronger and cleaner than routing it
-                     * through the C golden:
-                     *   - it needs no tolerance, so Java's fdlibm transcendentals
-                     *     are gated bitwise here like everything else;
-                     *   - the cross-language correctness of the DEFAULT result is
-                     *     already gated by vec[0] in this same sweep, so
-                     *     server(sentinel) == server(default) == golden(default)
-                     *     == golden(sentinel) closes the loop transitively;
-                     *   - both calls are hash mode, which returns right after the
-                     *     GUARDED call. The tolerance path instead falls through
-                     *     to the server's UNGUARDED rerun, and "every optional
-                     *     parameter resolved (never a sentinel) and in-range" is
-                     *     an unguarded PRECONDITION (see the VARIANT gate section
-                     *     of src/tools/ta_regtest/CLAUDE.md). Sending the raw
-                     *     sentinel down that path killed the Java server with
-                     *     ArrayIndexOutOfBoundsException: Index -2147483634. */
+                    /* Sentinel leg (issue #148). "TA_*_DEFAULT selects the declared
+                     * default" is a property of one implementation, so assert it
+                     * inside each server: sentinel vs explicit default, bit-for-bit,
+                     * no tolerance needed. vec[0] already ties the default's result
+                     * back to the C golden, so the chain closes. Both calls are hash
+                     * mode, which stops before the unguarded rerun (same precondition
+                     * as the reject path below). */
                     if( kind[k] == FUZZ_VEC_SENTINEL )
                     {
                         XHashParsed sent, dflt;
@@ -5286,32 +5193,16 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                         fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0);
                     else
                     {
+                        /* A rejected vector stays on the hash path even on a
+                         * transcendental: want_hash returns right after the
+                         * GUARDED call, where the tolerance path continues into
+                         * the server's unguarded rerun. "Every optional parameter
+                         * resolved and in-range" is an unguarded PRECONDITION (see
+                         * the VARIANT gate section of CLAUDE.md) — sending one down
+                         * that path killed the Java server. */
                         tolPath = kind[k] != FUZZ_VEC_REJECT &&
                                   codegen_call_is_transcendental(funcInfo->handle, vec[k],
                                                                  (int)funcInfo->nbOptInput);
-                        /* An out-of-range vector always takes the hash path, even
-                         * on a transcendental. Two reasons, both load-bearing:
-                         *   1. A rejected call emits no output, so there is
-                         *      nothing for the fdlibm tolerance to relax — the
-                         *      only thing to compare is the retCode, and
-                         *      codegen_hash_compare compares that FIRST and
-                         *      short-circuits to MATCH once both sides agree on
-                         *      the same non-success code.
-                         *   2. want_hash makes the server return right after the
-                         *      GUARDED call; the tolerance path instead falls
-                         *      through to the server's unguarded timing rerun,
-                         *      which is UB here — "every optional parameter
-                         *      resolved and in-range" is an unguarded
-                         *      PRECONDITION (see the VARIANT gate section of
-                         *      src/tools/ta_regtest/CLAUDE.md), and unguarded
-                         *      does not validate. Sending a rejected parameter
-                         *      down that path made the Java server die with an
-                         *      ArrayIndexOutOfBoundsException inside
-                         *      linearRegAngleUnguardedInternal. The servers
-                         *      would be more robust skipping the unguarded rerun
-                         *      when the guarded call failed; that is a generator
-                         *      change across four backends, so this gate simply
-                         *      does not ask them to do it. */
                         /* Chaotic phase of a null signal — not comparable across
                          * libms; C==Rust bitwise, all other shapes gated. */
                         if( tolPath && xlang_java_illcond(funcInfo->name, shape) )
@@ -5327,8 +5218,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     }
                     sv->cases++;
                     if( tolPath ) ctx->tolCases++;
-                    if( kind[k] == FUZZ_VEC_REJECT )   ctx->oorCases++;
-                    if( kind[k] == FUZZ_VEC_SENTINEL ) ctx->sentCases++;
+                    if( kind[k] == FUZZ_VEC_REJECT ) ctx->oorCases++;
 
                     if( tolPath )
                     {
@@ -5343,13 +5233,9 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                             if( ctx->reportedThisFunc < 3 )
                             {
                                 ctx->reportedThisFunc++;
-                                printf("  XLANG TOL MISMATCH TA_%s  C(golden) vs %s%s  "
+                                printf("  XLANG TOL MISMATCH TA_%s  C(golden) vs %s  "
                                        "shape=%d seed=%d n=%d range=[%d,%d]  params:",
-                                       funcInfo->name, sv->display,
-                                       kind[k] == FUZZ_VEC_SENTINEL
-                                           ? "  [sentinel vector: the two languages must "
-                                             "agree on resolving it to the default]" : "",
-                                       shape, seeds[si], n, s, e);
+                                       funcInfo->name, sv->display, shape, seeds[si], n, s, e);
                                 xlang_print_params(funcInfo, vec[k]);
                                 printf("\n    retCode %d/%d  begIdx %d/%d  nbElem %d/%d",
                                        (int)curRc, d.rc, curBeg, d.begIdx, curNb, d.nbElement);
@@ -5387,11 +5273,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                                        "shape=%d seed=%d n=%d range=[%d,%d]  params:",
                                        funcInfo->name, sv->display,
                                        kind[k] == FUZZ_VEC_REJECT
-                                           ? "  [out-of-range vector: the two languages "
-                                             "must agree on REJECTING it]"
-                                       : kind[k] == FUZZ_VEC_SENTINEL
-                                           ? "  [sentinel vector: the two languages must "
-                                             "agree on resolving it to the default]" : "",
+                                           ? "  [out-of-range vector: both must REJECT]" : "",
                                        shape, seeds[si], n, s, e);
                                 xlang_print_params(funcInfo, vec[k]);
                                 printf("\n");
@@ -5488,17 +5370,9 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
 
     long long totalMism = 0, totalCases = 0, totalRestarts = 0;
     printf("\n---------------------------------------------\n");
-    /* The out-of-range cases produce no output BY DESIGN (they are the rejection
-     * leg), so they are excluded from the non-vacuity ratio rather than diluting
-     * it — the ratio still measures what it was written to measure: how much of
-     * the VALUE comparison is backed by real output. Sentinel cases DO produce
-     * output (they are successful calls) and stay in. */
-    long long valueCases = ctx.comparisons - ctx.oorGolden;
-    printf("golden cases: %lld   (in-process C library; %lld value case(s), %lld with "
-           "non-empty output = %.0f%% non-vacuous; %lld out-of-range case(s) empty by design)\n",
-           ctx.comparisons, valueCases, ctx.nonEmpty,
-           valueCases ? 100.0 * (double)ctx.nonEmpty / (double)valueCases : 0.0,
-           ctx.oorGolden);
+    printf("golden cases: %lld   (in-process C library; %lld with non-empty output = %.0f%% non-vacuous)\n",
+           ctx.comparisons, ctx.nonEmpty,
+           ctx.comparisons ? 100.0 * (double)ctx.nonEmpty / (double)ctx.comparisons : 0.0);
     for( int s = 0; s < nsv; s++ )
     {
         if( servers[s].cases == 0 && !servers[s].open && !languageFilter ) continue;
@@ -5518,15 +5392,9 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
         printf("  (%lld Java HT_DCPHASE/HT_SINE call(s) skipped on the constant "
                "shape: atan2 phase of a null signal, ill-conditioned across libms "
                "— C==Rust bitwise there)\n", ctx.illcondSkipped);
-    printf("lookback tier: %lld case(s) compared (%lld out-of-range, %lld sentinel)\n",
-           ctx.lbCases, ctx.lbOorCases, ctx.lbSentCases);
-    printf("parameter-contract parity (issue #148):\n");
-    printf("  rejection — %lld batch + %lld lookback case(s) on below-min / above-max values "
-           "of every bounded optional parameter; C rejected all of them\n",
-           ctx.oorCases, ctx.lbOorCases);
-    printf("  sentinel  — %lld batch + %lld lookback case(s) on TA_REAL_DEFAULT / "
-           "TA_INTEGER_DEFAULT; C resolved every one to the explicit default's result\n",
-           ctx.sentCases, ctx.lbSentCases);
+    printf("param contract (#148): reject %lld batch + %lld lookback, sentinel %lld batch "
+           "+ %lld lookback; %lld lookback case(s) total\n",
+           ctx.oorCases, ctx.lbOorCases, ctx.sentCases, ctx.lbSentCases, ctx.lbCases);
 
     free(ctx.reqBuf); free(ctx.respBuf);
 
@@ -5567,30 +5435,24 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                "does, the sentinel-parity leg is vacuous.\n", ctx.sentNotDefault);
         return TA_CODEGEN_OUTPUT_MISMATCH;
     }
-    /* Non-vacuity: without a single rejected vector, and without a single
-     * sentinel vector, this gate is back to what it was before #148 — asserting
-     * only that VALUES agree, never that the parameter CONTRACT holds. Only
-     * meaningful on an unfiltered run: --function= can legitimately select
-     * functions that have no range-typed optional parameter at all. */
+    /* Non-vacuity: with no rejected and no sentinel vector this gate is back to
+     * what it was before #148 — asserting only that VALUES agree. Unfiltered runs
+     * only; --function= can select functions with no range-typed param at all. */
     if( !functionFilter && ctx.comparisons > 0 &&
-        (ctx.oorGolden == 0 || ctx.oorCases == 0 || ctx.lbOorCases == 0 ||
-         ctx.sentGolden == 0 || ctx.sentCases == 0 || ctx.lbSentCases == 0) )
+        (ctx.oorCases == 0 || ctx.lbOorCases == 0 ||
+         ctx.sentCases == 0 || ctx.lbSentCases == 0) )
     {
-        printf("FAIL — VACUOUS CONTRACT LEG: rejection %lld golden / %lld batch / %lld "
-               "lookback; sentinel %lld golden / %lld batch / %lld lookback. The sweep "
-               "produced no vector any language had to reject or resolve, so the "
-               "parameter contract is not being gated at all.\n",
-               ctx.oorGolden, ctx.oorCases, ctx.lbOorCases,
-               ctx.sentGolden, ctx.sentCases, ctx.lbSentCases);
+        printf("FAIL — VACUOUS CONTRACT LEG: reject %lld batch / %lld lookback, sentinel "
+               "%lld batch / %lld lookback — no vector any language had to reject or "
+               "resolve, so the parameter contract is not gated at all.\n",
+               ctx.oorCases, ctx.lbOorCases, ctx.sentCases, ctx.lbSentCases);
         return TA_CODEGEN_OUTPUT_MISMATCH;
     }
     if( totalMism == 0 && inFails == 0 && ctx.error == TA_TEST_PASS )
     {
         printf("PASS — every server matches the in-process C library: BIT-IDENTICAL "
                "(zero tolerance), Java transcendentals within %g "
-               "(current-vs-current, all shapes, period>=2); retCode and lookback "
-               "agree on every out-of-range parameter, and every default sentinel "
-               "resolves to the same value at both tiers.\n",
+               "(current-vs-current, all shapes, period>=2).\n",
                CODEGEN_JAVA_TRANSCENDENTAL_TOL);
         return TA_TEST_PASS;
     }

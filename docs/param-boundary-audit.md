@@ -79,5 +79,5 @@ so the change is comment-only there.
   `backends/java.rs` and `backends/rust_lang.rs`). The remaining 5 real optional
   parameters declare `[TA_REAL_MIN, TA_REAL_MAX]`, which constrains nothing and
   emits no check. The sweep still exercises real endpoints for the finite-output
-  scan only, not for `TA_BAD_PARAM` behavior — extending it to assert the rejection
-  is open work, not a property the library lacks.
+  scan only; the `TA_BAD_PARAM` rejection is asserted cross-language by the
+  `--xlang-hash` gate instead (issue #148).
