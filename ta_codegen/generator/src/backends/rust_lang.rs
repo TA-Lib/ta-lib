@@ -198,6 +198,15 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     let mut out = String::new();
     let snake = func.name.to_lowercase();
 
+    // C's pointer-based scratch-buffer election becomes a rename here, so the
+    // batch bodies below run the calculation directly in the caller's output
+    // slices instead of allocating and copying (issue #146). Rust-only: the C,
+    // Java and .NET backends assign the pointer/reference and need no rewrite,
+    // and the stream tier keeps the untransformed `func` (it composes its own
+    // scratch buffers). See [`ScratchElection`].
+    let elected = elect_output_scratch(func);
+    let func = &elected;
+
     out.push_str(
         "// Allow non-snake-case names to maintain TA-Lib API compatibility\n\
          #[allow(non_snake_case)]\n\
@@ -4127,6 +4136,623 @@ fn is_vec_local_var(name: &str) -> bool {
         || name.starts_with("buffer")
         || name.starts_with("localOutput")
         || name.starts_with("tempOutput")
+}
+
+// ---------------------------------------------------------------------------
+// Scratch-buffer election by name (issue #146)
+// ---------------------------------------------------------------------------
+
+/// Elections in force: local array variable → the output parameter it was
+/// elected to. Valid for the remainder of the block the election was written in
+/// (and the blocks nested inside it), which is exactly C's scope for it.
+type ElectionMap = HashMap<String, String>;
+
+/// Turns C's *pointer-based* scratch-buffer election into a rename, so the Rust
+/// body runs the calculation directly in the caller's output slices.
+///
+/// `BBANDS` opens with `tempBuffer1 = outRealMiddleBand;` and calls it out in a
+/// comment: *"Identify TWO temporary buffers among the outputs so the calculation
+/// needs no memory allocation"*. In C that is a pointer assignment, so the
+/// function allocates nothing and the copy-back below it is skipped. Rust has no
+/// pointer to assign, so the statement renders as `.to_vec()` — an allocation
+/// plus a copy of bytes that are overwritten before they are ever read, and one
+/// sized by the *caller's slice* rather than by the data range, so a caller that
+/// allocates its outputs once at capacity and then calls per window pays for the
+/// capacity on every call (issue #146).
+///
+/// What licenses the rename is Rust's own aliasing rule, which is also what makes
+/// C's aliasing branches dead code here:
+///
+/// * `inX: &[T]` and `outY: &mut [T]` are distinct parameters and can never
+///   overlap, so every `inX == outY` pointer test is statically false and the
+///   aliasing arms of C's election chain are unreachable.
+/// * two `&mut [T]` parameters can never overlap either, so electing a *second*
+///   output as scratch needs no further check — the entry point's distinctness
+///   test on the outputs is C parity, not the licence for this.
+///
+/// The rule, stated over the IR and over nothing else — no function name, no
+/// buffer name, no MA type appears anywhere in this pass:
+///
+/// 1. match an `if`/`else if`/…/`else` chain whose *every* condition is an
+///    input↔output pointer equality and whose *every* arm is only
+///    `scratch = someOutput;` elections ([`Self::election_chain`]);
+/// 2. take the terminal `else`'s mapping — the binding safe Rust always reaches;
+/// 3. delete the chain and rename those scratch names to their elected outputs
+///    through the rest of the enclosing block;
+/// 4. drop any guard the rename has turned into a self-comparison.
+///
+/// Being general is not the same as being greedy, and clause 1 is where the
+/// restraint lives:
+///
+/// * `STOCH`, `STOCHF` and `MAVP` mix an allocation and an `…IsAllocated = 1;`
+///   flag into a branch, so their arms are not elections and the chain is
+///   rejected. Their output is byte-for-byte unchanged. Tolerating one allocating
+///   arm would reach them, and is a widening of *this rule* for a later change —
+///   never a per-function case.
+/// * an election reaches only the end of its own block. `BBANDS` elects inside
+///   `if( optInMAType == TA_MAType_SMA ) { ... }`, so the general MA path that
+///   follows keeps its genuine `vec![0.0; ...]` allocations, and so do both
+///   stream paths.
+/// * clause 4 fires only where the rename actually rewrote a name, so a function
+///   that elected nothing is never touched. It is also load-bearing rather than
+///   cosmetic: `BBANDS`' copy-back guard collapses to
+///   `if o.as_ptr() != o.as_ptr() { o[..n].copy_from_slice(&o[..n]) }`, which is
+///   E0502 — the optimiser never gets the chance to fold it.
+/// * if the local is assigned again anywhere still in scope, the election is left
+///   alone, because the rename would then be wrong. The fallback is exactly
+///   today's `.to_vec()`.
+///
+/// `BBANDS` is currently the only function in `input/` written in this shape, but
+/// the pass never asks which function it is looking at; anything added in that
+/// shape benefits automatically, and the other three backends stay byte-identical
+/// because the pass does not run for them.
+struct ScratchElection<'a> {
+    /// Read-only array parameters (`&[T]`).
+    inputs: &'a std::collections::HashSet<String>,
+    /// Writable array parameters (`&mut [T]`).
+    outputs: &'a std::collections::HashSet<String>,
+    /// Array locals declared in the body (C `double *` / `int *`).
+    locals: &'a std::collections::HashSet<String>,
+}
+
+/// Apply [`ScratchElection`] to both bodies the Rust batch tier renders. The
+/// stream tier keeps the original `func` — it composes its own scratch buffers.
+pub(crate) fn elect_output_scratch(func: &FuncDef) -> FuncDef {
+    let inputs: std::collections::HashSet<String> =
+        func.inputs.iter().map(|i| i.name.clone()).collect();
+    let outputs: std::collections::HashSet<String> =
+        func.outputs.iter().map(|o| o.name.clone()).collect();
+    let mut out = func.clone();
+    for body in [&mut out.body, &mut out.private_body] {
+        let mut locals = std::collections::HashSet::new();
+        collect_array_locals(body, &mut locals);
+        let pass = ScratchElection { inputs: &inputs, outputs: &outputs, locals: &locals };
+        *body = pass.block(body, &ElectionMap::new());
+    }
+    out
+}
+
+/// Names declared in the body as C `double *` / `int *` — the only candidates for
+/// an election (a fixed-size array cannot be re-pointed).
+fn collect_array_locals(body: &[Statement], out: &mut std::collections::HashSet<String>) {
+    visit_stmts(body, &mut |stmt| {
+        if let Statement::VarDecl { var_type, name, .. } = stmt {
+            if matches!(var_type, VarType::RealPointer | VarType::IntPointer) {
+                out.insert(name.clone());
+            }
+        }
+    });
+}
+
+/// The comment that stands in for C's pointer assignment. The C comments around
+/// it keep naming the local — they are shared with every other backend — so the
+/// note maps each local onto the output it became.
+fn election_note(elected: &[(String, String)]) -> Vec<String> {
+    let mut lines = vec![
+        "Rust: C's pointer election here is a rename, so the calculation runs".to_string(),
+        "directly in the caller's slices:".to_string(),
+    ];
+    for (local, out) in elected {
+        lines.push(format!("  C's `{local}` is `{out}`"));
+    }
+    lines.push("This function therefore allocates nothing, exactly as the C does.".to_string());
+    lines.push("The aliasing arms, the input-alias guard and the copy-back are all".to_string());
+    lines.push("unreachable here: `&[T]` and `&mut [T]` parameters can never".to_string());
+    lines.push("overlap, and neither can two `&mut [T]`. See issue #146.".to_string());
+    lines
+}
+
+/// Pre-order walk over a statement tree, nested blocks included.
+///
+/// Exhaustive over `Statement` on purpose — no `_ => {}` arm. A catch-all here
+/// would silently skip the body-bearing variants, so the walk would miss the
+/// statements that matter most and would go on missing them the next time a
+/// variant is added. Let the compiler raise it instead.
+fn visit_stmts(stmts: &[Statement], f: &mut impl FnMut(&Statement)) {
+    for stmt in stmts {
+        f(stmt);
+        match stmt {
+            Statement::While { body, .. }
+            | Statement::DoWhile { body, .. }
+            | Statement::For { body, .. }
+            | Statement::Block { body } => visit_stmts(body, f),
+            Statement::If { then_body, else_body, .. } => {
+                visit_stmts(then_body, f);
+                visit_stmts(else_body, f);
+            }
+            Statement::Switch { cases, default, .. } => {
+                for (_, body) in cases {
+                    visit_stmts(body, f);
+                }
+                visit_stmts(default, f);
+            }
+            Statement::ForC { init, update, body, .. } => {
+                f(init);
+                f(update);
+                visit_stmts(body, f);
+            }
+            // Leaves: no nested statements to walk into.
+            Statement::VarDecl { .. }
+            | Statement::Assign { .. }
+            | Statement::UnrollHint { .. }
+            | Statement::Return { .. }
+            | Statement::Break
+            | Statement::Continue
+            | Statement::Expr(_)
+            | Statement::CircBuf(_)
+            | Statement::Comment(_) => {}
+        }
+    }
+}
+
+impl ScratchElection<'_> {
+    /// Rewrite one block. `elections` are the ones inherited from enclosing blocks.
+    fn block(&self, stmts: &[Statement], elections: &ElectionMap) -> Vec<Statement> {
+        let mut elections = elections.clone();
+        let mut queue: std::collections::VecDeque<Statement> = stmts.iter().cloned().collect();
+        let mut out: Vec<Statement> = Vec::new();
+        while let Some(stmt) = queue.pop_front() {
+            // The elections in force rename this statement's own expressions. The
+            // nested bodies are renamed when `descend` walks into them, so
+            // `rewritten` stays a fact about *this* statement.
+            let (stmt, rewritten) = rename_shallow(&stmt, &elections);
+            // An election chain: install the terminal arm's mapping, delete the
+            // chain, rename the uses that follow. This is the pass's *only* way
+            // to create an election — see [`ScratchElection::election_chain`].
+            if let Some(elected) = self.election_chain(&stmt) {
+                if elected.iter().all(|(local, _)| {
+                    !elections.contains_key(local)
+                        && references_var(queue.iter(), local)
+                        && !assigns_whole_var(queue.iter(), local)
+                }) {
+                    for (local, src) in &elected {
+                        elections.insert(local.clone(), src.clone());
+                    }
+                    out.push(Statement::Comment(election_note(&elected)));
+                    continue;
+                }
+            }
+            // A guard the rename turned into a self-comparison, which this
+            // backend can now decide. Folding it is load-bearing, not tidiness:
+            // left in place, `BBANDS`' copy-back would read and write the same
+            // `&mut` slice in one statement, which is E0502.
+            if rewritten {
+                if let Statement::If { condition, then_body, else_body, .. } = &stmt {
+                    if let Some(value) = self.static_ptr_cond(condition) {
+                        let taken = if value { then_body } else { else_body };
+                        if taken.iter().all(|s| matches!(s, Statement::Comment(_))) {
+                            // The statement is gone; so is the comment that
+                            // introduced it.
+                            if matches!(out.last(), Some(Statement::Comment(_))) {
+                                out.pop();
+                            }
+                        }
+                        for s in taken.iter().rev() {
+                            queue.push_front(s.clone());
+                        }
+                        continue;
+                    }
+                }
+            }
+            out.push(self.descend(stmt, &elections));
+        }
+        out
+    }
+
+    /// Match a whole `if`/`else if`/…/`else` chain that is *nothing but* a
+    /// scratch-buffer election, and return the terminal `else`'s mapping — the
+    /// binding safe Rust always reaches. `None` leaves the statement alone.
+    ///
+    /// All four conditions have to hold at once:
+    ///
+    /// 1. every link's condition is a bare pointer equality between an array
+    ///    *parameter* pair Rust decides statically (an input against an output);
+    /// 2. every `then` arm consists only of `local = someOutput;` elections
+    ///    (comments aside) and elects at least one;
+    /// 3. the chain ends in an `else` that does the same;
+    /// 4. nothing else appears in any arm.
+    ///
+    /// (4) is what keeps the pass conservative rather than greedy, and it is the
+    /// clause that declines `STOCH`, `STOCHF` and `MAVP`: their arms mix an
+    /// allocation and a `…IsAllocated = 1;` flag into the branch, so they are not
+    /// elections — they are a genuine in-place defence with a real buffer to
+    /// allocate. `MAVP` is inverted as well (the allocation in the `then`, the
+    /// election in the `else`), so (2) rejects it on the first link. Reaching those
+    /// needs a matcher that tolerates one allocating arm; that is a widening of
+    /// this rule, not a special case bolted onto it.
+    ///
+    /// Matching happens *before* [`Self::descend`] recurses (see
+    /// [`ScratchElection`]): a pass that walked the child blocks first would
+    /// collapse an inner `else if` link and silently truncate the chain.
+    fn election_chain(&self, stmt: &Statement) -> Option<Vec<(String, String)>> {
+        let Statement::If { condition, then_body, else_body, .. } = stmt else {
+            return None;
+        };
+        // (1) the link's own condition.
+        if !self.is_alias_test(condition) {
+            return None;
+        }
+        // (2) the `then` arm elects, and does nothing else.
+        self.arm_elections(then_body)?;
+        // (3)/(4) either the chain continues, or this `else` is the terminal arm.
+        let executable: Vec<&Statement> = else_body
+            .iter()
+            .filter(|s| !matches!(s, Statement::Comment(_)))
+            .collect();
+        if let [inner @ Statement::If { .. }] = executable[..] {
+            return self.election_chain(inner);
+        }
+        self.arm_elections(else_body)
+    }
+
+    /// A bare pointer-identity test between two array parameters that Rust's
+    /// aliasing rules settle at generation time — `inX == outY`. Deliberately
+    /// narrower than [`Self::static_ptr_cond`]: an election chain's conditions are
+    /// simple equalities, and admitting `&&`/`||`/`!=` here would let arbitrary
+    /// guards license an election.
+    fn is_alias_test(&self, cond: &Expr) -> bool {
+        let Expr::BinOp(l, BinOp::Eq, r) = cond else {
+            return false;
+        };
+        let (Expr::Var(a), Expr::Var(b)) = (&**l, &**r) else {
+            return false;
+        };
+        let paired = (self.inputs.contains(a.as_str()) && self.outputs.contains(b.as_str()))
+            || (self.outputs.contains(a.as_str()) && self.inputs.contains(b.as_str()));
+        paired && self.same_buffer(a, b) == Some(false)
+    }
+
+    /// The elections this arm performs, or `None` if the arm is not *purely* an
+    /// election — a single non-election statement disqualifies the whole chain.
+    /// Comments are ignored; an arm that elects nothing returns `None`.
+    fn arm_elections(&self, arm: &[Statement]) -> Option<Vec<(String, String)>> {
+        let mut elected = Vec::new();
+        for stmt in arm {
+            match stmt {
+                Statement::Comment(_) => {}
+                Statement::Assign {
+                    target: Expr::Var(local),
+                    value: Expr::Var(src),
+                    compound: false,
+                } if self.locals.contains(local) && self.outputs.contains(src) => {
+                    elected.push((local.clone(), src.clone()));
+                }
+                _ => return None,
+            }
+        }
+        (!elected.is_empty()).then_some(elected)
+    }
+
+    /// Evaluate a pointer-identity condition that Rust's parameter aliasing rules
+    /// settle at generation time. `None` = not decidable, leave the code alone.
+    fn static_ptr_cond(&self, cond: &Expr) -> Option<bool> {
+        match cond {
+            Expr::BinOp(l, BinOp::Or, r) => {
+                match (self.static_ptr_cond(l), self.static_ptr_cond(r)) {
+                    (Some(true), _) | (_, Some(true)) => Some(true),
+                    (Some(false), Some(false)) => Some(false),
+                    _ => None,
+                }
+            }
+            Expr::BinOp(l, BinOp::And, r) => {
+                match (self.static_ptr_cond(l), self.static_ptr_cond(r)) {
+                    (Some(false), _) | (_, Some(false)) => Some(false),
+                    (Some(true), Some(true)) => Some(true),
+                    _ => None,
+                }
+            }
+            Expr::Not(inner) => self.static_ptr_cond(inner).map(|v| !v),
+            Expr::BinOp(l, op @ (BinOp::Eq | BinOp::NotEq), r) => {
+                let (Expr::Var(a), Expr::Var(b)) = (&**l, &**r) else {
+                    return None;
+                };
+                let same = self.same_buffer(a, b)?;
+                Some(if matches!(op, BinOp::Eq) { same } else { !same })
+            }
+            _ => None,
+        }
+    }
+
+    /// Whether two array *parameters* can be the same buffer. Both names must
+    /// already be resolved through the elections in force.
+    fn same_buffer(&self, a: &str, b: &str) -> Option<bool> {
+        let known = |n: &str| self.inputs.contains(n) || self.outputs.contains(n);
+        if !known(a) || !known(b) {
+            return None;
+        }
+        if a == b {
+            return Some(true);
+        }
+        // `&[T]` vs `&mut [T]`, and two distinct `&mut [T]`, can never overlap.
+        // Two distinct `&[T]` can — the caller may pass one slice twice — so that
+        // pair stays undecided.
+        if self.inputs.contains(a) && self.inputs.contains(b) {
+            return None;
+        }
+        Some(false)
+    }
+
+    /// Rebuild `stmt` with its nested blocks rewritten under `elections`.
+    ///
+    /// Exhaustive over `Statement` on purpose — no `_ => stmt` arm. A catch-all
+    /// here is the sharpest failure mode this pass has: a body-bearing variant it
+    /// skipped would keep the *old* local name inside a loop body while the
+    /// election had already replaced the local with an output. That output is
+    /// well-typed, so the result compiles cleanly and only fails at run time, on
+    /// the first index into a `Vec` that is still empty. The compiler must be the
+    /// one to notice a new variant, not a fuzz run.
+    fn descend(&self, stmt: Statement, elections: &ElectionMap) -> Statement {
+        let go = |body: &[Statement]| self.block(body, elections);
+        match stmt {
+            Statement::While { condition, body } => Statement::While { condition, body: go(&body) },
+            Statement::DoWhile { condition, body } => Statement::DoWhile { condition, body: go(&body) },
+            Statement::For { var, count, body } => Statement::For { var, count, body: go(&body) },
+            Statement::If { condition, then_body, else_body, cond_comments } => Statement::If {
+                condition,
+                then_body: go(&then_body),
+                else_body: go(&else_body),
+                cond_comments,
+            },
+            Statement::Switch { expr, cases, default } => Statement::Switch {
+                expr,
+                cases: cases.into_iter().map(|(label, body)| (label, go(&body))).collect(),
+                default: go(&default),
+            },
+            Statement::ForC { init, condition, update, body } => {
+                let init = Box::new(descend_leaf(&init, elections));
+                let update = Box::new(descend_leaf(&update, elections));
+                Statement::ForC { init, condition, update, body: go(&body) }
+            }
+            Statement::Block { body } => Statement::Block { body: go(&body) },
+            // Leaves: `rename_shallow` has already rewritten every expression
+            // these own, and they hold no nested statements.
+            stmt @ (Statement::VarDecl { .. }
+            | Statement::Assign { .. }
+            | Statement::UnrollHint { .. }
+            | Statement::Return { .. }
+            | Statement::Break
+            | Statement::Continue
+            | Statement::Expr(_)
+            | Statement::CircBuf(_)
+            | Statement::Comment(_)) => stmt,
+        }
+    }
+}
+
+/// A `ForC` init/update is a single statement, not a block: rename it in place
+/// (it can never hold an election of its own).
+fn descend_leaf(stmt: &Statement, elections: &ElectionMap) -> Statement {
+    rename_shallow(stmt, elections).0
+}
+
+/// True if `name` is still read or written somewhere in `rest`. An election with
+/// no uses left in scope is dead code — `STOCH`/`STOCHF` write theirs on the
+/// unreachable aliasing arm — and eliding it would change the generated text
+/// without removing any work, so those are left exactly as they are.
+fn references_var<'a, I: Iterator<Item = &'a Statement>>(rest: I, name: &str) -> bool {
+    let stmts: Vec<Statement> = rest.cloned().collect();
+    let mut found = false;
+    visit_stmts(&stmts, &mut |stmt| {
+        let mut probe = |e: &Expr| {
+            if !found {
+                found = expr_mentions_var(e, name);
+            }
+        };
+        match stmt {
+            Statement::Assign { target, value, .. } => {
+                probe(target);
+                probe(value);
+            }
+            Statement::While { condition, .. }
+            | Statement::DoWhile { condition, .. }
+            | Statement::If { condition, .. }
+            | Statement::ForC { condition, .. } => probe(condition),
+            Statement::VarDecl { init: Some(e), .. }
+            | Statement::Return { value: Some(e) }
+            | Statement::For { count: e, .. }
+            | Statement::Switch { expr: e, .. }
+            | Statement::Expr(e)
+            | Statement::CircBuf(CircBuf::Init { size: e, .. }) => probe(e),
+            _ => {}
+        }
+    });
+    found
+}
+
+/// Whether `name` appears anywhere in `expr`, scalar or indexed.
+fn expr_mentions_var(expr: &Expr, name: &str) -> bool {
+    let mut hit = false;
+    let renamed = ElectionMap::from([(name.to_string(), name.to_string())]);
+    walk_rename(expr, &renamed, &mut hit);
+    hit
+}
+
+/// True if any statement in `rest` assigns the whole of `name` (an indexed write
+/// is fine — that is the calculation running in the elected buffer).
+fn assigns_whole_var<'a, I: Iterator<Item = &'a Statement>>(rest: I, name: &str) -> bool {
+    let mut found = false;
+    let stmts: Vec<Statement> = rest.cloned().collect();
+    visit_stmts(&stmts, &mut |stmt| {
+        if let Statement::Assign { target: Expr::Var(t), .. } = stmt {
+            if t == name {
+                found = true;
+            }
+        }
+        if let Statement::VarDecl { name: t, .. } = stmt {
+            if t == name {
+                found = true;
+            }
+        }
+    });
+    found
+}
+
+/// Rename the expressions a statement owns directly, leaving its nested blocks to
+/// the caller. Returns whether anything was rewritten.
+///
+/// Exhaustive over `Statement` on purpose — no `other => other.clone()` arm, for
+/// the same reason as [`ScratchElection::descend`]: a variant whose expressions
+/// went un-renamed would keep referring to a local the election has retired, and
+/// that miss is invisible until run time.
+fn rename_shallow(stmt: &Statement, elections: &ElectionMap) -> (Statement, bool) {
+    if elections.is_empty() {
+        return (stmt.clone(), false);
+    }
+    let mut hit = false;
+    let mut e = |x: &Expr| {
+        let (out, changed) = rename_expr(x, elections);
+        hit |= changed;
+        out
+    };
+    let out = match stmt {
+        Statement::VarDecl { var_type, name, init } => Statement::VarDecl {
+            var_type: var_type.clone(),
+            name: name.clone(),
+            init: init.as_ref().map(&mut e),
+        },
+        Statement::Assign { target, value, compound } => Statement::Assign {
+            target: e(target),
+            value: e(value),
+            compound: *compound,
+        },
+        Statement::While { condition, body } => Statement::While {
+            condition: e(condition),
+            body: body.clone(),
+        },
+        Statement::DoWhile { condition, body } => Statement::DoWhile {
+            condition: e(condition),
+            body: body.clone(),
+        },
+        Statement::For { var, count, body } => Statement::For {
+            var: var.clone(),
+            count: e(count),
+            body: body.clone(),
+        },
+        Statement::If { condition, then_body, else_body, cond_comments } => Statement::If {
+            condition: e(condition),
+            then_body: then_body.clone(),
+            else_body: else_body.clone(),
+            cond_comments: cond_comments.clone(),
+        },
+        Statement::Return { value } => Statement::Return {
+            value: value.as_ref().map(&mut e),
+        },
+        Statement::Switch { expr, cases, default } => Statement::Switch {
+            expr: e(expr),
+            cases: cases.clone(),
+            default: default.clone(),
+        },
+        Statement::ForC { init, condition, update, body } => Statement::ForC {
+            init: init.clone(),
+            condition: e(condition),
+            update: update.clone(),
+            body: body.clone(),
+        },
+        Statement::Expr(expr) => Statement::Expr(e(expr)),
+        Statement::CircBuf(CircBuf::Init { id, layout, size }) => {
+            Statement::CircBuf(CircBuf::Init {
+                id: id.clone(),
+                layout: layout.clone(),
+                size: e(size),
+            })
+        }
+        // Own no expressions, so there is nothing here to rename. `Block`'s body
+        // belongs to `descend`, and the remaining `CircBuf` operations carry only
+        // identifiers and layouts.
+        Statement::UnrollHint { .. }
+        | Statement::Break
+        | Statement::Continue
+        | Statement::Block { .. }
+        | Statement::Comment(_)
+        | Statement::CircBuf(
+            CircBuf::Prolog { .. }
+            | CircBuf::InitLocalOnly { .. }
+            | CircBuf::Next { .. }
+            | CircBuf::Destroy { .. },
+        ) => stmt.clone(),
+    };
+    (out, hit)
+}
+
+/// Substitute elected locals for the output parameters they were elected to.
+fn rename_expr(expr: &Expr, elections: &ElectionMap) -> (Expr, bool) {
+    let mut hit = false;
+    let out = walk_rename(expr, elections, &mut hit);
+    (out, hit)
+}
+
+fn walk_rename(expr: &Expr, elections: &ElectionMap, hit: &mut bool) -> Expr {
+    match expr {
+        Expr::Var(name) => match elections.get(name) {
+            Some(elected) => {
+                *hit = true;
+                Expr::Var(elected.clone())
+            }
+            None => expr.clone(),
+        },
+        Expr::ArrayAccess(name, idx) => {
+            let renamed = match elections.get(name) {
+                Some(elected) => {
+                    *hit = true;
+                    elected.clone()
+                }
+                None => name.clone(),
+            };
+            Expr::ArrayAccess(renamed, Box::new(walk_rename(idx, elections, hit)))
+        }
+        Expr::BinOp(l, op, r) => Expr::BinOp(
+            Box::new(walk_rename(l, elections, hit)),
+            op.clone(),
+            Box::new(walk_rename(r, elections, hit)),
+        ),
+        Expr::Cast(t, inner) => {
+            Expr::Cast(t.clone(), Box::new(walk_rename(inner, elections, hit)))
+        }
+        Expr::Not(inner) => Expr::Not(Box::new(walk_rename(inner, elections, hit))),
+        Expr::FuncCall(name, args) => Expr::FuncCall(
+            name.clone(),
+            args.iter().map(|a| walk_rename(a, elections, hit)).collect(),
+        ),
+        Expr::AddressOf(inner) => Expr::AddressOf(Box::new(walk_rename(inner, elections, hit))),
+        Expr::PostIncrement(inner) => {
+            Expr::PostIncrement(Box::new(walk_rename(inner, elections, hit)))
+        }
+        Expr::PostDecrement(inner) => {
+            Expr::PostDecrement(Box::new(walk_rename(inner, elections, hit)))
+        }
+        Expr::PreIncrement(inner) => {
+            Expr::PreIncrement(Box::new(walk_rename(inner, elections, hit)))
+        }
+        Expr::PreDecrement(inner) => {
+            Expr::PreDecrement(Box::new(walk_rename(inner, elections, hit)))
+        }
+        Expr::Ternary(c, t, f) => Expr::Ternary(
+            Box::new(walk_rename(c, elections, hit)),
+            Box::new(walk_rename(t, elections, hit)),
+            Box::new(walk_rename(f, elections, hit)),
+        ),
+        Expr::Literal(_) | Expr::IntLiteral(_) | Expr::PointerDeref(_) => expr.clone(),
+    }
 }
 
 /// Check if an expression returns usize (e.g., lookback function calls, UNSTABLE_PERIOD).

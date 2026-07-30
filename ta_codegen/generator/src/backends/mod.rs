@@ -181,7 +181,9 @@ impl LanguageBackend for RustBackend {
         ("", ".rs")
     }
     fn clean_keep(&self) -> &'static [&'static str] {
-        &["types.rs", "mod.rs"]
+        // Hand-written modules copied from `templates/rust/` (see
+        // `RUST_TEMPLATE_MODULES`) plus the generated `mod.rs`.
+        &["types.rs", "scratch_election.rs", "mod.rs"]
     }
     fn generate_server(
         &self,

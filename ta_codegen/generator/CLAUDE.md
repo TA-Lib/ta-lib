@@ -36,6 +36,15 @@ include/ta_func.h        (generated public header)
 (which holds only the indicator definitions) and out of `output/` (100% generated):
 - `templates/rust/types.rs` — the `Core` / `RetCode` / `CoreBuilder` / `CandleSettings`
   scaffolding, copied verbatim into the Rust crate (`output/rust/library/src/ta_func/types.rs`).
+- `templates/rust/scratch_election.rs` — the value gate for the scratch-buffer
+  election (issue #146), copied verbatim and declared `#[cfg(test)]` in the
+  generated `mod.rs`, so it never ships in a release build. Run by
+  `cargo test --lib -p ta-lib`.
+
+Both Rust templates are listed in `main.rs`'s `RUST_TEMPLATE_MODULES` (and the
+test-only ones in `RUST_TEST_ONLY_MODULES`) and in `RustBackend::clean_keep`, so
+`generate` copies them in and never deletes them. Adding another one means
+touching all three.
 - `templates/c/ta_retcode.c.template` — spliced with `src/ta_common/ta_retcode.csv`
   (`backends/retcode.rs`) → `src/ta_common/ta_retcode.c`.
 - `templates/c/ta_abstract_serve.c` — hand-written abstract-serve handlers `#include`d
@@ -89,6 +98,11 @@ cd ta_codegen/generator && cargo clippy          # Strict pedantic lints enabled
 ```
 
 Tests are in `tests/backend_suite.rs` and `tests/integration_test.rs` — they verify IR-to-backend rendering, expression types, function signatures, and function variants across all backends.
+
+Value gates that need the *generated* library live in the crate itself, as
+`#[cfg(test)]` modules copied from `templates/rust/` (see
+`RUST_TEMPLATE_MODULES`); run them with `cargo test --lib -p ta-lib` in
+`ta_codegen/output/rust/`.
 
 ## Cross-Language Testing Architecture
 
@@ -196,6 +210,50 @@ asserts `Success`). Crate-level docs, Cargo.toml package metadata, and the crate
 README.md are emitted by `generate_rust_crate_scaffolding` in `main.rs`. Verify
 with `cargo doc --no-deps` (must be warning-free — prose escaping of `[`/`<` is
 load-bearing) and `cargo test --doc` in `ta_codegen/output/rust/`.
+
+### Scratch-buffer election (issue #146)
+
+Several C bodies elect one of their own *output* buffers as the scratch the
+calculation runs in — `BBANDS` opens with `tempBuffer1 = outRealMiddleBand;` so it
+needs no allocation at all. In C that is a pointer assignment. Rust has no pointer
+to assign, so a naive rendering emits `outRealMiddleBand.to_vec()`: an allocation
+plus a copy of bytes that are overwritten before they are read, sized by the
+*caller's slice* rather than by the data range.
+
+`backends::rust_lang::ScratchElection` (a Rust-only pass, applied to both batch
+bodies at the top of `gen_impl_block`) restores C's shape by renaming the local to
+the elected output. It leans on Rust's own aliasing rules — `&[T]` and `&mut [T]`
+parameters can never overlap, and neither can two `&mut [T]` — which is also what
+makes C's aliasing arms, its input-alias guard and its copy-back statically dead
+here.
+
+The rule is stated over the IR, and nothing in the pass names a function, a buffer
+or an MA type: match an `if`/`else if`/…/`else` chain whose *every* condition is an
+input↔output pointer equality and whose *every* arm is only `scratch = someOutput;`
+elections; take the terminal `else`'s mapping; delete the chain and rename through
+the rest of the enclosing block; drop any guard that became a self-comparison.
+Clause 4 is load-bearing rather than cosmetic — left in place, `BBANDS`' copy-back
+would read and write the same `&mut` slice in one statement, which is E0502.
+
+Being general is not the same as being greedy. Requiring *every* arm to be an
+election is what declines `STOCH`, `STOCHF` and `MAVP`: each mixes an allocation
+and a `…IsAllocated = 1;` flag into a branch, which is a genuine in-place defence,
+not an election (`MAVP` is inverted too — allocation in the `then`, election in the
+`else`). Tolerating one allocating arm would reach them; that would be a widening
+of this rule for a later change, never a per-function case. An election also stops
+at the end of the block holding it, so `BBANDS`' general MA path and both stream
+paths keep their real `vec![0.0; ...]` allocations, and the pass backs off entirely
+if the local is assigned again while still in scope.
+
+`BBANDS` is currently the only function in `input/` written in this shape.
+`rust_scratch_election_declines_arms_that_allocate` in `tests/backend_suite.rs`
+pins that by sweeping every indicator and asserting the pass fires for `bbands`
+alone.
+
+The C, Java and .NET backends need none of this — they assign the pointer or
+reference directly — so the transform must never change their output. `generate`
+followed by `git diff` over `src/ta_func/`, `output/java/` and `output/dotnet/` is
+the check. `templates/rust/scratch_election.rs` is the value gate.
 
 ### Debug-safe decrements
 
