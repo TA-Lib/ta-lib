@@ -65,9 +65,9 @@ TA_LIB_API int TA_STDDEV_Lookback( int optInTimePeriod, double optInNbDev )
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
-   if( optInNbDev == -4e37 )
+   if( optInNbDev == TA_REAL_DEFAULT )
       optInNbDev = 1;
-   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+   else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX )
       return -1;
    /* Lookback is driven by the variance. */
    return TA_VAR_Lookback(optInTimePeriod,optInNbDev);
@@ -97,9 +97,9 @@ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
-   if( optInNbDev == -4e37 )
+   if( optInNbDev == TA_REAL_DEFAULT )
       optInNbDev = 1;
-   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+   else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -217,9 +217,9 @@ TA_RetCode TA_S_STDDEV( int    startIdx,
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
-   if( optInNbDev == -4e37 )
+   if( optInNbDev == TA_REAL_DEFAULT )
       optInNbDev = 1;
-   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+   else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -376,9 +376,9 @@ TA_RetCode TA_STDDEV_OpenInternal( struct TA_STDDEV_Stream **stream, const doubl
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
-   if( optInNbDev == -4e37 )
+   if( optInNbDev == TA_REAL_DEFAULT )
       optInNbDev = 1;
-   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+   else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
@@ -486,9 +486,9 @@ TA_LIB_API TA_RetCode TA_STDDEV_OpenAndFill( TA_STDDEV_Stream **stream, const do
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
-   if( optInNbDev == -4e37 )
+   if( optInNbDev == TA_REAL_DEFAULT )
       optInNbDev = 1;
-   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+   else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;

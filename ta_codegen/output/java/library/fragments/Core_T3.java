@@ -47,7 +47,7 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      if( optInVFactor == -4e37 ) {
+      if( optInVFactor == TA_REAL_DEFAULT ) {
          optInVFactor = 7e-1;
       } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
          return -1;
@@ -92,7 +92,7 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInVFactor == -4e37 ) {
+      if( optInVFactor == TA_REAL_DEFAULT ) {
          optInVFactor = 7e-1;
       } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
          return RetCode.BadParam;
@@ -386,7 +386,7 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInVFactor == -4e37 ) {
+      if( optInVFactor == TA_REAL_DEFAULT ) {
          optInVFactor = 7e-1;
       } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
          return RetCode.BadParam;
@@ -934,7 +934,7 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInVFactor == -4e37 ) {
+      if( optInVFactor == TA_REAL_DEFAULT ) {
          optInVFactor = 7e-1;
       } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
          return RetCode.BadParam;
@@ -1127,7 +1127,7 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInVFactor == -4e37 ) {
+      if( optInVFactor == TA_REAL_DEFAULT ) {
          optInVFactor = 7e-1;
       } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
          return RetCode.BadParam;

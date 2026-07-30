@@ -32,12 +32,12 @@
     */
    public int mamaLookback( double optInFastLimit, double optInSlowLimit )
    {
-      if( optInFastLimit == -4e37 ) {
+      if( optInFastLimit == TA_REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
          return -1;
       }
-      if( optInSlowLimit == -4e37 ) {
+      if( optInSlowLimit == TA_REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
          return -1;
@@ -141,12 +141,12 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInFastLimit == -4e37 ) {
+      if( optInFastLimit == TA_REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
          return RetCode.BadParam;
       }
-      if( optInSlowLimit == -4e37 ) {
+      if( optInSlowLimit == TA_REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
          return RetCode.BadParam;
@@ -851,12 +851,12 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInFastLimit == -4e37 ) {
+      if( optInFastLimit == TA_REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
          return RetCode.BadParam;
       }
-      if( optInSlowLimit == -4e37 ) {
+      if( optInSlowLimit == TA_REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
          return RetCode.BadParam;
@@ -2079,12 +2079,12 @@
       if( historyLen < 1 ) {
          return RetCode.BadParam;
       }
-      if( optInFastLimit == -4e37 ) {
+      if( optInFastLimit == TA_REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
          return RetCode.BadParam;
       }
-      if( optInSlowLimit == -4e37 ) {
+      if( optInSlowLimit == TA_REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
          return RetCode.BadParam;
@@ -2533,12 +2533,12 @@
       if( historyLen < 1 ) {
          return RetCode.BadParam;
       }
-      if( optInFastLimit == -4e37 ) {
+      if( optInFastLimit == TA_REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
          return RetCode.BadParam;
       }
-      if( optInSlowLimit == -4e37 ) {
+      if( optInSlowLimit == TA_REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
          return RetCode.BadParam;

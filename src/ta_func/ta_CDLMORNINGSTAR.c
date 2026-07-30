@@ -64,9 +64,9 @@ TA_LIB_API int TA_CDLMORNINGSTAR_Lookback( double optInPenetration )
    int BodyShort_rangeType = TA_Globals->candleSettings[TA_BodyShort].rangeType;
    int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;
    double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
-   if( optInPenetration == -4e37 )
+   if( optInPenetration == TA_REAL_DEFAULT )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
+   else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX )
       return -1;
    return max(BodyShort_avgPeriod,BodyLong_avgPeriod) + 2;
 }
@@ -111,9 +111,9 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR( int    startIdx,
       return TA_BAD_PARAM;
    if( !inClose )
       return TA_BAD_PARAM;
-   if( optInPenetration == -4e37 )
+   if( optInPenetration == TA_REAL_DEFAULT )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
+   else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX )
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
@@ -321,9 +321,9 @@ TA_RetCode TA_S_CDLMORNINGSTAR( int    startIdx,
       return TA_BAD_PARAM;
    if( !inClose )
       return TA_BAD_PARAM;
-   if( optInPenetration == -4e37 )
+   if( optInPenetration == TA_REAL_DEFAULT )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
+   else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX )
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
@@ -594,9 +594,9 @@ TA_RetCode TA_CDLMORNINGSTAR_OpenInternal( struct TA_CDLMORNINGSTAR_Stream **str
    *stream = NULL;
    if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( optInPenetration == -4e37 )
+   if( optInPenetration == TA_REAL_DEFAULT )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
+   else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
@@ -801,9 +801,9 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_OpenAndFill( TA_CDLMORNINGSTAR_Stream **
    if( !inOpen || !inHigh || !inLow || !inClose || !outInteger || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
-   if( optInPenetration == -4e37 )
+   if( optInPenetration == TA_REAL_DEFAULT )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
+   else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;

@@ -55,14 +55,14 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      if( optInNbDevUp == -4e37 ) {
+      if( optInNbDevUp == TA_REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 ) {
+      } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
          return -1;
       }
-      if( optInNbDevDn == -4e37 ) {
+      if( optInNbDevDn == TA_REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 ) {
+      } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
          return -1;
       }
       int maLookback;
@@ -116,14 +116,14 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevUp == -4e37 ) {
+      if( optInNbDevUp == TA_REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 ) {
+      } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevDn == -4e37 ) {
+      if( optInNbDevDn == TA_REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 ) {
+      } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
@@ -543,14 +543,14 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevUp == -4e37 ) {
+      if( optInNbDevUp == TA_REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 ) {
+      } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevDn == -4e37 ) {
+      if( optInNbDevDn == TA_REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 ) {
+      } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
@@ -1290,14 +1290,14 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevUp == -4e37 ) {
+      if( optInNbDevUp == TA_REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 ) {
+      } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevDn == -4e37 ) {
+      if( optInNbDevDn == TA_REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 ) {
+      } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
       double[] sc_outRealUpperBand = new double[historyLen];
@@ -1397,14 +1397,14 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevUp == -4e37 ) {
+      if( optInNbDevUp == TA_REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 ) {
+      } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevDn == -4e37 ) {
+      if( optInNbDevDn == TA_REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 ) {
+      } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
       if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {

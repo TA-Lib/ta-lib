@@ -30,14 +30,14 @@
     */
    public int sarLookback( double optInAcceleration, double optInMaximum )
    {
-      if( optInAcceleration == -4e37 ) {
+      if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > 3e37 ) {
+      } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
          return -1;
       }
-      if( optInMaximum == -4e37 ) {
+      if( optInMaximum == TA_REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > 3e37 ) {
+      } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
          return -1;
       }
       /* SAR always sacrify one price bar to establish the
@@ -75,14 +75,14 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInAcceleration == -4e37 ) {
+      if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > 3e37 ) {
+      } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInMaximum == -4e37 ) {
+      if( optInMaximum == TA_REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > 3e37 ) {
+      } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
       /* > 0 indicates long. == 0 indicates short */
@@ -474,14 +474,14 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInAcceleration == -4e37 ) {
+      if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > 3e37 ) {
+      } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInMaximum == -4e37 ) {
+      if( optInMaximum == TA_REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > 3e37 ) {
+      } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
       if( startIdx < 1 ) {
@@ -1159,14 +1159,14 @@
       if( historyLen < 1 || inLow.length != inHigh.length ) {
          return RetCode.BadParam;
       }
-      if( optInAcceleration == -4e37 ) {
+      if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > 3e37 ) {
+      } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInMaximum == -4e37 ) {
+      if( optInMaximum == TA_REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > 3e37 ) {
+      } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
       /* > 0 indicates long. == 0 indicates short */
@@ -1416,14 +1416,14 @@
       if( historyLen < 1 || inLow.length != inHigh.length ) {
          return RetCode.BadParam;
       }
-      if( optInAcceleration == -4e37 ) {
+      if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > 3e37 ) {
+      } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInMaximum == -4e37 ) {
+      if( optInMaximum == TA_REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > 3e37 ) {
+      } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {

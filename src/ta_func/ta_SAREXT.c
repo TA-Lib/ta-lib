@@ -63,37 +63,37 @@
 
 TA_LIB_API int TA_SAREXT_Lookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
 {
-   if( optInStartValue == -4e37 )
+   if( optInStartValue == TA_REAL_DEFAULT )
       optInStartValue = 0;
-   else if( optInStartValue < -3e37 || optInStartValue > 3e37 )
+   else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX )
       return -1;
-   if( optInOffsetOnReverse == -4e37 )
+   if( optInOffsetOnReverse == TA_REAL_DEFAULT )
       optInOffsetOnReverse = 0;
-   else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > 3e37 )
+   else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX )
       return -1;
-   if( optInAccelerationInitLong == -4e37 )
+   if( optInAccelerationInitLong == TA_REAL_DEFAULT )
       optInAccelerationInitLong = 0.02;
-   else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > 3e37 )
+   else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX )
       return -1;
-   if( optInAccelerationLong == -4e37 )
+   if( optInAccelerationLong == TA_REAL_DEFAULT )
       optInAccelerationLong = 0.02;
-   else if( optInAccelerationLong < 0e0 || optInAccelerationLong > 3e37 )
+   else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX )
       return -1;
-   if( optInAccelerationMaxLong == -4e37 )
+   if( optInAccelerationMaxLong == TA_REAL_DEFAULT )
       optInAccelerationMaxLong = 0.2;
-   else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > 3e37 )
+   else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX )
       return -1;
-   if( optInAccelerationInitShort == -4e37 )
+   if( optInAccelerationInitShort == TA_REAL_DEFAULT )
       optInAccelerationInitShort = 0.02;
-   else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > 3e37 )
+   else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX )
       return -1;
-   if( optInAccelerationShort == -4e37 )
+   if( optInAccelerationShort == TA_REAL_DEFAULT )
       optInAccelerationShort = 0.02;
-   else if( optInAccelerationShort < 0e0 || optInAccelerationShort > 3e37 )
+   else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX )
       return -1;
-   if( optInAccelerationMaxShort == -4e37 )
+   if( optInAccelerationMaxShort == TA_REAL_DEFAULT )
       optInAccelerationMaxShort = 0.2;
-   else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > 3e37 )
+   else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX )
       return -1;
    /* SAR always sacrifices one price bar to establish the
     * initial extreme price.
@@ -142,37 +142,37 @@ TA_LIB_API TA_RetCode TA_SAREXT( int    startIdx,
       return TA_BAD_PARAM;
    if( !inLow )
       return TA_BAD_PARAM;
-   if( optInStartValue == -4e37 )
+   if( optInStartValue == TA_REAL_DEFAULT )
       optInStartValue = 0;
-   else if( optInStartValue < -3e37 || optInStartValue > 3e37 )
+   else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInOffsetOnReverse == -4e37 )
+   if( optInOffsetOnReverse == TA_REAL_DEFAULT )
       optInOffsetOnReverse = 0;
-   else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > 3e37 )
+   else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationInitLong == -4e37 )
+   if( optInAccelerationInitLong == TA_REAL_DEFAULT )
       optInAccelerationInitLong = 0.02;
-   else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > 3e37 )
+   else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationLong == -4e37 )
+   if( optInAccelerationLong == TA_REAL_DEFAULT )
       optInAccelerationLong = 0.02;
-   else if( optInAccelerationLong < 0e0 || optInAccelerationLong > 3e37 )
+   else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationMaxLong == -4e37 )
+   if( optInAccelerationMaxLong == TA_REAL_DEFAULT )
       optInAccelerationMaxLong = 0.2;
-   else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > 3e37 )
+   else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationInitShort == -4e37 )
+   if( optInAccelerationInitShort == TA_REAL_DEFAULT )
       optInAccelerationInitShort = 0.02;
-   else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > 3e37 )
+   else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationShort == -4e37 )
+   if( optInAccelerationShort == TA_REAL_DEFAULT )
       optInAccelerationShort = 0.02;
-   else if( optInAccelerationShort < 0e0 || optInAccelerationShort > 3e37 )
+   else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationMaxShort == -4e37 )
+   if( optInAccelerationMaxShort == TA_REAL_DEFAULT )
       optInAccelerationMaxShort = 0.2;
-   else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > 3e37 )
+   else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -759,37 +759,37 @@ TA_RetCode TA_S_SAREXT( int    startIdx,
       return TA_BAD_PARAM;
    if( !inLow )
       return TA_BAD_PARAM;
-   if( optInStartValue == -4e37 )
+   if( optInStartValue == TA_REAL_DEFAULT )
       optInStartValue = 0;
-   else if( optInStartValue < -3e37 || optInStartValue > 3e37 )
+   else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInOffsetOnReverse == -4e37 )
+   if( optInOffsetOnReverse == TA_REAL_DEFAULT )
       optInOffsetOnReverse = 0;
-   else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > 3e37 )
+   else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationInitLong == -4e37 )
+   if( optInAccelerationInitLong == TA_REAL_DEFAULT )
       optInAccelerationInitLong = 0.02;
-   else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > 3e37 )
+   else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationLong == -4e37 )
+   if( optInAccelerationLong == TA_REAL_DEFAULT )
       optInAccelerationLong = 0.02;
-   else if( optInAccelerationLong < 0e0 || optInAccelerationLong > 3e37 )
+   else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationMaxLong == -4e37 )
+   if( optInAccelerationMaxLong == TA_REAL_DEFAULT )
       optInAccelerationMaxLong = 0.2;
-   else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > 3e37 )
+   else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationInitShort == -4e37 )
+   if( optInAccelerationInitShort == TA_REAL_DEFAULT )
       optInAccelerationInitShort = 0.02;
-   else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > 3e37 )
+   else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationShort == -4e37 )
+   if( optInAccelerationShort == TA_REAL_DEFAULT )
       optInAccelerationShort = 0.02;
-   else if( optInAccelerationShort < 0e0 || optInAccelerationShort > 3e37 )
+   else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationMaxShort == -4e37 )
+   if( optInAccelerationMaxShort == TA_REAL_DEFAULT )
       optInAccelerationMaxShort = 0.2;
-   else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > 3e37 )
+   else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -1397,37 +1397,37 @@ TA_RetCode TA_SAREXT_OpenInternal( struct TA_SAREXT_Stream **stream, const doubl
    *stream = NULL;
    if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( optInStartValue == -4e37 )
+   if( optInStartValue == TA_REAL_DEFAULT )
       optInStartValue = 0;
-   else if( optInStartValue < -3e37 || optInStartValue > 3e37 )
+   else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInOffsetOnReverse == -4e37 )
+   if( optInOffsetOnReverse == TA_REAL_DEFAULT )
       optInOffsetOnReverse = 0;
-   else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > 3e37 )
+   else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationInitLong == -4e37 )
+   if( optInAccelerationInitLong == TA_REAL_DEFAULT )
       optInAccelerationInitLong = 0.02;
-   else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > 3e37 )
+   else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationLong == -4e37 )
+   if( optInAccelerationLong == TA_REAL_DEFAULT )
       optInAccelerationLong = 0.02;
-   else if( optInAccelerationLong < 0e0 || optInAccelerationLong > 3e37 )
+   else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationMaxLong == -4e37 )
+   if( optInAccelerationMaxLong == TA_REAL_DEFAULT )
       optInAccelerationMaxLong = 0.2;
-   else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > 3e37 )
+   else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationInitShort == -4e37 )
+   if( optInAccelerationInitShort == TA_REAL_DEFAULT )
       optInAccelerationInitShort = 0.02;
-   else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > 3e37 )
+   else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationShort == -4e37 )
+   if( optInAccelerationShort == TA_REAL_DEFAULT )
       optInAccelerationShort = 0.02;
-   else if( optInAccelerationShort < 0e0 || optInAccelerationShort > 3e37 )
+   else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationMaxShort == -4e37 )
+   if( optInAccelerationMaxShort == TA_REAL_DEFAULT )
       optInAccelerationMaxShort = 0.2;
-   else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > 3e37 )
+   else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
@@ -1807,37 +1807,37 @@ TA_LIB_API TA_RetCode TA_SAREXT_OpenAndFill( TA_SAREXT_Stream **stream, const do
    if( !inHigh || !inLow || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
-   if( optInStartValue == -4e37 )
+   if( optInStartValue == TA_REAL_DEFAULT )
       optInStartValue = 0;
-   else if( optInStartValue < -3e37 || optInStartValue > 3e37 )
+   else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInOffsetOnReverse == -4e37 )
+   if( optInOffsetOnReverse == TA_REAL_DEFAULT )
       optInOffsetOnReverse = 0;
-   else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > 3e37 )
+   else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationInitLong == -4e37 )
+   if( optInAccelerationInitLong == TA_REAL_DEFAULT )
       optInAccelerationInitLong = 0.02;
-   else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > 3e37 )
+   else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationLong == -4e37 )
+   if( optInAccelerationLong == TA_REAL_DEFAULT )
       optInAccelerationLong = 0.02;
-   else if( optInAccelerationLong < 0e0 || optInAccelerationLong > 3e37 )
+   else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationMaxLong == -4e37 )
+   if( optInAccelerationMaxLong == TA_REAL_DEFAULT )
       optInAccelerationMaxLong = 0.2;
-   else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > 3e37 )
+   else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationInitShort == -4e37 )
+   if( optInAccelerationInitShort == TA_REAL_DEFAULT )
       optInAccelerationInitShort = 0.02;
-   else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > 3e37 )
+   else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationShort == -4e37 )
+   if( optInAccelerationShort == TA_REAL_DEFAULT )
       optInAccelerationShort = 0.02;
-   else if( optInAccelerationShort < 0e0 || optInAccelerationShort > 3e37 )
+   else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( optInAccelerationMaxShort == -4e37 )
+   if( optInAccelerationMaxShort == TA_REAL_DEFAULT )
       optInAccelerationMaxShort = 0.2;
-   else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > 3e37 )
+   else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;

@@ -78,14 +78,14 @@ impl Core {
     /// select their default value.
     #[inline]
     pub fn sar_lookback(&self, mut optInAcceleration: f64, mut optInMaximum: f64) -> usize {
-        if optInAcceleration == -4e37 {
+        if optInAcceleration == REAL_DEFAULT {
             optInAcceleration = 2e-2;
-        } else if (optInAcceleration < 0e0) || (optInAcceleration > 3e37) {
+        } else if (optInAcceleration < 0e0) || (optInAcceleration > REAL_MAX) {
             return usize::MAX;
         }
-        if optInMaximum == -4e37 {
+        if optInMaximum == REAL_DEFAULT {
             optInMaximum = 2e-1;
-        } else if (optInMaximum < 0e0) || (optInMaximum > 3e37) {
+        } else if (optInMaximum < 0e0) || (optInMaximum > REAL_MAX) {
             return usize::MAX;
         }
         // SAR always sacrify one price bar to establish the
@@ -181,14 +181,14 @@ impl Core {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
-        if optInAcceleration == -4e37 {
+        if optInAcceleration == REAL_DEFAULT {
             optInAcceleration = 2e-2;
-        } else if (optInAcceleration < 0e0) || (optInAcceleration > 3e37) {
+        } else if (optInAcceleration < 0e0) || (optInAcceleration > REAL_MAX) {
             return RetCode::BadParam;
         }
-        if optInMaximum == -4e37 {
+        if optInMaximum == REAL_DEFAULT {
             optInMaximum = 2e-1;
-        } else if (optInMaximum < 0e0) || (optInMaximum > 3e37) {
+        } else if (optInMaximum < 0e0) || (optInMaximum > REAL_MAX) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -734,14 +734,14 @@ impl Core {
         if inHigh.len() > i32::MAX as usize {
             return Err(RetCode::BadParam);
         }
-        if optInAcceleration == -4e37 {
+        if optInAcceleration == REAL_DEFAULT {
             optInAcceleration = 2e-2;
-        } else if (optInAcceleration < 0e0) || (optInAcceleration > 3e37) {
+        } else if (optInAcceleration < 0e0) || (optInAcceleration > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInMaximum == -4e37 {
+        if optInMaximum == REAL_DEFAULT {
             optInMaximum = 2e-1;
-        } else if (optInMaximum < 0e0) || (optInMaximum > 3e37) {
+        } else if (optInMaximum < 0e0) || (optInMaximum > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inHigh.len();
@@ -1019,14 +1019,14 @@ impl Core {
         if inHigh.len() > i32::MAX as usize {
             return Err(RetCode::BadParam);
         }
-        if optInAcceleration == -4e37 {
+        if optInAcceleration == REAL_DEFAULT {
             optInAcceleration = 2e-2;
-        } else if (optInAcceleration < 0e0) || (optInAcceleration > 3e37) {
+        } else if (optInAcceleration < 0e0) || (optInAcceleration > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInMaximum == -4e37 {
+        if optInMaximum == REAL_DEFAULT {
             optInMaximum = 2e-1;
-        } else if (optInMaximum < 0e0) || (optInMaximum > 3e37) {
+        } else if (optInMaximum < 0e0) || (optInMaximum > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inHigh.len();

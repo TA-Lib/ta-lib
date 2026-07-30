@@ -27,9 +27,9 @@
     */
    public int cdlMorningDojiStarLookback( double optInPenetration )
    {
-      if( optInPenetration == -4e37 ) {
+      if( optInPenetration == TA_REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > 3e37 ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
          return -1;
       }
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
@@ -79,9 +79,9 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInPenetration == -4e37 ) {
+      if( optInPenetration == TA_REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > 3e37 ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -281,9 +281,9 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInPenetration == -4e37 ) {
+      if( optInPenetration == TA_REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > 3e37 ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
       lookbackTotal = cdlMorningDojiStarLookback(optInPenetration);
@@ -857,9 +857,9 @@
       if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
          return RetCode.BadParam;
       }
-      if( optInPenetration == -4e37 ) {
+      if( optInPenetration == TA_REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > 3e37 ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
@@ -1051,9 +1051,9 @@
       if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
          return RetCode.BadParam;
       }
-      if( optInPenetration == -4e37 ) {
+      if( optInPenetration == TA_REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > 3e37 ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {

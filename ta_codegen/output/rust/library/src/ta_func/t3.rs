@@ -92,7 +92,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if optInVFactor == -4e37 {
+        if optInVFactor == REAL_DEFAULT {
             optInVFactor = 7e-1;
         } else if (optInVFactor < 0e0) || (optInVFactor > 1e0) {
             return usize::MAX;
@@ -191,7 +191,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if optInVFactor == -4e37 {
+        if optInVFactor == REAL_DEFAULT {
             optInVFactor = 7e-1;
         } else if (optInVFactor < 0e0) || (optInVFactor > 1e0) {
             return RetCode::BadParam;
@@ -587,7 +587,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if optInVFactor == -4e37 {
+        if optInVFactor == REAL_DEFAULT {
             optInVFactor = 7e-1;
         } else if (optInVFactor < 0e0) || (optInVFactor > 1e0) {
             return Err(RetCode::BadParam);
@@ -833,7 +833,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if optInVFactor == -4e37 {
+        if optInVFactor == REAL_DEFAULT {
             optInVFactor = 7e-1;
         } else if (optInVFactor < 0e0) || (optInVFactor > 1e0) {
             return Err(RetCode::BadParam);
