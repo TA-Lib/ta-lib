@@ -588,8 +588,8 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     // `--func=X` run cannot rewrite mod.rs down to the filtered subset and
     // break the crate.
     if backends_to_run.contains(&"rust") {
-        let types_src = root.join("ta_codegen/generator/templates/rust/types.rs");
-        generate_rust_crate_scaffolding(&out_base, all_funcs, &types_src);
+        let templates = root.join("ta_codegen/generator/templates/rust");
+        generate_rust_crate_scaffolding(&out_base, all_funcs, &templates);
     }
 
     backends::func_list::generate(all_funcs, &root.join("ta_func_list.txt"));
@@ -1725,7 +1725,19 @@ fn format_yaml_num(v: f64) -> String {
     }
 }
 
-fn generate_rust_crate_scaffolding(out_base: &Path, funcs: &[ir::FuncDef], types_src: &Path) {
+/// The hand-written Rust library sources that ship inside the generated crate,
+/// copied verbatim from `ta_codegen/generator/templates/rust/`. `types.rs` holds
+/// `Core`/`CoreBuilder` and its API tests (issue #144); `scratch_election.rs` is
+/// a `#[cfg(test)]`-only module holding the value gate for the batch bodies'
+/// scratch-buffer election (issue #146). Both are listed in the Rust backend's
+/// `clean_keep`, so `generate` never deletes them.
+const RUST_TEMPLATE_MODULES: &[&str] = &["types", "scratch_election"];
+
+/// Of [`RUST_TEMPLATE_MODULES`], the ones that exist only for `cargo test` and so
+/// are declared `#[cfg(test)]` in the generated `mod.rs`.
+const RUST_TEST_ONLY_MODULES: &[&str] = &["scratch_election"];
+
+fn generate_rust_crate_scaffolding(out_base: &Path, funcs: &[ir::FuncDef], templates: &Path) {
     // Single source of truth for the crate version: the VERSION file at the
     // repo root (kept in sync across all packaging by scripts/sync.py).
     // Hardcoding it here once made a release bump fail the regen-check gate.
@@ -1959,11 +1971,14 @@ BSD-3-Clause — see [LICENSE](https://github.com/TA-Lib/ta-lib/blob/main/LICENS
     std::fs::write(&readme_path, readme).unwrap();
     println!("  Scaffolding -> {}", readme_path.display());
 
-    // --- Copy hand-written types.rs from ta_codegen/generator/templates/rust/ ---
-    if types_src.exists() {
-        let types_dest = ta_func_dir.join("types.rs");
-        std::fs::copy(types_src, &types_dest).unwrap();
-        println!("  Copied types.rs -> {}", types_dest.display());
+    // --- Copy the hand-written modules from ta_codegen/generator/templates/rust/ ---
+    for module in RUST_TEMPLATE_MODULES {
+        let src = templates.join(format!("{module}.rs"));
+        if src.exists() {
+            let dest = ta_func_dir.join(format!("{module}.rs"));
+            std::fs::copy(&src, &dest).unwrap();
+            println!("  Copied {module}.rs -> {}", dest.display());
+        }
     }
 
     // --- src/ta_func/mod.rs (generated: imports types + declares indicator modules) ---
@@ -1975,10 +1990,20 @@ BSD-3-Clause — see [LICENSE](https://github.com/TA-Lib/ta-lib/blob/main/LICENS
 // Types and Core struct are in types.rs (hand-written, not generated).
 mod types;
 pub use types::*;
-
-// Generated indicator modules:
 "#,
     );
+
+    // Hand-written test-only modules (not generated; see templates/rust/).
+    if !RUST_TEST_ONLY_MODULES.is_empty() {
+        mod_rs.push_str(
+            "\n// Hand-written test-only modules (not generated; see templates/rust/).\n",
+        );
+        for module in RUST_TEST_ONLY_MODULES {
+            mod_rs.push_str(&format!("#[cfg(test)]\nmod {module};\n"));
+        }
+    }
+
+    mod_rs.push_str("\n// Generated indicator modules:\n");
 
     // Add mod declarations for each generated indicator
     let mut func_names: Vec<String> = funcs
