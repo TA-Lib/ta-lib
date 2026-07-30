@@ -2,6 +2,7 @@
 
 # Merge dev into main branch
 
+import argparse
 import subprocess
 import sys
 import os
@@ -14,6 +15,33 @@ def run_command(command):
     """Run a shell command and return the output."""
     result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return result.stdout.strip()
+
+def parse_args():
+    """Parse (and reject) the command line before anything touches git.
+
+    This script takes no options -- running it merges and PUSHES. It previously
+    ignored sys.argv entirely, so a mistyped or exploratory flag ('merge.py
+    --help') silently performed the merge instead of printing usage. argparse
+    now exits on -h/--help and on any unrecognized argument, before main() runs.
+    """
+    parser = argparse.ArgumentParser(
+        prog="scripts/merge.py",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            "Fast-forward main to dev, then push BOTH branches to origin.\n"
+            "\n"
+            "Takes no options: invoking it performs the merge and the push.\n"
+            "\n"
+            "It refuses to run unless dev is clean, is up-to-date with\n"
+            "origin/dev, and its committed TA_LIB_SOURCES_DIGEST matches its\n"
+            "sources -- i.e. the dev-nightly job has already regenerated and\n"
+            "committed the dist assets. Merging an inconsistent dev breaks\n"
+            "main-nightly's dist verification."
+        ),
+        epilog="Usage: run it with no arguments, after a green dev nightly.",
+    )
+    parser.parse_args()
+
 
 def main():
     try:
@@ -110,4 +138,5 @@ def main():
             run_command(['git', 'checkout', original_branch])
 
 if __name__ == "__main__":
+    parse_args()
     main()
