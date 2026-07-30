@@ -74,10 +74,20 @@ impl Core {
     ///   (default 0.02, minimum 0)
     /// * `optInMaximum` — Ceiling on the acceleration factor (default 0.2, minimum 0)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
+    /// select their default value.
     #[inline]
     pub fn sar_lookback(&self, mut optInAcceleration: f64, mut optInMaximum: f64) -> usize {
+        if optInAcceleration == -4e37 {
+            optInAcceleration = 2e-2;
+        } else if (optInAcceleration < 0e0) || (optInAcceleration > 1.7976931348623157e308) {
+            return usize::MAX;
+        }
+        if optInMaximum == -4e37 {
+            optInMaximum = 2e-1;
+        } else if (optInMaximum < 0e0) || (optInMaximum > 1.7976931348623157e308) {
+            return usize::MAX;
+        }
         // SAR always sacrify one price bar to establish the
         // initial extreme price.
         return (1) as usize;
@@ -107,6 +117,8 @@ impl Core {
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — Parabolic SAR stop/reverse level per bar.
+    ///
+    /// Real parameters accept `-4e37` to select their default value.
     ///
     /// # Errors
     ///
@@ -168,6 +180,16 @@ impl Core {
     ) -> RetCode {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
+        }
+        if optInAcceleration == -4e37 {
+            optInAcceleration = 2e-2;
+        } else if (optInAcceleration < 0e0) || (optInAcceleration > 1.7976931348623157e308) {
+            return RetCode::BadParam;
+        }
+        if optInMaximum == -4e37 {
+            optInMaximum = 2e-1;
+        } else if (optInMaximum < 0e0) || (optInMaximum > 1.7976931348623157e308) {
+            return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
         let mut retCode: RetCode = RetCode::Success;
@@ -712,6 +734,16 @@ impl Core {
         if inHigh.len() > i32::MAX as usize {
             return Err(RetCode::BadParam);
         }
+        if optInAcceleration == -4e37 {
+            optInAcceleration = 2e-2;
+        } else if (optInAcceleration < 0e0) || (optInAcceleration > 1.7976931348623157e308) {
+            return Err(RetCode::BadParam);
+        }
+        if optInMaximum == -4e37 {
+            optInMaximum = 2e-1;
+        } else if (optInMaximum < 0e0) || (optInMaximum > 1.7976931348623157e308) {
+            return Err(RetCode::BadParam);
+        }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
@@ -985,6 +1017,16 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if inHigh.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if optInAcceleration == -4e37 {
+            optInAcceleration = 2e-2;
+        } else if (optInAcceleration < 0e0) || (optInAcceleration > 1.7976931348623157e308) {
+            return Err(RetCode::BadParam);
+        }
+        if optInMaximum == -4e37 {
+            optInMaximum = 2e-1;
+        } else if (optInMaximum < 0e0) || (optInMaximum > 1.7976931348623157e308) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inHigh.len();

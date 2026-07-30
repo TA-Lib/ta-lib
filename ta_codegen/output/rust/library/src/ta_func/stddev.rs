@@ -74,14 +74,17 @@ impl Core {
     /// * `optInTimePeriod` — Window length (default 5, range 2..=100000)
     /// * `optInNbDev` — Multiplier applied to the standard deviation (default 1)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`,
+    /// and real parameters `-4e37`, to select their default value.
     #[inline]
     pub fn stddev_lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 5;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
+        }
+        if optInNbDev == -4e37 {
+            optInNbDev = 1e0;
         }
         // Lookback is driven by the variance.
         return self.var_lookback(optInTimePeriod, optInNbDev);
@@ -111,7 +114,8 @@ impl Core {
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — Standard deviation at each bar, scaled by optInNbDev.
     ///
-    /// Integer parameters accept `i32::MIN` to select their default value.
+    /// Integer parameters accept `i32::MIN`, and real parameters `-4e37`, to select their default
+    /// value.
     ///
     /// # Errors
     ///
@@ -171,6 +175,9 @@ impl Core {
             optInTimePeriod = 5;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
+        }
+        if optInNbDev == -4e37 {
+            optInNbDev = 1e0;
         }
         let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
@@ -337,6 +344,9 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        if optInNbDev == -4e37 {
+            optInNbDev = 1e0;
+        }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
@@ -441,6 +451,9 @@ impl Core {
             optInTimePeriod = 5;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
+        }
+        if optInNbDev == -4e37 {
+            optInNbDev = 1e0;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;

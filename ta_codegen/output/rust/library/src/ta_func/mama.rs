@@ -75,10 +75,20 @@ impl Core {
     /// * `optInSlowLimit` — Lower bound on the adaptive smoothing factor (default 0.05, range
     ///   0.01..=0.99)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
+    /// select their default value.
     #[inline]
     pub fn mama_lookback(&self, mut optInFastLimit: f64, mut optInSlowLimit: f64) -> usize {
+        if optInFastLimit == -4e37 {
+            optInFastLimit = 5e-1;
+        } else if (optInFastLimit < 1e-2) || (optInFastLimit > 9.9e-1) {
+            return usize::MAX;
+        }
+        if optInSlowLimit == -4e37 {
+            optInSlowLimit = 5e-2;
+        } else if (optInSlowLimit < 1e-2) || (optInSlowLimit > 9.9e-1) {
+            return usize::MAX;
+        }
         // The two parameters are not a factor to determine
         // the lookback, but are still requested for
         // consistency with all other Lookback functions.
@@ -125,6 +135,8 @@ impl Core {
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outMAMA` — Adaptive moving average (fast line)
     /// * `outFAMA` — Following adaptive moving average, using half the alpha (slow line)
+    ///
+    /// Real parameters accept `-4e37` to select their default value.
     ///
     /// # Errors
     ///
@@ -185,6 +197,16 @@ impl Core {
     ) -> RetCode {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
+        }
+        if optInFastLimit == -4e37 {
+            optInFastLimit = 5e-1;
+        } else if (optInFastLimit < 1e-2) || (optInFastLimit > 9.9e-1) {
+            return RetCode::BadParam;
+        }
+        if optInSlowLimit == -4e37 {
+            optInSlowLimit = 5e-2;
+        } else if (optInSlowLimit < 1e-2) || (optInSlowLimit > 9.9e-1) {
+            return RetCode::BadParam;
         }
         if outMAMA.as_ptr() == outFAMA.as_ptr() {
             return RetCode::BadParam;
@@ -1153,6 +1175,16 @@ impl Core {
         if inReal.len() > i32::MAX as usize {
             return Err(RetCode::BadParam);
         }
+        if optInFastLimit == -4e37 {
+            optInFastLimit = 5e-1;
+        } else if (optInFastLimit < 1e-2) || (optInFastLimit > 9.9e-1) {
+            return Err(RetCode::BadParam);
+        }
+        if optInSlowLimit == -4e37 {
+            optInSlowLimit = 5e-2;
+        } else if (optInSlowLimit < 1e-2) || (optInSlowLimit > 9.9e-1) {
+            return Err(RetCode::BadParam);
+        }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
@@ -1627,6 +1659,16 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if outMAMA.as_ptr() == outFAMA.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if optInFastLimit == -4e37 {
+            optInFastLimit = 5e-1;
+        } else if (optInFastLimit < 1e-2) || (optInFastLimit > 9.9e-1) {
+            return Err(RetCode::BadParam);
+        }
+        if optInSlowLimit == -4e37 {
+            optInSlowLimit = 5e-2;
+        } else if (optInSlowLimit < 1e-2) || (optInSlowLimit > 9.9e-1) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();

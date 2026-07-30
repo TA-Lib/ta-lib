@@ -365,36 +365,109 @@ Architecture (see `fuzz_data.h`, the Rust port in
 - **Coverage:** every function × 9 shapes × 3 seeds × 3 sizes × parameter
   vectors × 3 subranges ≈ 182k comparisons **per server**, ~94% with non-empty
   output (a non-vacuity guard fails the run if nothing produced output — an empty
-  output hashes the same on both sides).
+  output hashes the same on both sides). Plus the rejection leg below.
 
-Scope rules (deliberate):
-- **No 0.6.4, no waivers; one tolerance + one ill-conditioning skip.** This is
-  current-vs-current across languages, so — unlike `--fuzz-064` — there are none
-  of the `#98`/`#107`/FMA-transition carve-outs. Every case is bitwise except
-  Java's transcendental calls (1e-9, above). A non-tolerated mismatch is a real
-  fusion-site / codegen divergence to fix.
-- **The one ill-conditioning skip: HT_DCPHASE / HT_SINE on the constant shape,
-  Java only.** These two derive their output from `atan2` of the Hilbert
-  transform's in-phase/quadrature components. On `FUZZ_CONSTANT` (flat O=H=L=C,
-  zero variance) those components are floating-point noise (~0), so the phase is
-  `atan2(≈0,≈0)` — chaotically sensitive to the last bit of every transcendental
-  step. C and Rust share the system libm and stay **bit-identical** there (Rust:
-  0 mismatches on every shape); Java's fdlibm differs by ~1 ULP and this
-  ill-conditioning amplifies it to whole *degrees* (~2.9° on HT_DCPHASE). It is
-  not a codegen bug — all 8 non-degenerate shapes agree within 1e-9, and `atan2`
-  of a null signal is mathematically undefined — so no fixed tolerance can
-  separate it from fdlibm noise. `xlang_java_illcond` skips exactly these two
-  functions on exactly the constant shape for the Java leg; the count is reported
-  in the summary. Rust still gates HT_DCPHASE/HT_SINE bitwise on the constant
-  shape, so the C computation itself stays covered there.
-- **period == 1 is in scope** (no 0.6.4 to trip on it), though the shared
-  `fuzz_build_vectors` currently floors periods at 2; period-1 parity is also
-  covered by the `--codegen` edge sweeps.
-- Why this is expected GREEN (PR #96): every backend fuses the identical `a*b+c`
-  sites via the shared `backends/fma.rs` detector and builds with
-  `-ffp-contract=off`, and `fma`/`mul_add` are IEEE correctly-rounded → bit-
-  identical for equal operands (Java `Math.fma` included; only its fdlibm
-  transcendentals need the tolerance).
+### The parameter-contract legs — both classes, both tiers (issue #148)
+
+Everything above compares **values**. Until #148 nothing compared what a call is
+supposed to *do with its parameters*, because `fuzz_build_vectors` never produced
+a vector that exercised either half of the contract: integer candidates are
+clamped into `[min, max]`, real candidates are the `suggested_*` values (in-range
+by construction), and no candidate was ever a `TA_*_DEFAULT` sentinel. That blind
+spot let the Rust backend ship with **no validation at all** for `real` optional
+parameters — neither range check nor default substitution, at any tier — through
+every gate in this file. The whole verification table of the fix passed equally
+well *without* the fix.
+
+Two candidate classes now close it, both metadata-driven off `ta_abstract`, so
+they cover every range-typed parameter today and anything added later on the day
+it lands:
+
+| Class | Candidates | Contract |
+|---|---|---|
+| `FUZZ_VEC_REJECT` (`fuzz_add_out_of_range`) | below-min, above-max — per **bounded** side | the call must be **rejected** (`TA_BAD_PARAM` / an invalid lookback) |
+| `FUZZ_VEC_SENTINEL` (`fuzz_add_default_sentinel`) | `TA_REAL_DEFAULT` (`-4e37`), `TA_INTEGER_DEFAULT` (`INT_MIN`) — per **Range** parameter, bounded or not | the call must **succeed with the declared default's result** |
+
+- **Scope: `--xlang-hash` only.** `fuzz_build_vectors(..., frozenOracle=1)` — the
+  `--fuzz-064` path — emits neither class. That oracle certifies *numeric*
+  agreement with a shipped binary; the parameter contract is a separate question
+  and is deliberately not tangled into it. (`--fuzz-064`'s comparison counts are
+  byte-identical before and after this feature, which is the check that proves
+  the separation.)
+- **An unconstrained side contributes no reject candidate.** `TA_REAL_MIN/MAX`,
+  `TA_INTEGER_MIN/MAX` reach the backends as the widest representable value and
+  every backend skips the comparison for them (the shared unbounded-range
+  magnitude test in `backends/c.rs`, `rust_lang.rs`, `java.rs`), so there is no
+  rejection to compare. `optInPenetration` is `[0, TA_REAL_MAX]`: below-min is a
+  real gate, above-max is not. The **sentinel** class has no such exemption —
+  which is exactly what gates the five `[TA_REAL_MIN, TA_REAL_MAX]` reals
+  (`BBANDS.optInNbDevUp/Dn`, `STDDEV`/`VAR.optInNbDev`, `SAREXT.optInStartValue`):
+  substitution is their *only* contract.
+- **`IntegerList` (the MAType-style enums) is excluded from both**, for different
+  reasons. It declares no range, so there is no bound to exceed (the equivalent
+  out-of-**list** injection lives in the stream vector builder). And C maps
+  `TA_INTEGER_DEFAULT` to the declared default for enums while the Rust backend
+  does not — a known residual divergence tracked in
+  `ta_codegen/generator/CLAUDE.md`, on a different set of functions.
+- **Both tiers.** The lookback entry point carries its own copy of the validation,
+  so a backend can diverge at one tier and not the other. `xlang_lookback_leg`
+  sweeps `abstract_get_lookback` once per parameter vector (lookback is a pure
+  function of the parameters, so it needs no data). C and Java signal rejection
+  with `-1`, the Rust crate with `usize::MAX`; both normalize to `-1` before
+  comparing.
+
+**How each class is asserted**
+
+- *Reject* — against the C golden, reusing the existing verdict machinery:
+  `codegen_hash_compare` / `codegen_compare_tol` diff `retCode` first and
+  short-circuit to MATCH once both sides agree on the same non-success code, so a
+  language that computes a number where C returns `TA_BAD_PARAM` is a hard
+  mismatch.
+- *Sentinel* — **inside each server**, not against the golden: the same call with
+  the sentinel and with the explicit default must agree bit-for-bit
+  (`xlang_hash_call` twice). "The sentinel selects the default" is a property of
+  one implementation, and asserting it language-internally needs no tolerance, so
+  Java's fdlibm transcendentals stay bitwise here like everything else. Nothing is
+  lost: the cross-language correctness of the *default* result is already gated by
+  `vec[0]` in the same sweep, so
+  `server(sentinel) == server(default) ≈ golden(default) == golden(sentinel)`
+  closes the loop transitively.
+
+**Three self-checks keep it from passing vacuously**
+
+1. An out-of-range vector the in-process C library *accepts* fails the run — the
+   candidate, not the implementation, is wrong (the `ta_abstract` range has
+   drifted from what the generated code validates).
+2. A sentinel vector where C does *not* reproduce the explicit default's result
+   fails the run — otherwise "both languages agree" would stop meaning the
+   contract holds.
+3. An unfiltered run that produces **zero** cases in either class, at either tier,
+   fails as `VACUOUS CONTRACT LEG`.
+
+**Contract vectors always take the hash path, and only the full range.** Hash mode
+(`want_hash` / `gen_present`) makes the server return right after the **guarded**
+call; the tolerance path instead falls through to the server's *unguarded* timing
+rerun, where "every optional parameter resolved (never a sentinel) and in-range"
+is a **precondition** (see the VARIANT gate above) that both classes violate by
+construction. Sending them down that path killed the Java server twice —
+`ArrayIndexOutOfBoundsException: Index 40` (below-min period) and
+`Index -2147483634` (the raw `INT_MIN` sentinel), both inside
+`linearRegAngleUnguardedInternal`. The servers would be more robust skipping the
+unguarded rerun when the guarded call failed; that is a generator change across
+four backends, so this gate simply does not ask them to do it. And because
+validation runs before any `startIdx`/`endIdx` logic, the contract is
+subrange-independent — the contract vectors run on the full range only (still 81
+repetitions each across shapes × seeds × sizes), which keeps the added cost to
+about +14% wall clock on a two-server run.
+
+**Sabotage-proven, both halves independently.** Against `dev` +
+`--language=rust`:
+
+| `rust_lang.rs::gen_opt_param_validation_with` | Result |
+|---|---|
+| as merged | `PASS`, `Rust: 226470 cases, 0 mismatch(es)` |
+| `ParamType::Real` arm deleted (the `dev` state) | `FAIL — 3129 output mismatch(es) ... across 13 function(s)` |
+| Real arm kept, **sentinel substitution only** removed | `FAIL — 1855 output mismatch(es) ... across 13 function(s)` |
 
 ## `server_verify` — bitwise C⇄server on the hard-coded tests (issue #115)
 

@@ -73,6 +73,11 @@ so the change is comment-only there.
   lookback formula) are left to the ASan/UBSan job rather than forced by the
   boundary sweep: they are values no caller passes and are unsafe to provoke in a
   plain build. The sweep uses an overflow-safe "large" period near the data length.
-- **Real-parameter range rejection**: the library does not range-check real
-  optional parameters, so the sweep exercises real endpoints for the finite-output
-  scan only, not for `TA_BAD_PARAM` behavior.
+- **Real-parameter range rejection**: the library *does* range-check real optional
+  parameters that declare a finite bound — 19 parameters across 11 functions
+  (`ta_T3.c:76-79` is the shape; the emitter is `backends/c.rs`, mirrored in
+  `backends/java.rs` and `backends/rust_lang.rs`). The remaining 5 real optional
+  parameters declare `[TA_REAL_MIN, TA_REAL_MAX]`, which constrains nothing and
+  emits no check. The sweep still exercises real endpoints for the finite-output
+  scan only, not for `TA_BAD_PARAM` behavior — extending it to assert the rejection
+  is open work, not a property the library lacks.
