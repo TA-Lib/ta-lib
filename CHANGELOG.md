@@ -64,6 +64,14 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#77) CMake shared library now links libm directly, so it declares its own math-library dependency instead of relying on the consuming program to provide it. Thanks @BwL1289 !
 - (#102) Fixed ULTOSC and CDL3INSIDE performance regression (only in 0.7.1)
 - (#112) IMI returned NaN on an all-flat window (every bar `close == open`); now returns 50.0.
+- Real optional parameters lost their range check in 0.7.0. Values far outside the
+  documented bounds were accepted — `TA_SAR` with a negative acceleration, or
+  `TA_CDLDARKCLOUDCOVER` with a penetration of `1e100`, returned `TA_SUCCESS` and a
+  meaningless result; `TA_BBANDS` with an infinite `optInNbDevUp` returned
+  `TA_SUCCESS` with a non-finite band. All 21 of them are validated again, exactly as
+  in 0.6.x, so these calls return `TA_BAD_PARAM`. Affects `TA_BBANDS`, `TA_STDDEV`,
+  `TA_VAR`, `TA_SAR`, `TA_SAREXT`, `TA_MAMA`, `TA_T3` and the seven `TA_CDL*` patterns
+  that take a penetration.
 
 ## [0.7.1] 2026-07-03
 ### Added
