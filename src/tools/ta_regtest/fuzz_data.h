@@ -4,7 +4,9 @@
 /* fuzz_data.h — deterministic input generator + output hasher, compiled
  * byte-identically into both ta_regtest and ta_064_serve so a (shape,seed,n)
  * tuple reproduces the same inputs on each side. See CLAUDE.md (--fuzz-064).
- * FP_CONTRACT off so the generator can't be FMA-fused on one side only. */
+ * Both sides must be COMPILED with -ffp-contract=off so the generator can't be
+ * FMA-fused on one side only; the pragma below is not enough on its own, GCC
+ * ignores it (issue #150). */
 
 #pragma STDC FP_CONTRACT OFF
 #include <math.h>
@@ -547,7 +549,8 @@ static void fuzz_zerosum_gen(int seed, int n,
 }
 
 /* Fill OHLCV+OI arrays (length n) from (shape,seed). high>=max(o,c),
- * low<=min(o,c). Mul/add split into statements so nothing contracts. */
+ * low<=min(o,c). Mul/add split into statements: that stops clang's
+ * statement-local contraction, but not GCC's — see the header note (#150). */
 static void fuzz_gen(int shape, int seed, int n,
                      double *o, double *h, double *l, double *c,
                      double *v, double *oi)

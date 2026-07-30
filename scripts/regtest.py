@@ -167,7 +167,8 @@ def _compile_ta_ref_serve(serve_src, lib_a, include_dirs, bin_dir, post_funcs=()
     tmp_ref = os.path.join(bin_dir, "_ta_ref_serve.c")
     with open(tmp_ref, "w") as f:
         f.write(src_text)
-    cmd = ["cc", "-O3", "-flto", "-DNDEBUG", "-DTA_REF_SERVE", "-Wno-everything"]
+    cmd = ["cc", "-O3", "-flto", "-DNDEBUG", "-DTA_REF_SERVE", "-Wno-everything",
+           serve_version.FP_CONTRACT_FLAG]
     cmd += [f"-I{d}" for d in include_dirs]
     cmd += ["-o", os.path.join(bin_dir, "ta_ref_serve"), tmp_ref, lib_a, "-lm"]
     rc = subprocess.run(cmd).returncode
@@ -211,16 +212,9 @@ def ensure_reference_serve(root, bin_dir):
         # frozen library. TA_*_Unguarded/TA_S_*_Unguarded calls are compiled
         # out via TA_REF_SERVE (the frozen lib has no unguarded symbols).
         serve_src, _lib_ignored, includes = _ta_ref_serve_paths(root, os.path.join(root, "cmake-build"))
-        lib_a = os.path.join(ref_build, "libta-lib.a")
-        # Build the frozen reference static lib once (the tag is immutable).
-        if not os.path.exists(lib_a):
-            print("  Building frozen reference libta-lib.a (one time)...")
-            os.makedirs(ref_build, exist_ok=True)
-            if not os.path.exists(os.path.join(ref_build, "CMakeCache.txt")):
-                subprocess.run(["cmake", ref_root, "-DCMAKE_BUILD_TYPE=Release"],
-                               check=True, cwd=ref_build)
-            subprocess.run(["cmake", "--build", ".", "--target", "ta-lib-static",
-                            "-j", str(os.cpu_count() or 4)], check=True, cwd=ref_build)
+        # Build the frozen reference static lib (the tag is immutable, but the
+        # FP-contraction setting must match this tree's — see build_frozen_lib).
+        lib_a = serve_version.build_frozen_lib(ref_root, ref_build, "ta_ref_serve")
         if not os.path.exists(serve_src):
             print(f"  ta_ref_serve: FAILED — {serve_src} missing in worktree")
             return
