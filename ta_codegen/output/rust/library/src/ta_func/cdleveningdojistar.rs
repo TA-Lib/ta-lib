@@ -71,10 +71,15 @@ impl Core {
     /// * `optInPenetration` — Fraction of the 1st real body the 3rd candle's close must
     ///   penetrate; larger demands a deeper close into the first body (default 0.3, minimum 0)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
+    /// select their default value.
     #[inline]
     pub fn cdleveningdojistar_lookback(&self, mut optInPenetration: f64) -> usize {
+        if optInPenetration == -4e37 {
+            optInPenetration = 3e-1;
+        } else if (optInPenetration < 0e0) || (optInPenetration > 1.7976931348623157e308) {
+            return usize::MAX;
+        }
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -117,6 +122,8 @@ impl Core {
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outInteger` — -100 when the pattern is detected, 0 otherwise. Always bearish; never
     ///   emits +100.
+    ///
+    /// Real parameters accept `-4e37` to select their default value.
     ///
     /// # Errors
     ///
@@ -179,6 +186,11 @@ impl Core {
     ) -> RetCode {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
+        }
+        if optInPenetration == -4e37 {
+            optInPenetration = 3e-1;
+        } else if (optInPenetration < 0e0) || (optInPenetration > 1.7976931348623157e308) {
+            return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
         let mut BodyDojiPeriodTotal: f64 = 0.0_f64;
@@ -911,6 +923,11 @@ impl Core {
         if inOpen.len() > i32::MAX as usize {
             return Err(RetCode::BadParam);
         }
+        if optInPenetration == -4e37 {
+            optInPenetration = 3e-1;
+        } else if (optInPenetration < 0e0) || (optInPenetration > 1.7976931348623157e308) {
+            return Err(RetCode::BadParam);
+        }
         let historyLen: usize = inOpen.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
@@ -1286,6 +1303,11 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if inOpen.len() > i32::MAX as usize {
+            return Err(RetCode::BadParam);
+        }
+        if optInPenetration == -4e37 {
+            optInPenetration = 3e-1;
+        } else if (optInPenetration < 0e0) || (optInPenetration > 1.7976931348623157e308) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inOpen.len();

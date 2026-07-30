@@ -36,7 +36,9 @@
 //!   written. An indicator consumes a number of leading values (its *lookback*)
 //!   before producing output — query it with the matching `*_lookback` method
 //!   (e.g. [`Core::sma_lookback`]).
-//! * Integer parameters accept `i32::MIN` to select their default value.
+//! * Integer parameters accept `i32::MIN`, and real parameters `-4e37`, to select their
+//!   default value. A parameter outside its documented range returns
+//!   [`RetCode::BadParam`].
 //! * Every call returns a [`RetCode`]; anything other than [`RetCode::Success`]
 //!   means no output was produced.
 //!

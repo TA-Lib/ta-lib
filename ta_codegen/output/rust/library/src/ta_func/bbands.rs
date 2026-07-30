@@ -93,14 +93,20 @@ impl Core {
     /// * `optInMAType` — Moving-average type for the middle band (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`,
+    /// and real parameters `-4e37`, to select their default value.
     #[inline]
     pub fn bbands_lookback(&self, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
+        }
+        if optInNbDevUp == -4e37 {
+            optInNbDevUp = 2e0;
+        }
+        if optInNbDevDn == -4e37 {
+            optInNbDevDn = 2e0;
         }
         let mut maLookback: usize = 0_usize;
         let mut stddevLookback: usize = 0_usize;
@@ -163,7 +169,8 @@ impl Core {
     /// * `outRealMiddleBand` — The moving average.
     /// * `outRealLowerBand` — Middle band minus nbDevDn standard deviations.
     ///
-    /// Integer parameters accept `i32::MIN` to select their default value.
+    /// Integer parameters accept `i32::MIN`, and real parameters `-4e37`, to select their default
+    /// value.
     ///
     /// # Errors
     ///
@@ -231,6 +238,12 @@ impl Core {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
+        }
+        if optInNbDevUp == -4e37 {
+            optInNbDevUp = 2e0;
+        }
+        if optInNbDevDn == -4e37 {
+            optInNbDevDn = 2e0;
         }
         if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
             return RetCode::BadParam;
@@ -765,6 +778,12 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        if optInNbDevUp == -4e37 {
+            optInNbDevUp = 2e0;
+        }
+        if optInNbDevDn == -4e37 {
+            optInNbDevDn = 2e0;
+        }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
@@ -921,6 +940,12 @@ impl Core {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
+        }
+        if optInNbDevUp == -4e37 {
+            optInNbDevUp = 2e0;
+        }
+        if optInNbDevDn == -4e37 {
+            optInNbDevDn = 2e0;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
