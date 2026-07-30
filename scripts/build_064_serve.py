@@ -51,7 +51,6 @@ def ensure_worktree_and_lib(root):
     """Return the path to the frozen v0.6.4 libta-lib.a, building it once."""
     ref_root = os.path.join(os.path.dirname(root), "ta-lib-064")
     ref_build = os.path.join(ref_root, "cmake-build")
-    lib_a = os.path.join(ref_build, "libta-lib.a")
 
     if not tag_available(root):
         die(f"tag '{REF_TAG}' unavailable. Fetch tags (git fetch --tags) or use\n"
@@ -63,14 +62,7 @@ def ensure_worktree_and_lib(root):
         subprocess.run(["git", "worktree", "add", ref_root, REF_TAG],
                        check=True, cwd=root)
 
-    if not os.path.exists(lib_a):
-        print("  Building frozen v0.6.4 libta-lib.a (one time)...")
-        os.makedirs(ref_build, exist_ok=True)
-        if not os.path.exists(os.path.join(ref_build, "CMakeCache.txt")):
-            subprocess.run(["cmake", ref_root, "-DCMAKE_BUILD_TYPE=Release"],
-                           check=True, cwd=ref_build)
-        subprocess.run(["cmake", "--build", ".", "--target", "ta-lib-static",
-                        "-j", str(os.cpu_count() or 4)], check=True, cwd=ref_build)
+    lib_a = serve_version.build_frozen_lib(ref_root, ref_build, "ta_064_serve")
     if not os.path.exists(lib_a):
         die("frozen v0.6.4 libta-lib.a was not produced")
     return lib_a
@@ -202,8 +194,14 @@ def build(root, bin_dir, lib_a):
     with open(os.path.join(bin_dir, "ta_abstract_serve.c"), "w") as f:
         f.write(a)
 
-    # 3. Compile + link against the frozen 0.6.4 lib.
-    cmd = ["cc", "-O3", "-flto", "-DNDEBUG", "-DTA_REF_SERVE", "-Wno-everything"]
+    # 3. Compile + link against the frozen 0.6.4 lib. FP_CONTRACT_FLAG is
+    #    load-bearing here, not hygiene: this TU compiles fuzz_data.h, the
+    #    seeded INPUT generator, whose own `#pragma STDC FP_CONTRACT OFF` is
+    #    honoured by clang but silently ignored by GCC (issue #150). Without the
+    #    flag, an FMA-baseline GCC target generates different inputs on this side
+    #    than in ta_regtest, and --fuzz-064 would read that as a library change.
+    cmd = ["cc", "-O3", "-flto", "-DNDEBUG", "-DTA_REF_SERVE", "-Wno-everything",
+           serve_version.FP_CONTRACT_FLAG]
     cmd += [f"-I{d}" for d in include_dirs(root, bin_dir)]
     cmd += ["-o", os.path.join(bin_dir, "ta_064_serve"),
             os.path.join(bin_dir, "_ta_064_serve.c"), lib_a, "-lm"]

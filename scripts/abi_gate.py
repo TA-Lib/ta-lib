@@ -99,6 +99,7 @@ def main():
         print(f"ABI GATE: SETUP ERROR — reference lib not found:\n  {ref_a}\n"
               f"  Build it: scripts/regtest.py builds the pinned-tag worktree lib,\n"
               f"  or:  cd ../ta-lib-ref && cmake -B cmake-build -DCMAKE_BUILD_TYPE=Release"
+              f" -DCMAKE_C_FLAGS=-ffp-contract=off"
               f" && cmake --build cmake-build --target ta-lib-static")
         return 2
 

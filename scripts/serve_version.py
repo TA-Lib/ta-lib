@@ -26,6 +26,50 @@ Both problems are handled the SAME way for every version serve (this is the
 
 import os
 import re
+import subprocess
+import sys
+
+
+# Floating-point contraction setting for everything a differential gate compares
+# against (issue #150). Mirrors CMakeLists.txt / configure.ac: explicit fma() is
+# the ONLY fusion (PR #96). The pinned tags predate #96, so a frozen worktree has
+# nothing of its own to inherit — without this, a compiler whose target has
+# baseline FMA (any aarch64) fuses inside the REFERENCE, and the suites then
+# measure a compiler difference rather than a code difference.
+FP_CONTRACT_FLAG = "-ffp-contract=off"
+
+
+def build_frozen_lib(ref_root, ref_build, label):
+    """Configure + build a frozen worktree's libta-lib.a. Returns its path.
+
+    Deliberately unconditional (issue #150). Gating the configure on a missing
+    CMakeCache.txt lets a worktree built by an older revision keep its flagless
+    cache forever, and gating the build on a missing libta-lib.a does not help
+    either: deleting the archive re-archives the same stale objects without
+    recompiling. cmake's own dependency tracking is the correct "build once"
+    mechanism — a re-configure with changed flags invalidates every object, and
+    the no-op path costs ~0.2s."""
+    os.makedirs(ref_build, exist_ok=True)
+    _run_quiet(["cmake", ref_root, "-DCMAKE_BUILD_TYPE=Release",
+                f"-DCMAKE_C_FLAGS={FP_CONTRACT_FLAG}"],
+               ref_build, f"{label}: cmake configure")
+    out = _run_quiet(["cmake", "--build", ".", "--target", "ta-lib-static",
+                      "-j", str(os.cpu_count() or 4)],
+                     ref_build, f"{label}: cmake build")
+    if "Building C object" in out:
+        print(f"  {label}: rebuilt frozen libta-lib.a ({FP_CONTRACT_FLAG})")
+    return os.path.join(ref_build, "libta-lib.a")
+
+
+def _run_quiet(cmd, cwd, what):
+    """Run cmd, swallowing output unless it fails (these run on every invocation
+    now, and a successful no-op should not spam the pipeline log)."""
+    r = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+    if r.returncode != 0:
+        sys.stdout.write(r.stdout)
+        sys.stderr.write(r.stderr)
+        sys.exit(f"serve_version: {what} failed (exit {r.returncode})")
+    return r.stdout
 
 
 def _func_names(root):

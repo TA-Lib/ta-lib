@@ -45,7 +45,7 @@ def build_server():
     cmd = ["gcc", "-o", SERVER_BIN, SERVER_SRC]
     cmd += [f"-I{os.path.join(ROOT, d)}" for d in INCLUDE_DIRS]
     cmd += ["-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer",
-            "-Wno-parentheses-equality", "-lm"]
+            "-ffp-contract=off", "-Wno-parentheses-equality", "-lm"]
     print("Building sanitized C stream server (single TU, -fsanitize=address,undefined)...")
     subprocess.run(cmd, check=True, cwd=ROOT)
     print(f"  built {SERVER_BIN}")
