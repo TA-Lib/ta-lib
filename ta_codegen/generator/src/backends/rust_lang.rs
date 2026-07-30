@@ -689,7 +689,8 @@ fn gen_private_func(
 }
 
 /// Generate the unguarded function: same signature as guarded, no validation.
-/// For functions without _private: real algorithm with `get_unchecked` array access.
+/// For functions without _private: the real algorithm, with the same safe `[]`
+/// indexing the guarded body uses (the crate is `#![forbid(unsafe_code)]`).
 /// For functions with _private: delegates to _private (uses guarded body).
 #[allow(clippy::too_many_lines)]
 fn gen_unguarded_func(
@@ -1148,7 +1149,7 @@ pub(crate) fn collect_var_types(
                 collect_var_types(default, index_vars, real_vars, vec_vars, real_array_vars, int_vec_vars);
             }
             // A CIRCBUF prolog declares Vec storage (+ usize index/bound) at the function
-            // top; classify the names so get_unchecked / usize inference apply.
+            // top; classify the names so the usize inference applies.
             Statement::CircBuf(CircBuf::Prolog { id, layout, .. }) => {
                 for (storage, t) in circbuf_storage(id, layout) {
                     vec_vars.insert(storage.clone());

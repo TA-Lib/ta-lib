@@ -155,8 +155,10 @@ is the shipped `ta-lib` crate, `tools/` holds the JSON-RPC server/bench.
 - The public API uses `f64` slices (`&[f64]` / `&mut [f64]`), `usize` indices,
   and `i32` optional params.
 - Each indicator generates a `xxx_lookback`, a guarded `xxx` (validates params,
-  pre-computes optimization values), and an `xxx_unguarded` variant (no range
-  checks, `get_unchecked` indexing inside an `unsafe` block).
+  pre-computes optimization values), and an `xxx_unguarded` variant (skips the
+  validation prologue only). Indexing stays safe in both: the crate is
+  `#![forbid(unsafe_code)]`, so violating an unguarded precondition panics —
+  never undefined behavior.
 - **Cross-indicator calls always use `_unguarded`** to avoid double-validation.
 - Functions with extra internal params (e.g., EMA's k factor) expose them on the
   unguarded variant only; the guarded variant pre-computes them and delegates.

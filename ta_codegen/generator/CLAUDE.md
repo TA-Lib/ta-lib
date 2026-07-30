@@ -178,7 +178,7 @@ is concrete-`f64` only.
 |---------|---------|
 | `fn xxx_lookback(...) -> usize` | Lookback (first valid output index) |
 | `fn xxx(...)` | Guarded public API: validates params, pre-computes optimization values, delegates |
-| `fn xxx_unguarded(...)` | Cross-indicator calls: no range checks, `get_unchecked` indexing inside an `unsafe` block |
+| `fn xxx_unguarded(...)` | Cross-indicator calls: skips the validation prologue. Indexing stays safe (`#![forbid(unsafe_code)]`), so a violated precondition panics, never UB |
 
 Cross-indicator calls always use `_unguarded` to avoid double-validation.
 Functions with extra internal params (e.g. EMA's `k` factor) get an additional
