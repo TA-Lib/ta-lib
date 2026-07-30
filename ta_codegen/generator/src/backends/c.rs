@@ -266,7 +266,7 @@ pub(crate) fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
             ParamType::Real => {
                 if let Some(default_val) = opt.default {
                     out.push_str(&format!(
-                        "   if( {name} == -4e37 )\n      {name} = {val};\n",
+                        "   if( {name} == TA_REAL_DEFAULT )\n      {name} = {val};\n",
                         name = opt.name,
                         val = default_val
                     ));
@@ -275,8 +275,10 @@ pub(crate) fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
                     // and it is what keeps an infinity out of the computation.
                     if let Some((min, max)) = opt.range {
                         out.push_str(&format!(
-                            "   else if( {name} < {min:e} || {name} > {max:e} )\n      return {fail};\n",
-                            name = opt.name
+                            "   else if( {name} < {lo} || {name} > {hi} )\n      return {fail};\n",
+                            name = opt.name,
+                            lo = super::common::real_bound_literal(min, "TA_"),
+                            hi = super::common::real_bound_literal(max, "TA_")
                         ));
                     }
                 }

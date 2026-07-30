@@ -79,12 +79,12 @@ impl Core {
     /// select their default value.
     #[inline]
     pub fn mama_lookback(&self, mut optInFastLimit: f64, mut optInSlowLimit: f64) -> usize {
-        if optInFastLimit == -4e37 {
+        if optInFastLimit == REAL_DEFAULT {
             optInFastLimit = 5e-1;
         } else if (optInFastLimit < 1e-2) || (optInFastLimit > 9.9e-1) {
             return usize::MAX;
         }
-        if optInSlowLimit == -4e37 {
+        if optInSlowLimit == REAL_DEFAULT {
             optInSlowLimit = 5e-2;
         } else if (optInSlowLimit < 1e-2) || (optInSlowLimit > 9.9e-1) {
             return usize::MAX;
@@ -198,12 +198,12 @@ impl Core {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
-        if optInFastLimit == -4e37 {
+        if optInFastLimit == REAL_DEFAULT {
             optInFastLimit = 5e-1;
         } else if (optInFastLimit < 1e-2) || (optInFastLimit > 9.9e-1) {
             return RetCode::BadParam;
         }
-        if optInSlowLimit == -4e37 {
+        if optInSlowLimit == REAL_DEFAULT {
             optInSlowLimit = 5e-2;
         } else if (optInSlowLimit < 1e-2) || (optInSlowLimit > 9.9e-1) {
             return RetCode::BadParam;
@@ -1175,12 +1175,12 @@ impl Core {
         if inReal.len() > i32::MAX as usize {
             return Err(RetCode::BadParam);
         }
-        if optInFastLimit == -4e37 {
+        if optInFastLimit == REAL_DEFAULT {
             optInFastLimit = 5e-1;
         } else if (optInFastLimit < 1e-2) || (optInFastLimit > 9.9e-1) {
             return Err(RetCode::BadParam);
         }
-        if optInSlowLimit == -4e37 {
+        if optInSlowLimit == REAL_DEFAULT {
             optInSlowLimit = 5e-2;
         } else if (optInSlowLimit < 1e-2) || (optInSlowLimit > 9.9e-1) {
             return Err(RetCode::BadParam);
@@ -1661,12 +1661,12 @@ impl Core {
         if outMAMA.as_ptr() == outFAMA.as_ptr() {
             return Err(RetCode::BadParam);
         }
-        if optInFastLimit == -4e37 {
+        if optInFastLimit == REAL_DEFAULT {
             optInFastLimit = 5e-1;
         } else if (optInFastLimit < 1e-2) || (optInFastLimit > 9.9e-1) {
             return Err(RetCode::BadParam);
         }
-        if optInSlowLimit == -4e37 {
+        if optInSlowLimit == REAL_DEFAULT {
             optInSlowLimit = 5e-2;
         } else if (optInSlowLimit < 1e-2) || (optInSlowLimit > 9.9e-1) {
             return Err(RetCode::BadParam);

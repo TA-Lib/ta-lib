@@ -73,7 +73,7 @@ TA_LIB_API int TA_T3_Lookback( int optInTimePeriod, double optInVFactor )
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return -1;
-   if( optInVFactor == -4e37 )
+   if( optInVFactor == TA_REAL_DEFAULT )
       optInVFactor = 0.7;
    else if( optInVFactor < 0e0 || optInVFactor > 1e0 )
       return -1;
@@ -119,7 +119,7 @@ TA_LIB_API TA_RetCode TA_T3( int    startIdx,
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
-   if( optInVFactor == -4e37 )
+   if( optInVFactor == TA_REAL_DEFAULT )
       optInVFactor = 0.7;
    else if( optInVFactor < 0e0 || optInVFactor > 1e0 )
       return TA_BAD_PARAM;
@@ -445,7 +445,7 @@ TA_RetCode TA_S_T3( int    startIdx,
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
-   if( optInVFactor == -4e37 )
+   if( optInVFactor == TA_REAL_DEFAULT )
       optInVFactor = 0.7;
    else if( optInVFactor < 0e0 || optInVFactor > 1e0 )
       return TA_BAD_PARAM;
@@ -749,7 +749,7 @@ TA_RetCode TA_T3_OpenInternal( struct TA_T3_Stream **stream, const double inReal
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
-   if( optInVFactor == -4e37 )
+   if( optInVFactor == TA_REAL_DEFAULT )
       optInVFactor = 0.7;
    else if( optInVFactor < 0e0 || optInVFactor > 1e0 )
       return TA_BAD_PARAM;
@@ -979,7 +979,7 @@ TA_LIB_API TA_RetCode TA_T3_OpenAndFill( TA_T3_Stream **stream, const double inR
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
-   if( optInVFactor == -4e37 )
+   if( optInVFactor == TA_REAL_DEFAULT )
       optInVFactor = 0.7;
    else if( optInVFactor < 0e0 || optInVFactor > 1e0 )
       return TA_BAD_PARAM;

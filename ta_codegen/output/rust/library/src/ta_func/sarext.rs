@@ -92,44 +92,44 @@ impl Core {
     /// select their default value.
     #[inline]
     pub fn sarext_lookback(&self, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64) -> usize {
-        if optInStartValue == -4e37 {
+        if optInStartValue == REAL_DEFAULT {
             optInStartValue = 0e0;
-        } else if (optInStartValue < -3e37) || (optInStartValue > 3e37) {
+        } else if (optInStartValue < REAL_MIN) || (optInStartValue > REAL_MAX) {
             return usize::MAX;
         }
-        if optInOffsetOnReverse == -4e37 {
+        if optInOffsetOnReverse == REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
-        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > 3e37) {
+        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > REAL_MAX) {
             return usize::MAX;
         }
-        if optInAccelerationInitLong == -4e37 {
+        if optInAccelerationInitLong == REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
-        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > 3e37) {
+        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > REAL_MAX) {
             return usize::MAX;
         }
-        if optInAccelerationLong == -4e37 {
+        if optInAccelerationLong == REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
-        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > 3e37) {
+        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > REAL_MAX) {
             return usize::MAX;
         }
-        if optInAccelerationMaxLong == -4e37 {
+        if optInAccelerationMaxLong == REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
-        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > 3e37) {
+        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > REAL_MAX) {
             return usize::MAX;
         }
-        if optInAccelerationInitShort == -4e37 {
+        if optInAccelerationInitShort == REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
-        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > 3e37) {
+        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > REAL_MAX) {
             return usize::MAX;
         }
-        if optInAccelerationShort == -4e37 {
+        if optInAccelerationShort == REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
-        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > 3e37) {
+        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > REAL_MAX) {
             return usize::MAX;
         }
-        if optInAccelerationMaxShort == -4e37 {
+        if optInAccelerationMaxShort == REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
-        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > 3e37) {
+        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > REAL_MAX) {
             return usize::MAX;
         }
         // SAR always sacrifices one price bar to establish the
@@ -234,44 +234,44 @@ impl Core {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
-        if optInStartValue == -4e37 {
+        if optInStartValue == REAL_DEFAULT {
             optInStartValue = 0e0;
-        } else if (optInStartValue < -3e37) || (optInStartValue > 3e37) {
+        } else if (optInStartValue < REAL_MIN) || (optInStartValue > REAL_MAX) {
             return RetCode::BadParam;
         }
-        if optInOffsetOnReverse == -4e37 {
+        if optInOffsetOnReverse == REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
-        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > 3e37) {
+        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > REAL_MAX) {
             return RetCode::BadParam;
         }
-        if optInAccelerationInitLong == -4e37 {
+        if optInAccelerationInitLong == REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
-        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > 3e37) {
+        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > REAL_MAX) {
             return RetCode::BadParam;
         }
-        if optInAccelerationLong == -4e37 {
+        if optInAccelerationLong == REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
-        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > 3e37) {
+        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > REAL_MAX) {
             return RetCode::BadParam;
         }
-        if optInAccelerationMaxLong == -4e37 {
+        if optInAccelerationMaxLong == REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
-        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > 3e37) {
+        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > REAL_MAX) {
             return RetCode::BadParam;
         }
-        if optInAccelerationInitShort == -4e37 {
+        if optInAccelerationInitShort == REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
-        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > 3e37) {
+        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > REAL_MAX) {
             return RetCode::BadParam;
         }
-        if optInAccelerationShort == -4e37 {
+        if optInAccelerationShort == REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
-        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > 3e37) {
+        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > REAL_MAX) {
             return RetCode::BadParam;
         }
-        if optInAccelerationMaxShort == -4e37 {
+        if optInAccelerationMaxShort == REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
-        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > 3e37) {
+        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > REAL_MAX) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -925,44 +925,44 @@ impl Core {
         if inHigh.len() > i32::MAX as usize {
             return Err(RetCode::BadParam);
         }
-        if optInStartValue == -4e37 {
+        if optInStartValue == REAL_DEFAULT {
             optInStartValue = 0e0;
-        } else if (optInStartValue < -3e37) || (optInStartValue > 3e37) {
+        } else if (optInStartValue < REAL_MIN) || (optInStartValue > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInOffsetOnReverse == -4e37 {
+        if optInOffsetOnReverse == REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
-        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > 3e37) {
+        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationInitLong == -4e37 {
+        if optInAccelerationInitLong == REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
-        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > 3e37) {
+        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationLong == -4e37 {
+        if optInAccelerationLong == REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
-        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > 3e37) {
+        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationMaxLong == -4e37 {
+        if optInAccelerationMaxLong == REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
-        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > 3e37) {
+        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationInitShort == -4e37 {
+        if optInAccelerationInitShort == REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
-        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > 3e37) {
+        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationShort == -4e37 {
+        if optInAccelerationShort == REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
-        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > 3e37) {
+        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationMaxShort == -4e37 {
+        if optInAccelerationMaxShort == REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
-        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > 3e37) {
+        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inHigh.len();
@@ -1304,44 +1304,44 @@ impl Core {
         if inHigh.len() > i32::MAX as usize {
             return Err(RetCode::BadParam);
         }
-        if optInStartValue == -4e37 {
+        if optInStartValue == REAL_DEFAULT {
             optInStartValue = 0e0;
-        } else if (optInStartValue < -3e37) || (optInStartValue > 3e37) {
+        } else if (optInStartValue < REAL_MIN) || (optInStartValue > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInOffsetOnReverse == -4e37 {
+        if optInOffsetOnReverse == REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
-        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > 3e37) {
+        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationInitLong == -4e37 {
+        if optInAccelerationInitLong == REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
-        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > 3e37) {
+        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationLong == -4e37 {
+        if optInAccelerationLong == REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
-        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > 3e37) {
+        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationMaxLong == -4e37 {
+        if optInAccelerationMaxLong == REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
-        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > 3e37) {
+        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationInitShort == -4e37 {
+        if optInAccelerationInitShort == REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
-        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > 3e37) {
+        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationShort == -4e37 {
+        if optInAccelerationShort == REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
-        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > 3e37) {
+        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationMaxShort == -4e37 {
+        if optInAccelerationMaxShort == REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
-        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > 3e37) {
+        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inHigh.len();

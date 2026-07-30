@@ -1038,16 +1038,17 @@ pub(crate) fn gen_opt_param_validation_with(opt: &OptInput, pad: &str, err_retur
         }
         ParamType::Real => {
             if let Some(default) = opt.default {
-                // `-4e37` is the cross-language "use the default" sentinel (`TA_REAL_DEFAULT`);
-                // the bounds are emitted in exponent form so they are `f64` literals, not
+                // Bounds are emitted in exponent form so they are `f64` literals, not
                 // integers, on the comparison's right-hand side.
-                out.push_str(&format!("{pad}if {name} == -4e37 {{\n"));
+                out.push_str(&format!("{pad}if {name} == REAL_DEFAULT {{\n"));
                 out.push_str(&format!("{pad}    {name} = {default:e};\n"));
 
                 // Every declared bound is checked (see backends::c).
                 if let Some((lo, hi)) = opt.range {
                     out.push_str(&format!(
-                        "{pad}}} else if ({name} < {lo:e}) || ({name} > {hi:e}) {{\n"
+                        "{pad}}} else if ({name} < {lo}) || ({name} > {hi}) {{\n",
+                        lo = super::common::real_bound_literal(lo, ""),
+                        hi = super::common::real_bound_literal(hi, "")
                     ));
                     out.push_str(&format!("{pad}    {err_return}\n"));
                 }

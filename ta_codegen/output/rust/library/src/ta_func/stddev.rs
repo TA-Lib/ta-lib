@@ -83,9 +83,9 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if optInNbDev == -4e37 {
+        if optInNbDev == REAL_DEFAULT {
             optInNbDev = 1e0;
-        } else if (optInNbDev < -3e37) || (optInNbDev > 3e37) {
+        } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
             return usize::MAX;
         }
         // Lookback is driven by the variance.
@@ -178,9 +178,9 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if optInNbDev == -4e37 {
+        if optInNbDev == REAL_DEFAULT {
             optInNbDev = 1e0;
-        } else if (optInNbDev < -3e37) || (optInNbDev > 3e37) {
+        } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -348,9 +348,9 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if optInNbDev == -4e37 {
+        if optInNbDev == REAL_DEFAULT {
             optInNbDev = 1e0;
-        } else if (optInNbDev < -3e37) || (optInNbDev > 3e37) {
+        } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
@@ -458,9 +458,9 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if optInNbDev == -4e37 {
+        if optInNbDev == REAL_DEFAULT {
             optInNbDev = 1e0;
-        } else if (optInNbDev < -3e37) || (optInNbDev > 3e37) {
+        } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();

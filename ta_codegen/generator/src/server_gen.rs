@@ -2194,6 +2194,15 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // Core class — method bodies are inlined by the caller via inline_java_core_methods()
     s.push_str("class Core {\n");
+    // The parameter sentinels the generated validation names. This server is a
+    // standalone compilation unit, so it carries its own copy of what the shipped
+    // io.github.talib.Core declares.
+    s.push_str("    static final double TA_REAL_DEFAULT = -4e37;\n");
+    s.push_str("    static final double TA_REAL_MIN = -3e37;\n");
+    s.push_str("    static final double TA_REAL_MAX = 3e37;\n");
+    s.push_str("    static final int TA_INTEGER_DEFAULT = Integer.MIN_VALUE;\n");
+    s.push_str("    static final int TA_INTEGER_MIN = Integer.MIN_VALUE + 1;\n");
+    s.push_str("    static final int TA_INTEGER_MAX = Integer.MAX_VALUE;\n");
     // Sized by the id count, so the wildcard gets no slot -- matching the
     // shipped CoreBuilder (#144).
     s.push_str("    int[] unstablePeriod = new int[FuncUnstId.COUNT];\n");

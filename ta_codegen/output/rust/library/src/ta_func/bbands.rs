@@ -102,14 +102,14 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if optInNbDevUp == -4e37 {
+        if optInNbDevUp == REAL_DEFAULT {
             optInNbDevUp = 2e0;
-        } else if (optInNbDevUp < -3e37) || (optInNbDevUp > 3e37) {
+        } else if (optInNbDevUp < REAL_MIN) || (optInNbDevUp > REAL_MAX) {
             return usize::MAX;
         }
-        if optInNbDevDn == -4e37 {
+        if optInNbDevDn == REAL_DEFAULT {
             optInNbDevDn = 2e0;
-        } else if (optInNbDevDn < -3e37) || (optInNbDevDn > 3e37) {
+        } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return usize::MAX;
         }
         let mut maLookback: usize = 0_usize;
@@ -243,14 +243,14 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if optInNbDevUp == -4e37 {
+        if optInNbDevUp == REAL_DEFAULT {
             optInNbDevUp = 2e0;
-        } else if (optInNbDevUp < -3e37) || (optInNbDevUp > 3e37) {
+        } else if (optInNbDevUp < REAL_MIN) || (optInNbDevUp > REAL_MAX) {
             return RetCode::BadParam;
         }
-        if optInNbDevDn == -4e37 {
+        if optInNbDevDn == REAL_DEFAULT {
             optInNbDevDn = 2e0;
-        } else if (optInNbDevDn < -3e37) || (optInNbDevDn > 3e37) {
+        } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return RetCode::BadParam;
         }
         if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
@@ -786,14 +786,14 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if optInNbDevUp == -4e37 {
+        if optInNbDevUp == REAL_DEFAULT {
             optInNbDevUp = 2e0;
-        } else if (optInNbDevUp < -3e37) || (optInNbDevUp > 3e37) {
+        } else if (optInNbDevUp < REAL_MIN) || (optInNbDevUp > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInNbDevDn == -4e37 {
+        if optInNbDevDn == REAL_DEFAULT {
             optInNbDevDn = 2e0;
-        } else if (optInNbDevDn < -3e37) || (optInNbDevDn > 3e37) {
+        } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
@@ -953,14 +953,14 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if optInNbDevUp == -4e37 {
+        if optInNbDevUp == REAL_DEFAULT {
             optInNbDevUp = 2e0;
-        } else if (optInNbDevUp < -3e37) || (optInNbDevUp > 3e37) {
+        } else if (optInNbDevUp < REAL_MIN) || (optInNbDevUp > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if optInNbDevDn == -4e37 {
+        if optInNbDevDn == REAL_DEFAULT {
             optInNbDevDn = 2e0;
-        } else if (optInNbDevDn < -3e37) || (optInNbDevDn > 3e37) {
+        } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
