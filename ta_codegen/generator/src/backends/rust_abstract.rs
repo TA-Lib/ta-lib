@@ -13,7 +13,6 @@
 #![allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 
 use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType};
-use super::common::ta_real_sentinel;
 use super::price_bundle;
 use std::collections::HashMap;
 use std::fmt::Write as _;
@@ -196,18 +195,18 @@ fn emit_opt(o: &mut String, opt: &OptInput, enums: &HashMap<String, EnumDef>) {
 fn emit_real_domain(o: &mut String, opt: &OptInput) {
     let (min, max) = opt.range.unwrap_or((0.0, 0.0));
     let prec = opt.precision.unwrap_or(0);
-    let def = ta_real_sentinel(opt.default.unwrap_or(0.0));
+    let def = opt.default.unwrap_or(0.0);
     let (s, e, i) = opt.suggested.unwrap_or((0.0, 0.0, 0.0));
     let _ = write!(
         o,
         "OptDomain::RealRange {{ min: {}, max: {}, precision: {}, default: {}, suggested: ({}, {}, {}) }}",
-        fl(ta_real_sentinel(min)),
-        fl(ta_real_sentinel(max)),
+        fl(min),
+        fl(max),
         prec,
         fl(def),
-        fl(ta_real_sentinel(s)),
-        fl(ta_real_sentinel(e)),
-        fl(ta_real_sentinel(i)),
+        fl(s),
+        fl(e),
+        fl(i),
     );
 }
 

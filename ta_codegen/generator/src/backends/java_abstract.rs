@@ -7,7 +7,7 @@
 //!
 //! The metadata VALUES — flag bit-masks, price-input collapsing, real sentinels —
 //! are computed by the SAME helpers that build the C and Rust tables
-//! ([`func_flag_bits`], [`price_bundle`], `ta_real_sentinel`, ...), so the three
+//! ([`func_flag_bits`], [`price_bundle`], ...), so the three
 //! backends agree by construction rather than by three hand-maintained copies.
 
 #![allow(
@@ -19,7 +19,6 @@
 use std::collections::HashMap;
 use std::fmt::Write;
 
-use super::common::ta_real_sentinel;
 use super::price_bundle;
 use super::rust_abstract::{func_flag_bits, opt_flag_bits, output_flag_bits};
 use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType};
@@ -199,11 +198,11 @@ fn opt_row(opt: &OptInput, enums: &HashMap<String, EnumDef>) -> OptRow {
             let (sg, en, ic) = opt.suggested.unwrap_or((0.0, 0.0, 0.0));
             OptRow {
                 ty: 0,
-                default_value: ta_real_sentinel(opt.default.unwrap_or(0.0)),
-                rmin: ta_real_sentinel(min),
-                rmax: ta_real_sentinel(max),
+                default_value: opt.default.unwrap_or(0.0),
+                rmin: min,
+                rmax: max,
                 precision: opt.precision.unwrap_or(0),
-                rsug: (ta_real_sentinel(sg), ta_real_sentinel(en), ta_real_sentinel(ic)),
+                rsug: (sg, en, ic),
                 ..base
             }
         }

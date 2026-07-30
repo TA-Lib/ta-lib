@@ -1044,16 +1044,12 @@ pub(crate) fn gen_opt_param_validation_with(opt: &OptInput, pad: &str, err_retur
                 out.push_str(&format!("{pad}if {name} == -4e37 {{\n"));
                 out.push_str(&format!("{pad}    {name} = {default:e};\n"));
 
+                // Every declared bound is checked (see backends::c).
                 if let Some((lo, hi)) = opt.range {
-                    // Skip unbounded ranges: `TA_REAL_MIN`/`TA_REAL_MAX` reach the IR as
-                    // `f64::MIN`/`f64::MAX` and constrain nothing. Same magnitude test the
-                    // C and Java backends use.
-                    if lo > f64::MIN / 2.0 || hi < f64::MAX / 2.0 {
-                        out.push_str(&format!(
-                            "{pad}}} else if ({name} < {lo:e}) || ({name} > {hi:e}) {{\n"
-                        ));
-                        out.push_str(&format!("{pad}    {err_return}\n"));
-                    }
+                    out.push_str(&format!(
+                        "{pad}}} else if ({name} < {lo:e}) || ({name} > {hi:e}) {{\n"
+                    ));
+                    out.push_str(&format!("{pad}    {err_return}\n"));
                 }
 
                 out.push_str(&format!("{pad}}}\n"));

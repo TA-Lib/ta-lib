@@ -1712,10 +1712,10 @@ fn func_to_yaml(func: &TableFuncDef) -> String {
 
 /// Format a number for YAML output: integers without decimal, reals with decimal.
 fn format_yaml_num(v: f64) -> String {
-    if v == f64::MIN {
+    if v <= crate::backends::common::TA_REAL_MIN {
         return "TA_REAL_MIN".to_string();
     }
-    if v == f64::MAX {
+    if v >= crate::backends::common::TA_REAL_MAX {
         return "TA_REAL_MAX".to_string();
     }
     if v == v.floor() && v.abs() < 1e15 {

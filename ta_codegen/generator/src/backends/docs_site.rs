@@ -1025,7 +1025,7 @@ mod tests {
             vec![opt(
                 "optInTimePeriod",
                 ParamType::Real,
-                Some((f64::MIN, f64::MAX)),
+                Some((crate::backends::common::TA_REAL_MIN, crate::backends::common::TA_REAL_MAX)),
                 2.0,
             )],
         );
@@ -1068,7 +1068,7 @@ mod tests {
     fn pipes_in_prose_are_escaped() {
         let f = func(
             "X",
-            vec![opt("optInStartValue", ParamType::Real, Some((0.0, f64::MAX)), 0.0)],
+            vec![opt("optInStartValue", ParamType::Real, Some((0.0, crate::backends::common::TA_REAL_MAX)), 0.0)],
         );
         let body = "# X\n\n## Parameters\n\n- `optInStartValue` — start short at |value|\n";
         let out = inject_parameters(body, &f, &HashMap::new());

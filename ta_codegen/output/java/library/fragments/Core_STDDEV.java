@@ -37,6 +37,8 @@
       }
       if( optInNbDev == -4e37 ) {
          optInNbDev = 1e0;
+      } else if( optInNbDev < -3e37 || optInNbDev > 3e37 ) {
+         return -1;
       }
       /* Lookback is driven by the variance. */
       return varianceLookback(optInTimePeriod, optInNbDev) ;
@@ -67,6 +69,8 @@
       }
       if( optInNbDev == -4e37 ) {
          optInNbDev = 1e0;
+      } else if( optInNbDev < -3e37 || optInNbDev > 3e37 ) {
+         return RetCode.BadParam;
       }
       /* Calculate the variance. */
       retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
@@ -161,6 +165,8 @@
       }
       if( optInNbDev == -4e37 ) {
          optInNbDev = 1e0;
+      } else if( optInNbDev < -3e37 || optInNbDev > 3e37 ) {
+         return RetCode.BadParam;
       }
       retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
@@ -514,6 +520,8 @@
       }
       if( optInNbDev == -4e37 ) {
          optInNbDev = 1e0;
+      } else if( optInNbDev < -3e37 || optInNbDev > 3e37 ) {
+         return RetCode.BadParam;
       }
       double[] sc_outReal = new double[historyLen];
       /* Calculate the variance. */
@@ -576,6 +584,8 @@
       }
       if( optInNbDev == -4e37 ) {
          optInNbDev = 1e0;
+      } else if( optInNbDev < -3e37 || optInNbDev > 3e37 ) {
+         return RetCode.BadParam;
       }
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;

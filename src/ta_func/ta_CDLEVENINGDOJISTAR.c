@@ -69,7 +69,7 @@ TA_LIB_API int TA_CDLEVENINGDOJISTAR_Lookback( double optInPenetration )
    double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
    if( optInPenetration == -4e37 )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
+   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
       return -1;
    return max(max(BodyDoji_avgPeriod,BodyLong_avgPeriod),BodyShort_avgPeriod) + 2;
 }
@@ -119,7 +119,7 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR( int    startIdx,
       return TA_BAD_PARAM;
    if( optInPenetration == -4e37 )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
+   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
@@ -349,7 +349,7 @@ TA_RetCode TA_S_CDLEVENINGDOJISTAR( int    startIdx,
       return TA_BAD_PARAM;
    if( optInPenetration == -4e37 )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
+   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
@@ -675,7 +675,7 @@ TA_RetCode TA_CDLEVENINGDOJISTAR_OpenInternal( struct TA_CDLEVENINGDOJISTAR_Stre
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( optInPenetration == -4e37 )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
+   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
@@ -903,7 +903,7 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_OpenAndFill( TA_CDLEVENINGDOJISTAR_S
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
    if( optInPenetration == -4e37 )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
+   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
