@@ -2844,6 +2844,40 @@ static ErrorNumber test_codegen_for_language(
         ctx.sweepFunctions = 0;
         g_frozenEnumSkips  = 0;
         TA_ForEachFunc(sweep_one_function, &ctx);
+
+        /* Vacuity floor. A sweep MISMATCH is already loud (REF SWEEP FAIL,
+         * nonzero exit); this catches the opposite — a green run that verified
+         * nothing. Every guard in sweep_one_function `return`s without failing:
+         * the filter, the nbOptInput bounds, and the refFuncList subset gate. So
+         * an empty/garbled refFuncList, or a broken enumeration, prints
+         * "0 variants across 0 functions, all match ta_ref_serve" and passes.
+         * Two floors, both self-scaling (no coverage constant to maintain):
+         * an unfiltered sweep must verify something, and it must not skip more
+         * functions as absent-from-the-reference than it actually sweeps.
+         * Skipped under --function, where sweeping one function — or zero, for a
+         * post-reference one like CMF — is exactly the intent. Same shape as the
+         * STREAM VACUOUS / STREAM FILL VACUOUS floors above. */
+        if( ctx.error == TA_TEST_PASS && ctx.functionFilter == NULL )
+        {
+            if( ctx.sweepFunctions <= 0 || ctx.sweepVariants <= 0 )
+            {
+                printf("REF SWEEP VACUOUS: %d variants across %d functions — an "
+                       "unfiltered sweep must verify something\n",
+                       ctx.sweepVariants, ctx.sweepFunctions);
+                ctx.error = TA_CODEGEN_SWEEP_VACUOUS;
+                ctx.failed++;
+            }
+            else if( ctx.sweepSkipped > ctx.sweepFunctions )
+            {
+                printf("REF SWEEP VACUOUS: %d function(s) skipped as absent from "
+                       "ta_ref_serve, only %d swept — the subset gate is skipping "
+                       "more than it verifies\n",
+                       ctx.sweepSkipped, ctx.sweepFunctions);
+                ctx.error = TA_CODEGEN_SWEEP_VACUOUS;
+                ctx.failed++;
+            }
+        }
+
         printf("  Ref differential sweep: %d variants across %d functions%s\n",
                ctx.sweepVariants, ctx.sweepFunctions,
                ctx.error == TA_TEST_PASS ? ", all match ta_ref_serve" : "");
