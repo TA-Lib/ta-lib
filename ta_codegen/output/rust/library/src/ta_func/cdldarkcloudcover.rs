@@ -78,7 +78,7 @@ impl Core {
     pub fn cdldarkcloudcover_lookback(&self, mut optInPenetration: f64) -> usize {
         if optInPenetration == -4e37 {
             optInPenetration = 5e-1;
-        } else if (optInPenetration < 0e0) || (optInPenetration > 1.7976931348623157e308) {
+        } else if (optInPenetration < 0e0) || (optInPenetration > 3e37) {
             return usize::MAX;
         }
         #[allow(non_snake_case)]
@@ -179,7 +179,7 @@ impl Core {
         }
         if optInPenetration == -4e37 {
             optInPenetration = 5e-1;
-        } else if (optInPenetration < 0e0) || (optInPenetration > 1.7976931348623157e308) {
+        } else if (optInPenetration < 0e0) || (optInPenetration > 3e37) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -538,7 +538,7 @@ impl Core {
         }
         if optInPenetration == -4e37 {
             optInPenetration = 5e-1;
-        } else if (optInPenetration < 0e0) || (optInPenetration > 1.7976931348623157e308) {
+        } else if (optInPenetration < 0e0) || (optInPenetration > 3e37) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inOpen.len();
@@ -763,7 +763,7 @@ impl Core {
         }
         if optInPenetration == -4e37 {
             optInPenetration = 5e-1;
-        } else if (optInPenetration < 0e0) || (optInPenetration > 1.7976931348623157e308) {
+        } else if (optInPenetration < 0e0) || (optInPenetration > 3e37) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inOpen.len();

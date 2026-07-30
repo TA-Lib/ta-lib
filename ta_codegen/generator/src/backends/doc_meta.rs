@@ -10,7 +10,7 @@
 //! Two resolutions are the reason this is not a formatting one-liner:
 //!
 //! - **Sentinel bounds.** `range: [TA_REAL_MIN, TA_REAL_MAX]` reaches the IR as
-//!   `f64::MIN`/`f64::MAX` (`parser/yaml.rs`), which must read as "unbounded" rather
+//!   `TA_REAL_MIN`/`TA_REAL_MAX` (±3e37), which must read as "unbounded" rather
 //!   than as `-1.7976931348623157e308`. A magnitude test, not an identity test:
 //!   the C backend maps the same tokens to ±3e37, so a bound may arrive as either.
 //! - **Enum defaults.** `default: 1` on an `enum:MAType` parameter is a *value*, not
@@ -27,8 +27,7 @@ use crate::ir::{EnumDef, OptInput, ParamType};
 use std::collections::HashMap;
 
 /// Above this magnitude a bound is one of the `TA_REAL_MIN`/`TA_REAL_MAX` sentinels
-/// (`f64::MIN`/`f64::MAX` from the YAML parser, or ±3e37 from the C mapping) rather
-/// than a real constraint. The largest genuine bound in the corpus is `100000`.
+/// (±3e37) rather than a real constraint. The largest genuine bound is `100000`.
 const SENTINEL_MAGNITUDE: f64 = 1e15;
 
 /// The admissible range of a parameter, with the sentinel bounds resolved away.
@@ -227,7 +226,7 @@ mod tests {
     fn sentinel_bounds_resolve_to_unbounded() {
         // BBANDS optInNbDevUp: `range: [TA_REAL_MIN, TA_REAL_MAX]`, `default: 2`.
         let m = param_meta(
-            &opt("optInNbDevUp", ParamType::Real, Some((f64::MIN, f64::MAX)), 2.0),
+            &opt("optInNbDevUp", ParamType::Real, Some((crate::backends::common::TA_REAL_MIN, crate::backends::common::TA_REAL_MAX)), 2.0),
             &HashMap::new(),
         );
         assert_eq!(m.default.as_deref(), Some("2"));
@@ -241,7 +240,7 @@ mod tests {
             &opt(
                 "optInAcceleration",
                 ParamType::Real,
-                Some((0.0, f64::MAX)),
+                Some((0.0, crate::backends::common::TA_REAL_MAX)),
                 0.02,
             ),
             &HashMap::new(),

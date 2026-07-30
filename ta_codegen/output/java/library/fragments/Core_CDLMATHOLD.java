@@ -28,7 +28,7 @@
    {
       if( optInPenetration == -4e37 ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > 3e37 ) {
          return -1;
       }
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -72,7 +72,7 @@
       }
       if( optInPenetration == -4e37 ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > 3e37 ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -271,7 +271,7 @@
       }
       if( optInPenetration == -4e37 ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > 3e37 ) {
          return RetCode.BadParam;
       }
       lookbackTotal = cdlMatHoldLookback(optInPenetration);
@@ -845,7 +845,7 @@
       }
       if( optInPenetration == -4e37 ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > 3e37 ) {
          return RetCode.BadParam;
       }
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -1066,7 +1066,7 @@
       }
       if( optInPenetration == -4e37 ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > 3e37 ) {
          return RetCode.BadParam;
       }
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {

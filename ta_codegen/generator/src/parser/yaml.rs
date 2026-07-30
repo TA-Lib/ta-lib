@@ -76,10 +76,16 @@ struct YamlOutput {
 fn yaml_val_to_f64(v: &serde_yaml::Value) -> f64 {
     match v {
         serde_yaml::Value::Number(n) => n.as_f64().unwrap_or(0.0),
+        // The IR carries TA-Lib's own sentinel values, not f64::MIN/MAX: the
+        // emitted range checks print whatever is here, and ta_defs.h defines
+        // these bounds as ±3e37 (see backends::common).
         serde_yaml::Value::String(s) => match s.as_str() {
-            "TA_INTEGER_MIN" | "TA_REAL_MIN" => f64::MIN,
-            "TA_INTEGER_MAX" | "TA_REAL_MAX" => f64::MAX,
-            "TA_INTEGER_DEFAULT" => 0.0,
+            "TA_REAL_MIN" => crate::backends::common::TA_REAL_MIN,
+            "TA_REAL_MAX" => crate::backends::common::TA_REAL_MAX,
+            "TA_REAL_DEFAULT" => crate::backends::common::TA_REAL_DEFAULT,
+            "TA_INTEGER_MIN" => f64::from(crate::backends::common::TA_INTEGER_MIN),
+            "TA_INTEGER_MAX" => f64::from(crate::backends::common::TA_INTEGER_MAX),
+            "TA_INTEGER_DEFAULT" => f64::from(crate::backends::common::TA_INTEGER_DEFAULT),
             other => panic!("Unknown range constant: {other}"),
         },
         other => panic!("Unexpected YAML range value: {other:?}"),

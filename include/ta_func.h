@@ -889,10 +889,10 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_OpenAndFill( TA_AVGPRICE_Stream **stream, cons
  * optInTimePeriod:(From 2 to 100000)
  *    Time period
  * 
- * optInNbDevUp:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInNbDevUp:(From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000)
  *    Deviation multiplier for upper band
  * 
- * optInNbDevDn:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInNbDevDn:(From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000)
  *    Deviation multiplier for lower band
  * 
  * optInMAType:
@@ -904,8 +904,8 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
                                  int    endIdx,
                                             const double inReal[],
                                             int           optInTimePeriod, /* From 2 to 100000 */
-                                            double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-                                            double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                            double        optInNbDevUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                            double        optInNbDevDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                             TA_MAType     optInMAType,
                                             int          *outBegIdx,
                                             int          *outNBElement,
@@ -917,8 +917,8 @@ TA_LIB_API TA_RetCode TA_S_BBANDS( int    startIdx,
                                    int    endIdx,
                                               const float  inReal[],
                                               int           optInTimePeriod, /* From 2 to 100000 */
-                                              double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-                                              double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                              double        optInNbDevUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                              double        optInNbDevDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                               TA_MAType     optInMAType,
                                               int          *outBegIdx,
                                               int          *outNBElement,
@@ -927,8 +927,8 @@ TA_LIB_API TA_RetCode TA_S_BBANDS( int    startIdx,
                                               double        outRealLowerBand[] );
 
 TA_LIB_API int TA_BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
-                                            double        optInNbDevUp, /* From TA_REAL_MIN to TA_REAL_MAX */
-                                            double        optInNbDevDn, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                            double        optInNbDevUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                            double        optInNbDevDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                             TA_MAType     optInMAType );
 
 
@@ -1491,7 +1491,7 @@ TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_OpenAndFill( TA_CDL3WHITESOLDIERS_Str
  * 
  * Optional Parameters
  * -------------------
- * optInPenetration:(From 0 to TA_REAL_MAX)
+ * optInPenetration:(From 0 to 30000000000000000000000000000000000000)
  *    Percentage of penetration of a candle within another candle
  * 
  * 
@@ -1502,7 +1502,7 @@ TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY( int    startIdx,
                                                       const double inHigh[],
                                                       const double inLow[],
                                                       const double inClose[],
-                                                      double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                      double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                       int          *outBegIdx,
                                                       int          *outNBElement,
                                                       int           outInteger[] );
@@ -1513,12 +1513,12 @@ TA_LIB_API TA_RetCode TA_S_CDLABANDONEDBABY( int    startIdx,
                                                         const float  inHigh[],
                                                         const float  inLow[],
                                                         const float  inClose[],
-                                                        double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                        double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                         int          *outBegIdx,
                                                         int          *outNBElement,
                                                         int           outInteger[] );
 
-TA_LIB_API int TA_CDLABANDONEDBABY_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLABANDONEDBABY_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
 
 
 
@@ -1863,7 +1863,7 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_OpenAndFill( TA_CDLCOUNTERATTACK_Strea
  * 
  * Optional Parameters
  * -------------------
- * optInPenetration:(From 0 to TA_REAL_MAX)
+ * optInPenetration:(From 0 to 30000000000000000000000000000000000000)
  *    Percentage of penetration of a candle within another candle
  * 
  * 
@@ -1874,7 +1874,7 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER( int    startIdx,
                                                        const double inHigh[],
                                                        const double inLow[],
                                                        const double inClose[],
-                                                       double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                       double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                        int          *outBegIdx,
                                                        int          *outNBElement,
                                                        int           outInteger[] );
@@ -1885,12 +1885,12 @@ TA_LIB_API TA_RetCode TA_S_CDLDARKCLOUDCOVER( int    startIdx,
                                                          const float  inHigh[],
                                                          const float  inLow[],
                                                          const float  inClose[],
-                                                         double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                         double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                          int          *outBegIdx,
                                                          int          *outNBElement,
                                                          int           outInteger[] );
 
-TA_LIB_API int TA_CDLDARKCLOUDCOVER_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLDARKCLOUDCOVER_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
 
 
 
@@ -2131,7 +2131,7 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_OpenAndFill( TA_CDLENGULFING_Stream **stre
  * 
  * Optional Parameters
  * -------------------
- * optInPenetration:(From 0 to TA_REAL_MAX)
+ * optInPenetration:(From 0 to 30000000000000000000000000000000000000)
  *    Percentage of penetration of a candle within another candle
  * 
  * 
@@ -2142,7 +2142,7 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR( int    startIdx,
                                                         const double inHigh[],
                                                         const double inLow[],
                                                         const double inClose[],
-                                                        double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                        double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                         int          *outBegIdx,
                                                         int          *outNBElement,
                                                         int           outInteger[] );
@@ -2153,12 +2153,12 @@ TA_LIB_API TA_RetCode TA_S_CDLEVENINGDOJISTAR( int    startIdx,
                                                           const float  inHigh[],
                                                           const float  inLow[],
                                                           const float  inClose[],
-                                                          double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                          double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                           int          *outBegIdx,
                                                           int          *outNBElement,
                                                           int           outInteger[] );
 
-TA_LIB_API int TA_CDLEVENINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLEVENINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
 
 
 
@@ -2191,7 +2191,7 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_OpenAndFill( TA_CDLEVENINGDOJISTAR_S
  * 
  * Optional Parameters
  * -------------------
- * optInPenetration:(From 0 to TA_REAL_MAX)
+ * optInPenetration:(From 0 to 30000000000000000000000000000000000000)
  *    Percentage of penetration of a candle within another candle
  * 
  * 
@@ -2202,7 +2202,7 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR( int    startIdx,
                                                     const double inHigh[],
                                                     const double inLow[],
                                                     const double inClose[],
-                                                    double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                    double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                     int          *outBegIdx,
                                                     int          *outNBElement,
                                                     int           outInteger[] );
@@ -2213,12 +2213,12 @@ TA_LIB_API TA_RetCode TA_S_CDLEVENINGSTAR( int    startIdx,
                                                       const float  inHigh[],
                                                       const float  inLow[],
                                                       const float  inClose[],
-                                                      double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                      double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                       int          *outBegIdx,
                                                       int          *outNBElement,
                                                       int           outInteger[] );
 
-TA_LIB_API int TA_CDLEVENINGSTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLEVENINGSTAR_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
 
 
 
@@ -3291,7 +3291,7 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_OpenAndFill( TA_CDLMATCHINGLOW_Stream **
  * 
  * Optional Parameters
  * -------------------
- * optInPenetration:(From 0 to TA_REAL_MAX)
+ * optInPenetration:(From 0 to 30000000000000000000000000000000000000)
  *    Percentage of penetration of a candle within another candle
  * 
  * 
@@ -3302,7 +3302,7 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD( int    startIdx,
                                                 const double inHigh[],
                                                 const double inLow[],
                                                 const double inClose[],
-                                                double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                 int          *outBegIdx,
                                                 int          *outNBElement,
                                                 int           outInteger[] );
@@ -3313,12 +3313,12 @@ TA_LIB_API TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
                                                   const float  inHigh[],
                                                   const float  inLow[],
                                                   const float  inClose[],
-                                                  double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                  double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                   int          *outBegIdx,
                                                   int          *outNBElement,
                                                   int           outInteger[] );
 
-TA_LIB_API int TA_CDLMATHOLD_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLMATHOLD_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
 
 
 
@@ -3351,7 +3351,7 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_OpenAndFill( TA_CDLMATHOLD_Stream **stream, 
  * 
  * Optional Parameters
  * -------------------
- * optInPenetration:(From 0 to TA_REAL_MAX)
+ * optInPenetration:(From 0 to 30000000000000000000000000000000000000)
  *    Percentage of penetration of a candle within another candle
  * 
  * 
@@ -3362,7 +3362,7 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR( int    startIdx,
                                                         const double inHigh[],
                                                         const double inLow[],
                                                         const double inClose[],
-                                                        double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                        double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                         int          *outBegIdx,
                                                         int          *outNBElement,
                                                         int           outInteger[] );
@@ -3373,12 +3373,12 @@ TA_LIB_API TA_RetCode TA_S_CDLMORNINGDOJISTAR( int    startIdx,
                                                           const float  inHigh[],
                                                           const float  inLow[],
                                                           const float  inClose[],
-                                                          double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                          double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                           int          *outBegIdx,
                                                           int          *outNBElement,
                                                           int           outInteger[] );
 
-TA_LIB_API int TA_CDLMORNINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLMORNINGDOJISTAR_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
 
 
 
@@ -3411,7 +3411,7 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_OpenAndFill( TA_CDLMORNINGDOJISTAR_S
  * 
  * Optional Parameters
  * -------------------
- * optInPenetration:(From 0 to TA_REAL_MAX)
+ * optInPenetration:(From 0 to 30000000000000000000000000000000000000)
  *    Percentage of penetration of a candle within another candle
  * 
  * 
@@ -3422,7 +3422,7 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR( int    startIdx,
                                                     const double inHigh[],
                                                     const double inLow[],
                                                     const double inClose[],
-                                                    double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                    double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                     int          *outBegIdx,
                                                     int          *outNBElement,
                                                     int           outInteger[] );
@@ -3433,12 +3433,12 @@ TA_LIB_API TA_RetCode TA_S_CDLMORNINGSTAR( int    startIdx,
                                                       const float  inHigh[],
                                                       const float  inLow[],
                                                       const float  inClose[],
-                                                      double        optInPenetration, /* From 0 to TA_REAL_MAX */
+                                                      double        optInPenetration, /* From 0 to 30000000000000000000000000000000000000 */
                                                       int          *outBegIdx,
                                                       int          *outNBElement,
                                                       int           outInteger[] );
 
-TA_LIB_API int TA_CDLMORNINGSTAR_Lookback( double        optInPenetration );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_CDLMORNINGSTAR_Lookback( double        optInPenetration );  /* From 0 to 30000000000000000000000000000000000000 */
 
 
 
@@ -7656,10 +7656,10 @@ TA_LIB_API TA_RetCode TA_RSI_OpenAndFill( TA_RSI_Stream **stream, const double i
  * 
  * Optional Parameters
  * -------------------
- * optInAcceleration:(From 0 to TA_REAL_MAX)
+ * optInAcceleration:(From 0 to 30000000000000000000000000000000000000)
  *    Acceleration Factor used up to the Maximum value
  * 
- * optInMaximum:(From 0 to TA_REAL_MAX)
+ * optInMaximum:(From 0 to 30000000000000000000000000000000000000)
  *    Acceleration Factor Maximum value
  * 
  * 
@@ -7668,8 +7668,8 @@ TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
                               int    endIdx,
                                          const double inHigh[],
                                          const double inLow[],
-                                         double        optInAcceleration, /* From 0 to TA_REAL_MAX */
-                                         double        optInMaximum, /* From 0 to TA_REAL_MAX */
+                                         double        optInAcceleration, /* From 0 to 30000000000000000000000000000000000000 */
+                                         double        optInMaximum, /* From 0 to 30000000000000000000000000000000000000 */
                                          int          *outBegIdx,
                                          int          *outNBElement,
                                          double        outReal[] );
@@ -7678,14 +7678,14 @@ TA_LIB_API TA_RetCode TA_S_SAR( int    startIdx,
                                 int    endIdx,
                                            const float  inHigh[],
                                            const float  inLow[],
-                                           double        optInAcceleration, /* From 0 to TA_REAL_MAX */
-                                           double        optInMaximum, /* From 0 to TA_REAL_MAX */
+                                           double        optInAcceleration, /* From 0 to 30000000000000000000000000000000000000 */
+                                           double        optInMaximum, /* From 0 to 30000000000000000000000000000000000000 */
                                            int          *outBegIdx,
                                            int          *outNBElement,
                                            double        outReal[] );
 
-TA_LIB_API int TA_SAR_Lookback( double        optInAcceleration, /* From 0 to TA_REAL_MAX */
-                                         double        optInMaximum );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_SAR_Lookback( double        optInAcceleration, /* From 0 to 30000000000000000000000000000000000000 */
+                                         double        optInMaximum );  /* From 0 to 30000000000000000000000000000000000000 */
 
 
 
@@ -7718,28 +7718,28 @@ TA_LIB_API TA_RetCode TA_SAR_OpenAndFill( TA_SAR_Stream **stream, const double i
  * 
  * Optional Parameters
  * -------------------
- * optInStartValue:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInStartValue:(From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000)
  *    Start value and direction. 0 for Auto, >0 for Long, <0 for Short
  * 
- * optInOffsetOnReverse:(From 0 to TA_REAL_MAX)
+ * optInOffsetOnReverse:(From 0 to 30000000000000000000000000000000000000)
  *    Percent offset added/removed to initial stop on short/long reversal
  * 
- * optInAccelerationInitLong:(From 0 to TA_REAL_MAX)
+ * optInAccelerationInitLong:(From 0 to 30000000000000000000000000000000000000)
  *    Acceleration Factor initial value for the Long direction
  * 
- * optInAccelerationLong:(From 0 to TA_REAL_MAX)
+ * optInAccelerationLong:(From 0 to 30000000000000000000000000000000000000)
  *    Acceleration Factor for the Long direction
  * 
- * optInAccelerationMaxLong:(From 0 to TA_REAL_MAX)
+ * optInAccelerationMaxLong:(From 0 to 30000000000000000000000000000000000000)
  *    Acceleration Factor maximum value for the Long direction
  * 
- * optInAccelerationInitShort:(From 0 to TA_REAL_MAX)
+ * optInAccelerationInitShort:(From 0 to 30000000000000000000000000000000000000)
  *    Acceleration Factor initial value for the Short direction
  * 
- * optInAccelerationShort:(From 0 to TA_REAL_MAX)
+ * optInAccelerationShort:(From 0 to 30000000000000000000000000000000000000)
  *    Acceleration Factor for the Short direction
  * 
- * optInAccelerationMaxShort:(From 0 to TA_REAL_MAX)
+ * optInAccelerationMaxShort:(From 0 to 30000000000000000000000000000000000000)
  *    Acceleration Factor maximum value for the Short direction
  * 
  * 
@@ -7748,14 +7748,14 @@ TA_LIB_API TA_RetCode TA_SAREXT( int    startIdx,
                                  int    endIdx,
                                             const double inHigh[],
                                             const double inLow[],
-                                            double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
-                                            double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
-                                            double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
-                                            double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
-                                            double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
-                                            double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
-                                            double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
-                                            double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
+                                            double        optInStartValue, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                            double        optInOffsetOnReverse, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInAccelerationInitLong, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInAccelerationLong, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInAccelerationMaxLong, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInAccelerationInitShort, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInAccelerationShort, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInAccelerationMaxShort, /* From 0 to 30000000000000000000000000000000000000 */
                                             int          *outBegIdx,
                                             int          *outNBElement,
                                             double        outReal[] );
@@ -7764,26 +7764,26 @@ TA_LIB_API TA_RetCode TA_S_SAREXT( int    startIdx,
                                    int    endIdx,
                                               const float  inHigh[],
                                               const float  inLow[],
-                                              double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
-                                              double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
-                                              double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
-                                              double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
-                                              double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
-                                              double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
-                                              double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
-                                              double        optInAccelerationMaxShort, /* From 0 to TA_REAL_MAX */
+                                              double        optInStartValue, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                              double        optInOffsetOnReverse, /* From 0 to 30000000000000000000000000000000000000 */
+                                              double        optInAccelerationInitLong, /* From 0 to 30000000000000000000000000000000000000 */
+                                              double        optInAccelerationLong, /* From 0 to 30000000000000000000000000000000000000 */
+                                              double        optInAccelerationMaxLong, /* From 0 to 30000000000000000000000000000000000000 */
+                                              double        optInAccelerationInitShort, /* From 0 to 30000000000000000000000000000000000000 */
+                                              double        optInAccelerationShort, /* From 0 to 30000000000000000000000000000000000000 */
+                                              double        optInAccelerationMaxShort, /* From 0 to 30000000000000000000000000000000000000 */
                                               int          *outBegIdx,
                                               int          *outNBElement,
                                               double        outReal[] );
 
-TA_LIB_API int TA_SAREXT_Lookback( double        optInStartValue, /* From TA_REAL_MIN to TA_REAL_MAX */
-                                            double        optInOffsetOnReverse, /* From 0 to TA_REAL_MAX */
-                                            double        optInAccelerationInitLong, /* From 0 to TA_REAL_MAX */
-                                            double        optInAccelerationLong, /* From 0 to TA_REAL_MAX */
-                                            double        optInAccelerationMaxLong, /* From 0 to TA_REAL_MAX */
-                                            double        optInAccelerationInitShort, /* From 0 to TA_REAL_MAX */
-                                            double        optInAccelerationShort, /* From 0 to TA_REAL_MAX */
-                                            double        optInAccelerationMaxShort );  /* From 0 to TA_REAL_MAX */
+TA_LIB_API int TA_SAREXT_Lookback( double        optInStartValue, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                            double        optInOffsetOnReverse, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInAccelerationInitLong, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInAccelerationLong, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInAccelerationMaxLong, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInAccelerationInitShort, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInAccelerationShort, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInAccelerationMaxShort );  /* From 0 to 30000000000000000000000000000000000000 */
 
 
 
@@ -8011,7 +8011,7 @@ TA_LIB_API TA_RetCode TA_SQRT_OpenAndFill( TA_SQRT_Stream **stream, const double
  * optInTimePeriod:(From 2 to 100000)
  *    Time period
  * 
- * optInNbDev:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInNbDev:(From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000)
  *    Nb of deviations
  * 
  * 
@@ -8020,7 +8020,7 @@ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
                                  int    endIdx,
                                             const double inReal[],
                                             int           optInTimePeriod, /* From 2 to 100000 */
-                                            double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                            double        optInNbDev, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                             int          *outBegIdx,
                                             int          *outNBElement,
                                             double        outReal[] );
@@ -8029,13 +8029,13 @@ TA_LIB_API TA_RetCode TA_S_STDDEV( int    startIdx,
                                    int    endIdx,
                                               const float  inReal[],
                                               int           optInTimePeriod, /* From 2 to 100000 */
-                                              double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                              double        optInNbDev, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                               int          *outBegIdx,
                                               int          *outNBElement,
                                               double        outReal[] );
 
 TA_LIB_API int TA_STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
-                                            double        optInNbDev );  /* From TA_REAL_MIN to TA_REAL_MAX */
+                                            double        optInNbDev );  /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
 
 
 
@@ -8938,7 +8938,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const do
  * optInTimePeriod:(From 1 to 100000)
  *    Time period
  * 
- * optInNbDev:(From TA_REAL_MIN to TA_REAL_MAX)
+ * optInNbDev:(From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000)
  *    Nb of deviations
  * 
  * 
@@ -8947,7 +8947,7 @@ TA_LIB_API TA_RetCode TA_VAR( int    startIdx,
                               int    endIdx,
                                          const double inReal[],
                                          int           optInTimePeriod, /* From 1 to 100000 */
-                                         double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                         double        optInNbDev, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                          int          *outBegIdx,
                                          int          *outNBElement,
                                          double        outReal[] );
@@ -8956,13 +8956,13 @@ TA_LIB_API TA_RetCode TA_S_VAR( int    startIdx,
                                 int    endIdx,
                                            const float  inReal[],
                                            int           optInTimePeriod, /* From 1 to 100000 */
-                                           double        optInNbDev, /* From TA_REAL_MIN to TA_REAL_MAX */
+                                           double        optInNbDev, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
                                            int          *outBegIdx,
                                            int          *outNBElement,
                                            double        outReal[] );
 
 TA_LIB_API int TA_VAR_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
-                                         double        optInNbDev );  /* From TA_REAL_MIN to TA_REAL_MAX */
+                                         double        optInNbDev );  /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
 
 
 

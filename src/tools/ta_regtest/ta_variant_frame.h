@@ -1334,8 +1334,8 @@ static TA_RetCode TA_BBANDS_VFrameSU( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_BBANDS[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_BBANDS[] = {
    { "optInTimePeriod", 0, 2.0, 100000.0, 20.0 },
-   { "optInNbDevUp", 1, -1.79769313486231571e308, 1.79769313486231571e308, 2.0 },
-   { "optInNbDevDn", 1, -1.79769313486231571e308, 1.79769313486231571e308, 2.0 },
+   { "optInNbDevUp", 1, -3.00000000000000022e37, 3.00000000000000022e37, 2.0 },
+   { "optInNbDevDn", 1, -3.00000000000000022e37, 3.00000000000000022e37, 2.0 },
    { "optInMAType", 0, 0.0, 10.0, 0.0 },
 };
 
@@ -2202,7 +2202,7 @@ static TA_RetCode TA_CDLABANDONEDBABY_VFrameSU( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLABANDONEDBABY[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLABANDONEDBABY[] = {
-   { "optInPenetration", 1, 0.0, 1.79769313486231571e308, 2.99999999999999989e-1 },
+   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
 
 static TA_RetCode TA_CDLADVANCEBLOCK_VFrameD( int startIdx, int endIdx,
@@ -2758,7 +2758,7 @@ static TA_RetCode TA_CDLDARKCLOUDCOVER_VFrameSU( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLDARKCLOUDCOVER[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLDARKCLOUDCOVER[] = {
-   { "optInPenetration", 1, 0.0, 1.79769313486231571e308, 5.00000000000000000e-1 },
+   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 5.00000000000000000e-1 },
 };
 
 static TA_RetCode TA_CDLDOJI_VFrameD( int startIdx, int endIdx,
@@ -3156,7 +3156,7 @@ static TA_RetCode TA_CDLEVENINGDOJISTAR_VFrameSU( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLEVENINGDOJISTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLEVENINGDOJISTAR[] = {
-   { "optInPenetration", 1, 0.0, 1.79769313486231571e308, 2.99999999999999989e-1 },
+   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
 
 static TA_RetCode TA_CDLEVENINGSTAR_VFrameD( int startIdx, int endIdx,
@@ -3238,7 +3238,7 @@ static TA_RetCode TA_CDLEVENINGSTAR_VFrameSU( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLEVENINGSTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLEVENINGSTAR[] = {
-   { "optInPenetration", 1, 0.0, 1.79769313486231571e308, 2.99999999999999989e-1 },
+   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
 
 static TA_RetCode TA_CDLGAPSIDESIDEWHITE_VFrameD( int startIdx, int endIdx,
@@ -4900,7 +4900,7 @@ static TA_RetCode TA_CDLMATHOLD_VFrameSU( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLMATHOLD[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLMATHOLD[] = {
-   { "optInPenetration", 1, 0.0, 1.79769313486231571e308, 5.00000000000000000e-1 },
+   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 5.00000000000000000e-1 },
 };
 
 static TA_RetCode TA_CDLMORNINGDOJISTAR_VFrameD( int startIdx, int endIdx,
@@ -4982,7 +4982,7 @@ static TA_RetCode TA_CDLMORNINGDOJISTAR_VFrameSU( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLMORNINGDOJISTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLMORNINGDOJISTAR[] = {
-   { "optInPenetration", 1, 0.0, 1.79769313486231571e308, 2.99999999999999989e-1 },
+   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
 
 static TA_RetCode TA_CDLMORNINGSTAR_VFrameD( int startIdx, int endIdx,
@@ -5064,7 +5064,7 @@ static TA_RetCode TA_CDLMORNINGSTAR_VFrameSU( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLMORNINGSTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLMORNINGSTAR[] = {
-   { "optInPenetration", 1, 0.0, 1.79769313486231571e308, 2.99999999999999989e-1 },
+   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
 
 static TA_RetCode TA_CDLONNECK_VFrameD( int startIdx, int endIdx,
@@ -10921,8 +10921,8 @@ static TA_RetCode TA_SAR_VFrameSU( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_SAR[] = { TA_VIN_HIGH, TA_VIN_LOW };
 static const TA_VOptSpec TA_VOpt_SAR[] = {
-   { "optInAcceleration", 1, 0.0, 1.79769313486231571e308, 2.00000000000000004e-2 },
-   { "optInMaximum", 1, 0.0, 1.79769313486231571e308, 2.00000000000000011e-1 },
+   { "optInAcceleration", 1, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
+   { "optInMaximum", 1, 0.0, 3.00000000000000022e37, 2.00000000000000011e-1 },
 };
 
 static TA_RetCode TA_SAREXT_VFrameD( int startIdx, int endIdx,
@@ -11024,14 +11024,14 @@ static TA_RetCode TA_SAREXT_VFrameSU( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_SAREXT[] = { TA_VIN_HIGH, TA_VIN_LOW };
 static const TA_VOptSpec TA_VOpt_SAREXT[] = {
-   { "optInStartValue", 1, -1.79769313486231571e308, 1.79769313486231571e308, 0.0 },
-   { "optInOffsetOnReverse", 1, 0.0, 1.79769313486231571e308, 0.0 },
-   { "optInAccelerationInitLong", 1, 0.0, 1.79769313486231571e308, 2.00000000000000004e-2 },
-   { "optInAccelerationLong", 1, 0.0, 1.79769313486231571e308, 2.00000000000000004e-2 },
-   { "optInAccelerationMaxLong", 1, 0.0, 1.79769313486231571e308, 2.00000000000000011e-1 },
-   { "optInAccelerationInitShort", 1, 0.0, 1.79769313486231571e308, 2.00000000000000004e-2 },
-   { "optInAccelerationShort", 1, 0.0, 1.79769313486231571e308, 2.00000000000000004e-2 },
-   { "optInAccelerationMaxShort", 1, 0.0, 1.79769313486231571e308, 2.00000000000000011e-1 },
+   { "optInStartValue", 1, -3.00000000000000022e37, 3.00000000000000022e37, 0.0 },
+   { "optInOffsetOnReverse", 1, 0.0, 3.00000000000000022e37, 0.0 },
+   { "optInAccelerationInitLong", 1, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
+   { "optInAccelerationLong", 1, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
+   { "optInAccelerationMaxLong", 1, 0.0, 3.00000000000000022e37, 2.00000000000000011e-1 },
+   { "optInAccelerationInitShort", 1, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
+   { "optInAccelerationShort", 1, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
+   { "optInAccelerationMaxShort", 1, 0.0, 3.00000000000000022e37, 2.00000000000000011e-1 },
 };
 
 static TA_RetCode TA_SIN_VFrameD( int startIdx, int endIdx,
@@ -11377,7 +11377,7 @@ static TA_RetCode TA_STDDEV_VFrameSU( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_STDDEV[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_STDDEV[] = {
    { "optInTimePeriod", 0, 2.0, 100000.0, 5.0 },
-   { "optInNbDev", 1, -1.79769313486231571e308, 1.79769313486231571e308, 1.0 },
+   { "optInNbDev", 1, -3.00000000000000022e37, 3.00000000000000022e37, 1.0 },
 };
 
 static TA_RetCode TA_STOCH_VFrameD( int startIdx, int endIdx,
@@ -12603,7 +12603,7 @@ static TA_RetCode TA_VAR_VFrameSU( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_VAR[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_VAR[] = {
    { "optInTimePeriod", 0, 1.0, 100000.0, 5.0 },
-   { "optInNbDev", 1, -1.79769313486231571e308, 1.79769313486231571e308, 1.0 },
+   { "optInNbDev", 1, -3.00000000000000022e37, 3.00000000000000022e37, 1.0 },
 };
 
 static TA_RetCode TA_VWMA_VFrameD( int startIdx, int endIdx,

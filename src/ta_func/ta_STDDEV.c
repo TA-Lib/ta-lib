@@ -67,6 +67,8 @@ TA_LIB_API int TA_STDDEV_Lookback( int optInTimePeriod, double optInNbDev )
       return -1;
    if( optInNbDev == -4e37 )
       optInNbDev = 1;
+   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+      return -1;
    /* Lookback is driven by the variance. */
    return TA_VAR_Lookback(optInTimePeriod,optInNbDev);
 }
@@ -97,6 +99,8 @@ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
       return TA_BAD_PARAM;
    if( optInNbDev == -4e37 )
       optInNbDev = 1;
+   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+      return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
 
@@ -215,6 +219,8 @@ TA_RetCode TA_S_STDDEV( int    startIdx,
       return TA_BAD_PARAM;
    if( optInNbDev == -4e37 )
       optInNbDev = 1;
+   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+      return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
 
@@ -372,6 +378,8 @@ TA_RetCode TA_STDDEV_OpenInternal( struct TA_STDDEV_Stream **stream, const doubl
       return TA_BAD_PARAM;
    if( optInNbDev == -4e37 )
       optInNbDev = 1;
+   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+      return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -480,6 +488,8 @@ TA_LIB_API TA_RetCode TA_STDDEV_OpenAndFill( TA_STDDEV_Stream **stream, const do
       return TA_BAD_PARAM;
    if( optInNbDev == -4e37 )
       optInNbDev = 1;
+   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+      return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
    startIdx = 0;

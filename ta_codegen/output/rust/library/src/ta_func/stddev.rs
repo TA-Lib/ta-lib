@@ -85,6 +85,8 @@ impl Core {
         }
         if optInNbDev == -4e37 {
             optInNbDev = 1e0;
+        } else if (optInNbDev < -3e37) || (optInNbDev > 3e37) {
+            return usize::MAX;
         }
         // Lookback is driven by the variance.
         return self.var_lookback(optInTimePeriod, optInNbDev);
@@ -178,6 +180,8 @@ impl Core {
         }
         if optInNbDev == -4e37 {
             optInNbDev = 1e0;
+        } else if (optInNbDev < -3e37) || (optInNbDev > 3e37) {
+            return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
@@ -346,6 +350,8 @@ impl Core {
         }
         if optInNbDev == -4e37 {
             optInNbDev = 1e0;
+        } else if (optInNbDev < -3e37) || (optInNbDev > 3e37) {
+            return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
@@ -454,6 +460,8 @@ impl Core {
         }
         if optInNbDev == -4e37 {
             optInNbDev = 1e0;
+        } else if (optInNbDev < -3e37) || (optInNbDev > 3e37) {
+            return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;

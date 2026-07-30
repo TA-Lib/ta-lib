@@ -62,11 +62,11 @@ TA_LIB_API int TA_SAR_Lookback( double optInAcceleration, double optInMaximum )
 {
    if( optInAcceleration == -4e37 )
       optInAcceleration = 0.02;
-   else if( optInAcceleration < 0e0 || optInAcceleration > 1.7976931348623157e308 )
+   else if( optInAcceleration < 0e0 || optInAcceleration > 3e37 )
       return -1;
    if( optInMaximum == -4e37 )
       optInMaximum = 0.2;
-   else if( optInMaximum < 0e0 || optInMaximum > 1.7976931348623157e308 )
+   else if( optInMaximum < 0e0 || optInMaximum > 3e37 )
       return -1;
    /* SAR always sacrify one price bar to establish the
     * initial extreme price.
@@ -110,11 +110,11 @@ TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
       return TA_BAD_PARAM;
    if( optInAcceleration == -4e37 )
       optInAcceleration = 0.02;
-   else if( optInAcceleration < 0e0 || optInAcceleration > 1.7976931348623157e308 )
+   else if( optInAcceleration < 0e0 || optInAcceleration > 3e37 )
       return TA_BAD_PARAM;
    if( optInMaximum == -4e37 )
       optInMaximum = 0.2;
-   else if( optInMaximum < 0e0 || optInMaximum > 1.7976931348623157e308 )
+   else if( optInMaximum < 0e0 || optInMaximum > 3e37 )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -579,11 +579,11 @@ TA_RetCode TA_S_SAR( int    startIdx,
       return TA_BAD_PARAM;
    if( optInAcceleration == -4e37 )
       optInAcceleration = 0.02;
-   else if( optInAcceleration < 0e0 || optInAcceleration > 1.7976931348623157e308 )
+   else if( optInAcceleration < 0e0 || optInAcceleration > 3e37 )
       return TA_BAD_PARAM;
    if( optInMaximum == -4e37 )
       optInMaximum = 0.2;
-   else if( optInMaximum < 0e0 || optInMaximum > 1.7976931348623157e308 )
+   else if( optInMaximum < 0e0 || optInMaximum > 3e37 )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -1087,11 +1087,11 @@ TA_RetCode TA_SAR_OpenInternal( struct TA_SAR_Stream **stream, const double inHi
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( optInAcceleration == -4e37 )
       optInAcceleration = 0.02;
-   else if( optInAcceleration < 0e0 || optInAcceleration > 1.7976931348623157e308 )
+   else if( optInAcceleration < 0e0 || optInAcceleration > 3e37 )
       return TA_BAD_PARAM;
    if( optInMaximum == -4e37 )
       optInMaximum = 0.2;
-   else if( optInMaximum < 0e0 || optInMaximum > 1.7976931348623157e308 )
+   else if( optInMaximum < 0e0 || optInMaximum > 3e37 )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
@@ -1397,11 +1397,11 @@ TA_LIB_API TA_RetCode TA_SAR_OpenAndFill( TA_SAR_Stream **stream, const double i
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
    if( optInAcceleration == -4e37 )
       optInAcceleration = 0.02;
-   else if( optInAcceleration < 0e0 || optInAcceleration > 1.7976931348623157e308 )
+   else if( optInAcceleration < 0e0 || optInAcceleration > 3e37 )
       return TA_BAD_PARAM;
    if( optInMaximum == -4e37 )
       optInMaximum = 0.2;
-   else if( optInMaximum < 0e0 || optInMaximum > 1.7976931348623157e308 )
+   else if( optInMaximum < 0e0 || optInMaximum > 3e37 )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;

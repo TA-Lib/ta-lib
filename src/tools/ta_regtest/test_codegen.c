@@ -3455,10 +3455,10 @@ static unsigned long long fuzz_parse_hash(const char *resp)
  * this builder emits that a correct implementation must REJECT; every other one
  * is deliberately pulled inside the range, which is how #148 (the Rust backend
  * emitting no validation at all for `real` params) survived every gate in this
- * file. A side declared unconstrained (TA_INTEGER_MIN/MAX, TA_REAL_MIN/MAX) is
- * skipped: the backends emit no check there either, so there is no rejection to
- * compare. Lists have no bound to exceed; their out-of-list arm lives in the
- * stream vector builder. */
+ * file. Every real bound is finite and checked, so both sides always have a
+ * rejection to compare; an integer side is skipped only when the probe would
+ * leave TA_INTEGER_MIN/MAX. Lists have no bound to exceed; their out-of-list arm
+ * lives in the stream vector builder. */
 static void fuzz_add_out_of_range(const TA_OptInputParameterInfo *oi,
                                   double cand[FUZZ_MAX_CAND],
                                   char candKind[FUZZ_MAX_CAND],
@@ -3480,13 +3480,10 @@ static void fuzz_add_out_of_range(const TA_OptInputParameterInfo *oi,
     {
         const TA_RealRange *r = (const TA_RealRange *)oi->dataSet;
         if( !r ) return;
-        /* The `- 1.0 < min` / `+ 1.0 > max` guards keep a candidate that the
-         * bound's own magnitude would absorb from being emitted as a silent
-         * in-range value. */
-        if( r->min > TA_REAL_MIN && r->min - 1.0 < r->min )
-            oor[noor++] = r->min - 1.0;
-        if( r->max < TA_REAL_MAX && r->max + 1.0 > r->max )
-            oor[noor++] = r->max + 1.0;
+        /* +/-1.0 is absorbed at sentinel magnitude, so fall back to a multiple of
+         * the widest legal bound. Neither can collide with TA_REAL_DEFAULT. */
+        oor[noor++] = (r->min - 1.0 < r->min) ? r->min - 1.0 : 2.0 * TA_REAL_MIN;
+        oor[noor++] = (r->max + 1.0 > r->max) ? r->max + 1.0 : 2.0 * TA_REAL_MAX;
     }
     else
         return;

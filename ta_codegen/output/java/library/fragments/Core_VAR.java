@@ -38,6 +38,8 @@
       }
       if( optInNbDev == -4e37 ) {
          optInNbDev = 1e0;
+      } else if( optInNbDev < -3e37 || optInNbDev > 3e37 ) {
+         return -1;
       }
       return optInTimePeriod - 1 ;
 
@@ -78,6 +80,8 @@
       }
       if( optInNbDev == -4e37 ) {
          optInNbDev = 1e0;
+      } else if( optInNbDev < -3e37 || optInNbDev > 3e37 ) {
+         return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed to calculate
        * at least one output.
@@ -303,6 +307,8 @@
       }
       if( optInNbDev == -4e37 ) {
          optInNbDev = 1e0;
+      } else if( optInNbDev < -3e37 || optInNbDev > 3e37 ) {
+         return RetCode.BadParam;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
@@ -832,6 +838,8 @@
       }
       if( optInNbDev == -4e37 ) {
          optInNbDev = 1e0;
+      } else if( optInNbDev < -3e37 || optInNbDev > 3e37 ) {
+         return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed to calculate
        * at least one output.
@@ -987,6 +995,8 @@
       }
       if( optInNbDev == -4e37 ) {
          optInNbDev = 1e0;
+      } else if( optInNbDev < -3e37 || optInNbDev > 3e37 ) {
+         return RetCode.BadParam;
       }
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;

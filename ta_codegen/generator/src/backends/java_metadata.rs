@@ -9,7 +9,7 @@
 //!
 //! Both surfaces render from [`java_abstract::rows`], so they cannot disagree:
 //! the values come from the same `func_flag_bits` / `price_bundle` /
-//! `ta_real_sentinel` helpers that build the C and Rust tables, and
+//! helpers that build the C and Rust tables, and
 //! `test_abstract.c` already diffs the server's copy against C.
 //!
 //! Scope is the guarded double-precision batch API — the same as the C and Rust

@@ -57,9 +57,13 @@
       }
       if( optInNbDevUp == -4e37 ) {
          optInNbDevUp = 2e0;
+      } else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 ) {
+         return -1;
       }
       if( optInNbDevDn == -4e37 ) {
          optInNbDevDn = 2e0;
+      } else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 ) {
+         return -1;
       }
       int maLookback;
       int stddevLookback;
@@ -114,9 +118,13 @@
       }
       if( optInNbDevUp == -4e37 ) {
          optInNbDevUp = 2e0;
+      } else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 ) {
+         return RetCode.BadParam;
       }
       if( optInNbDevDn == -4e37 ) {
          optInNbDevDn = 2e0;
+      } else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 ) {
+         return RetCode.BadParam;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
          return RetCode.BadParam ;
@@ -537,9 +545,13 @@
       }
       if( optInNbDevUp == -4e37 ) {
          optInNbDevUp = 2e0;
+      } else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 ) {
+         return RetCode.BadParam;
       }
       if( optInNbDevDn == -4e37 ) {
          optInNbDevDn = 2e0;
+      } else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 ) {
+         return RetCode.BadParam;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
          return RetCode.BadParam ;
@@ -1280,9 +1292,13 @@
       }
       if( optInNbDevUp == -4e37 ) {
          optInNbDevUp = 2e0;
+      } else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 ) {
+         return RetCode.BadParam;
       }
       if( optInNbDevDn == -4e37 ) {
          optInNbDevDn = 2e0;
+      } else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 ) {
+         return RetCode.BadParam;
       }
       double[] sc_outRealUpperBand = new double[historyLen];
       double[] sc_outRealMiddleBand = new double[historyLen];
@@ -1383,9 +1399,13 @@
       }
       if( optInNbDevUp == -4e37 ) {
          optInNbDevUp = 2e0;
+      } else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 ) {
+         return RetCode.BadParam;
       }
       if( optInNbDevDn == -4e37 ) {
          optInNbDevDn = 2e0;
+      } else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 ) {
+         return RetCode.BadParam;
       }
       if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
          return RetCode.BadParam;

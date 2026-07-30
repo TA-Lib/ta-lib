@@ -84,8 +84,12 @@ TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, dou
       return -1;
    if( optInNbDevUp == -4e37 )
       optInNbDevUp = 2;
+   else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 )
+      return -1;
    if( optInNbDevDn == -4e37 )
       optInNbDevDn = 2;
+   else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 )
+      return -1;
    if( (int)optInMAType == (int)0x80000000 )
       optInMAType = 0;
    /* A band value needs BOTH the middle-band moving average and the standard
@@ -141,8 +145,12 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( optInNbDevUp == -4e37 )
       optInNbDevUp = 2;
+   else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 )
+      return TA_BAD_PARAM;
    if( optInNbDevDn == -4e37 )
       optInNbDevDn = 2;
+   else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 )
+      return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 )
       optInMAType = 0;
    if( !outRealUpperBand )
@@ -662,8 +670,12 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( optInNbDevUp == -4e37 )
       optInNbDevUp = 2;
+   else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 )
+      return TA_BAD_PARAM;
    if( optInNbDevDn == -4e37 )
       optInNbDevDn = 2;
+   else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 )
+      return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 )
       optInMAType = 0;
    if( !outRealUpperBand )
@@ -1186,8 +1198,12 @@ TA_RetCode TA_BBANDS_OpenInternal( struct TA_BBANDS_Stream **stream, const doubl
       return TA_BAD_PARAM;
    if( optInNbDevUp == -4e37 )
       optInNbDevUp = 2;
+   else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 )
+      return TA_BAD_PARAM;
    if( optInNbDevDn == -4e37 )
       optInNbDevDn = 2;
+   else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 )
+      return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 )
       optInMAType = 0;
 
@@ -1381,8 +1397,12 @@ TA_LIB_API TA_RetCode TA_BBANDS_OpenAndFill( TA_BBANDS_Stream **stream, const do
       return TA_BAD_PARAM;
    if( optInNbDevUp == -4e37 )
       optInNbDevUp = 2;
+   else if( optInNbDevUp < -3e37 || optInNbDevUp > 3e37 )
+      return TA_BAD_PARAM;
    if( optInNbDevDn == -4e37 )
       optInNbDevDn = 2;
+   else if( optInNbDevDn < -3e37 || optInNbDevDn > 3e37 )
+      return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 )
       optInMAType = 0;
 

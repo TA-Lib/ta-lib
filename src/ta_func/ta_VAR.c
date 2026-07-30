@@ -68,6 +68,8 @@ TA_LIB_API int TA_VAR_Lookback( int optInTimePeriod, double optInNbDev )
       return -1;
    if( optInNbDev == -4e37 )
       optInNbDev = 1;
+   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+      return -1;
    return optInTimePeriod - 1;
 }
 
@@ -108,6 +110,8 @@ TA_LIB_API TA_RetCode TA_VAR( int    startIdx,
       return TA_BAD_PARAM;
    if( optInNbDev == -4e37 )
       optInNbDev = 1;
+   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+      return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
 
@@ -353,6 +357,8 @@ TA_RetCode TA_S_VAR( int    startIdx,
       return TA_BAD_PARAM;
    if( optInNbDev == -4e37 )
       optInNbDev = 1;
+   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+      return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
 
@@ -652,6 +658,8 @@ TA_RetCode TA_VAR_OpenInternal( struct TA_VAR_Stream **stream, const double inRe
       return TA_BAD_PARAM;
    if( optInNbDev == -4e37 )
       optInNbDev = 1;
+   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+      return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -839,6 +847,8 @@ TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double i
       return TA_BAD_PARAM;
    if( optInNbDev == -4e37 )
       optInNbDev = 1;
+   else if( optInNbDev < -3e37 || optInNbDev > 3e37 )
+      return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
    startIdx = 0;

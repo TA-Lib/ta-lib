@@ -6,7 +6,6 @@
 use crate::ir::{FuncDef, Input, ParamType};
 use std::fmt::Write as _;
 use std::path::Path;
-use super::common::ta_real_sentinel;
 
 /// Generate `ta_func_api.xml` from the given function definitions.
 ///
@@ -213,36 +212,26 @@ fn write_real_opt(
 ) {
     out.push_str("\t\t\t\t<Type>Double</Type>\n");
     if let Some((min, max)) = opt.range {
-        let min_v = ta_real_sentinel(min);
-        let max_v = ta_real_sentinel(max);
         out.push_str("\t\t\t\t<Range>\n");
-        let _ = writeln!(
-            out,
-            "\t\t\t\t\t<Minimum>{}</Minimum>",
-            double_to_str(min_v)
-        );
-        let _ = writeln!(
-            out,
-            "\t\t\t\t\t<Maximum>{}</Maximum>",
-            double_to_str(max_v)
-        );
+        let _ = writeln!(out, "\t\t\t\t\t<Minimum>{}</Minimum>", double_to_str(min));
+        let _ = writeln!(out, "\t\t\t\t\t<Maximum>{}</Maximum>", double_to_str(max));
         let p = opt.precision.unwrap_or(0);
         let _ = writeln!(out, "\t\t\t\t\t<Precision>{p}</Precision>");
         let (start, end, inc) = opt.suggested.unwrap_or((0.0, 0.0, 0.0));
         let _ = writeln!(
             out,
             "\t\t\t\t\t<SuggestedStart>{}</SuggestedStart>",
-            double_to_str(ta_real_sentinel(start))
+            double_to_str(start)
         );
         let _ = writeln!(
             out,
             "\t\t\t\t\t<SuggestedEnd>{}</SuggestedEnd>",
-            double_to_str(ta_real_sentinel(end))
+            double_to_str(end)
         );
         let _ = writeln!(
             out,
             "\t\t\t\t\t<SuggestedIncrement>{}</SuggestedIncrement>",
-            double_to_str(ta_real_sentinel(inc))
+            double_to_str(inc)
         );
         out.push_str("\t\t\t\t</Range>\n");
     }
@@ -250,7 +239,7 @@ fn write_real_opt(
     let _ = writeln!(
         out,
         "\t\t\t\t<DefaultValue>{}</DefaultValue>",
-        double_to_str(ta_real_sentinel(default))
+        double_to_str(default)
     );
 }
 

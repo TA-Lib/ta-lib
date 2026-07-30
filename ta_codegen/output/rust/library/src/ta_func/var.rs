@@ -87,6 +87,8 @@ impl Core {
         }
         if optInNbDev == -4e37 {
             optInNbDev = 1e0;
+        } else if (optInNbDev < -3e37) || (optInNbDev > 3e37) {
+            return usize::MAX;
         }
         return (optInTimePeriod - 1) as usize;
     }
@@ -176,6 +178,8 @@ impl Core {
         }
         if optInNbDev == -4e37 {
             optInNbDev = 1e0;
+        } else if (optInNbDev < -3e37) || (optInNbDev > 3e37) {
+            return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
         let mut tempReal: f64 = 0.0_f64;
@@ -532,6 +536,8 @@ impl Core {
         }
         if optInNbDev == -4e37 {
             optInNbDev = 1e0;
+        } else if (optInNbDev < -3e37) || (optInNbDev > 3e37) {
+            return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
@@ -729,6 +735,8 @@ impl Core {
         }
         if optInNbDev == -4e37 {
             optInNbDev = 1e0;
+        } else if (optInNbDev < -3e37) || (optInNbDev > 3e37) {
+            return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;

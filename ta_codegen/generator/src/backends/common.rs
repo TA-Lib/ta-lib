@@ -6,22 +6,18 @@
 
 use crate::ir::{BinOp, Expr, Statement};
 
-/// TA-Lib's real-value range sentinels (`TA_REAL_MIN` / `TA_REAL_MAX`).
+// TA-Lib's parameter sentinels, mirroring include/ta_defs.h. The "use the
+// default" value deliberately sits one step OUTSIDE the legal range so
+// `x == DEFAULT` can never collide with real data — hence -4e37 vs -3e37, and
+// i32::MIN vs i32::MIN+1. DBL_MIN/DBL_MAX cannot express that scheme (there is
+// no representable double outside them to spare), which is why these are fixed
+// decimals. Values are pinned by the ta_defs_sentinels_match test below.
 pub const TA_REAL_MIN: f64 = -3e37;
 pub const TA_REAL_MAX: f64 = 3e37;
-
-/// Map the YAML parser's `f64::MIN`/`MAX` sentinels back to TA-Lib's
-/// `-3e37`/`3e37` so every metadata backend agrees with C/XML semantics.
-#[allow(clippy::float_cmp)]
-pub fn ta_real_sentinel(v: f64) -> f64 {
-    if v == f64::MIN {
-        TA_REAL_MIN
-    } else if v == f64::MAX {
-        TA_REAL_MAX
-    } else {
-        v
-    }
-}
+pub const TA_REAL_DEFAULT: f64 = -4e37;
+pub const TA_INTEGER_MIN: i32 = i32::MIN + 1;
+pub const TA_INTEGER_MAX: i32 = i32::MAX;
+pub const TA_INTEGER_DEFAULT: i32 = i32::MIN;
 
 /// The candlestick helper functions (`ta_candlerange`, `ta_candleaverage`) whose
 /// calls are unpacked/hoisted before the surrounding expression is rendered.
@@ -92,5 +88,49 @@ pub fn find_sizeof_type(expr: &Expr) -> Option<String> {
         Expr::BinOp(left, _, right) => find_sizeof_type(left).or_else(|| find_sizeof_type(right)),
         Expr::Cast(_, inner) => find_sizeof_type(inner),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The sentinels above are a copy of `include/ta_defs.h`, which is hand-written
+    /// public ABI. Nothing else notices when the two drift: a wrong value silently
+    /// widens or narrows every generated range check (that is exactly how
+    /// `TA_REAL_MAX` came to be emitted as `f64::MAX`). Pin them to the header.
+    #[test]
+    #[allow(clippy::float_cmp)] // pinning exact literals is the point
+    fn ta_defs_sentinels_match() {
+        let hdr = std::fs::read_to_string(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../include/ta_defs.h"),
+        )
+        .expect("include/ta_defs.h");
+        for (macro_name, expected) in [
+            ("TA_REAL_MIN", "(-3e+37)"),
+            ("TA_REAL_MAX", "(3e+37)"),
+            ("TA_REAL_DEFAULT", "(-4e+37)"),
+            ("TA_INTEGER_MIN", "(INT_MIN+1)"),
+            ("TA_INTEGER_MAX", "(INT_MAX)"),
+            ("TA_INTEGER_DEFAULT", "(INT_MIN)"),
+        ] {
+            let needle = format!("#define {macro_name} ");
+            let line = hdr
+                .lines()
+                .find(|l| l.starts_with(&needle))
+                .unwrap_or_else(|| panic!("{macro_name} not found in ta_defs.h"));
+            assert_eq!(
+                line[needle.len()..].trim(),
+                expected,
+                "{macro_name} changed in ta_defs.h; update backends::common to match"
+            );
+        }
+        // And that our Rust values are those literals.
+        assert_eq!(TA_REAL_MIN, -3e37);
+        assert_eq!(TA_REAL_MAX, 3e37);
+        assert_eq!(TA_REAL_DEFAULT, -4e37);
+        assert_eq!(TA_INTEGER_MIN, i32::MIN + 1);
+        assert_eq!(TA_INTEGER_MAX, i32::MAX);
+        assert_eq!(TA_INTEGER_DEFAULT, i32::MIN);
     }
 }

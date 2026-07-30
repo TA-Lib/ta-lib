@@ -66,7 +66,7 @@ TA_LIB_API int TA_CDLMATHOLD_Lookback( double optInPenetration )
    double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
    if( optInPenetration == -4e37 )
       optInPenetration = 0.5;
-   else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
+   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
       return -1;
    return max(BodyShort_avgPeriod,BodyLong_avgPeriod) + 4;
 }
@@ -111,7 +111,7 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD( int    startIdx,
       return TA_BAD_PARAM;
    if( optInPenetration == -4e37 )
       optInPenetration = 0.5;
-   else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
+   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
@@ -338,7 +338,7 @@ TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
       return TA_BAD_PARAM;
    if( optInPenetration == -4e37 )
       optInPenetration = 0.5;
-   else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
+   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
@@ -670,7 +670,7 @@ TA_RetCode TA_CDLMATHOLD_OpenInternal( struct TA_CDLMATHOLD_Stream **stream, con
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( optInPenetration == -4e37 )
       optInPenetration = 0.5;
-   else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
+   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
@@ -935,7 +935,7 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_OpenAndFill( TA_CDLMATHOLD_Stream **stream, 
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
    if( optInPenetration == -4e37 )
       optInPenetration = 0.5;
-   else if( optInPenetration < 0e0 || optInPenetration > 1.7976931348623157e308 )
+   else if( optInPenetration < 0e0 || optInPenetration > 3e37 )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;

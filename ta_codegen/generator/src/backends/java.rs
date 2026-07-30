@@ -556,14 +556,12 @@ pub(crate) fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
                         name = opt.name,
                         val = default_val
                     ));
+                    // Every declared bound is checked (see backends::c).
                     if let Some((min, max)) = opt.range {
-                        // Skip unbounded ranges (f64::MIN/MAX = no real constraint)
-                        if min > f64::MIN / 2.0 || max < f64::MAX / 2.0 {
-                            out.push_str(&format!(
-                                " else if( {name} < {min:e} || {name} > {max:e} ) {{\n         return {fail};\n      }}",
-                                name = opt.name
-                            ));
-                        }
+                        out.push_str(&format!(
+                            " else if( {name} < {min:e} || {name} > {max:e} ) {{\n         return {fail};\n      }}",
+                            name = opt.name
+                        ));
                     }
                     out.push('\n');
                 }
