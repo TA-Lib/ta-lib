@@ -38,7 +38,11 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from utilities.common import check_prerequisites, PREREQS_BUILD_SERVERS
+from utilities.common import (
+    check_prerequisites, PREREQS_BUILD_SERVERS,
+    PREREQS_CMAKE, PREREQS_CARGO, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
+    PREREQS_DOTNET,
+)
 import serve_version
 
 OUR_FLAGS = {
@@ -62,6 +66,35 @@ def get_filter(args, prefix):
         if a.startswith(prefix + "="):
             return a.split("=", 1)[1]
     return None
+
+
+# Tools each --language= backend needs, on top of the base set below. Unknown
+# tokens (ta_bench also accepts "cref") contribute nothing, so a typo can only
+# widen the check, never shrink it below the base.
+LANG_PREREQS = {
+    "c":      [PREREQS_GCC],
+    "rust":   [],                            # cargo is already in the base set
+    "java":   [PREREQS_JAVAC, PREREQS_JAVA],
+    "dotnet": [PREREQS_DOTNET],
+}
+
+
+def prereqs_for(lang_filter):
+    """Prerequisites this run actually needs (issue #150).
+
+    Without --language every backend is generated and built, so the full set
+    applies. With one, only that backend's toolchain is required — a JDK/.NET-less
+    machine could not reach `--codegen-only --language=c,rust` at all before.
+    cmake and cargo stay unconditional: the generator itself is the Rust binary
+    driving generate/generate-servers/build, so even --language=c runs cargo."""
+    if not lang_filter:
+        return PREREQS_BUILD_SERVERS
+    prereqs = [PREREQS_CMAKE, PREREQS_CARGO]
+    for lang in lang_filter.split(","):
+        for tool in LANG_PREREQS.get(lang.strip().lower(), []):
+            if tool not in prereqs:
+                prereqs.append(tool)
+    return prereqs
 
 
 # Reference-as-server: the reference C library is frozen at this immutable tag
@@ -227,8 +260,6 @@ def main():
         print(__doc__.strip())
         sys.exit(0)
 
-    check_prerequisites(PREREQS_BUILD_SERVERS)
-
     argv = sys.argv[1:]
     test_only      = "--test-only" in argv
     direct_only    = "--direct-bench-only" in argv
@@ -253,6 +284,9 @@ def main():
     passthrough = [normalize_flag(a) for a in argv if a not in OUR_FLAGS]
     func_filter = get_filter(passthrough, "--function")
     lang_filter = get_filter(passthrough, "--language")
+
+    # Must follow --language parsing: the prerequisite set depends on it.
+    check_prerequisites(prereqs_for(lang_filter))
 
     root = find_repo_root()
     build_dir = os.path.join(root, "cmake-build")
