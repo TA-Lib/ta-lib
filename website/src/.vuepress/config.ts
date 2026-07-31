@@ -1,6 +1,9 @@
 import { defineUserConfig } from "vuepress";
 
-import theme from "./theme.js";
+// The theme/navbar/sidebar modules deliberately live outside `.vuepress/`:
+// CodeQL's JavaScript extractor skips hidden directories, so config kept in
+// here is invisible to it and the analysis fails with "no source code seen".
+import theme from "../../config/theme.js";
 import { viteBundler } from "@vuepress/bundler-vite";
 
 export default defineUserConfig({
