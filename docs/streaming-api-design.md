@@ -466,22 +466,25 @@ Corrected after a full 161-function audit:
 | T1 | pure per-bar map | none | O(1) | ADD…DIV, math/price transforms, BOP |
 | T2 | scalar recurrence | O(1) scalars | O(1) | EMA, DEMA/TEMA/TRIX, MACD/MACDFIX, RSI, CMO, ADX/DI/DM/DX, ATR (steady), OBV, AD (cumulative), ADOSC, SAR/SAREXT, T3, TRANGE (prev-close scalar) |
 | T3 | fixed trailing window | ring O(period) | O(1) for rolling sums (SMA, WMA, SUM, VAR/STDDEV, MOM/ROC\*, MFI, TRIMA); **O(period)** for window recomputers (LINEARREG family, TSF, BETA, CORREL, AVGDEV, IMI, CCI, ULTOSC, CDL\* candle averages) | see left | KAMA (sliding ROC-sum ring — *not* T2), HT_\* family + MAMA (single loops, bounded ≤50-slot rings — *not* "needs restructuring") |
-| T4a | window extrema, value-output | monotonic deque O(period) | amortized O(1) | MIN/MAX, MIDPOINT/MIDPRICE, WILLR, STOCH's raw range |
-| T4b | window extrema, **index-observable** | ring + cached-index automaton (transcribed verbatim) | amortized O(1), worst O(period) | MININDEX/MAXINDEX/MINMAXINDEX, AROON/AROONOSC |
-| TC | **composed** — calls other indicators over intermediate arrays | sub-stream handles as state members | sum of parts | BBANDS, STOCH/STOCHF (T4a + MA slowing), STOCHRSI, APO/PPO, MACDEXT, MA (factory over the 9 MA streams), ACCBANDS, ADXR (ADX sub-stream **+ O(period) ring of past ADX outputs** — not T2), STDDEV-as-written (fusable into VAR), NATR (degenerate path) |
+| T4 | window extrema — value-output **and** index-observable alike | ring + cached-index automaton (transcribed verbatim) | O(1) while the cached extremum sits away from the trailing edge, **O(period)** while it sits on it — *not* amortized O(1), see #147 | MIN/MAX, MIDPOINT/MIDPRICE, WILLR, STOCH's raw range, MININDEX/MAXINDEX/MINMAXINDEX, AROON/AROONOSC |
+| TC | **composed** — calls other indicators over intermediate arrays | sub-stream handles as state members | sum of parts | BBANDS, STOCH/STOCHF (T4 + MA slowing), STOCHRSI, APO/PPO, MACDEXT, MA (factory over the 9 MA streams), ACCBANDS, ADXR (ADX sub-stream **+ O(period) ring of past ADX outputs** — not T2), STDDEV-as-written (fusable into VAR), NATR (degenerate path) |
 | PB | period bank (per-bar variable period) | (maxP-minP+1) MA sub-streams | sum of sub-streams | MAVP |
 
 Structural notes:
 
-- **T4a deque is legal only for value outputs.** Batch extrema use *different*
-  tie rules on their two paths (strict `<` on rescan, `<=` on the incoming
-  side), so the selected *index* is path-dependent and no single deque
-  discipline reproduces it (counterexample: MININDEX period=2 on `[3,3]`
-  diverges on the first output). For T4a ties are bit-identical input copies,
-  so values match regardless of which index wins. T4b functions output the
-  index (or compute from it — AROON), so their stream must transcribe the
-  batch cached-index automaton over a ring of the window: same memory as the
-  deque, amortized O(1).
+- **A monotonic deque was scoped for the value-output half and never built.**
+  Batch extrema use *different* tie rules on their two paths (strict `<` on
+  rescan, `<=` on the incoming side), so the selected *index* is path-dependent
+  and no single deque discipline reproduces it (counterexample: MININDEX
+  period=2 on `[3,3]` diverges on the first output). That rules a deque out
+  outright for the functions that output the index or compute from it (AROON).
+  It would have been legal for the value-output ones — their ties are
+  bit-identical input copies, so values match regardless of which index wins —
+  but T4 shipped as **one** mechanism: every extrema function transcribes the
+  batch cached-index automaton over a ring (Staging §3 below). So the stream
+  inherits batch's cost profile exactly, rescans and all, rather than the
+  deque's amortized O(1). Substituting a deque for the value-output subset is
+  the streaming half of #147 and is still open.
 - **T3 ring-order constraint (CCI class).** Some batch code sums its circular
   buffer *in buffer order*, so the FP summation order depends on the ring's
   rotation phase. The stream's ring phase must equal batch's — the safe rule
@@ -543,8 +546,8 @@ Structural notes:
      handle at open; composed tiers set a `peekMode` flag so the step calls
      sub-`Peek`), then a call to that *same* transition function. One body means there is no
      peek-specific logic to drift; `stream_verify` still asserts
-     peek == update. T4a substitutes the deque; T4b
-     transcribes the cached-index automaton over a ring; TC emits sub-stream
+     peek == update. T4 transcribes the cached-index
+     automaton over a ring; TC emits sub-stream
      calls in batch temp-buffer order.
    - Generation-time invariant checks: no global *writes* and no
      compatibility reads outside `open` (candle-settings reads in CDL\*
