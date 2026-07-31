@@ -359,6 +359,84 @@ jobs:
         shell: bash
         run: python3 scripts/build.py fuzz-064
 
+  # Native arm64 Linux — the ONE platform where both halves of issue #150 are live
+  # at once, and the only reason that issue reached a user instead of CI.
+  #
+  #  (1) Baseline FMA. aarch64 always has it, so any differential oracle built
+  #      without -ffp-contract=off fuses a*b+c inside the REFERENCE, and the suite
+  #      then measures a compiler difference rather than a code difference (549
+  #      false failures across 9 functions, reported on an M5 Max). On x86-64 the
+  #      flag is inert — no baseline FMA — which is why every job above is blind to
+  #      this class. macos-latest is arm64, but it runs only the plain C suite; no
+  #      FMA-baseline runner has ever executed an oracle suite.
+  #  (2) GCC. fuzz_data.h — the seeded INPUT generator both sides of --fuzz-064
+  #      compile — defends itself with `#pragma STDC FP_CONTRACT OFF`, which clang
+  #      honours and GCC ignores outright (GCC also contracts ACROSS statements, so
+  #      its second defence, splitting multiply from add, goes with it). Only GCC on
+  #      an FMA-baseline target can therefore make the two sides generate DIFFERENT
+  #      inputs from the same (shape, seed, n). The reporter could not test this
+  #      half: macOS /usr/bin/gcc is an Apple clang shim.
+  #
+  # Not gated on 'test': that job is x86-64 + Windows, so an unrelated dist failure
+  # there must never skip this platform's only coverage.
+  arm64-linux:
+    name: arm64 Linux (GCC, baseline FMA — oracle contraction gate)
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+          fetch-depth: 0 # both oracles build from pinned tags (v0.6.4, reference-pre-cutover)
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      # The arm64 images carry a smaller toolset than their x86-64 counterparts,
+      # so nothing here is assumed preinstalled the way ubuntu-latest allows.
+      - name: Install build tooling
+        shell: bash
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential cmake
+
+      - name: Install Rust
+        shell: bash
+        run: |
+          # rust-toolchain.toml pins the version; --default-toolchain none lets
+          # rustup honour the pin on first use instead of fetching stable twice.
+          if ! command -v cargo >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+              | sh -s -- -y --default-toolchain none
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+
+      # First execution of the C suite on arm64 Linux + real GCC anywhere in CI.
+      - name: Run the C regression suite
+        shell: bash
+        run: |
+          python3 scripts/build.py ta_regtest
+          cd bin && ./ta_regtest
+
+      # Half (1) and half (2): --fuzz-064 builds the frozen v0.6.4 oracle AND the
+      # 064 transport that compiles fuzz_data.h, so it exercises both the cmake
+      # sites and the raw-cc site in one run.
+      - name: Fuzz current library vs frozen v0.6.4
+        shell: bash
+        run: python3 scripts/build.py fuzz-064
+
+      # The ref differential sweep — the suite that silently truncated on arm64
+      # (131 variants/21 functions when it aborted, 613/74 once the oracle stopped
+      # fusing). --language=c,rust is also the invocation that was unreachable
+      # through the CLI until the prerequisite check became per-language, so this
+      # is its live regression test on a runner with no JDK and no .NET.
+      - name: Ref differential sweep (C + Rust)
+        shell: bash
+        run: python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen-only --language=c,rust
+
   # Cross-language BITWISE parity gate (issue #113): the generated language
   # servers must compute BIT-IDENTICAL outputs to the shipped in-process C library
   # (no tolerance — the seed/hex + hash design routes around the JSON-RPC
