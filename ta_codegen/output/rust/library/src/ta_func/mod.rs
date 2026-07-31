@@ -5,6 +5,10 @@
 mod types;
 pub use types::*;
 
+// Hand-written test-only modules (not generated; see templates/rust/).
+#[cfg(test)]
+mod scratch_election;
+
 // Generated indicator modules:
 mod accbands;
 mod acos;
