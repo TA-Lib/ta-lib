@@ -210,6 +210,53 @@ changes or benchmarks are invalid. `regtest.py` handles this automatically.
 Full-suite benchmark runs have 10–20% variance from icache pressure;
 use `--function=NAME --iters=500` for ground truth.
 
+### Benchmark input corpus
+
+Some indicators have input-dependent cost, so which series you measure on is
+part of the measurement. `src/tools/ta_bench/bench_corpus.h` holds the corpus —
+one deterministic generator, shared by `ta_bench`, `ta_bench_direct` and the
+generated `ta_bench_cg` / `ta_bench_stream`. Select a class with `--shape=`:
+
+```bash
+cd bin && ./ta_bench --list-shapes            # the input classes and what each reaches
+
+# random walk (default: the historical seed-42 series) and GBM — the acceptance gate
+./ta_bench --language=cref,c --function=WILLR --shape=randwalk --iters=500
+./ta_bench --language=cref,c --function=WILLR --shape=gbm      --iters=500
+
+# alternating trend/chop legs — the class rolling min/max degrades on
+for s in trend-chop-0.5p trend-chop-1p trend-chop-2p trend-chop-4p; do
+  ./ta_bench --language=cref,c --function=WILLR --shape=$s --period=30 --iters=500
+done
+```
+
+The rolling min/max behind MIN, MAX, MINMAX, MIDPOINT, MIDPRICE, WILLR, STOCH
+and STOCHF caches the window extremum and rescans the window when that extremum
+is the bar dropping out of it, so its cost depends on how often that happens. On
+a zero-drift walk the rate decays as ~1/sqrt(period); on a trending leg it is
+set by the drift/noise ratio instead and barely moves with the period, so the
+two separate further the longer the window (1.1x the rescan rate at period 14,
+3x at period 200). `randwalk` alone cannot see that — issue #147.
+
+The tail shapes are not peers: `constant` is the worst case at `2*(period-1)`
+comparisons per bar, exactly twice `mono-up`/`mono-down`. Flat input pins both
+extrema because the rescan compares with strict `>`/`<` and leaves the cached
+index on `trailingIdx`, so the `>=`/`<=` fast-path arms never run; a monotone
+ramp pins only one of the two.
+
+`--shape` is opt-in and `randwalk` reproduces the pre-corpus series bit for bit,
+so a default run costs and measures exactly what it did before. `--seed` picks
+the stream; `--regime-period` the window the trend/chop regime length is relative
+to (defaults to `--period` when given, else 14); `--trend-strength` the trend-leg
+drift in per-bar standard deviations (default 0.5 — sweep it to see how the cost
+responds to trend/noise). `--verify-corpus` checks every shape is reproducible
+and produces valid OHLC.
+
+The corpus is timing-only — it is never hashed and is unrelated to
+`fuzz_data.h`, whose `FUZZ_*` shape list is iterated by `--fuzz-064` /
+`--xlang-hash`. Keep it that way: adding a shape there changes what those gates
+compare (see the note at `test_variants.c:148`).
+
 ## Project Structure
 
 ```

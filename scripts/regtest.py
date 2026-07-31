@@ -22,6 +22,11 @@ Filters (applied to generate AND test):
 Perftest options:
   --points=5000              Data points (default 5000)
   --iters=20                 Iterations (default 20)
+  --shape=trend-chop-1p      Benchmark input class (default randwalk;
+                             ta_bench --list-shapes prints them)
+  --seed=42                  Corpus seed (default 42)
+  --regime-period=30         Reference window for the trend/chop regime length
+  --trend-strength=0.5       Trend-leg drift, in per-bar standard deviations
 
 Examples:
   scripts/regtest.py                                             # full pipeline
@@ -30,6 +35,8 @@ Examples:
                                                                  # regen SMA indicator + test
   scripts/regtest.py --no-regtest --language=c --function=STOCH  # build + perftest only
   scripts/regtest.py --test-only --no-regtest --function=STOCH   # just perftest, no build
+  scripts/regtest.py --test-only --no-regtest --function=WILLR --shape=trend-chop-1p
+                                                                 # perftest on trending input
 """
 
 import os
@@ -435,7 +442,11 @@ def main():
             direct_args = [a for a in passthrough
                            if a.startswith("--function=")
                            or a.startswith("--iters=")
-                           or a.startswith("--points=")]
+                           or a.startswith("--points=")
+                           or a.startswith("--shape=")
+                           or a.startswith("--seed=")
+                           or a.startswith("--regime-period=")
+                           or a.startswith("--trend-strength=")]
             direct_rc = subprocess.run(
                 [bench_direct] + direct_args, cwd=bin_dir,
             ).returncode
