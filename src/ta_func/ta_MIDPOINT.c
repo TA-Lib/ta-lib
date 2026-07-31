@@ -134,9 +134,20 @@ TA_LIB_API TA_RetCode TA_MIDPOINT( int    startIdx,
     * output to be the same buffer.
     *
     * The highest/lowest of the window is cached with its
-    * index; a rescan of the window is needed only when the
-    * cached extremum drops out of the window (amortized O(1)
-    * per bar instead of O(period)).
+    * index; the window is rescanned only when the cached
+    * extremum drops out of the window. That is O(1) per bar
+    * while the extremum sits away from the trailing edge, but
+    * it is not amortized O(1): an extremum on the oldest
+    * in-window bar drops out on the very next bar, so the
+    * rescan repeats and the cost stays O(period) per bar for
+    * as long as that persists.
+    *
+    * Tracking both extrema keeps that state going through a
+    * trend: while the high is refreshed by each new bar, the
+    * low stays pinned at the oldest bar for the whole leg
+    * (and the reverse on the way down). A flat stretch pins
+    * both. Random-walk input is the favourable case, where
+    * rescans are rare. See issue #147.
     */
    outIdx = 0;
    today = startIdx;
@@ -642,9 +653,20 @@ TA_RetCode TA_MIDPOINT_OpenInternal( struct TA_MIDPOINT_Stream **stream, const d
        * output to be the same buffer.
        *
        * The highest/lowest of the window is cached with its
-       * index; a rescan of the window is needed only when the
-       * cached extremum drops out of the window (amortized O(1)
-       * per bar instead of O(period)).
+       * index; the window is rescanned only when the cached
+       * extremum drops out of the window. That is O(1) per bar
+       * while the extremum sits away from the trailing edge, but
+       * it is not amortized O(1): an extremum on the oldest
+       * in-window bar drops out on the very next bar, so the
+       * rescan repeats and the cost stays O(period) per bar for
+       * as long as that persists.
+       *
+       * Tracking both extrema keeps that state going through a
+       * trend: while the high is refreshed by each new bar, the
+       * low stays pinned at the oldest bar for the whole leg
+       * (and the reverse on the way down). A flat stretch pins
+       * both. Random-walk input is the favourable case, where
+       * rescans are rare. See issue #147.
        */
       outIdx = 0;
       today = startIdx;
@@ -811,9 +833,20 @@ TA_LIB_API TA_RetCode TA_MIDPOINT_OpenAndFill( TA_MIDPOINT_Stream **stream, cons
        * output to be the same buffer.
        *
        * The highest/lowest of the window is cached with its
-       * index; a rescan of the window is needed only when the
-       * cached extremum drops out of the window (amortized O(1)
-       * per bar instead of O(period)).
+       * index; the window is rescanned only when the cached
+       * extremum drops out of the window. That is O(1) per bar
+       * while the extremum sits away from the trailing edge, but
+       * it is not amortized O(1): an extremum on the oldest
+       * in-window bar drops out on the very next bar, so the
+       * rescan repeats and the cost stays O(period) per bar for
+       * as long as that persists.
+       *
+       * Tracking both extrema keeps that state going through a
+       * trend: while the high is refreshed by each new bar, the
+       * low stays pinned at the oldest bar for the whole leg
+       * (and the reverse on the way down). A flat stretch pins
+       * both. Random-walk input is the favourable case, where
+       * rescans are rare. See issue #147.
        */
       outIdx = 0;
       today = startIdx;
