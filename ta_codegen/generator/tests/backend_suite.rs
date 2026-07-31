@@ -6965,3 +6965,138 @@ fn test_period_scaled_arithmetic_is_double_not_int32() {
         );
     }
 }
+
+// ---------------------------------------------------------------------------
+// Scratch-buffer election (issue #146)
+// ---------------------------------------------------------------------------
+
+/// The scratch election must reach the SMA fast path and *only* the SMA fast path:
+/// the calculation writes straight into the caller's slices, while the general MA
+/// path below it keeps its two genuine allocations.
+#[test]
+fn rust_bbands_elects_output_scratch_only_in_the_sma_fast_path() {
+    let (func, enums) = load_indicator("bbands");
+    let registry = make_registry();
+    let helpers = make_helpers();
+    let out = generate_all(&func, &enums);
+    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+
+    // No allocation-and-copy of an output slice survives anywhere.
+    assert!(
+        !rust_out.contains(".to_vec()"),
+        "BBANDS Rust should not copy an output slice into a scratch Vec: {rust_out}"
+    );
+    // The SMA and the standard deviation are written into the outputs by name.
+    assert!(
+        rust_out.contains("outRealMiddleBand[_outIdx] = maTotal /"),
+        "BBANDS Rust should write the SMA straight into outRealMiddleBand: {rust_out}"
+    );
+    assert!(
+        rust_out.contains("outRealUpperBand[_outIdx] = (variance).sqrt();"),
+        "BBANDS Rust should write the standard deviation into outRealUpperBand: {rust_out}"
+    );
+    assert!(
+        rust_out.contains("tempReal = outRealUpperBand[i] * optInNbDevUp;"),
+        "the band loop should read its deviation back out of outRealUpperBand: {rust_out}"
+    );
+    // The dead aliasing arms, the input-alias guard and the copy-back are gone.
+    assert!(
+        !rust_out.contains("inReal.as_ptr() == outRealUpperBand.as_ptr()"),
+        "BBANDS Rust should not test inReal against an output: {rust_out}"
+    );
+    assert!(
+        !rust_out.contains("tempBuffer1.as_ptr()"),
+        "BBANDS Rust should have no pointer tests left on tempBuffer1: {rust_out}"
+    );
+    // The general MA path's allocations are real and must survive — one pair in
+    // each of the guarded and unguarded batch variants, plus the stream tier's.
+    let allocs = rust_out.matches("tempBuffer1 = vec![0.0_f64;").count();
+    assert!(
+        allocs >= 2,
+        "the general MA path must keep its tempBuffer1 allocation in every variant \
+         (found {allocs}): {rust_out}"
+    );
+    assert_eq!(
+        allocs,
+        rust_out.matches("tempBuffer2 = vec![0.0_f64;").count(),
+        "tempBuffer1 and tempBuffer2 must be allocated in the same places: {rust_out}"
+    );
+    // Rust-only: the other backends assign the pointer/reference and keep C's
+    // election chain verbatim.
+    assert!(
+        out.c.contains("tempBuffer1 = outRealMiddleBand;"),
+        "the C backend must keep C's pointer election: {}",
+        out.c
+    );
+    assert!(
+        out.java.contains("tempBuffer1 = outRealMiddleBand;"),
+        "the Java backend must keep C's reference election: {}",
+        out.java
+    );
+}
+
+/// Being general is not the same as being greedy. The matcher requires *every* arm
+/// of the chain to be nothing but `scratch = someOutput;` elections, and that one
+/// clause is what declines `STOCH`, `STOCHF` and `MAVP`: each mixes an allocation
+/// and a `…IsAllocated = 1;` flag into a branch, so the branch is a genuine
+/// in-place defence with a real buffer to allocate rather than an election.
+/// `MAVP` is inverted as well — the allocation sits in the `then` and the election
+/// in the `else` — so it is rejected on the very first link.
+///
+/// Their generated Rust must come out byte-for-byte as it was. That non-firing is
+/// what lets the PR assert the other three backends were untouched, so it is
+/// pinned here rather than left to `git diff`.
+#[test]
+fn rust_scratch_election_declines_arms_that_allocate() {
+    let registry = make_registry();
+    let helpers = make_helpers();
+
+    for name in ["stoch", "stochf"] {
+        let (func, enums) = load_indicator(name);
+        let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        assert!(
+            rust_out.contains("tempBuffer = outSlowK.to_vec();")
+                || rust_out.contains("tempBuffer = outFastK.to_vec();"),
+            "{name}'s election arm must be untouched: {rust_out}"
+        );
+        assert!(
+            rust_out.contains("tempBuffer = vec![0.0_f64;"),
+            "{name} must keep the allocation on its other arm: {rust_out}"
+        );
+    }
+
+    // `MAVP` is the inverted case, and the one a looser matcher reaches first.
+    let (func, enums) = load_indicator("mavp");
+    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        rust_out.contains("localFinalArray = outReal.to_vec();"),
+        "MAVP's election must be left as it is: {rust_out}"
+    );
+    assert!(
+        rust_out.contains("localFinalArray = vec![0.0_f64;"),
+        "MAVP must keep the allocation in its `then` arm: {rust_out}"
+    );
+    assert!(
+        rust_out.contains("localFinalArray.as_ptr() != outReal.as_ptr()"),
+        "MAVP must keep its copy-back guard: {rust_out}"
+    );
+
+    // The pass must not have fired for a single function other than `BBANDS`. The
+    // election note is emitted exactly when an election is installed, so its
+    // absence across the whole `input/` tree is the non-firing proof — and it is
+    // proven over every indicator rather than a hand-picked list, so a widening of
+    // the rule cannot slip past by naming a function this test forgot.
+    const NOTE: &str = "C's pointer election here is a rename";
+    let mut fired = Vec::new();
+    for name in discover_indicators() {
+        let (func, enums) = load_indicator(&name);
+        if backends::rust_lang::generate(&func, &enums, &registry, &helpers).contains(NOTE) {
+            fired.push(name);
+        }
+    }
+    assert_eq!(
+        fired,
+        vec!["bbands".to_string()],
+        "the scratch election must fire for BBANDS and nothing else"
+    );
+}
