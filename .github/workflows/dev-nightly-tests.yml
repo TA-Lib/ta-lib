@@ -412,6 +412,26 @@ jobs:
         with:
           ref: dev
 
+      # Pull before running, with retries. Docker Hub times out on the runners often
+      # enough to fail a whole nightly on infrastructure rather than on the library:
+      # `docker run` exits 125 having built nothing, which reads exactly like a real
+      # musl regression until you open the log. Only the pull is retried — the build
+      # and the reference suite below are deterministic and must fail on the first try.
+      - name: Pull the musl image (retried; Docker Hub is flaky from Actions)
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if docker pull --quiet alpine:3.20; then
+              echo "pulled alpine:3.20 on attempt $attempt"
+              exit 0
+            fi
+            delay=$((attempt * 15))
+            echo "docker pull failed (attempt $attempt/5); retrying in ${delay}s"
+            sleep "$delay"
+          done
+          echo "::error::could not pull alpine:3.20 after 5 attempts — Docker Hub unreachable"
+          exit 1
+
       - name: Build under musl — must compile, emit no ifunc, and compute correctly
         shell: bash
         run: |
