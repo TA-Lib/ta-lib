@@ -76,9 +76,19 @@ TA_RetCode midprice(int startIdx, int endIdx,
     *   (~period 19-20 with gcc/clang -O3 on x86-64).
     *
     * - Larger periods: cache the highest high/lowest low with its
-    *   index; a rescan of the window is needed only when the cached
-    *   extremum drops out of the window (amortized O(1) per bar
-    *   instead of O(period)).
+    *   index; the window is rescanned only when the cached extremum
+    *   drops out of the window. That is O(1) per bar while the
+    *   extremum sits away from the trailing edge, but it is not
+    *   amortized O(1): an extremum on the oldest in-window bar drops
+    *   out on the very next bar, so the rescan repeats and the cost
+    *   stays O(period) per bar for as long as that persists.
+    *
+    *   Tracking both extrema keeps that state going through a trend:
+    *   while the highest high is refreshed by each new bar, the
+    *   lowest low stays pinned at the oldest bar for the whole leg
+    *   (and the reverse on the way down). A flat stretch pins both.
+    *   Random-walk input is the favourable case, where rescans are
+    *   rare. See issue #147.
     */
    outIdx = 0;
    today       = startIdx;
