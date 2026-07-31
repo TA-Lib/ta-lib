@@ -7100,3 +7100,69 @@ fn rust_scratch_election_declines_arms_that_allocate() {
         "the scratch election must fire for BBANDS and nothing else"
     );
 }
+
+/// C's scratch local is *function*-scoped: a pointer elected inside a nested
+/// block still points at that output after the block ends. The rename only
+/// reaches the end of the electing block, so it is equivalent only when nothing
+/// afterwards can observe the local. `BBANDS` satisfies that because its fast
+/// path `return`s; this fixture does not, and the election must be declined
+/// rather than leave a read of a `Vec` that is never assigned.
+#[test]
+fn rust_scratch_election_declines_an_election_that_escapes_its_block() {
+    let src = r#"
+int bbands_lookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType )
+{
+   return optInTimePeriod - 1;
+}
+
+TA_RetCode bbands( int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   double optInNbDevUp, double optInNbDevDn,
+   TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement,
+   double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   double *tempBuffer1;
+   double *tempBuffer2;
+   int i;
+
+   if( optInMAType == TA_MAType_SMA )
+   {
+      if( inReal == outRealUpperBand )
+      {
+         tempBuffer1 = outRealMiddleBand;
+         tempBuffer2 = outRealLowerBand;
+      }
+      else
+      {
+         tempBuffer1 = outRealMiddleBand;
+         tempBuffer2 = outRealUpperBand;
+      }
+      for( i=0; i < 10; i++ )
+      {
+         tempBuffer1[i] = inReal[i];
+         tempBuffer2[i] = inReal[i];
+      }
+   }
+
+   /* Control falls out of the electing block, and the local is read here. */
+   for( i=0; i < 10; i++ )
+   {
+      outRealLowerBand[i] = tempBuffer1[i];
+   }
+
+   *outBegIdx = startIdx;
+   *outNBElement = 10;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("bbands", src);
+    let rust = generate_all(&func, &enums).rust;
+    assert!(
+        rust.contains("tempBuffer1 = outRealMiddleBand.to_vec()"),
+        "an election whose local is still read after the electing block must fall \
+         back to the copy; renaming it would leave that read pointing at a Vec \
+         nothing ever assigns: {rust}"
+    );
+}
