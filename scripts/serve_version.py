@@ -26,6 +26,7 @@ Both problems are handled the SAME way for every version serve (this is the
 
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -48,7 +49,21 @@ def build_frozen_lib(ref_root, ref_build, label):
     either: deleting the archive re-archives the same stale objects without
     recompiling. cmake's own dependency tracking is the correct "build once"
     mechanism — a re-configure with changed flags invalidates every object, and
-    the no-op path costs ~0.2s."""
+    the no-op path costs ~0.2s.
+
+    That invalidation is mtime-based, though, so it is only reliable above the
+    filesystem's 1-second granularity: a flagless build finishing in the SAME
+    wall-clock second as the re-configure recompiles only SOME objects and still
+    exits 0, leaving a partially fused oracle that fails as a confusing subset of
+    #150's 549 rather than the whole set. Which objects fall inside that second is
+    what varies: 21 of 198 recompiled (412 fused instructions left) as reported,
+    0 of 198 (all 893 left) when reproduced here. So a flagless cache is discarded
+    outright rather than upgraded in place, which removes mtime from the picture
+    entirely — an upgrade always starts from a clean tree."""
+    if _stale_cache(ref_build):
+        print(f"  {label}: discarding a build tree configured without "
+              f"{FP_CONTRACT_FLAG}")
+        shutil.rmtree(ref_build)
     os.makedirs(ref_build, exist_ok=True)
     _run_quiet(["cmake", ref_root, "-DCMAKE_BUILD_TYPE=Release",
                 f"-DCMAKE_C_FLAGS={FP_CONTRACT_FLAG}"],
@@ -59,6 +74,22 @@ def build_frozen_lib(ref_root, ref_build, label):
     if "Building C object" in out:
         print(f"  {label}: rebuilt frozen libta-lib.a ({FP_CONTRACT_FLAG})")
     return os.path.join(ref_build, "libta-lib.a")
+
+
+def _stale_cache(ref_build):
+    """True iff ref_build holds a cmake cache that was NOT configured with
+    FP_CONTRACT_FLAG. A directory with no cache at all is not stale — there is
+    nothing to discard, and the configure below is already correct."""
+    cache = os.path.join(ref_build, "CMakeCache.txt")
+    if not os.path.exists(cache):
+        return False
+    with open(cache) as f:
+        for line in f:
+            # CMAKE_C_FLAGS_RELEASE et al. are distinct entries; the colon pins
+            # this to the one cmake actually applies to every C TU.
+            if line.startswith("CMAKE_C_FLAGS:"):
+                return FP_CONTRACT_FLAG not in line
+    return True
 
 
 def _run_quiet(cmd, cwd, what):
