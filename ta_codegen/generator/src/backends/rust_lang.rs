@@ -4228,7 +4228,7 @@ pub(crate) fn elect_output_scratch(func: &FuncDef) -> FuncDef {
         let mut locals = std::collections::HashSet::new();
         collect_array_locals(body, &mut locals);
         let pass = ScratchElection { inputs: &inputs, outputs: &outputs, locals: &locals };
-        *body = pass.block(body, &ElectionMap::new());
+        *body = pass.block(body, &ElectionMap::new(), &[]);
     }
     out
 }
@@ -4308,7 +4308,7 @@ fn visit_stmts(stmts: &[Statement], f: &mut impl FnMut(&Statement)) {
 
 impl ScratchElection<'_> {
     /// Rewrite one block. `elections` are the ones inherited from enclosing blocks.
-    fn block(&self, stmts: &[Statement], elections: &ElectionMap) -> Vec<Statement> {
+    fn block(&self, stmts: &[Statement], elections: &ElectionMap, outer: &[Statement]) -> Vec<Statement> {
         let mut elections = elections.clone();
         let mut queue: std::collections::VecDeque<Statement> = stmts.iter().cloned().collect();
         let mut out: Vec<Statement> = Vec::new();
@@ -4325,6 +4325,14 @@ impl ScratchElection<'_> {
                     !elections.contains_key(local)
                         && references_var(queue.iter(), local)
                         && !assigns_whole_var(queue.iter(), local)
+                        // C's scratch local is *function*-scoped: a pointer elected
+                        // inside a nested block still points at that output after the
+                        // block ends. The rename only reaches the end of this block, so
+                        // it is only equivalent when nothing after the block can observe
+                        // the local — either control never falls out of here, or the
+                        // enclosing scopes never mention it again.
+                        && (tail_always_returns(queue.iter())
+                            || !references_var(outer.iter(), local))
                 }) {
                     for (local, src) in &elected {
                         elections.insert(local.clone(), src.clone());
@@ -4355,7 +4363,9 @@ impl ScratchElection<'_> {
                     }
                 }
             }
-            out.push(self.descend(stmt, &elections));
+            let outer_for_children: Vec<Statement> =
+                queue.iter().cloned().chain(outer.iter().cloned()).collect();
+            out.push(self.descend(stmt, &elections, &outer_for_children));
         }
         out
     }
@@ -4502,8 +4512,8 @@ impl ScratchElection<'_> {
     /// well-typed, so the result compiles cleanly and only fails at run time, on
     /// the first index into a `Vec` that is still empty. The compiler must be the
     /// one to notice a new variant, not a fuzz run.
-    fn descend(&self, stmt: Statement, elections: &ElectionMap) -> Statement {
-        let go = |body: &[Statement]| self.block(body, elections);
+    fn descend(&self, stmt: Statement, elections: &ElectionMap, outer: &[Statement]) -> Statement {
+        let go = |body: &[Statement]| self.block(body, elections, outer);
         match stmt {
             Statement::While { condition, body } => Statement::While { condition, body: go(&body) },
             Statement::DoWhile { condition, body } => Statement::DoWhile { condition, body: go(&body) },
@@ -4544,6 +4554,17 @@ impl ScratchElection<'_> {
 /// (it can never hold an election of its own).
 fn descend_leaf(stmt: &Statement, elections: &ElectionMap) -> Statement {
     rename_shallow(stmt, elections).0
+}
+
+/// True if control can never fall out of the statements that remain in this block —
+/// the last executable one is a `return`. When it holds, nothing after the enclosing
+/// block can observe a local elected here, so the block-scoped rename is equivalent
+/// to C's function-scoped pointer.
+fn tail_always_returns<'a, I: Iterator<Item = &'a Statement>>(rest: I) -> bool {
+    matches!(
+        rest.filter(|s| !matches!(s, Statement::Comment(_))).last(),
+        Some(Statement::Return { .. })
+    )
 }
 
 /// True if `name` is still read or written somewhere in `rest`. An election with
