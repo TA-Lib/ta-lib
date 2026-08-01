@@ -227,6 +227,19 @@ in the shared body.
 The gate prints its coverage (functions, vectors, and how many compared actual
 output) and asserts it non-zero, so it cannot pass by silently doing nothing.
 
+## Transport
+
+`codegen_pipe_call` reads responses in 256KB chunks into a per-pipe buffer that
+persists across calls (a read can overrun the newline into the next response).
+It used to read one byte per `read()`; at ~2MB responses that was ~800k blocking
+syscalls per benchmarked function. The buffer is heap-allocated because these
+structs are `main()` locals, including a `CodegenPipe[SV_MAX_PIPES]` — inline it
+would not fit Windows' 1MB default stack.
+
+The paired server-side saving is the `no_output` request flag (see the root
+CLAUDE.md): callers that only want `timing_ns` suppress the output arrays. Every
+correctness path omits it and still gets the values.
+
 ## Buffer Sizes
 
 - `JSON_BUF_SIZE` = 64KB in current code

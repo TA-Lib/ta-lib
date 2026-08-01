@@ -1905,6 +1905,11 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
         s.push_str("        int pos = json_appendf(resp, resp_size, 0,\n");
         s.push_str("            \"{\\\"retCode\\\":%d,\\\"outBegIdx\\\":%d,\\\"outNBElement\\\":%d,\\\"timing_ns\\\":%ld\",\n");
         s.push_str("            (int)rc, outBegIdx, outNBElement, elapsed_ns);\n");
+        // no_output: ta_bench only reads timing_ns, but serialising a 100k-element
+        // array as %.15g costs more than the call being measured. Suppressing the
+        // arrays keeps retCode/outBegIdx/outNBElement so the caller can still tell
+        // a real result from an error.
+        s.push_str("        if( !json_find_int(json, \"no_output\") ) {\n");
         {
             let mut real_idx = 0usize;
             let mut int_idx = 0usize;
@@ -1926,6 +1931,7 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
                 }
             }
         }
+        s.push_str("        }\n");
         s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"timing_ns_unguarded\\\":%ld}\", elapsed_ns_ung);\n");
 
         s.push_str("    }\n");

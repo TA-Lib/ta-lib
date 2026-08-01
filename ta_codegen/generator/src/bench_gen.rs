@@ -303,12 +303,60 @@ fn stream_opt_args(func: &FuncDef) -> Vec<String> {
     args
 }
 
+/// Row printer + the tally behind the summary and `--min-ratio`.
+///
+/// `speedup = batch_last_ns / update_ns` is the number this binary exists to
+/// produce: streaming is only worth choosing over a batch recompute when it is
+/// above 1. Both halves are measured in one TU on one input, so unlike every
+/// other ratio in the tree it is not comparing two build configurations.
+const STREAM_ROW_HELPER: &str = r##"static double g_min_ratio = 0.0;   /* 0 = report only, no gate */
+static double g_worst_ratio = -1.0;
+static char   g_worst_name[64] = "";
+static int    g_rows = 0, g_slow = 0, g_below = 0, g_reject = 0;
+
+static void bench_stream_row(const char *name, double b, double u, double p,
+                             int lb, size_t hb)
+{
+    if( u <= 0.0 ) {   /* Open rejected the default params */
+        printf("%s %.3f -1 -1 %d 0 -1\n", name, b, lb);
+        g_reject++;
+        return;
+    }
+    double r = b / u;
+    printf("%s %.3f %.3f %.3f %d %zu %.3f\n", name, b, u, p, lb, hb, r);
+    g_rows++;
+    if( r < 1.0 ) g_slow++;
+    if( g_min_ratio > 0.0 && r < g_min_ratio ) g_below++;
+    if( g_worst_ratio < 0.0 || r < g_worst_ratio ) {
+        g_worst_ratio = r;
+        snprintf(g_worst_name, sizeof(g_worst_name), "%s", name);
+    }
+}
+
+/* Returns the process exit code: non-zero only when --min-ratio is set and
+   something came in under it, so this can gate a nightly. */
+static int bench_stream_summary(void)
+{
+    printf("# %d timed, %d rejected; %d slower than batch@last; worst %s %.2fx\n",
+           g_rows, g_reject, g_slow,
+           g_worst_name[0] ? g_worst_name : "-", g_worst_ratio);
+    if( g_min_ratio > 0.0 ) {
+        printf("# --min-ratio=%.2f: %d below -> %s\n",
+               g_min_ratio, g_below, g_below ? "FAIL" : "PASS");
+        return g_below ? 1 : 0;
+    }
+    return 0;
+}
+
+"##;
+
 #[allow(clippy::too_many_lines)]
 fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
     s.push_str("static volatile int g_sink = 0;\n\n");
     s.push_str("#define BENCH_MASK 4095\n\n");
+    s.push_str(STREAM_ROW_HELPER);
     s.push_str("static void bench_stream_all(const char *filter, int iters) {\n");
-    s.push_str("    printf(\"# func batch_last_ns update_ns peek_ns lookback handle_bytes\\n\");\n");
+    s.push_str("    printf(\"# func batch_last_ns update_ns peek_ns lookback handle_bytes speedup\\n\");\n");
     s.push_str("    fflush(stdout);\n");
 
     for func in funcs {
@@ -485,14 +533,14 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
         s.push_str("            g_sink += (int)acc + nb;\n");
         s.push_str(&format!("            {ta}_Close(st);\n"));
         s.push_str(&format!(
-            "            printf(\"{name} %.3f %.3f %.3f %d %zu\\n\", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);\n"
+            "            bench_stream_row(\"{name}\", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);\n"
         ));
         s.push_str("        } else {\n");
         s.push_str("            g_sink += (int)acc + nb;\n");
         s.push_str("            if( st ) { g_ta_track = 0; ");
         s.push_str(&format!("{ta}_Close(st); }}\n"));
         s.push_str(&format!(
-            "            printf(\"{name} %.3f -1 -1 %d 0\\n\", best_b/(double)iters, lb);\n"
+            "            bench_stream_row(\"{name}\", best_b/(double)iters, -1.0, -1.0, lb, 0);\n"
         ));
         s.push_str("        }\n");
         s.push_str("        fflush(stdout);\n");
@@ -616,6 +664,9 @@ int main(int argc, char *argv[]) {
         if( strncmp(argv[i], "--points=", 9) == 0 )    n_points = atoi(argv[i]+9);
         else if( strncmp(argv[i], "--iters=", 8) == 0 ) n_iters = atoi(argv[i]+8);
         else if( strncmp(argv[i], "--function=", 11) == 0 ) func_filter = argv[i]+11;
+        /* Gate: exit non-zero if any function streams slower than this multiple
+           of its batch@last cost. Stream-bench only, hence not in CORPUS_ARGS. */
+        else if( strncmp(argv[i], "--min-ratio=", 12) == 0 ) g_min_ratio = atof(argv[i]+12);
 __CORPUS_ARGS__    }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
     if( n_points < BENCH_MASK + 1 ) n_points = BENCH_MASK + 1; /* the bar feed indexes it & BENCH_MASK */
@@ -645,9 +696,10 @@ __CORPUS_ARGS__    }
         g_rt_periods[i]=g_periods[j];
     }
     bench_stream_all(func_filter, n_iters);
+    int rc = bench_stream_summary();
     free(g_rt_open); free(g_rt_high); free(g_rt_low); free(g_rt_close); free(g_rt_volume); free(g_rt_oi); free(g_rt_periods);
     free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi); free(g_periods);
-    return 0;
+    return rc;
 }
 "#;
 

@@ -17,6 +17,8 @@ ErrorNumber codegen_pipe_open(CodegenPipe *cp, const char *const argv[])
     cp->to_child_fd = -1;
     cp->from_child_fd = -1;
     cp->child_pid = -1;
+    cp->rbuf = NULL;
+    cp->rpos = cp->rlen = 0;
     return TA_CODEGEN_PIPE_OPEN_FAILED;
 }
 
@@ -37,6 +39,8 @@ void codegen_pipe_close(CodegenPipe *cp)
     cp->to_child_fd = -1;
     cp->from_child_fd = -1;
     cp->child_pid = -1;
+    cp->rbuf = NULL;
+    cp->rpos = cp->rlen = 0;
 }
 
 #else /* POSIX implementation */
@@ -55,6 +59,8 @@ ErrorNumber codegen_pipe_open(CodegenPipe *cp, const char *const argv[])
      * instead of killing the entire ta_regtest process. */
     signal(SIGPIPE, SIG_IGN);
 
+    cp->rbuf = NULL;    /* before any early return: close() frees this */
+    cp->rpos = cp->rlen = 0;
     cp->to_child_fd = -1;
     cp->from_child_fd = -1;
     cp->child_pid = -1;
@@ -119,6 +125,13 @@ ErrorNumber codegen_pipe_open(CodegenPipe *cp, const char *const argv[])
     cp->to_child_fd = parent_to_child[1];
     cp->from_child_fd = child_to_parent[0];
     cp->child_pid = (int)pid;
+    cp->rpos = cp->rlen = 0;
+    cp->rbuf = (char *)malloc(CODEGEN_PIPE_RBUF);
+    if( !cp->rbuf )
+    {
+        codegen_pipe_close(cp);
+        return TA_CODEGEN_PIPE_OPEN_FAILED;
+    }
 
     return TA_TEST_PASS;
 }
@@ -147,28 +160,57 @@ ErrorNumber codegen_pipe_call(CodegenPipe *cp,
             return TA_CODEGEN_PIPE_WRITE_FAILED;
     }
 
-    /* Read response line (one byte at a time until newline) */
+    /* Read the response line out of the chunk buffer, refilling as needed. */
     int idx = 0;
-    while( idx < response_size - 1 )
+    for( ;; )
     {
-        ssize_t n = read(cp->from_child_fd, &response[idx], 1);
-        if( n <= 0 )
-            return TA_CODEGEN_PIPE_READ_FAILED;
-        if( response[idx] == '\n' )
+        if( cp->rpos >= cp->rlen )
         {
-            response[idx] = '\0';
-            return TA_TEST_PASS;
+            ssize_t n = read(cp->from_child_fd, cp->rbuf, CODEGEN_PIPE_RBUF);
+            if( n <= 0 )
+                return TA_CODEGEN_PIPE_READ_FAILED;
+            cp->rlen = (int)n;
+            cp->rpos = 0;
         }
-        idx++;
-    }
 
-    /* Buffer full without seeing newline */
-    response[response_size - 1] = '\0';
-    return TA_TEST_PASS;
+        /* Consume up to the newline, or the whole chunk if there isn't one. */
+        {
+            char *chunk = cp->rbuf + cp->rpos;
+            int avail = cp->rlen - cp->rpos;
+            char *nl = (char *)memchr(chunk, '\n', (size_t)avail);
+            int take = nl ? (int)(nl - chunk) : avail;
+            int room = response_size - 1 - idx;
+            int copy = (take < room) ? take : room;
+
+            if( copy > 0 )
+            {
+                memcpy(response + idx, chunk, (size_t)copy);
+                idx += copy;
+            }
+            cp->rpos += take + (nl ? 1 : 0);
+
+            /* Overlong response: keep draining to the newline so the stream
+               stays aligned for the next call, but return what fits. */
+            if( nl || room <= take )
+            {
+                if( !nl )
+                {
+                    response[response_size - 1] = '\0';
+                    continue;
+                }
+                response[idx] = '\0';
+                return TA_TEST_PASS;
+            }
+        }
+    }
 }
 
 void codegen_pipe_close(CodegenPipe *cp)
 {
+    free(cp->rbuf);
+    cp->rbuf = NULL;
+    cp->rpos = cp->rlen = 0;
+
     if( cp->to_child_fd >= 0 )
     {
         close(cp->to_child_fd);

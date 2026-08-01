@@ -74,7 +74,11 @@ def ensure_configured(root_dir: str, build_dir: str, build_type: str, cmake_args
 
     if needs_configure:
         os.makedirs(build_dir, exist_ok=True)
-        cmd = ['cmake', root_dir, f'-DCMAKE_BUILD_TYPE={build_type}']
+        # This script is the TA-Lib developer entry point, so it opts into the
+        # benchmarks. A library consumer running cmake directly gets the default
+        # (OFF) and never compiles them.
+        cmd = ['cmake', root_dir, f'-DCMAKE_BUILD_TYPE={build_type}',
+               '-DBUILD_BENCHMARKS=ON']
         if cmake_args:
             cmd.extend(shlex.split(cmake_args))
         subprocess.run(cmd, check=True, cwd=build_dir)

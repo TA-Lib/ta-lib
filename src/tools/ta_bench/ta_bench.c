@@ -170,7 +170,10 @@ static int g_period_override = 0;
 static int build_bench_request(char *buf, int sz, const TA_FuncInfo *fi,
                                 int startIdx, int endIdx, int iters) {
     int pos = codegen_appendf(buf, sz, 0,
-        "{\"method\":\"TA_%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d,\"use_preloaded\":1,\"iters\":%d",
+        /* no_output: only timing_ns is read here, and serialising the output
+           arrays costs far more than the call being timed. */
+        "{\"method\":\"TA_%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d,"
+        "\"use_preloaded\":1,\"no_output\":1,\"iters\":%d",
         fi->name, startIdx, endIdx, iters);
 
     /* Add optional params with default values */
@@ -197,14 +200,14 @@ static int build_bench_request(char *buf, int sz, const TA_FuncInfo *fi,
 /* Run SMA on the C-ref server as a thermal probe.
  * Returns the timing in ns, or 0 on error. */
 static long long g_canary_baseline = 0;
-static const char *CANARY_REQ =
-    "{\"method\":\"TA_SMA\",\"params\":{\"startIdx\":0,\"endIdx\":99999,"
-    "\"use_preloaded\":1,\"iters\":50,\"optInTimePeriod\":30}}";
+/* endIdx is filled from the run's --points: the literal 99999 silently probed a
+ * different workload than the one being measured (and read past a smaller run). */
+static char g_canary_req[256];
 
 static long long run_canary(char *respBuf, int respSz) {
     /* Find the C-ref server (index 0) */
     if( !LANGUAGES[0].active ) return 0;
-    if( codegen_pipe_call(&LANGUAGES[0].cp, CANARY_REQ, respBuf, respSz) != TA_TEST_PASS )
+    if( codegen_pipe_call(&LANGUAGES[0].cp, g_canary_req, respBuf, respSz) != TA_TEST_PASS )
         return 0;
     int len;
     const char *t = json_find_field(respBuf, "timing_ns", &len);
@@ -398,6 +401,11 @@ int main(int argc, char *argv[]) {
 
     TA_Initialize();
     generate_price_data(n_points, &corpus);
+
+    snprintf(g_canary_req, sizeof(g_canary_req),
+             "{\"method\":\"TA_SMA\",\"params\":{\"startIdx\":0,\"endIdx\":%d,"
+             "\"use_preloaded\":1,\"no_output\":1,\"iters\":50,"
+             "\"optInTimePeriod\":30}}", n_points - 1);
 
     printf("ta_bench: %d points, %d iters, shape=%s seed=%d regime-period=%d"
            " trend-strength=%.2f (server-side)\n\n",

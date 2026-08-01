@@ -15857,12 +15857,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal2\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf2, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_ACOS", 7) == 0 ) {
@@ -15928,8 +15930,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 5 && strncmp(method, "TA_AD", 5) == 0 ) {
@@ -16013,8 +16017,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_ADD", 6) == 0 ) {
@@ -16086,8 +16092,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_ADOSC", 8) == 0 ) {
@@ -16181,8 +16189,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_ADX", 6) == 0 ) {
@@ -16266,8 +16276,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_ADXR", 7) == 0 ) {
@@ -16350,8 +16362,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_APO", 6) == 0 ) {
@@ -16432,8 +16446,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_AROON", 8) == 0 ) {
@@ -16511,10 +16527,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_AROONOSC", 11) == 0 ) {
@@ -16591,8 +16609,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_ASIN", 7) == 0 ) {
@@ -16658,8 +16678,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_ATAN", 7) == 0 ) {
@@ -16725,8 +16747,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_ATR", 6) == 0 ) {
@@ -16810,8 +16834,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_AVGDEV", 9) == 0 ) {
@@ -16882,8 +16908,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_AVGPRICE", 11) == 0 ) {
@@ -16967,8 +16995,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_BBANDS", 9) == 0 ) {
@@ -17056,12 +17086,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal2\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf2, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_BETA", 7) == 0 ) {
@@ -17138,8 +17170,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_BOP", 6) == 0 ) {
@@ -17223,8 +17257,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_CCI", 6) == 0 ) {
@@ -17307,8 +17343,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_CDL2CROWS", 12) == 0 ) {
@@ -17392,8 +17430,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDL3BLACKCROWS", 17) == 0 ) {
@@ -17477,8 +17517,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 13 && strncmp(method, "TA_CDL3INSIDE", 13) == 0 ) {
@@ -17562,8 +17604,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDL3LINESTRIKE", 17) == 0 ) {
@@ -17647,8 +17691,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDL3OUTSIDE", 14) == 0 ) {
@@ -17732,8 +17778,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 19 && strncmp(method, "TA_CDL3STARSINSOUTH", 19) == 0 ) {
@@ -17817,8 +17865,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_CDL3WHITESOLDIERS", 20) == 0 ) {
@@ -17902,8 +17952,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 19 && strncmp(method, "TA_CDLABANDONEDBABY", 19) == 0 ) {
@@ -17992,8 +18044,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_CDLADVANCEBLOCK", 18) == 0 ) {
@@ -18077,8 +18131,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDLBELTHOLD", 14) == 0 ) {
@@ -18162,8 +18218,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_CDLBREAKAWAY", 15) == 0 ) {
@@ -18247,8 +18305,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLCLOSINGMARUBOZU", 21) == 0 ) {
@@ -18332,8 +18392,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 22 && strncmp(method, "TA_CDLCONCEALBABYSWALL", 22) == 0 ) {
@@ -18417,8 +18479,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 19 && strncmp(method, "TA_CDLCOUNTERATTACK", 19) == 0 ) {
@@ -18502,8 +18566,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_CDLDARKCLOUDCOVER", 20) == 0 ) {
@@ -18592,8 +18658,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_CDLDOJI", 10) == 0 ) {
@@ -18677,8 +18745,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDLDOJISTAR", 14) == 0 ) {
@@ -18762,8 +18832,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 19 && strncmp(method, "TA_CDLDRAGONFLYDOJI", 19) == 0 ) {
@@ -18847,8 +18919,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_CDLENGULFING", 15) == 0 ) {
@@ -18932,8 +19006,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLEVENINGDOJISTAR", 21) == 0 ) {
@@ -19022,8 +19098,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDLEVENINGSTAR", 17) == 0 ) {
@@ -19112,8 +19190,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 22 && strncmp(method, "TA_CDLGAPSIDESIDEWHITE", 22) == 0 ) {
@@ -19197,8 +19277,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_CDLGRAVESTONEDOJI", 20) == 0 ) {
@@ -19282,8 +19364,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_CDLHAMMER", 12) == 0 ) {
@@ -19367,8 +19451,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 16 && strncmp(method, "TA_CDLHANGINGMAN", 16) == 0 ) {
@@ -19452,8 +19538,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_CDLHARAMI", 12) == 0 ) {
@@ -19537,8 +19625,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDLHARAMICROSS", 17) == 0 ) {
@@ -19622,8 +19712,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDLHIGHWAVE", 14) == 0 ) {
@@ -19707,8 +19799,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 13 && strncmp(method, "TA_CDLHIKKAKE", 13) == 0 ) {
@@ -19792,8 +19886,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 16 && strncmp(method, "TA_CDLHIKKAKEMOD", 16) == 0 ) {
@@ -19877,8 +19973,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_CDLHOMINGPIGEON", 18) == 0 ) {
@@ -19962,8 +20060,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLIDENTICAL3CROWS", 21) == 0 ) {
@@ -20047,8 +20147,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_CDLINNECK", 12) == 0 ) {
@@ -20132,8 +20234,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_CDLINVERTEDHAMMER", 20) == 0 ) {
@@ -20217,8 +20321,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 13 && strncmp(method, "TA_CDLKICKING", 13) == 0 ) {
@@ -20302,8 +20408,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLKICKINGBYLENGTH", 21) == 0 ) {
@@ -20387,8 +20495,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_CDLLADDERBOTTOM", 18) == 0 ) {
@@ -20472,8 +20582,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_CDLLONGLEGGEDDOJI", 20) == 0 ) {
@@ -20557,8 +20669,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDLLONGLINE", 14) == 0 ) {
@@ -20642,8 +20756,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDLMARUBOZU", 14) == 0 ) {
@@ -20727,8 +20843,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDLMATCHINGLOW", 17) == 0 ) {
@@ -20812,8 +20930,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 13 && strncmp(method, "TA_CDLMATHOLD", 13) == 0 ) {
@@ -20902,8 +21022,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLMORNINGDOJISTAR", 21) == 0 ) {
@@ -20992,8 +21114,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDLMORNINGSTAR", 17) == 0 ) {
@@ -21082,8 +21206,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_CDLONNECK", 12) == 0 ) {
@@ -21167,8 +21293,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_CDLPIERCING", 14) == 0 ) {
@@ -21252,8 +21380,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDLRICKSHAWMAN", 17) == 0 ) {
@@ -21337,8 +21467,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 22 && strncmp(method, "TA_CDLRISEFALL3METHODS", 22) == 0 ) {
@@ -21422,8 +21554,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLSEPARATINGLINES", 21) == 0 ) {
@@ -21507,8 +21641,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_CDLSHOOTINGSTAR", 18) == 0 ) {
@@ -21592,8 +21728,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_CDLSHORTLINE", 15) == 0 ) {
@@ -21677,8 +21815,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 17 && strncmp(method, "TA_CDLSPINNINGTOP", 17) == 0 ) {
@@ -21762,8 +21902,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_CDLSTALLEDPATTERN", 20) == 0 ) {
@@ -21847,8 +21989,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 19 && strncmp(method, "TA_CDLSTICKSANDWICH", 19) == 0 ) {
@@ -21932,8 +22076,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_CDLTAKURI", 12) == 0 ) {
@@ -22017,8 +22163,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_CDLTASUKIGAP", 15) == 0 ) {
@@ -22102,8 +22250,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_CDLTHRUSTING", 15) == 0 ) {
@@ -22187,8 +22337,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 13 && strncmp(method, "TA_CDLTRISTAR", 13) == 0 ) {
@@ -22272,8 +22424,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_CDLUNIQUE3RIVER", 18) == 0 ) {
@@ -22357,8 +22511,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 21 && strncmp(method, "TA_CDLUPSIDEGAP2CROWS", 21) == 0 ) {
@@ -22442,8 +22598,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 22 && strncmp(method, "TA_CDLXSIDEGAP3METHODS", 22) == 0 ) {
@@ -22527,8 +22685,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_CEIL", 7) == 0 ) {
@@ -22594,8 +22754,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_CMF", 6) == 0 ) {
@@ -22684,8 +22846,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_CMO", 6) == 0 ) {
@@ -22757,8 +22921,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_CMOU", 7) == 0 ) {
@@ -22829,8 +22995,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_CORREL", 9) == 0 ) {
@@ -22907,8 +23075,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_COS", 6) == 0 ) {
@@ -22974,8 +23144,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_COSH", 7) == 0 ) {
@@ -23041,8 +23213,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_DEMA", 7) == 0 ) {
@@ -23113,8 +23287,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_DIV", 6) == 0 ) {
@@ -23186,8 +23362,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 5 && strncmp(method, "TA_DX", 5) == 0 ) {
@@ -23271,8 +23449,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_EMA", 6) == 0 ) {
@@ -23344,8 +23524,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_EXP", 6) == 0 ) {
@@ -23411,8 +23593,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_FLOOR", 8) == 0 ) {
@@ -23478,8 +23662,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_HMA", 6) == 0 ) {
@@ -23550,8 +23736,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_HT_DCPERIOD", 14) == 0 ) {
@@ -23618,8 +23806,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 13 && strncmp(method, "TA_HT_DCPHASE", 13) == 0 ) {
@@ -23686,8 +23876,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_HT_PHASOR", 12) == 0 ) {
@@ -23755,10 +23947,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_HT_SINE", 10) == 0 ) {
@@ -23826,10 +24020,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_HT_TRENDLINE", 15) == 0 ) {
@@ -23896,8 +24092,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 15 && strncmp(method, "TA_HT_TRENDMODE", 15) == 0 ) {
@@ -23964,8 +24162,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_IMI", 6) == 0 ) {
@@ -24042,8 +24242,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_KAMA", 7) == 0 ) {
@@ -24115,8 +24317,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 12 && strncmp(method, "TA_LINEARREG", 12) == 0 ) {
@@ -24187,8 +24391,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_LINEARREG_ANGLE", 18) == 0 ) {
@@ -24259,8 +24465,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 22 && strncmp(method, "TA_LINEARREG_INTERCEPT", 22) == 0 ) {
@@ -24331,8 +24539,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 18 && strncmp(method, "TA_LINEARREG_SLOPE", 18) == 0 ) {
@@ -24403,8 +24613,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 5 && strncmp(method, "TA_LN", 5) == 0 ) {
@@ -24470,8 +24682,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_LOG10", 8) == 0 ) {
@@ -24537,8 +24751,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 5 && strncmp(method, "TA_MA", 5) == 0 ) {
@@ -24614,8 +24830,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_MACD", 7) == 0 ) {
@@ -24698,12 +24916,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal2\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf2, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_MACDEXT", 10) == 0 ) {
@@ -24801,12 +25021,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal2\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf2, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_MACDFIX", 10) == 0 ) {
@@ -24879,12 +25101,14 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal2\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf2, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_MAMA", 7) == 0 ) {
@@ -24962,10 +25186,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_MAVP", 7) == 0 ) {
@@ -25052,8 +25278,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_MAX", 6) == 0 ) {
@@ -25124,8 +25352,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MAXINDEX", 11) == 0 ) {
@@ -25196,8 +25426,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MEDPRICE", 11) == 0 ) {
@@ -25269,8 +25501,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_MFI", 6) == 0 ) {
@@ -25359,8 +25593,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MIDPOINT", 11) == 0 ) {
@@ -25431,8 +25667,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MIDPRICE", 11) == 0 ) {
@@ -25509,8 +25747,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_MIN", 6) == 0 ) {
@@ -25581,8 +25821,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MININDEX", 11) == 0 ) {
@@ -25653,8 +25895,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_MINMAX", 9) == 0 ) {
@@ -25726,10 +25970,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 14 && strncmp(method, "TA_MINMAXINDEX", 14) == 0 ) {
@@ -25801,10 +26047,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger1\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf1, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MINUS_DI", 11) == 0 ) {
@@ -25888,8 +26136,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_MINUS_DM", 11) == 0 ) {
@@ -25967,8 +26217,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_MOM", 6) == 0 ) {
@@ -26039,8 +26291,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_MULT", 7) == 0 ) {
@@ -26112,8 +26366,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_NATR", 7) == 0 ) {
@@ -26197,8 +26453,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_NVI", 6) == 0 ) {
@@ -26270,8 +26528,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_OBV", 6) == 0 ) {
@@ -26343,8 +26603,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_PLUS_DI", 10) == 0 ) {
@@ -26428,8 +26690,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_PLUS_DM", 10) == 0 ) {
@@ -26507,8 +26771,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_PPO", 6) == 0 ) {
@@ -26589,8 +26855,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_PVI", 6) == 0 ) {
@@ -26662,8 +26930,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_PVO", 6) == 0 ) {
@@ -26744,8 +27014,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_ROC", 6) == 0 ) {
@@ -26816,8 +27088,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_ROCP", 7) == 0 ) {
@@ -26888,8 +27162,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_ROCR", 7) == 0 ) {
@@ -26960,8 +27236,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 10 && strncmp(method, "TA_ROCR100", 10) == 0 ) {
@@ -27032,8 +27310,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_RSI", 6) == 0 ) {
@@ -27105,8 +27385,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_SAR", 6) == 0 ) {
@@ -27188,8 +27470,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_SAREXT", 9) == 0 ) {
@@ -27301,8 +27585,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_SIN", 6) == 0 ) {
@@ -27368,8 +27654,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_SINH", 7) == 0 ) {
@@ -27435,8 +27723,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_SMA", 6) == 0 ) {
@@ -27507,8 +27797,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_SQRT", 7) == 0 ) {
@@ -27574,8 +27866,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_STDDEV", 9) == 0 ) {
@@ -27651,8 +27945,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_STOCH", 8) == 0 ) {
@@ -27756,10 +28052,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_STOCHF", 9) == 0 ) {
@@ -27853,10 +28151,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_STOCHRSI", 11) == 0 ) {
@@ -27943,10 +28243,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_SUB", 6) == 0 ) {
@@ -28018,8 +28320,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_SUM", 6) == 0 ) {
@@ -28090,8 +28394,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 5 && strncmp(method, "TA_T3", 5) == 0 ) {
@@ -28168,8 +28474,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_TAN", 6) == 0 ) {
@@ -28235,8 +28543,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_TANH", 7) == 0 ) {
@@ -28302,8 +28612,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_TEMA", 7) == 0 ) {
@@ -28374,8 +28686,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_TRANGE", 9) == 0 ) {
@@ -28453,8 +28767,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_TRIMA", 8) == 0 ) {
@@ -28525,8 +28841,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_TRIX", 7) == 0 ) {
@@ -28597,8 +28915,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_TSF", 6) == 0 ) {
@@ -28669,8 +28989,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_TYPPRICE", 11) == 0 ) {
@@ -28748,8 +29070,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 9 && strncmp(method, "TA_ULTOSC", 9) == 0 ) {
@@ -28842,8 +29166,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_VAR", 6) == 0 ) {
@@ -28919,8 +29245,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 7 && strncmp(method, "TA_VWMA", 7) == 0 ) {
@@ -28997,8 +29325,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 11 && strncmp(method, "TA_WCLPRICE", 11) == 0 ) {
@@ -29076,8 +29406,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 8 && strncmp(method, "TA_WILLR", 8) == 0 ) {
@@ -29160,8 +29492,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 6 && strncmp(method, "TA_WMA", 6) == 0 ) {
@@ -29232,8 +29566,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int pos = json_appendf(resp, resp_size, 0,
             "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
             (int)rc, outBegIdx, outNBElement, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
         pos = json_appendf(resp, resp_size, pos, ",\"timing_ns_unguarded\":%ld}", elapsed_ns_ung);
     }
     else if ( methodLen == 20 && strncmp(method, "TA_ACCBANDS_Lookback", 20) == 0 ) {

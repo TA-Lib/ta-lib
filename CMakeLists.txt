@@ -14,8 +14,13 @@ set(PROJECT_VERSION "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VE
 set(CMAKE_C_STANDARD 11)
 
 # Option to build development tools (enabled by default)
-option(BUILD_DEV_TOOLS "Build development tools (ta_regtest, ta_bench)" ON)
+option(BUILD_DEV_TOOLS "Build ta_regtest (verifies the library on a given setup; packagers run it)" ON)
 message(STATUS "BUILD_DEV_TOOLS: ${BUILD_DEV_TOOLS}")
+# Separate from BUILD_DEV_TOOLS on purpose. ta_regtest has a user-facing job, so
+# it is ON; the benchmarks are for people working ON TA-Lib and nobody else, so
+# they are OFF and a plain `cmake ..` from a clone does not compile them.
+option(BUILD_BENCHMARKS "Build ta_bench/ta_bench_direct (TA-Lib developers only)" OFF)
+message(STATUS "BUILD_BENCHMARKS: ${BUILD_BENCHMARKS}")
 
 # Optional AddressSanitizer + UndefinedBehaviorSanitizer instrumentation (issue
 # #94). Builds the library and the C tools so that out-of-bounds / uninitialized
@@ -524,7 +529,7 @@ endif()
 set(_TA_BUILD_TOOLS ${BUILD_DEV_TOOLS})
 if(BUILD_DEV_TOOLS AND WIN32 AND NOT BUILD_STATIC_LIBS)
 	message(WARNING "BUILD_DEV_TOOLS is ON but the dev tools require the static library "
-		"on Windows (BUILD_STATIC_LIBS=OFF); skipping ta_regtest/ta_bench. "
+		"on Windows (BUILD_STATIC_LIBS=OFF); skipping ta_regtest and the benchmarks. "
 		"Set BUILD_STATIC_LIBS=ON to build them.")
 	set(_TA_BUILD_TOOLS OFF)
 endif()
@@ -610,6 +615,12 @@ if(_TA_BUILD_TOOLS)
 	############
 	# ta_bench #
 	############
+	# Opt-in, unlike ta_regtest: the benchmarks answer questions only TA-Lib's
+	# own developers ask, so a library consumer building from a git clone should
+	# not compile them. They are also absent from the released source tarball
+	# (autotools never descends into src/tools/ta_bench), so this keeps the two
+	# build systems agreeing on what a non-developer gets.
+	if(BUILD_BENCHMARKS)
 	add_executable(ta_bench
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_bench/ta_bench.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/codegen_pipe.c"
@@ -655,7 +666,32 @@ if(_TA_BUILD_TOOLS)
 		target_compile_options(ta_bench_direct PRIVATE -O3)
 	endif()
 
+	# Stage the benches into bin/, which is where the docs and the perf skill
+	# invoke them, and where ta_bench_direct must find ./ta_bench_cg (cargo puts
+	# the two generated benches there).
+	#
+	# ALL, but scoped inside BUILD_BENCHMARKS, so it exists only for developers
+	# who opted in — a consumer build never defines it. POST_BUILD would be
+	# wrong here: it runs only when the target relinks, so an up-to-date
+	# ta_bench would leave bin/ holding an older copy indefinitely, which is the
+	# staleness this exists to prevent.
+	add_custom_target(stage_benchmarks ALL
+		COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		"$<TARGET_FILE:ta_bench>"
+		"${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:ta_bench>"
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		"$<TARGET_FILE:ta_bench_direct>"
+		"${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:ta_bench_direct>"
+		DEPENDS ta_bench ta_bench_direct
+	)
+	endif() # BUILD_BENCHMARKS
+
 	# Add a custom target to ensure ta_regtest is copied to ta-lib/bin directory
+	# ta_regtest is a USER-facing tool — downstream packagers (brew) run it to
+	# verify the library behaves on their setup — so it is an ALL target and is
+	# always present in bin/. The benchmarks are developer-only and get no such
+	# treatment; they only refresh bin/ as a side effect of being built (below).
 	add_custom_target(ensure_ta_regtest_in_bin ALL
 		COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/bin"
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -663,6 +699,7 @@ if(_TA_BUILD_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:ta_regtest>"
 		DEPENDS ta_regtest
 	)
+
 endif()
 
 # --- Convenience test targets (run the C ta_regtest binary) ---

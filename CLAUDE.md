@@ -210,6 +210,37 @@ changes or benchmarks are invalid. `regtest.py` handles this automatically.
 Full-suite benchmark runs have 10–20% variance from icache pressure;
 use `--function=NAME --iters=500` for ground truth.
 
+`ta_bench` sends `no_output:1`, so servers return timings without serialising
+the output arrays — it only ever reads `timing_ns`. Without it a 100k-point run
+spends ~97% of its wall clock formatting and parsing JSON nobody looks at.
+Anything that needs the values (`--codegen`, `--xlang-hash`, `server_verify`)
+simply omits the flag. `cref` is a frozen binary and predates it, so runs
+including `cref` stay slower than C-only ones.
+
+### Streaming vs batch
+
+`ta_bench_stream` answers the question streaming has to justify itself on: is
+`TA_S_<N>_Update` actually cheaper than recomputing the last bar with the batch
+call? Its `speedup` column is `batch_last_ns / update_ns` — above 1 means
+streaming wins. Both halves are measured in one TU, one input, one layout, so
+unlike `ta_bench_direct`'s ratio it is not comparing two build configurations.
+
+```bash
+cd bin && ./ta_bench_stream --points=20000 --iters=50
+./ta_bench_stream --points=20000 --iters=50 --min-ratio=0.35   # exits 1 if any func is below
+```
+
+Current shape (168 functions): median ~1.6x, but **~25 stream slower than
+batch** and another ~50 sit under 1.5x. Recursive/multi-stage state wins big
+(`HT_TRENDLINE` ~24x, `TRIX`/`TEMA` ~16x); window-recomputers and stateless
+patterns lose (`AVGDEV`, `MAVP`, `MIDPRICE`, `WILLR`, CDL*) because the handle
+buys nothing and costs indirection. Those losers overlap the rolling-extremum
+family — see the corpus note below.
+
+`--min-ratio` is a cliff detector, not a quality bar: run to run the worst ratio
+moves 0.42–0.50 and the worst function's *name* changes, so a threshold near 1.0
+just flaps. 0.35 has headroom while still failing on a real regression.
+
 ### Benchmark input corpus
 
 Some indicators have input-dependent cost, so which series you measure on is
