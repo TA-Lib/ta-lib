@@ -283,6 +283,26 @@ def main():
                 return "--function=" + a.split("=", 1)[1]
         return a
     passthrough = [normalize_flag(a) for a in argv if a not in OUR_FLAGS]
+
+    # Reject unknown argv up front. The downstream steps filter `passthrough`
+    # by allowlist before handing it to ta_regtest / ta_bench / ta_bench_direct,
+    # because those binaries reject argv they do not recognise. Filtering alone
+    # would turn a typo into a SILENT default -- `--shpae=constant` would exit 0
+    # having benchmarked randwalk -- which is exactly the failure mode the
+    # binaries were made strict to prevent. So validate here, once, loudly.
+    KNOWN_PASSTHROUGH = (
+        "--function=", "--language=", "--points=", "--iters=", "--period=",
+        "--shape=", "--seed=", "--regime-period=", "--trend-strength=",
+        "--codegen", "--codegen=", "--codegen-only",
+        "--fuzz-064", "--xlang-hash", "--no-guarded", "--no-unguarded",
+    )
+    unknown = [a for a in passthrough
+               if a != "-p" and not a.startswith(KNOWN_PASSTHROUGH)]
+    if unknown:
+        print("regtest.py: unknown option(s): " + " ".join(unknown))
+        print(__doc__)
+        sys.exit(2)
+
     func_filter = get_filter(passthrough, "--function")
     lang_filter = get_filter(passthrough, "--language")
 
@@ -392,7 +412,17 @@ def main():
         print("\n" + "=" * 60)
         print("REGTEST — cross-language codegen verification")
         print("=" * 60)
-        codegen_args = list(passthrough)
+        # Allowlist, not passthrough: ta_regtest exits with BAD_USER_PARAM on any
+        # argv it does not know (ta_regtest.c, the trailing else of the option
+        # chain). Forwarding the perftest/bench-only flags — --points=, --iters=
+        # and the corpus selectors — aborted step 5b before the bench in step 6/7
+        # ever ran. An allowlist keeps a future bench flag from breaking it again.
+        REGTEST_FLAGS = ("--function=", "--language=", "--codegen", "--codegen=",
+                         "--codegen-only", "--fuzz-064", "--xlang-hash",
+                         "--no-guarded", "--no-unguarded", "-p")
+        codegen_args = [a for a in passthrough
+                        if a == "-p" or a.startswith(tuple(
+                            f for f in REGTEST_FLAGS if f != "-p"))]
         if not any(a.startswith("--codegen") for a in codegen_args):
             codegen_args = ["--codegen-only"] + codegen_args
         rc = subprocess.run(
@@ -408,8 +438,14 @@ def main():
         print("\n" + "=" * 60)
         print("PERFTEST — performance (large dataset, averaged)")
         print("=" * 60, flush=True)
+        # Allowlist for the same reason as step 5b: ta_bench now rejects unknown
+        # argv instead of ignoring it, so regtest-only flags (--codegen-only,
+        # --xlang-hash, ...) must not reach it.
+        BENCH_FLAGS = ("--points=", "--iters=", "--language=", "--function=",
+                       "--period=", "--shape=", "--seed=", "--regime-period=",
+                       "--trend-strength=")
         # Always include cref for comparison, even when --language= filters
-        bench_args = list(passthrough)
+        bench_args = [a for a in passthrough if a.startswith(BENCH_FLAGS)]
         if lang_filter and "cref" not in lang_filter:
             for i, a in enumerate(bench_args):
                 if a.startswith("--language="):

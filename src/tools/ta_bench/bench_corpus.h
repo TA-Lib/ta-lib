@@ -15,6 +15,16 @@
  * timed, so no cross-toolchain bit-identity is required and the
  * -ffp-contract=off constraint of fuzz_data.h (#150) does not apply here.
  *
+ * There is a WEAKER property one caller does depend on, though. ta_bench_direct
+ * prints a ratio between its own in-process run (CMake, -O3, no LTO) and a
+ * ta_bench_cg subprocess (gcc -O3 -flto, single TU) — two independently
+ * compiled copies of this header. That ratio is only meaningful if both halves
+ * generate the SAME workload, so keep the generators here free of anything a
+ * build flag can reorder: no reassociable reductions, no fast-math-sensitive
+ * idioms. The current shapes satisfy this; the walk family is immune outright
+ * (its scale factors are exact powers of two), and the rest are strict
+ * sequential recurrences.
+ *
  * WHY MORE THAN ONE SHAPE — the rolling min/max shared by MIN, MAX, MINMAX,
  * MIDPOINT, MIDPRICE, WILLR, STOCH and STOCHF caches the window extremum with
  * its index and rescans the whole window whenever that extremum falls out of
@@ -114,10 +124,36 @@ enum {
     BENCH_GEN_FLAT          /* constant                                          */
 };
 
+/* What a shape is FOR. The rolling-extremum rescan rate depends only on the
+ * RANK ORDER of the bars, and three shapes cannot move it — measured within 1%
+ * of randwalk at period 14/30/200 — but for TWO DIFFERENT reasons, which is
+ * worth keeping straight:
+ *
+ *   - randwalk-lo / randwalk-hi are the SAME path rescaled. They share the LCG
+ *     stream and their scale factors are exact powers of two, so the bar
+ *     ordering is identical by construction (measured: 7 and 18 close-direction
+ *     differences in 99999, all downstream of the 1.0 price floor).
+ *   - gbm is an INDEPENDENT path — a different generator entirely, disagreeing
+ *     with randwalk on the direction of 50172 of 99999 bars, i.e. a coin flip.
+ *     It matches on the rescan rate because it is also driftless, not because
+ *     it retraces the same walk.
+ *
+ * Either way they are controls, not stressors, and the list says so rather than
+ * implying otherwise with a "low/high volatility" label. They still earn their
+ * place: they vary magnitude and (for gbm) additive-vs-multiplicative scaling,
+ * which is what a numerical-conditioning question needs — deadbands,
+ * cancellation, ratio-based indicators — just not this one. */
+enum {
+    BENCH_GRP_CONTROL = 0,  /* rank-order preserving: same rescan rate as randwalk */
+    BENCH_GRP_STRESS,       /* varies how often the window extremum is its oldest bar */
+    BENCH_GRP_TAIL          /* analytic degenerate cases, not the target class     */
+};
+
 typedef struct {
     const char *name;       /* --shape= token                                   */
     int         gen;        /* BENCH_GEN_*                                      */
     double      param;      /* meaning depends on gen (see above)               */
+    int         group;      /* BENCH_GRP_*                                      */
     const char *note;       /* one line for --list-shapes                       */
 } BenchShape;
 
@@ -133,27 +169,27 @@ typedef struct {
  * 1.87 x — so one sweep covers roughly 0.25p..4p across both default periods in
  * the family. */
 static const BenchShape BENCH_SHAPES[BENCH_NSHAPES] = {
-    { "randwalk",         BENCH_GEN_WALK,      1.00,
-      "zero-drift additive walk, seed 42 (historical default)" },
-    { "randwalk-lo",      BENCH_GEN_WALK,      0.25,
-      "same walk, 1/4 step size (low volatility)" },
-    { "randwalk-hi",      BENCH_GEN_WALK,      4.00,
-      "same walk, 4x step size (high volatility)" },
-    { "gbm",              BENCH_GEN_GBM,       0.20,
-      "geometric Brownian motion, 20%/yr vol on daily bars" },
-    { "trend-chop-0.5p",  BENCH_GEN_TRENDCHOP, 0.50,
+    { "randwalk",         BENCH_GEN_WALK,      1.00, BENCH_GRP_CONTROL,
+      "zero-drift additive walk, seed 42 (historical default; the control)" },
+    { "randwalk-lo",      BENCH_GEN_WALK,      0.25, BENCH_GRP_CONTROL,
+      "randwalk at 1/4 step: same rank order, smaller magnitudes" },
+    { "randwalk-hi",      BENCH_GEN_WALK,      4.00, BENCH_GRP_CONTROL,
+      "randwalk at 4x step: same rank order, larger magnitudes" },
+    { "gbm",              BENCH_GEN_GBM,       0.20, BENCH_GRP_CONTROL,
+      "multiplicative walk, 20%/yr: moves scale with the price level" },
+    { "trend-chop-0.5p",  BENCH_GEN_TRENDCHOP, 0.50, BENCH_GRP_STRESS,
       "alternating trend/chop legs, regime = period/2" },
-    { "trend-chop-1p",    BENCH_GEN_TRENDCHOP, 1.00,
+    { "trend-chop-1p",    BENCH_GEN_TRENDCHOP, 1.00, BENCH_GRP_STRESS,
       "alternating trend/chop legs, regime = period" },
-    { "trend-chop-2p",    BENCH_GEN_TRENDCHOP, 2.00,
+    { "trend-chop-2p",    BENCH_GEN_TRENDCHOP, 2.00, BENCH_GRP_STRESS,
       "alternating trend/chop legs, regime = 2x period" },
-    { "trend-chop-4p",    BENCH_GEN_TRENDCHOP, 4.00,
+    { "trend-chop-4p",    BENCH_GEN_TRENDCHOP, 4.00, BENCH_GRP_STRESS,
       "alternating trend/chop legs, regime = 4x period" },
-    { "mono-up",          BENCH_GEN_RAMP,      1.00,
+    { "mono-up",          BENCH_GEN_RAMP,      1.00, BENCH_GRP_TAIL,
       "strictly increasing ramp: pins the low only, period-1 per bar" },
-    { "mono-down",        BENCH_GEN_RAMP,     -1.00,
+    { "mono-down",        BENCH_GEN_RAMP,     -1.00, BENCH_GRP_TAIL,
       "strictly decreasing ramp: pins the high only, period-1 per bar" },
-    { "constant",         BENCH_GEN_FLAT,      0.00,
+    { "constant",         BENCH_GEN_FLAT,      0.00, BENCH_GRP_TAIL,
       "flat O=H=L=C: WORST case, pins both, 2*(period-1) per bar" }
 };
 
@@ -186,11 +222,16 @@ typedef struct {
     int    hasSpare;
 } BenchRng;
 
-static void bench_rng_init(BenchRng *r, int shape, int seed)
+/* The stream depends on the seed ONLY — deliberately not on the shape.
+ * Mixing the table index in would make a --shape sweep vary the regime length
+ * and the random path at the same time, so trend-chop-0.5p..4p would not be a
+ * controlled comparison. It would also tie every series to its position in
+ * BENCH_SHAPES, so inserting or removing a shape would silently change the
+ * numbers of every other one. */
+static void bench_rng_init(BenchRng *r, int seed)
 {
     r->s = 0x243F6A8885A308D3ULL
-         ^ ((unsigned long long)(unsigned int)seed * 0xD1B54A32D192ED03ULL)
-         ^ ((unsigned long long)(unsigned int)shape << 32);
+         ^ ((unsigned long long)(unsigned int)seed * 0xD1B54A32D192ED03ULL);
     r->spare = 0.0;
     r->hasSpare = 0;
 }
@@ -243,14 +284,28 @@ static const char *bench_shape_name(int shape)
     return BENCH_SHAPES[shape].name;
 }
 
-/* One line per input class, for --list-shapes. */
+/* One line per input class, grouped by what the class is for, for
+ * --list-shapes. The grouping is the point: it stops a reader assuming the
+ * rank-order controls stress the rescan rate. */
 static void bench_shape_list(void)
 {
-    int i;
+    static const char *const GROUP_HDR[] = {
+        "Controls -- do NOT move the rolling-extremum rescan rate (within 1% of randwalk).\n"
+        "randwalk-lo/-hi are the same path rescaled; gbm is an independent driftless path.\n"
+        "Useful for magnitude/conditioning questions, not for the rescan rate.",
+        "Rescan-rate stressors -- vary how often the window extremum is its oldest bar.",
+        "Degenerate tail -- analytic worst cases, not the class this corpus exists for."
+    };
+    int g, i;
     printf("Benchmark input corpus (--shape=NAME, default %s):\n",
            BENCH_SHAPES[BENCH_RANDWALK].name);
-    for( i = 0; i < BENCH_NSHAPES; i++ )
-        printf("  %-16s %s\n", BENCH_SHAPES[i].name, BENCH_SHAPES[i].note);
+    for( g = BENCH_GRP_CONTROL; g <= BENCH_GRP_TAIL; g++ )
+    {
+        printf("\n%s\n", GROUP_HDR[g]);
+        for( i = 0; i < BENCH_NSHAPES; i++ )
+            if( BENCH_SHAPES[i].group == g )
+                printf("  %-16s %s\n", BENCH_SHAPES[i].name, BENCH_SHAPES[i].note);
+    }
     printf("\nTrend/chop regime length is --regime-period (default %d) times the ratio\n"
            "in the shape name; --trend-strength (default %.2f) is the trend-leg drift in\n"
            "per-bar standard deviations; --seed (default %d) picks the stream.\n",
@@ -281,7 +336,7 @@ static void bench_corpus_gen(const BenchCorpusCfg *cfg, int n,
     if( refPeriod < 2 ) refPeriod = BENCH_CORPUS_PERIOD;
     sh = &BENCH_SHAPES[shape];
     param = sh->param;
-    bench_rng_init(&rng, shape, seed);
+    bench_rng_init(&rng, seed);
 
     if( sh->gen == BENCH_GEN_WALK )
     {
@@ -370,9 +425,16 @@ static void bench_corpus_gen(const BenchCorpusCfg *cfg, int n,
          * trend direction alternates so the level stays bounded and so the
          * single-extremum functions see both their favourable and their
          * degrading direction within one series. */
-        int regime = (sh->gen == BENCH_GEN_TRENDCHOP)
-                   ? (int)(param * (double)refPeriod + 0.5)
-                   : 0;
+        /* Clamped before the cast: (int) of an out-of-range double is UB, and
+         * an overflowing --regime-period used to wrap to INT_MIN and then clamp
+         * UP to a 2-bar regime — the exact inverse of what was asked for. */
+        double regimeF = (sh->gen == BENCH_GEN_TRENDCHOP)
+                       ? param * (double)refPeriod + 0.5
+                       : 0.0;
+        int regime;
+        if( regimeF > (double)(n > 2 ? n : 2) ) regimeF = (double)(n > 2 ? n : 2);
+        if( regimeF < 0.0 ) regimeF = 0.0;
+        regime = (int)regimeF;
         double logp = log(100.0), anchor = logp;
         int leg = 0, legBar = 0;
 
@@ -425,8 +487,23 @@ static void bench_corpus_gen(const BenchCorpusCfg *cfg, int n,
  * Two properties, for every shape:
  *   1. reproducible — two generations of the same (shape, seed, n) are
  *      byte-identical, so a measurement can be repeated exactly;
- *   2. valid OHLC   — all values finite, high >= max(open,close),
- *      low <= min(open,close), low > 0, and the MAVP period series in [2,30].
+ *   2. valid OHLC   — all values finite, high >= low, high >= max(open,close),
+ *      low > 0, low <= min(open,close), and the MAVP period series in [2,30].
+ *
+ * ONE DOCUMENTED EXEMPTION. `low <= min(open,close)` does NOT hold for the
+ * BENCH_GEN_WALK family. The pre-corpus generator floors `low` at 1.0 but
+ * leaves `close` unclamped, so a bar whose body trades below 1.0 ends up with
+ * low > close — 32 bars of randwalk and 129 of randwalk-hi at n=100000, 11 and
+ * 99 of them with a negative close. That is inherited behaviour, and clamping
+ * `close` to repair it would break the byte-for-byte reproduction of the
+ * historical seed-42 series, which is worth more than a tidy invariant on a
+ * timing-only corpus. So the check exempts the walk family from that one
+ * predicate BY GENERATOR, not by name, and enforces it on everything else —
+ * a new shape still cannot regress. The other five predicates hold everywhere,
+ * walk family included (verified at n up to 200000).
+ *
+ * Callers pass the n they will actually benchmark at: the walk violations only
+ * begin around n=12000, so a check pinned at a small n cannot see them.
  * Returns the number of failing shapes; prints one line each. */
 static int bench_corpus_selfcheck(int n, const BenchCorpusCfg *base)
 {
@@ -458,17 +535,28 @@ static int bench_corpus_selfcheck(int n, const BenchCorpusCfg *base)
         if( memcmp(a, b, sizeof(double) * (size_t)NARR * (size_t)n) != 0 )
             why = "not reproducible";
 
+        /* See the exemption note above: the walk family floors low at 1.0 but
+         * not close, so low can sit above the body. Narrowed to low == 1.0
+         * EXACTLY — the floor value — rather than exempting the family
+         * wholesale, so the predicate still fires on a walk-family low that is
+         * above the body for any OTHER reason. (Checked: all real violations
+         * are exactly 1.0; a deliberate fmin/fmax swap in the walk generator is
+         * caught by this form and was not caught by the blanket one.) */
+        const int bodyExempt = (BENCH_SHAPES[shape].gen == BENCH_GEN_WALK);
+
         for( i = 0; i < n && !why; i++ )
         {
             double hi = (ao[i] > ac[i]) ? ao[i] : ac[i];
             double lo = (ao[i] < ac[i]) ? ao[i] : ac[i];
-            if( !(ao[i] == ao[i]) || !(ah[i] == ah[i]) ||
-                !(al[i] == al[i]) || !(ac[i] == ac[i]) ||
-                !(av[i] == av[i]) || !(ai[i] == ai[i]) || !(ap[i] == ap[i]) )
+            if( !isfinite(ao[i]) || !isfinite(ah[i]) ||
+                !isfinite(al[i]) || !isfinite(ac[i]) ||
+                !isfinite(av[i]) || !isfinite(ai[i]) || !isfinite(ap[i]) )
                 why = "non-finite value";
+            else if( ah[i] < al[i] )         why = "high below low";
             else if( ah[i] < hi )            why = "high below body";
-            else if( al[i] > lo )            why = "low above body";
             else if( !(al[i] > 0.0) )        why = "non-positive low";
+            else if( al[i] > lo && !(bodyExempt && al[i] == 1.0) )
+                why = "low above body";
             else if( ap[i] < 2.0 || ap[i] > 30.0 ) why = "period out of [2,30]";
         }
 

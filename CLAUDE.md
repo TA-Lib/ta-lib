@@ -250,7 +250,22 @@ the stream; `--regime-period` the window the trend/chop regime length is relativ
 to (defaults to `--period` when given, else 14); `--trend-strength` the trend-leg
 drift in per-bar standard deviations (default 0.5 — sweep it to see how the cost
 responds to trend/noise). `--verify-corpus` checks every shape is reproducible
-and produces valid OHLC.
+and produces valid OHLC, at the `--points` you pass it.
+
+`--list-shapes` groups the classes by what they are for, and the grouping
+matters. The rescan rate depends only on the *rank order* of the bars, so
+`randwalk-lo`, `randwalk-hi` and `gbm` cannot move it however much they change
+the magnitudes — measured within 1% of `randwalk` at period 14/30/200. They are
+controls, useful for numerical-conditioning questions (deadbands, cancellation,
+ratio-based indicators), not stressors. Only `trend-chop-*` varies the rescan
+rate; `mono-*` and `constant` are the analytic tail.
+
+One documented exemption in `--verify-corpus`: the walk family floors `low` at
+1.0 but leaves `close` unclamped, so `low <= min(open,close)` fails on 32 bars of
+`randwalk` at n=100000 (11 with a negative close). That is inherited from the
+pre-corpus generator and is preserved deliberately — clamping `close` would break
+the byte-for-byte reproduction of the historical seed-42 series, which matters
+more on a timing-only corpus. Every other predicate holds for every shape.
 
 The corpus is timing-only — it is never hashed and is unrelated to
 `fuzz_data.h`, whose `FUZZ_*` shape list is iterated by `--fuzz-064` /
