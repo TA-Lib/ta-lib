@@ -610,6 +610,7 @@ int main(int argc, char *argv[]) {
     TA_Initialize();
     int n_points = 100000;
     int n_iters = 500;
+    int verify_corpus = 0;
     const char *func_filter = NULL;
     for( int i = 1; i < argc; i++ ) {
         if( strncmp(argv[i], "--points=", 9) == 0 )    n_points = atoi(argv[i]+9);
@@ -619,6 +620,9 @@ __CORPUS_ARGS__    }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
     if( n_points < BENCH_MASK + 1 ) n_points = BENCH_MASK + 1; /* the bar feed indexes it & BENCH_MASK */
     if( n_iters < 1 ) n_iters = 1;
+    /* After the loop, so the check runs at the n actually benchmarked
+       regardless of where --points sits in argv. */
+    if( verify_corpus ) return bench_corpus_selfcheck(n_points, &g_corpus) ? 1 : 0;
     generate_price_data(n_points);
     /* Growing history for batch@last: one buffer sized to hold the whole run
        (n_iters appended bars + lookback headroom) so it never recycles within a pass. */
@@ -704,7 +708,15 @@ const CORPUS_ARGS: &str = r#"        else if( strncmp(argv[i], "--shape=", 8) ==
         else if( strncmp(argv[i], "--regime-period=", 16) == 0 ) g_corpus.refPeriod = atoi(argv[i]+16);
         else if( strncmp(argv[i], "--trend-strength=", 17) == 0 ) g_corpus.trendStrength = atof(argv[i]+17);
         else if( strcmp(argv[i], "--list-shapes") == 0 ) { bench_shape_list(); return 0; }
-        else if( strcmp(argv[i], "--verify-corpus") == 0 ) return bench_corpus_selfcheck(4096, &g_corpus) ? 1 : 0;
+        else if( strcmp(argv[i], "--verify-corpus") == 0 ) verify_corpus = 1;
+        else {
+            /* Reject rather than ignore. ta_bench_direct forwards the corpus
+             * flags to this binary unconditionally, so a silently-dropped flag
+             * makes it time two DIFFERENT input classes and print the ratio as
+             * if they matched — a wrong answer with no diagnostic. */
+            fprintf(stderr, "%s: unknown option '%s'\n", argv[0], argv[i]);
+            return 2;
+        }
 "#;
 
 const FUNC_MATCHES: &str = r#"
@@ -724,6 +736,7 @@ int main(int argc, char *argv[]) {
     TA_Initialize();
     int n_points = 100000;
     int n_iters = 200;
+    int verify_corpus = 0;
     const char *func_filter = NULL;
     for( int i = 1; i < argc; i++ ) {
         if( strncmp(argv[i], "--points=", 9) == 0 )    n_points = atoi(argv[i]+9);
@@ -731,6 +744,9 @@ int main(int argc, char *argv[]) {
         else if( strncmp(argv[i], "--function=", 11) == 0 ) func_filter = argv[i]+11;
 __CORPUS_ARGS__    }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
+    /* After the loop, so the check runs at the n actually benchmarked
+       regardless of where --points sits in argv. */
+    if( verify_corpus ) return bench_corpus_selfcheck(n_points, &g_corpus) ? 1 : 0;
     generate_price_data(n_points);
     bench_all(func_filter, n_iters);
     free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi); free(g_periods);

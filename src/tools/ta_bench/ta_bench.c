@@ -363,6 +363,13 @@ int main(int argc, char *argv[]) {
         else if( strncmp(argv[i], "--trend-strength=", 17) == 0 ) trend_strength = atof(argv[i]+17);
         else if( strcmp(argv[i], "--list-shapes") == 0 )  { bench_shape_list(); return 0; }
         else if( strcmp(argv[i], "--verify-corpus") == 0 ) verify_corpus = 1;
+        else {
+            /* Reject rather than ignore: a mistyped --shape= would otherwise
+             * silently benchmark the default class and report it as the one
+             * asked for. */
+            fprintf(stderr, "ta_bench: unknown option '%s'\n", argv[i]);
+            return 2;
+        }
     }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
 
@@ -384,8 +391,10 @@ int main(int argc, char *argv[]) {
     corpus.refPeriod     = regime_period;
     corpus.trendStrength = trend_strength;
 
+    /* At the n actually benchmarked — the walk family's floor artefacts only
+     * appear around n=12000, so a small fixed n cannot see them. */
     if( verify_corpus )
-        return bench_corpus_selfcheck(4096, &corpus) ? 1 : 0;
+        return bench_corpus_selfcheck(n_points, &corpus) ? 1 : 0;
 
     TA_Initialize();
     generate_price_data(n_points, &corpus);
