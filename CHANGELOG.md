@@ -27,6 +27,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~8x: MACD and MACDFIX
 - ~8x: MACDEXT when MA types are EMA.
 - ~2.4x: ACCBANDS
+- ~40%: ULTOSC (#154). Thanks @dexhunter !
 - ~30%: MAVP (#143). Thanks @dexhunter !
 - ~27% Apple, ~8% GCC: MIN, MAX, MINMAX, MININDEX, MAXINDEX, MINMAXINDEX, MIDPOINT, MIDPRICE, AROON, AROONOSC and WILLR (#128). Thanks @dexhunter !
 - ~20%: VAR, STDDEV, BBANDS

@@ -48,6 +48,7 @@
  *  -------------------------------------------------------------------
  *  DM       Drew McCormack (http://www.trade-strategist.com)
  *  MF       Mario Fortier
+ *  DX       Dex Hunter (https://github.com/dexhunter)
  *
  * Change history:
  *
@@ -55,6 +56,7 @@
  *  -------------------------------------------------------------------
  *  281206 DM   Initial Implementation
  *  010606 MF   Abstract local arrays. Detect divide by zero.
+ *  073126 DX   Evaluate each bar's terms once via a CIRCBUF ring (PR #154).
  */
 
 TA_LIB_API int TA_ULTOSC_Lookback( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
@@ -112,12 +114,17 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
    int j;
    int today;
    int outIdx;
-   int trailingIdx1;
-   int trailingIdx2;
-   int trailingIdx3;
+   int trailingPos1;
+   int trailingPos2;
    int usedFlag[3];
    int periods[3];
    int sortedPeriods[3];
+   double local_term_closeMinusTrueLow[32];
+   double *term_closeMinusTrueLow;
+   double local_term_trueRange[32];
+   double *term_trueRange;
+   int term_Idx;
+   int maxIdx_term;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -145,6 +152,14 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
+   /* The two per-bar terms the three moving sums are built from. Both are a
+    * pure function of the bar, so each bar is evaluated once on entry and read
+    * back when it leaves each of the three windows.
+    */
+   /* One entry per bar of the longest window. Stays on the stack for every
+    * period up to 32, which covers the 7/14/28 default.
+    */
+   /* Id, Type, Static Size */
    *outBegIdx= 0;
    *outNBElement= 0;
    /* Ensure that the time periods are ordered from shortest to longest.
@@ -185,53 +200,39 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   /* Prime running totals used in moving averages */
+   if( optInTimePeriod3 < 1 ) return TA_INTERNAL_ERROR(137);
+   if( (int)optInTimePeriod3 > (int)(sizeof(local_term_closeMinusTrueLow)/sizeof(double)) )
+   {
+      term_closeMinusTrueLow = TA_Malloc( sizeof(double)*optInTimePeriod3 );
+      if( !term_closeMinusTrueLow )
+      {
+         return TA_ALLOC_ERR;
+      }
+      term_trueRange = TA_Malloc( sizeof(double)*optInTimePeriod3 );
+      if( !term_trueRange )
+      {
+         TA_Free( term_closeMinusTrueLow );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      term_closeMinusTrueLow = &local_term_closeMinusTrueLow[0];
+      term_trueRange = &local_term_trueRange[0];
+   }
+   maxIdx_term = (optInTimePeriod3-1);
+   term_Idx = 0;
+   /* Prime running totals used in moving averages.
+    *
+    * One pass over the longest warm-up window replaces three overlapping
+    * passes. A bar inside the shorter windows is added to those totals as it
+    * is reached, so every total still accumulates exactly the same bars in
+    * exactly the same ascending order as three separate loops did.
+    */
    a1Total = 0;
    b1Total = 0;
-   for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 )
-   {
-      tempLT = inLow[i];
-      tempHT = inHigh[i];
-      tempCY = inClose[i - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = inClose[i] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a1Total += closeMinusTrueLow;
-      b1Total += trueRange;
-   }
    a2Total = 0;
    b2Total = 0;
-   for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 )
-   {
-      tempLT = inLow[i];
-      tempHT = inHigh[i];
-      tempCY = inClose[i - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = inClose[i] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a2Total += closeMinusTrueLow;
-      b2Total += trueRange;
-   }
    a3Total = 0;
    b3Total = 0;
    for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 )
@@ -252,15 +253,40 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       {
          trueRange = tempDouble;
       }
+      term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+      term_trueRange[term_Idx] = trueRange;
+      term_Idx++;
+      if( term_Idx > maxIdx_term ) term_Idx = 0;
+      if( i >= startIdx - optInTimePeriod1 + 1 )
+      {
+         a1Total += closeMinusTrueLow;
+         b1Total += trueRange;
+      }
+      if( i >= startIdx - optInTimePeriod2 + 1 )
+      {
+         a2Total += closeMinusTrueLow;
+         b2Total += trueRange;
+      }
       a3Total += closeMinusTrueLow;
       b3Total += trueRange;
    }
    /* Calculate oscillator */
    today = startIdx;
    outIdx = 0;
-   trailingIdx1 = today - optInTimePeriod1 + 1;
-   trailingIdx2 = today - optInTimePeriod2 + 1;
-   trailingIdx3 = today - optInTimePeriod3 + 1;
+   /* The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
+    * `today` and, once advanced past it, the slot of the bar leaving the
+    * longest window. The two shorter windows trail it by a fixed offset.
+    */
+   trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+   if( trailingPos1 >= optInTimePeriod3 )
+   {
+      trailingPos1 -= optInTimePeriod3;
+   }
+   trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+   if( trailingPos2 >= optInTimePeriod3 )
+   {
+      trailingPos2 -= optInTimePeriod3;
+   }
    while( today <= endIdx )
    {
       /* Add on today's terms */
@@ -280,6 +306,8 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       {
          trueRange = tempDouble;
       }
+      term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+      term_trueRange[term_Idx] = trueRange;
       a1Total += closeMinusTrueLow;
       a2Total += closeMinusTrueLow;
       a3Total += closeMinusTrueLow;
@@ -300,61 +328,27 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       {
          output += a3Total / b3Total;
       }
-      /* Remove the trailing terms to prepare for next day */
-      tempLT = inLow[trailingIdx1];
-      tempHT = inHigh[trailingIdx1];
-      tempCY = inClose[trailingIdx1 - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
+      /* Remove the trailing terms to prepare for next day. Each was evaluated
+       * once, when its bar entered the ring.
+       */
+      a1Total -= term_closeMinusTrueLow[trailingPos1];
+      b1Total -= term_trueRange[trailingPos1];
+      trailingPos1 += 1;
+      if( trailingPos1 >= optInTimePeriod3 )
       {
-         trueRange = tempDouble;
+         trailingPos1 = 0;
       }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
+      a2Total -= term_closeMinusTrueLow[trailingPos2];
+      b2Total -= term_trueRange[trailingPos2];
+      trailingPos2 += 1;
+      if( trailingPos2 >= optInTimePeriod3 )
       {
-         trueRange = tempDouble;
+         trailingPos2 = 0;
       }
-      a1Total -= closeMinusTrueLow;
-      b1Total -= trueRange;
-      tempLT = inLow[trailingIdx2];
-      tempHT = inHigh[trailingIdx2];
-      tempCY = inClose[trailingIdx2 - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a2Total -= closeMinusTrueLow;
-      b2Total -= trueRange;
-      tempLT = inLow[trailingIdx3];
-      tempHT = inHigh[trailingIdx3];
-      tempCY = inClose[trailingIdx3 - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a3Total -= closeMinusTrueLow;
-      b3Total -= trueRange;
+      term_Idx++;
+      if( term_Idx > maxIdx_term ) term_Idx = 0;
+      a3Total -= term_closeMinusTrueLow[term_Idx];
+      b3Total -= term_trueRange[term_Idx];
       /* Last operation is to write the output. Must
        * be done after the trailing index have all been
        * taken care of because the caller is allowed
@@ -365,13 +359,12 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       /* Increment indexes */
       outIdx += 1;
       today += 1;
-      trailingIdx1 += 1;
-      trailingIdx2 += 1;
-      trailingIdx3 += 1;
    }
    /* All done. Indicate the output limits and return. */
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
+   if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow );
+   if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange );
    return TA_SUCCESS;
 }
 
@@ -408,12 +401,17 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Unguarded( int    startIdx,
    int j;
    int today;
    int outIdx;
-   int trailingIdx1;
-   int trailingIdx2;
-   int trailingIdx3;
+   int trailingPos1;
+   int trailingPos2;
    int usedFlag[3];
    int periods[3];
    int sortedPeriods[3];
+   double local_term_closeMinusTrueLow[32];
+   double *term_closeMinusTrueLow;
+   double local_term_trueRange[32];
+   double *term_trueRange;
+   int term_Idx;
+   int maxIdx_term;
 
    *outBegIdx= 0;
    *outNBElement= 0;
@@ -450,52 +448,32 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Unguarded( int    startIdx,
    {
       return TA_SUCCESS;
    }
+   if( optInTimePeriod3 < 1 ) return TA_INTERNAL_ERROR(137);
+   if( (int)optInTimePeriod3 > (int)(sizeof(local_term_closeMinusTrueLow)/sizeof(double)) )
+   {
+      term_closeMinusTrueLow = TA_Malloc( sizeof(double)*optInTimePeriod3 );
+      if( !term_closeMinusTrueLow )
+      {
+         return TA_ALLOC_ERR;
+      }
+      term_trueRange = TA_Malloc( sizeof(double)*optInTimePeriod3 );
+      if( !term_trueRange )
+      {
+         TA_Free( term_closeMinusTrueLow );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      term_closeMinusTrueLow = &local_term_closeMinusTrueLow[0];
+      term_trueRange = &local_term_trueRange[0];
+   }
+   maxIdx_term = (optInTimePeriod3-1);
+   term_Idx = 0;
    a1Total = 0;
    b1Total = 0;
-   for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 )
-   {
-      tempLT = inLow[i];
-      tempHT = inHigh[i];
-      tempCY = inClose[i - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = inClose[i] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a1Total += closeMinusTrueLow;
-      b1Total += trueRange;
-   }
    a2Total = 0;
    b2Total = 0;
-   for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 )
-   {
-      tempLT = inLow[i];
-      tempHT = inHigh[i];
-      tempCY = inClose[i - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = inClose[i] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a2Total += closeMinusTrueLow;
-      b2Total += trueRange;
-   }
    a3Total = 0;
    b3Total = 0;
    for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 )
@@ -516,14 +494,35 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Unguarded( int    startIdx,
       {
          trueRange = tempDouble;
       }
+      term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+      term_trueRange[term_Idx] = trueRange;
+      term_Idx++;
+      if( term_Idx > maxIdx_term ) term_Idx = 0;
+      if( i >= startIdx - optInTimePeriod1 + 1 )
+      {
+         a1Total += closeMinusTrueLow;
+         b1Total += trueRange;
+      }
+      if( i >= startIdx - optInTimePeriod2 + 1 )
+      {
+         a2Total += closeMinusTrueLow;
+         b2Total += trueRange;
+      }
       a3Total += closeMinusTrueLow;
       b3Total += trueRange;
    }
    today = startIdx;
    outIdx = 0;
-   trailingIdx1 = today - optInTimePeriod1 + 1;
-   trailingIdx2 = today - optInTimePeriod2 + 1;
-   trailingIdx3 = today - optInTimePeriod3 + 1;
+   trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+   if( trailingPos1 >= optInTimePeriod3 )
+   {
+      trailingPos1 -= optInTimePeriod3;
+   }
+   trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+   if( trailingPos2 >= optInTimePeriod3 )
+   {
+      trailingPos2 -= optInTimePeriod3;
+   }
    while( today <= endIdx )
    {
       tempLT = inLow[today];
@@ -542,6 +541,8 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Unguarded( int    startIdx,
       {
          trueRange = tempDouble;
       }
+      term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+      term_trueRange[term_Idx] = trueRange;
       a1Total += closeMinusTrueLow;
       a2Total += closeMinusTrueLow;
       a3Total += closeMinusTrueLow;
@@ -561,69 +562,32 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Unguarded( int    startIdx,
       {
          output += a3Total / b3Total;
       }
-      tempLT = inLow[trailingIdx1];
-      tempHT = inHigh[trailingIdx1];
-      tempCY = inClose[trailingIdx1 - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
+      a1Total -= term_closeMinusTrueLow[trailingPos1];
+      b1Total -= term_trueRange[trailingPos1];
+      trailingPos1 += 1;
+      if( trailingPos1 >= optInTimePeriod3 )
       {
-         trueRange = tempDouble;
+         trailingPos1 = 0;
       }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
+      a2Total -= term_closeMinusTrueLow[trailingPos2];
+      b2Total -= term_trueRange[trailingPos2];
+      trailingPos2 += 1;
+      if( trailingPos2 >= optInTimePeriod3 )
       {
-         trueRange = tempDouble;
+         trailingPos2 = 0;
       }
-      a1Total -= closeMinusTrueLow;
-      b1Total -= trueRange;
-      tempLT = inLow[trailingIdx2];
-      tempHT = inHigh[trailingIdx2];
-      tempCY = inClose[trailingIdx2 - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a2Total -= closeMinusTrueLow;
-      b2Total -= trueRange;
-      tempLT = inLow[trailingIdx3];
-      tempHT = inHigh[trailingIdx3];
-      tempCY = inClose[trailingIdx3 - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a3Total -= closeMinusTrueLow;
-      b3Total -= trueRange;
+      term_Idx++;
+      if( term_Idx > maxIdx_term ) term_Idx = 0;
+      a3Total -= term_closeMinusTrueLow[term_Idx];
+      b3Total -= term_trueRange[term_Idx];
       outReal[outIdx] = 100.0 * (output / 7.0);
       outIdx += 1;
       today += 1;
-      trailingIdx1 += 1;
-      trailingIdx2 += 1;
-      trailingIdx3 += 1;
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
+   if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow );
+   if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange );
    return TA_SUCCESS;
 }
 
@@ -660,12 +624,17 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
    int j;
    int today;
    int outIdx;
-   int trailingIdx1;
-   int trailingIdx2;
-   int trailingIdx3;
+   int trailingPos1;
+   int trailingPos2;
    int usedFlag[3];
    int periods[3];
    int sortedPeriods[3];
+   double local_term_closeMinusTrueLow[32];
+   double *term_closeMinusTrueLow;
+   double local_term_trueRange[32];
+   double *term_trueRange;
+   int term_Idx;
+   int maxIdx_term;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -728,52 +697,32 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
    {
       return TA_SUCCESS;
    }
+   if( optInTimePeriod3 < 1 ) return TA_INTERNAL_ERROR(137);
+   if( (int)optInTimePeriod3 > (int)(sizeof(local_term_closeMinusTrueLow)/sizeof(double)) )
+   {
+      term_closeMinusTrueLow = TA_Malloc( sizeof(double)*optInTimePeriod3 );
+      if( !term_closeMinusTrueLow )
+      {
+         return TA_ALLOC_ERR;
+      }
+      term_trueRange = TA_Malloc( sizeof(double)*optInTimePeriod3 );
+      if( !term_trueRange )
+      {
+         TA_Free( term_closeMinusTrueLow );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      term_closeMinusTrueLow = &local_term_closeMinusTrueLow[0];
+      term_trueRange = &local_term_trueRange[0];
+   }
+   maxIdx_term = (optInTimePeriod3-1);
+   term_Idx = 0;
    a1Total = 0;
    b1Total = 0;
-   for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 )
-   {
-      tempLT = (double)inLow[i];
-      tempHT = (double)inHigh[i];
-      tempCY = (double)inClose[i - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = (double)inClose[i] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a1Total += closeMinusTrueLow;
-      b1Total += trueRange;
-   }
    a2Total = 0;
    b2Total = 0;
-   for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 )
-   {
-      tempLT = (double)inLow[i];
-      tempHT = (double)inHigh[i];
-      tempCY = (double)inClose[i - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = (double)inClose[i] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a2Total += closeMinusTrueLow;
-      b2Total += trueRange;
-   }
    a3Total = 0;
    b3Total = 0;
    for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 )
@@ -794,14 +743,35 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       {
          trueRange = tempDouble;
       }
+      term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+      term_trueRange[term_Idx] = trueRange;
+      term_Idx++;
+      if( term_Idx > maxIdx_term ) term_Idx = 0;
+      if( i >= startIdx - optInTimePeriod1 + 1 )
+      {
+         a1Total += closeMinusTrueLow;
+         b1Total += trueRange;
+      }
+      if( i >= startIdx - optInTimePeriod2 + 1 )
+      {
+         a2Total += closeMinusTrueLow;
+         b2Total += trueRange;
+      }
       a3Total += closeMinusTrueLow;
       b3Total += trueRange;
    }
    today = startIdx;
    outIdx = 0;
-   trailingIdx1 = today - optInTimePeriod1 + 1;
-   trailingIdx2 = today - optInTimePeriod2 + 1;
-   trailingIdx3 = today - optInTimePeriod3 + 1;
+   trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+   if( trailingPos1 >= optInTimePeriod3 )
+   {
+      trailingPos1 -= optInTimePeriod3;
+   }
+   trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+   if( trailingPos2 >= optInTimePeriod3 )
+   {
+      trailingPos2 -= optInTimePeriod3;
+   }
    while( today <= endIdx )
    {
       tempLT = (double)inLow[today];
@@ -820,6 +790,8 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       {
          trueRange = tempDouble;
       }
+      term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+      term_trueRange[term_Idx] = trueRange;
       a1Total += closeMinusTrueLow;
       a2Total += closeMinusTrueLow;
       a3Total += closeMinusTrueLow;
@@ -839,69 +811,32 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       {
          output += a3Total / b3Total;
       }
-      tempLT = (double)inLow[trailingIdx1];
-      tempHT = (double)inHigh[trailingIdx1];
-      tempCY = (double)inClose[trailingIdx1 - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = (double)inClose[trailingIdx1] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
+      a1Total -= term_closeMinusTrueLow[trailingPos1];
+      b1Total -= term_trueRange[trailingPos1];
+      trailingPos1 += 1;
+      if( trailingPos1 >= optInTimePeriod3 )
       {
-         trueRange = tempDouble;
+         trailingPos1 = 0;
       }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
+      a2Total -= term_closeMinusTrueLow[trailingPos2];
+      b2Total -= term_trueRange[trailingPos2];
+      trailingPos2 += 1;
+      if( trailingPos2 >= optInTimePeriod3 )
       {
-         trueRange = tempDouble;
+         trailingPos2 = 0;
       }
-      a1Total -= closeMinusTrueLow;
-      b1Total -= trueRange;
-      tempLT = (double)inLow[trailingIdx2];
-      tempHT = (double)inHigh[trailingIdx2];
-      tempCY = (double)inClose[trailingIdx2 - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = (double)inClose[trailingIdx2] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a2Total -= closeMinusTrueLow;
-      b2Total -= trueRange;
-      tempLT = (double)inLow[trailingIdx3];
-      tempHT = (double)inHigh[trailingIdx3];
-      tempCY = (double)inClose[trailingIdx3 - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = (double)inClose[trailingIdx3] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a3Total -= closeMinusTrueLow;
-      b3Total -= trueRange;
+      term_Idx++;
+      if( term_Idx > maxIdx_term ) term_Idx = 0;
+      a3Total -= term_closeMinusTrueLow[term_Idx];
+      b3Total -= term_trueRange[term_Idx];
       outReal[outIdx] = 100.0 * (output / 7.0);
       outIdx += 1;
       today += 1;
-      trailingIdx1 += 1;
-      trailingIdx2 += 1;
-      trailingIdx3 += 1;
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
+   if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow );
+   if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange );
    return TA_SUCCESS;
 }
 
@@ -938,12 +873,17 @@ TA_RetCode TA_S_ULTOSC_Unguarded( int    startIdx,
    int j;
    int today;
    int outIdx;
-   int trailingIdx1;
-   int trailingIdx2;
-   int trailingIdx3;
+   int trailingPos1;
+   int trailingPos2;
    int usedFlag[3];
    int periods[3];
    int sortedPeriods[3];
+   double local_term_closeMinusTrueLow[32];
+   double *term_closeMinusTrueLow;
+   double local_term_trueRange[32];
+   double *term_trueRange;
+   int term_Idx;
+   int maxIdx_term;
 
    *outBegIdx= 0;
    *outNBElement= 0;
@@ -980,52 +920,32 @@ TA_RetCode TA_S_ULTOSC_Unguarded( int    startIdx,
    {
       return TA_SUCCESS;
    }
+   if( optInTimePeriod3 < 1 ) return TA_INTERNAL_ERROR(137);
+   if( (int)optInTimePeriod3 > (int)(sizeof(local_term_closeMinusTrueLow)/sizeof(double)) )
+   {
+      term_closeMinusTrueLow = TA_Malloc( sizeof(double)*optInTimePeriod3 );
+      if( !term_closeMinusTrueLow )
+      {
+         return TA_ALLOC_ERR;
+      }
+      term_trueRange = TA_Malloc( sizeof(double)*optInTimePeriod3 );
+      if( !term_trueRange )
+      {
+         TA_Free( term_closeMinusTrueLow );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      term_closeMinusTrueLow = &local_term_closeMinusTrueLow[0];
+      term_trueRange = &local_term_trueRange[0];
+   }
+   maxIdx_term = (optInTimePeriod3-1);
+   term_Idx = 0;
    a1Total = 0;
    b1Total = 0;
-   for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 )
-   {
-      tempLT = (double)inLow[i];
-      tempHT = (double)inHigh[i];
-      tempCY = (double)inClose[i - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = (double)inClose[i] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a1Total += closeMinusTrueLow;
-      b1Total += trueRange;
-   }
    a2Total = 0;
    b2Total = 0;
-   for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 )
-   {
-      tempLT = (double)inLow[i];
-      tempHT = (double)inHigh[i];
-      tempCY = (double)inClose[i - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = (double)inClose[i] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a2Total += closeMinusTrueLow;
-      b2Total += trueRange;
-   }
    a3Total = 0;
    b3Total = 0;
    for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 )
@@ -1046,14 +966,35 @@ TA_RetCode TA_S_ULTOSC_Unguarded( int    startIdx,
       {
          trueRange = tempDouble;
       }
+      term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+      term_trueRange[term_Idx] = trueRange;
+      term_Idx++;
+      if( term_Idx > maxIdx_term ) term_Idx = 0;
+      if( i >= startIdx - optInTimePeriod1 + 1 )
+      {
+         a1Total += closeMinusTrueLow;
+         b1Total += trueRange;
+      }
+      if( i >= startIdx - optInTimePeriod2 + 1 )
+      {
+         a2Total += closeMinusTrueLow;
+         b2Total += trueRange;
+      }
       a3Total += closeMinusTrueLow;
       b3Total += trueRange;
    }
    today = startIdx;
    outIdx = 0;
-   trailingIdx1 = today - optInTimePeriod1 + 1;
-   trailingIdx2 = today - optInTimePeriod2 + 1;
-   trailingIdx3 = today - optInTimePeriod3 + 1;
+   trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+   if( trailingPos1 >= optInTimePeriod3 )
+   {
+      trailingPos1 -= optInTimePeriod3;
+   }
+   trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+   if( trailingPos2 >= optInTimePeriod3 )
+   {
+      trailingPos2 -= optInTimePeriod3;
+   }
    while( today <= endIdx )
    {
       tempLT = (double)inLow[today];
@@ -1072,6 +1013,8 @@ TA_RetCode TA_S_ULTOSC_Unguarded( int    startIdx,
       {
          trueRange = tempDouble;
       }
+      term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+      term_trueRange[term_Idx] = trueRange;
       a1Total += closeMinusTrueLow;
       a2Total += closeMinusTrueLow;
       a3Total += closeMinusTrueLow;
@@ -1091,69 +1034,32 @@ TA_RetCode TA_S_ULTOSC_Unguarded( int    startIdx,
       {
          output += a3Total / b3Total;
       }
-      tempLT = (double)inLow[trailingIdx1];
-      tempHT = (double)inHigh[trailingIdx1];
-      tempCY = (double)inClose[trailingIdx1 - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = (double)inClose[trailingIdx1] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
+      a1Total -= term_closeMinusTrueLow[trailingPos1];
+      b1Total -= term_trueRange[trailingPos1];
+      trailingPos1 += 1;
+      if( trailingPos1 >= optInTimePeriod3 )
       {
-         trueRange = tempDouble;
+         trailingPos1 = 0;
       }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
+      a2Total -= term_closeMinusTrueLow[trailingPos2];
+      b2Total -= term_trueRange[trailingPos2];
+      trailingPos2 += 1;
+      if( trailingPos2 >= optInTimePeriod3 )
       {
-         trueRange = tempDouble;
+         trailingPos2 = 0;
       }
-      a1Total -= closeMinusTrueLow;
-      b1Total -= trueRange;
-      tempLT = (double)inLow[trailingIdx2];
-      tempHT = (double)inHigh[trailingIdx2];
-      tempCY = (double)inClose[trailingIdx2 - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = (double)inClose[trailingIdx2] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a2Total -= closeMinusTrueLow;
-      b2Total -= trueRange;
-      tempLT = (double)inLow[trailingIdx3];
-      tempHT = (double)inHigh[trailingIdx3];
-      tempCY = (double)inClose[trailingIdx3 - 1];
-      trueLow = min(tempLT,tempCY);
-      closeMinusTrueLow = (double)inClose[trailingIdx3] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs(tempCY - tempHT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      tempDouble = fabs(tempCY - tempLT);
-      if( tempDouble > trueRange )
-      {
-         trueRange = tempDouble;
-      }
-      a3Total -= closeMinusTrueLow;
-      b3Total -= trueRange;
+      term_Idx++;
+      if( term_Idx > maxIdx_term ) term_Idx = 0;
+      a3Total -= term_closeMinusTrueLow[term_Idx];
+      b3Total -= term_trueRange[term_Idx];
       outReal[outIdx] = 100.0 * (output / 7.0);
       outIdx += 1;
       today += 1;
-      trailingIdx1 += 1;
-      trailingIdx2 += 1;
-      trailingIdx3 += 1;
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
+   if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow );
+   if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange );
    return TA_SUCCESS;
 }
 
@@ -1170,58 +1076,26 @@ struct TA_ULTOSC_Stream {
    double b2Total;
    double b3Total;
    double output;
+   int trailingPos1;
+   int trailingPos2;
+   int term_Idx;
+   int maxIdx_term;
    double lag1_inClose;
-   int ringPos_trailingIdx1;
-   int ringCap_trailingIdx1;
-   int ringLag_trailingIdx1;
-   double *ring_trailingIdx1_inHigh;
-   double *ringMirror_trailingIdx1_inHigh;
-   double *ring_trailingIdx1_inLow;
-   double *ringMirror_trailingIdx1_inLow;
-   double *ring_trailingIdx1_inClose;
-   double *ringMirror_trailingIdx1_inClose;
-   int ringPos_trailingIdx2;
-   int ringCap_trailingIdx2;
-   int ringLag_trailingIdx2;
-   double *ring_trailingIdx2_inHigh;
-   double *ringMirror_trailingIdx2_inHigh;
-   double *ring_trailingIdx2_inLow;
-   double *ringMirror_trailingIdx2_inLow;
-   double *ring_trailingIdx2_inClose;
-   double *ringMirror_trailingIdx2_inClose;
-   int ringPos_trailingIdx3;
-   int ringCap_trailingIdx3;
-   int ringLag_trailingIdx3;
-   double *ring_trailingIdx3_inHigh;
-   double *ringMirror_trailingIdx3_inHigh;
-   double *ring_trailingIdx3_inLow;
-   double *ringMirror_trailingIdx3_inLow;
-   double *ring_trailingIdx3_inClose;
-   double *ringMirror_trailingIdx3_inClose;
+   int cbSize_term;
+   double *cb_term_closeMinusTrueLow;
+   double *cbMirror_term_closeMinusTrueLow;
+   double *cb_term_trueRange;
+   double *cbMirror_term_trueRange;
 };
 
 /* Private function, not in public API. */
 static void TA_ULTOSC_ReleaseInternal( struct TA_ULTOSC_Stream *sp )
 {
    if( !sp ) return;
-   if( sp->ring_trailingIdx1_inHigh ) TA_Free( sp->ring_trailingIdx1_inHigh );
-   if( sp->ringMirror_trailingIdx1_inHigh ) TA_Free( sp->ringMirror_trailingIdx1_inHigh );
-   if( sp->ring_trailingIdx1_inLow ) TA_Free( sp->ring_trailingIdx1_inLow );
-   if( sp->ringMirror_trailingIdx1_inLow ) TA_Free( sp->ringMirror_trailingIdx1_inLow );
-   if( sp->ring_trailingIdx1_inClose ) TA_Free( sp->ring_trailingIdx1_inClose );
-   if( sp->ringMirror_trailingIdx1_inClose ) TA_Free( sp->ringMirror_trailingIdx1_inClose );
-   if( sp->ring_trailingIdx2_inHigh ) TA_Free( sp->ring_trailingIdx2_inHigh );
-   if( sp->ringMirror_trailingIdx2_inHigh ) TA_Free( sp->ringMirror_trailingIdx2_inHigh );
-   if( sp->ring_trailingIdx2_inLow ) TA_Free( sp->ring_trailingIdx2_inLow );
-   if( sp->ringMirror_trailingIdx2_inLow ) TA_Free( sp->ringMirror_trailingIdx2_inLow );
-   if( sp->ring_trailingIdx2_inClose ) TA_Free( sp->ring_trailingIdx2_inClose );
-   if( sp->ringMirror_trailingIdx2_inClose ) TA_Free( sp->ringMirror_trailingIdx2_inClose );
-   if( sp->ring_trailingIdx3_inHigh ) TA_Free( sp->ring_trailingIdx3_inHigh );
-   if( sp->ringMirror_trailingIdx3_inHigh ) TA_Free( sp->ringMirror_trailingIdx3_inHigh );
-   if( sp->ring_trailingIdx3_inLow ) TA_Free( sp->ring_trailingIdx3_inLow );
-   if( sp->ringMirror_trailingIdx3_inLow ) TA_Free( sp->ringMirror_trailingIdx3_inLow );
-   if( sp->ring_trailingIdx3_inClose ) TA_Free( sp->ring_trailingIdx3_inClose );
-   if( sp->ringMirror_trailingIdx3_inClose ) TA_Free( sp->ringMirror_trailingIdx3_inClose );
+   if( sp->cb_term_closeMinusTrueLow ) TA_Free( sp->cb_term_closeMinusTrueLow );
+   if( sp->cbMirror_term_closeMinusTrueLow ) TA_Free( sp->cbMirror_term_closeMinusTrueLow );
+   if( sp->cb_term_trueRange ) TA_Free( sp->cb_term_trueRange );
+   if( sp->cbMirror_term_trueRange ) TA_Free( sp->cbMirror_term_trueRange );
    TA_Free( sp );
 }
 
@@ -1236,15 +1110,6 @@ static void TA_ULTOSC_StepInternal( struct TA_ULTOSC_Stream *sp, double inHigh, 
    double tempLT;
    double tempCY;
 
-   sp->ring_trailingIdx1_inHigh[sp->ringPos_trailingIdx1] = inHigh;
-   sp->ring_trailingIdx1_inLow[sp->ringPos_trailingIdx1] = inLow;
-   sp->ring_trailingIdx1_inClose[sp->ringPos_trailingIdx1] = inClose;
-   sp->ring_trailingIdx2_inHigh[sp->ringPos_trailingIdx2] = inHigh;
-   sp->ring_trailingIdx2_inLow[sp->ringPos_trailingIdx2] = inLow;
-   sp->ring_trailingIdx2_inClose[sp->ringPos_trailingIdx2] = inClose;
-   sp->ring_trailingIdx3_inHigh[sp->ringPos_trailingIdx3] = inHigh;
-   sp->ring_trailingIdx3_inLow[sp->ringPos_trailingIdx3] = inLow;
-   sp->ring_trailingIdx3_inClose[sp->ringPos_trailingIdx3] = inClose;
    /* Add on today's terms */
    tempLT = inLow;
    tempHT = inHigh;
@@ -1262,6 +1127,8 @@ static void TA_ULTOSC_StepInternal( struct TA_ULTOSC_Stream *sp, double inHigh, 
    {
       trueRange = tempDouble;
    }
+   sp->cb_term_closeMinusTrueLow[sp->term_Idx] = closeMinusTrueLow;
+   sp->cb_term_trueRange[sp->term_Idx] = trueRange;
    sp->a1Total += closeMinusTrueLow;
    sp->a2Total += closeMinusTrueLow;
    sp->a3Total += closeMinusTrueLow;
@@ -1282,61 +1149,30 @@ static void TA_ULTOSC_StepInternal( struct TA_ULTOSC_Stream *sp, double inHigh, 
    {
       sp->output += sp->a3Total / sp->b3Total;
    }
-   /* Remove the trailing terms to prepare for next day */
-   tempLT = sp->ring_trailingIdx1_inLow[(sp->ringPos_trailingIdx1 + sp->ringCap_trailingIdx1 - sp->ringLag_trailingIdx1) % sp->ringCap_trailingIdx1];
-   tempHT = sp->ring_trailingIdx1_inHigh[(sp->ringPos_trailingIdx1 + sp->ringCap_trailingIdx1 - sp->ringLag_trailingIdx1) % sp->ringCap_trailingIdx1];
-   tempCY = sp->ring_trailingIdx1_inClose[(sp->ringPos_trailingIdx1 + sp->ringCap_trailingIdx1 - sp->ringLag_trailingIdx1 - 1) % sp->ringCap_trailingIdx1];
-   trueLow = min(tempLT,tempCY);
-   closeMinusTrueLow = sp->ring_trailingIdx1_inClose[(sp->ringPos_trailingIdx1 + sp->ringCap_trailingIdx1 - sp->ringLag_trailingIdx1) % sp->ringCap_trailingIdx1] - trueLow;
-   trueRange = tempHT - tempLT;
-   tempDouble = fabs(tempCY - tempHT);
-   if( tempDouble > trueRange )
+   /* Remove the trailing terms to prepare for next day. Each was evaluated
+    * once, when its bar entered the ring.
+    */
+   sp->a1Total -= sp->cb_term_closeMinusTrueLow[sp->trailingPos1];
+   sp->b1Total -= sp->cb_term_trueRange[sp->trailingPos1];
+   sp->trailingPos1 += 1;
+   if( sp->trailingPos1 >= sp->optInTimePeriod3 )
    {
-      trueRange = tempDouble;
+      sp->trailingPos1 = 0;
    }
-   tempDouble = fabs(tempCY - tempLT);
-   if( tempDouble > trueRange )
+   sp->a2Total -= sp->cb_term_closeMinusTrueLow[sp->trailingPos2];
+   sp->b2Total -= sp->cb_term_trueRange[sp->trailingPos2];
+   sp->trailingPos2 += 1;
+   if( sp->trailingPos2 >= sp->optInTimePeriod3 )
    {
-      trueRange = tempDouble;
+      sp->trailingPos2 = 0;
    }
-   sp->a1Total -= closeMinusTrueLow;
-   sp->b1Total -= trueRange;
-   tempLT = sp->ring_trailingIdx2_inLow[(sp->ringPos_trailingIdx2 + sp->ringCap_trailingIdx2 - sp->ringLag_trailingIdx2) % sp->ringCap_trailingIdx2];
-   tempHT = sp->ring_trailingIdx2_inHigh[(sp->ringPos_trailingIdx2 + sp->ringCap_trailingIdx2 - sp->ringLag_trailingIdx2) % sp->ringCap_trailingIdx2];
-   tempCY = sp->ring_trailingIdx2_inClose[(sp->ringPos_trailingIdx2 + sp->ringCap_trailingIdx2 - sp->ringLag_trailingIdx2 - 1) % sp->ringCap_trailingIdx2];
-   trueLow = min(tempLT,tempCY);
-   closeMinusTrueLow = sp->ring_trailingIdx2_inClose[(sp->ringPos_trailingIdx2 + sp->ringCap_trailingIdx2 - sp->ringLag_trailingIdx2) % sp->ringCap_trailingIdx2] - trueLow;
-   trueRange = tempHT - tempLT;
-   tempDouble = fabs(tempCY - tempHT);
-   if( tempDouble > trueRange )
+   sp->term_Idx = sp->term_Idx + 1;
+   if( sp->term_Idx > sp->maxIdx_term )
    {
-      trueRange = tempDouble;
+      sp->term_Idx = 0;
    }
-   tempDouble = fabs(tempCY - tempLT);
-   if( tempDouble > trueRange )
-   {
-      trueRange = tempDouble;
-   }
-   sp->a2Total -= closeMinusTrueLow;
-   sp->b2Total -= trueRange;
-   tempLT = sp->ring_trailingIdx3_inLow[(sp->ringPos_trailingIdx3 + sp->ringCap_trailingIdx3 - sp->ringLag_trailingIdx3) % sp->ringCap_trailingIdx3];
-   tempHT = sp->ring_trailingIdx3_inHigh[(sp->ringPos_trailingIdx3 + sp->ringCap_trailingIdx3 - sp->ringLag_trailingIdx3) % sp->ringCap_trailingIdx3];
-   tempCY = sp->ring_trailingIdx3_inClose[(sp->ringPos_trailingIdx3 + sp->ringCap_trailingIdx3 - sp->ringLag_trailingIdx3 - 1) % sp->ringCap_trailingIdx3];
-   trueLow = min(tempLT,tempCY);
-   closeMinusTrueLow = sp->ring_trailingIdx3_inClose[(sp->ringPos_trailingIdx3 + sp->ringCap_trailingIdx3 - sp->ringLag_trailingIdx3) % sp->ringCap_trailingIdx3] - trueLow;
-   trueRange = tempHT - tempLT;
-   tempDouble = fabs(tempCY - tempHT);
-   if( tempDouble > trueRange )
-   {
-      trueRange = tempDouble;
-   }
-   tempDouble = fabs(tempCY - tempLT);
-   if( tempDouble > trueRange )
-   {
-      trueRange = tempDouble;
-   }
-   sp->a3Total -= closeMinusTrueLow;
-   sp->b3Total -= trueRange;
+   sp->a3Total -= sp->cb_term_closeMinusTrueLow[sp->term_Idx];
+   sp->b3Total -= sp->cb_term_trueRange[sp->term_Idx];
    /* Last operation is to write the output. Must
     * be done after the trailing index have all been
     * taken care of because the caller is allowed
@@ -1346,36 +1182,18 @@ static void TA_ULTOSC_StepInternal( struct TA_ULTOSC_Stream *sp, double inHigh, 
    *outReal= 100.0 * (sp->output / 7.0);
    /* Increment indexes */
    sp->lag1_inClose = inClose;
-   sp->ring_trailingIdx1_inHigh[sp->ringPos_trailingIdx1] = inHigh;
-   sp->ring_trailingIdx1_inLow[sp->ringPos_trailingIdx1] = inLow;
-   sp->ring_trailingIdx1_inClose[sp->ringPos_trailingIdx1] = inClose;
-   sp->ringPos_trailingIdx1 = sp->ringPos_trailingIdx1 + 1;
-   if( sp->ringPos_trailingIdx1 >= sp->ringCap_trailingIdx1 )
-   {
-      sp->ringPos_trailingIdx1 = 0;
-   }
-   sp->ring_trailingIdx2_inHigh[sp->ringPos_trailingIdx2] = inHigh;
-   sp->ring_trailingIdx2_inLow[sp->ringPos_trailingIdx2] = inLow;
-   sp->ring_trailingIdx2_inClose[sp->ringPos_trailingIdx2] = inClose;
-   sp->ringPos_trailingIdx2 = sp->ringPos_trailingIdx2 + 1;
-   if( sp->ringPos_trailingIdx2 >= sp->ringCap_trailingIdx2 )
-   {
-      sp->ringPos_trailingIdx2 = 0;
-   }
-   sp->ring_trailingIdx3_inHigh[sp->ringPos_trailingIdx3] = inHigh;
-   sp->ring_trailingIdx3_inLow[sp->ringPos_trailingIdx3] = inLow;
-   sp->ring_trailingIdx3_inClose[sp->ringPos_trailingIdx3] = inClose;
-   sp->ringPos_trailingIdx3 = sp->ringPos_trailingIdx3 + 1;
-   if( sp->ringPos_trailingIdx3 >= sp->ringCap_trailingIdx3 )
-   {
-      sp->ringPos_trailingIdx3 = 0;
-   }
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_ULTOSC_OpenInternal( struct TA_ULTOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double *outReal )
 {
    struct TA_ULTOSC_Stream *sp;
+   double local_term_closeMinusTrueLow[32];
+   double *term_closeMinusTrueLow;
+   double local_term_trueRange[32];
+   double *term_trueRange;
+   int term_Idx;
+   int maxIdx_term;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
@@ -1405,6 +1223,10 @@ TA_RetCode TA_ULTOSC_OpenInternal( struct TA_ULTOSC_Stream **stream, const doubl
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
 
    {
+      /* The two per-bar terms the three moving sums are built from. Both are a
+       * pure function of the bar, so each bar is evaluated once on entry and read
+       * back when it leaves each of the three windows.
+       */
       double a1Total = 0.0;
       double a2Total = 0.0;
       double a3Total = 0.0;
@@ -1426,12 +1248,15 @@ TA_RetCode TA_ULTOSC_OpenInternal( struct TA_ULTOSC_Stream **stream, const doubl
       int j;
       int today;
       int outIdx;
-      int trailingIdx1;
-      int trailingIdx2;
-      int trailingIdx3;
+      int trailingPos1 = 0;
+      int trailingPos2 = 0;
       int usedFlag[3];
       int periods[3];
       int sortedPeriods[3];
+      /* One entry per bar of the longest window. Stays on the stack for every
+       * period up to 32, which covers the 7/14/28 default.
+       */
+      /* Id, Type, Static Size */
       dummyBegIdx = 0;
       dummyNBElement = 0;
       /* Ensure that the time periods are ordered from shortest to longest.
@@ -1472,53 +1297,39 @@ TA_RetCode TA_ULTOSC_OpenInternal( struct TA_ULTOSC_Stream **stream, const doubl
       {
          return TA_BAD_PARAM;
       }
-      /* Prime running totals used in moving averages */
+      if( optInTimePeriod3 < 1 ) return TA_INTERNAL_ERROR(137);
+      if( (int)optInTimePeriod3 > (int)(sizeof(local_term_closeMinusTrueLow)/sizeof(double)) )
+      {
+         term_closeMinusTrueLow = TA_Malloc( sizeof(double)*optInTimePeriod3 );
+         if( !term_closeMinusTrueLow )
+         {
+            return TA_ALLOC_ERR;
+         }
+         term_trueRange = TA_Malloc( sizeof(double)*optInTimePeriod3 );
+         if( !term_trueRange )
+         {
+            TA_Free( term_closeMinusTrueLow );
+            return TA_ALLOC_ERR;
+         }
+      }
+      else
+      {
+         term_closeMinusTrueLow = &local_term_closeMinusTrueLow[0];
+         term_trueRange = &local_term_trueRange[0];
+      }
+      maxIdx_term = (optInTimePeriod3-1);
+      term_Idx = 0;
+      /* Prime running totals used in moving averages.
+       *
+       * One pass over the longest warm-up window replaces three overlapping
+       * passes. A bar inside the shorter windows is added to those totals as it
+       * is reached, so every total still accumulates exactly the same bars in
+       * exactly the same ascending order as three separate loops did.
+       */
       a1Total = 0;
       b1Total = 0;
-      for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 )
-      {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
-         trueLow = min(tempLT,tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = fabs(tempCY - tempHT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         tempDouble = fabs(tempCY - tempLT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         a1Total += closeMinusTrueLow;
-         b1Total += trueRange;
-      }
       a2Total = 0;
       b2Total = 0;
-      for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 )
-      {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
-         trueLow = min(tempLT,tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = fabs(tempCY - tempHT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         tempDouble = fabs(tempCY - tempLT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         a2Total += closeMinusTrueLow;
-         b2Total += trueRange;
-      }
       a3Total = 0;
       b3Total = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 )
@@ -1539,15 +1350,40 @@ TA_RetCode TA_ULTOSC_OpenInternal( struct TA_ULTOSC_Stream **stream, const doubl
          {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) term_Idx = 0;
+         if( i >= startIdx - optInTimePeriod1 + 1 )
+         {
+            a1Total += closeMinusTrueLow;
+            b1Total += trueRange;
+         }
+         if( i >= startIdx - optInTimePeriod2 + 1 )
+         {
+            a2Total += closeMinusTrueLow;
+            b2Total += trueRange;
+         }
          a3Total += closeMinusTrueLow;
          b3Total += trueRange;
       }
       /* Calculate oscillator */
       today = startIdx;
       outIdx = 0;
-      trailingIdx1 = today - optInTimePeriod1 + 1;
-      trailingIdx2 = today - optInTimePeriod2 + 1;
-      trailingIdx3 = today - optInTimePeriod3 + 1;
+      /* The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
+       * `today` and, once advanced past it, the slot of the bar leaving the
+       * longest window. The two shorter windows trail it by a fixed offset.
+       */
+      trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+      if( trailingPos1 >= optInTimePeriod3 )
+      {
+         trailingPos1 -= optInTimePeriod3;
+      }
+      trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+      if( trailingPos2 >= optInTimePeriod3 )
+      {
+         trailingPos2 -= optInTimePeriod3;
+      }
       while( today <= endIdx )
       {
          /* Add on today's terms */
@@ -1567,6 +1403,8 @@ TA_RetCode TA_ULTOSC_OpenInternal( struct TA_ULTOSC_Stream **stream, const doubl
          {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
          a1Total += closeMinusTrueLow;
          a2Total += closeMinusTrueLow;
          a3Total += closeMinusTrueLow;
@@ -1587,61 +1425,27 @@ TA_RetCode TA_ULTOSC_OpenInternal( struct TA_ULTOSC_Stream **stream, const doubl
          {
             output += a3Total / b3Total;
          }
-         /* Remove the trailing terms to prepare for next day */
-         tempLT = inLow[trailingIdx1];
-         tempHT = inHigh[trailingIdx1];
-         tempCY = inClose[trailingIdx1 - 1];
-         trueLow = min(tempLT,tempCY);
-         closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = fabs(tempCY - tempHT);
-         if( tempDouble > trueRange )
+         /* Remove the trailing terms to prepare for next day. Each was evaluated
+          * once, when its bar entered the ring.
+          */
+         a1Total -= term_closeMinusTrueLow[trailingPos1];
+         b1Total -= term_trueRange[trailingPos1];
+         trailingPos1 += 1;
+         if( trailingPos1 >= optInTimePeriod3 )
          {
-            trueRange = tempDouble;
+            trailingPos1 = 0;
          }
-         tempDouble = fabs(tempCY - tempLT);
-         if( tempDouble > trueRange )
+         a2Total -= term_closeMinusTrueLow[trailingPos2];
+         b2Total -= term_trueRange[trailingPos2];
+         trailingPos2 += 1;
+         if( trailingPos2 >= optInTimePeriod3 )
          {
-            trueRange = tempDouble;
+            trailingPos2 = 0;
          }
-         a1Total -= closeMinusTrueLow;
-         b1Total -= trueRange;
-         tempLT = inLow[trailingIdx2];
-         tempHT = inHigh[trailingIdx2];
-         tempCY = inClose[trailingIdx2 - 1];
-         trueLow = min(tempLT,tempCY);
-         closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = fabs(tempCY - tempHT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         tempDouble = fabs(tempCY - tempLT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         a2Total -= closeMinusTrueLow;
-         b2Total -= trueRange;
-         tempLT = inLow[trailingIdx3];
-         tempHT = inHigh[trailingIdx3];
-         tempCY = inClose[trailingIdx3 - 1];
-         trueLow = min(tempLT,tempCY);
-         closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = fabs(tempCY - tempHT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         tempDouble = fabs(tempCY - tempLT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         a3Total -= closeMinusTrueLow;
-         b3Total -= trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) term_Idx = 0;
+         a3Total -= term_closeMinusTrueLow[term_Idx];
+         b3Total -= term_trueRange[term_Idx];
          /* Last operation is to write the output. Must
           * be done after the trailing index have all been
           * taken care of because the caller is allowed
@@ -1652,9 +1456,6 @@ TA_RetCode TA_ULTOSC_OpenInternal( struct TA_ULTOSC_Stream **stream, const doubl
          /* Increment indexes */
          outIdx += 1;
          today += 1;
-         trailingIdx1 += 1;
-         trailingIdx2 += 1;
-         trailingIdx3 += 1;
       }
       /* All done. Indicate the output limits and return. */
       dummyNBElement = outIdx;
@@ -1662,7 +1463,7 @@ TA_RetCode TA_ULTOSC_OpenInternal( struct TA_ULTOSC_Stream **stream, const doubl
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_ULTOSC_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
+      if( !sp ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod1 = optInTimePeriod1;
       sp->optInTimePeriod2 = optInTimePeriod2;
@@ -1674,97 +1475,24 @@ TA_RetCode TA_ULTOSC_OpenInternal( struct TA_ULTOSC_Stream **stream, const doubl
       sp->b2Total = b2Total;
       sp->b3Total = b3Total;
       sp->output = output;
-      sp->ringLag_trailingIdx1 = (int)(today - trailingIdx1);
-      sp->ringCap_trailingIdx1 = sp->ringLag_trailingIdx1 + 2;
-      if( sp->ringLag_trailingIdx1 < 0 || sp->ringCap_trailingIdx1 > historyLen ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_trailingIdx1 > 0 ? sp->ringCap_trailingIdx1 : 1);
-        sp->ring_trailingIdx1_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx1_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx1_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx1_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx1; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx1_inHigh[fillJ % sp->ringCap_trailingIdx1] = inHigh[fillJ];
-        }
-        sp->ring_trailingIdx1_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx1_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx1_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx1_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx1; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx1_inLow[fillJ % sp->ringCap_trailingIdx1] = inLow[fillJ];
-        }
-        sp->ring_trailingIdx1_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx1_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx1_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx1_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx1; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx1_inClose[fillJ % sp->ringCap_trailingIdx1] = inClose[fillJ];
-        }
-      }
-      sp->ringPos_trailingIdx1 = historyLen % sp->ringCap_trailingIdx1;
-      sp->ringLag_trailingIdx2 = (int)(today - trailingIdx2);
-      sp->ringCap_trailingIdx2 = sp->ringLag_trailingIdx2 + 2;
-      if( sp->ringLag_trailingIdx2 < 0 || sp->ringCap_trailingIdx2 > historyLen ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_trailingIdx2 > 0 ? sp->ringCap_trailingIdx2 : 1);
-        sp->ring_trailingIdx2_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx2_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx2_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx2_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx2; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx2_inHigh[fillJ % sp->ringCap_trailingIdx2] = inHigh[fillJ];
-        }
-        sp->ring_trailingIdx2_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx2_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx2_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx2_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx2; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx2_inLow[fillJ % sp->ringCap_trailingIdx2] = inLow[fillJ];
-        }
-        sp->ring_trailingIdx2_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx2_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx2_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx2_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx2; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx2_inClose[fillJ % sp->ringCap_trailingIdx2] = inClose[fillJ];
-        }
-      }
-      sp->ringPos_trailingIdx2 = historyLen % sp->ringCap_trailingIdx2;
-      sp->ringLag_trailingIdx3 = (int)(today - trailingIdx3);
-      sp->ringCap_trailingIdx3 = sp->ringLag_trailingIdx3 + 2;
-      if( sp->ringLag_trailingIdx3 < 0 || sp->ringCap_trailingIdx3 > historyLen ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_trailingIdx3 > 0 ? sp->ringCap_trailingIdx3 : 1);
-        sp->ring_trailingIdx3_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx3_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx3_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx3_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx3; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx3_inHigh[fillJ % sp->ringCap_trailingIdx3] = inHigh[fillJ];
-        }
-        sp->ring_trailingIdx3_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx3_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx3_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx3_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx3; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx3_inLow[fillJ % sp->ringCap_trailingIdx3] = inLow[fillJ];
-        }
-        sp->ring_trailingIdx3_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx3_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx3_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx3_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx3; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx3_inClose[fillJ % sp->ringCap_trailingIdx3] = inClose[fillJ];
-        }
-      }
-      sp->ringPos_trailingIdx3 = historyLen % sp->ringCap_trailingIdx3;
+      sp->trailingPos1 = trailingPos1;
+      sp->trailingPos2 = trailingPos2;
+      sp->term_Idx = term_Idx;
+      sp->maxIdx_term = maxIdx_term;
       sp->lag1_inClose = inClose[historyLen - 1];
+      sp->cbSize_term = maxIdx_term + 1;
+      if( sp->cbSize_term < 1 || sp->cbSize_term > historyLen + 1 ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      sp->cb_term_closeMinusTrueLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
+      if( !sp->cb_term_closeMinusTrueLow ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->cbMirror_term_closeMinusTrueLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
+      if( !sp->cbMirror_term_closeMinusTrueLow ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_term_closeMinusTrueLow, term_closeMinusTrueLow, sizeof(double) * (size_t)sp->cbSize_term );
+      sp->cb_term_trueRange = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
+      if( !sp->cb_term_trueRange ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->cbMirror_term_trueRange = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
+      if( !sp->cbMirror_term_trueRange ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_term_trueRange, term_trueRange, sizeof(double) * (size_t)sp->cbSize_term );
+      if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); 
       *outReal = lastValue_outReal;
       *stream = sp;
       return TA_SUCCESS;
@@ -1779,6 +1507,12 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Open( TA_ULTOSC_Stream **stream, const double in
 TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, int *outBegIdx, int *outNBElement, double outReal[] )
 {
    struct TA_ULTOSC_Stream *sp;
+   double local_term_closeMinusTrueLow[32];
+   double *term_closeMinusTrueLow;
+   double local_term_trueRange[32];
+   double *term_trueRange;
+   int term_Idx;
+   int maxIdx_term;
    int endIdx;
    int startIdx;
    int dummyBegIdx;
@@ -1809,6 +1543,10 @@ TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const do
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
 
    {
+      /* The two per-bar terms the three moving sums are built from. Both are a
+       * pure function of the bar, so each bar is evaluated once on entry and read
+       * back when it leaves each of the three windows.
+       */
       double a1Total = 0.0;
       double a2Total = 0.0;
       double a3Total = 0.0;
@@ -1830,12 +1568,15 @@ TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const do
       int j;
       int today;
       int outIdx;
-      int trailingIdx1;
-      int trailingIdx2;
-      int trailingIdx3;
+      int trailingPos1 = 0;
+      int trailingPos2 = 0;
       int usedFlag[3];
       int periods[3];
       int sortedPeriods[3];
+      /* One entry per bar of the longest window. Stays on the stack for every
+       * period up to 32, which covers the 7/14/28 default.
+       */
+      /* Id, Type, Static Size */
       *outBegIdx= 0;
       *outNBElement= 0;
       /* Ensure that the time periods are ordered from shortest to longest.
@@ -1876,53 +1617,39 @@ TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const do
       {
          return TA_BAD_PARAM;
       }
-      /* Prime running totals used in moving averages */
+      if( optInTimePeriod3 < 1 ) return TA_INTERNAL_ERROR(137);
+      if( (int)optInTimePeriod3 > (int)(sizeof(local_term_closeMinusTrueLow)/sizeof(double)) )
+      {
+         term_closeMinusTrueLow = TA_Malloc( sizeof(double)*optInTimePeriod3 );
+         if( !term_closeMinusTrueLow )
+         {
+            return TA_ALLOC_ERR;
+         }
+         term_trueRange = TA_Malloc( sizeof(double)*optInTimePeriod3 );
+         if( !term_trueRange )
+         {
+            TA_Free( term_closeMinusTrueLow );
+            return TA_ALLOC_ERR;
+         }
+      }
+      else
+      {
+         term_closeMinusTrueLow = &local_term_closeMinusTrueLow[0];
+         term_trueRange = &local_term_trueRange[0];
+      }
+      maxIdx_term = (optInTimePeriod3-1);
+      term_Idx = 0;
+      /* Prime running totals used in moving averages.
+       *
+       * One pass over the longest warm-up window replaces three overlapping
+       * passes. A bar inside the shorter windows is added to those totals as it
+       * is reached, so every total still accumulates exactly the same bars in
+       * exactly the same ascending order as three separate loops did.
+       */
       a1Total = 0;
       b1Total = 0;
-      for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 )
-      {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
-         trueLow = min(tempLT,tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = fabs(tempCY - tempHT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         tempDouble = fabs(tempCY - tempLT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         a1Total += closeMinusTrueLow;
-         b1Total += trueRange;
-      }
       a2Total = 0;
       b2Total = 0;
-      for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 )
-      {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
-         trueLow = min(tempLT,tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = fabs(tempCY - tempHT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         tempDouble = fabs(tempCY - tempLT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         a2Total += closeMinusTrueLow;
-         b2Total += trueRange;
-      }
       a3Total = 0;
       b3Total = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 )
@@ -1943,15 +1670,40 @@ TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const do
          {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) term_Idx = 0;
+         if( i >= startIdx - optInTimePeriod1 + 1 )
+         {
+            a1Total += closeMinusTrueLow;
+            b1Total += trueRange;
+         }
+         if( i >= startIdx - optInTimePeriod2 + 1 )
+         {
+            a2Total += closeMinusTrueLow;
+            b2Total += trueRange;
+         }
          a3Total += closeMinusTrueLow;
          b3Total += trueRange;
       }
       /* Calculate oscillator */
       today = startIdx;
       outIdx = 0;
-      trailingIdx1 = today - optInTimePeriod1 + 1;
-      trailingIdx2 = today - optInTimePeriod2 + 1;
-      trailingIdx3 = today - optInTimePeriod3 + 1;
+      /* The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
+       * `today` and, once advanced past it, the slot of the bar leaving the
+       * longest window. The two shorter windows trail it by a fixed offset.
+       */
+      trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+      if( trailingPos1 >= optInTimePeriod3 )
+      {
+         trailingPos1 -= optInTimePeriod3;
+      }
+      trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+      if( trailingPos2 >= optInTimePeriod3 )
+      {
+         trailingPos2 -= optInTimePeriod3;
+      }
       while( today <= endIdx )
       {
          /* Add on today's terms */
@@ -1971,6 +1723,8 @@ TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const do
          {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
          a1Total += closeMinusTrueLow;
          a2Total += closeMinusTrueLow;
          a3Total += closeMinusTrueLow;
@@ -1991,61 +1745,27 @@ TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const do
          {
             output += a3Total / b3Total;
          }
-         /* Remove the trailing terms to prepare for next day */
-         tempLT = inLow[trailingIdx1];
-         tempHT = inHigh[trailingIdx1];
-         tempCY = inClose[trailingIdx1 - 1];
-         trueLow = min(tempLT,tempCY);
-         closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = fabs(tempCY - tempHT);
-         if( tempDouble > trueRange )
+         /* Remove the trailing terms to prepare for next day. Each was evaluated
+          * once, when its bar entered the ring.
+          */
+         a1Total -= term_closeMinusTrueLow[trailingPos1];
+         b1Total -= term_trueRange[trailingPos1];
+         trailingPos1 += 1;
+         if( trailingPos1 >= optInTimePeriod3 )
          {
-            trueRange = tempDouble;
+            trailingPos1 = 0;
          }
-         tempDouble = fabs(tempCY - tempLT);
-         if( tempDouble > trueRange )
+         a2Total -= term_closeMinusTrueLow[trailingPos2];
+         b2Total -= term_trueRange[trailingPos2];
+         trailingPos2 += 1;
+         if( trailingPos2 >= optInTimePeriod3 )
          {
-            trueRange = tempDouble;
+            trailingPos2 = 0;
          }
-         a1Total -= closeMinusTrueLow;
-         b1Total -= trueRange;
-         tempLT = inLow[trailingIdx2];
-         tempHT = inHigh[trailingIdx2];
-         tempCY = inClose[trailingIdx2 - 1];
-         trueLow = min(tempLT,tempCY);
-         closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = fabs(tempCY - tempHT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         tempDouble = fabs(tempCY - tempLT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         a2Total -= closeMinusTrueLow;
-         b2Total -= trueRange;
-         tempLT = inLow[trailingIdx3];
-         tempHT = inHigh[trailingIdx3];
-         tempCY = inClose[trailingIdx3 - 1];
-         trueLow = min(tempLT,tempCY);
-         closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = fabs(tempCY - tempHT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         tempDouble = fabs(tempCY - tempLT);
-         if( tempDouble > trueRange )
-         {
-            trueRange = tempDouble;
-         }
-         a3Total -= closeMinusTrueLow;
-         b3Total -= trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) term_Idx = 0;
+         a3Total -= term_closeMinusTrueLow[term_Idx];
+         b3Total -= term_trueRange[term_Idx];
          /* Last operation is to write the output. Must
           * be done after the trailing index have all been
           * taken care of because the caller is allowed
@@ -2056,9 +1776,6 @@ TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const do
          /* Increment indexes */
          outIdx += 1;
          today += 1;
-         trailingIdx1 += 1;
-         trailingIdx2 += 1;
-         trailingIdx3 += 1;
       }
       /* All done. Indicate the output limits and return. */
       *outNBElement= outIdx;
@@ -2066,7 +1783,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const do
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_ULTOSC_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
+      if( !sp ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod1 = optInTimePeriod1;
       sp->optInTimePeriod2 = optInTimePeriod2;
@@ -2078,97 +1795,24 @@ TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const do
       sp->b2Total = b2Total;
       sp->b3Total = b3Total;
       sp->output = output;
-      sp->ringLag_trailingIdx1 = (int)(today - trailingIdx1);
-      sp->ringCap_trailingIdx1 = sp->ringLag_trailingIdx1 + 2;
-      if( sp->ringLag_trailingIdx1 < 0 || sp->ringCap_trailingIdx1 > historyLen ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_trailingIdx1 > 0 ? sp->ringCap_trailingIdx1 : 1);
-        sp->ring_trailingIdx1_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx1_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx1_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx1_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx1; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx1_inHigh[fillJ % sp->ringCap_trailingIdx1] = inHigh[fillJ];
-        }
-        sp->ring_trailingIdx1_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx1_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx1_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx1_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx1; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx1_inLow[fillJ % sp->ringCap_trailingIdx1] = inLow[fillJ];
-        }
-        sp->ring_trailingIdx1_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx1_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx1_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx1_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx1; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx1_inClose[fillJ % sp->ringCap_trailingIdx1] = inClose[fillJ];
-        }
-      }
-      sp->ringPos_trailingIdx1 = historyLen % sp->ringCap_trailingIdx1;
-      sp->ringLag_trailingIdx2 = (int)(today - trailingIdx2);
-      sp->ringCap_trailingIdx2 = sp->ringLag_trailingIdx2 + 2;
-      if( sp->ringLag_trailingIdx2 < 0 || sp->ringCap_trailingIdx2 > historyLen ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_trailingIdx2 > 0 ? sp->ringCap_trailingIdx2 : 1);
-        sp->ring_trailingIdx2_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx2_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx2_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx2_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx2; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx2_inHigh[fillJ % sp->ringCap_trailingIdx2] = inHigh[fillJ];
-        }
-        sp->ring_trailingIdx2_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx2_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx2_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx2_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx2; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx2_inLow[fillJ % sp->ringCap_trailingIdx2] = inLow[fillJ];
-        }
-        sp->ring_trailingIdx2_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx2_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx2_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx2_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx2; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx2_inClose[fillJ % sp->ringCap_trailingIdx2] = inClose[fillJ];
-        }
-      }
-      sp->ringPos_trailingIdx2 = historyLen % sp->ringCap_trailingIdx2;
-      sp->ringLag_trailingIdx3 = (int)(today - trailingIdx3);
-      sp->ringCap_trailingIdx3 = sp->ringLag_trailingIdx3 + 2;
-      if( sp->ringLag_trailingIdx3 < 0 || sp->ringCap_trailingIdx3 > historyLen ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_trailingIdx3 > 0 ? sp->ringCap_trailingIdx3 : 1);
-        sp->ring_trailingIdx3_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx3_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx3_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx3_inHigh ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx3; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx3_inHigh[fillJ % sp->ringCap_trailingIdx3] = inHigh[fillJ];
-        }
-        sp->ring_trailingIdx3_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx3_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx3_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx3_inLow ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx3; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx3_inLow[fillJ % sp->ringCap_trailingIdx3] = inLow[fillJ];
-        }
-        sp->ring_trailingIdx3_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx3_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx3_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx3_inClose ) { TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_trailingIdx3; fillJ < historyLen; fillJ++ )
-             sp->ring_trailingIdx3_inClose[fillJ % sp->ringCap_trailingIdx3] = inClose[fillJ];
-        }
-      }
-      sp->ringPos_trailingIdx3 = historyLen % sp->ringCap_trailingIdx3;
+      sp->trailingPos1 = trailingPos1;
+      sp->trailingPos2 = trailingPos2;
+      sp->term_Idx = term_Idx;
+      sp->maxIdx_term = maxIdx_term;
       sp->lag1_inClose = inClose[historyLen - 1];
+      sp->cbSize_term = maxIdx_term + 1;
+      if( sp->cbSize_term < 1 || sp->cbSize_term > historyLen + 1 ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      sp->cb_term_closeMinusTrueLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
+      if( !sp->cb_term_closeMinusTrueLow ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->cbMirror_term_closeMinusTrueLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
+      if( !sp->cbMirror_term_closeMinusTrueLow ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_term_closeMinusTrueLow, term_closeMinusTrueLow, sizeof(double) * (size_t)sp->cbSize_term );
+      sp->cb_term_trueRange = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
+      if( !sp->cb_term_trueRange ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      sp->cbMirror_term_trueRange = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
+      if( !sp->cbMirror_term_trueRange ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      memcpy( sp->cb_term_trueRange, term_trueRange, sizeof(double) * (size_t)sp->cbSize_term );
+      if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); 
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -2187,24 +1831,10 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Peek( const TA_ULTOSC_Stream *stream, double inH
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.ring_trailingIdx1_inHigh = stream->ringMirror_trailingIdx1_inHigh;
-   memcpy( scratch.ring_trailingIdx1_inHigh, stream->ring_trailingIdx1_inHigh, sizeof(double) * (size_t)(stream->ringCap_trailingIdx1 > 0 ? stream->ringCap_trailingIdx1 : 1) );
-   scratch.ring_trailingIdx1_inLow = stream->ringMirror_trailingIdx1_inLow;
-   memcpy( scratch.ring_trailingIdx1_inLow, stream->ring_trailingIdx1_inLow, sizeof(double) * (size_t)(stream->ringCap_trailingIdx1 > 0 ? stream->ringCap_trailingIdx1 : 1) );
-   scratch.ring_trailingIdx1_inClose = stream->ringMirror_trailingIdx1_inClose;
-   memcpy( scratch.ring_trailingIdx1_inClose, stream->ring_trailingIdx1_inClose, sizeof(double) * (size_t)(stream->ringCap_trailingIdx1 > 0 ? stream->ringCap_trailingIdx1 : 1) );
-   scratch.ring_trailingIdx2_inHigh = stream->ringMirror_trailingIdx2_inHigh;
-   memcpy( scratch.ring_trailingIdx2_inHigh, stream->ring_trailingIdx2_inHigh, sizeof(double) * (size_t)(stream->ringCap_trailingIdx2 > 0 ? stream->ringCap_trailingIdx2 : 1) );
-   scratch.ring_trailingIdx2_inLow = stream->ringMirror_trailingIdx2_inLow;
-   memcpy( scratch.ring_trailingIdx2_inLow, stream->ring_trailingIdx2_inLow, sizeof(double) * (size_t)(stream->ringCap_trailingIdx2 > 0 ? stream->ringCap_trailingIdx2 : 1) );
-   scratch.ring_trailingIdx2_inClose = stream->ringMirror_trailingIdx2_inClose;
-   memcpy( scratch.ring_trailingIdx2_inClose, stream->ring_trailingIdx2_inClose, sizeof(double) * (size_t)(stream->ringCap_trailingIdx2 > 0 ? stream->ringCap_trailingIdx2 : 1) );
-   scratch.ring_trailingIdx3_inHigh = stream->ringMirror_trailingIdx3_inHigh;
-   memcpy( scratch.ring_trailingIdx3_inHigh, stream->ring_trailingIdx3_inHigh, sizeof(double) * (size_t)(stream->ringCap_trailingIdx3 > 0 ? stream->ringCap_trailingIdx3 : 1) );
-   scratch.ring_trailingIdx3_inLow = stream->ringMirror_trailingIdx3_inLow;
-   memcpy( scratch.ring_trailingIdx3_inLow, stream->ring_trailingIdx3_inLow, sizeof(double) * (size_t)(stream->ringCap_trailingIdx3 > 0 ? stream->ringCap_trailingIdx3 : 1) );
-   scratch.ring_trailingIdx3_inClose = stream->ringMirror_trailingIdx3_inClose;
-   memcpy( scratch.ring_trailingIdx3_inClose, stream->ring_trailingIdx3_inClose, sizeof(double) * (size_t)(stream->ringCap_trailingIdx3 > 0 ? stream->ringCap_trailingIdx3 : 1) );
+   scratch.cb_term_closeMinusTrueLow = stream->cbMirror_term_closeMinusTrueLow;
+   memcpy( scratch.cb_term_closeMinusTrueLow, stream->cb_term_closeMinusTrueLow, sizeof(double) * (size_t)stream->cbSize_term );
+   scratch.cb_term_trueRange = stream->cbMirror_term_trueRange;
+   memcpy( scratch.cb_term_trueRange, stream->cb_term_trueRange, sizeof(double) * (size_t)stream->cbSize_term );
    TA_ULTOSC_StepInternal( &scratch, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }

@@ -45,6 +45,7 @@
  *  -------------------------------------------------------------------
  *  DM       Drew McCormack (http://www.trade-strategist.com)
  *  MF       Mario Fortier
+ *  DX       Dex Hunter (https://github.com/dexhunter)
  *
  * Change history:
  *
@@ -52,6 +53,7 @@
  *  -------------------------------------------------------------------
  *  281206 DM   Initial Implementation
  *  010606 MF   Abstract local arrays. Detect divide by zero.
+ *  073126 DX   Evaluate each bar's terms once via a CIRCBUF ring (PR #154).
  */
 
 // Import types from parent module
@@ -235,12 +237,21 @@ impl Core {
         let mut j: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
-        let mut trailingIdx1: usize = 0_usize;
-        let mut trailingIdx2: usize = 0_usize;
-        let mut trailingIdx3: usize = 0_usize;
+        let mut trailingPos1: usize = 0_usize;
+        let mut trailingPos2: usize = 0_usize;
         let mut usedFlag: [i32; 3 as usize] = [0i32; 3 as usize];
         let mut periods: [i32; 3 as usize] = [0i32; 3 as usize];
         let mut sortedPeriods: [i32; 3 as usize] = [0i32; 3 as usize];
+        let mut term_closeMinusTrueLow: Vec<f64> = Vec::new();
+        let mut term_trueRange: Vec<f64> = Vec::new();
+        let mut term_Idx: usize = 0;
+        let mut maxIdx_term: usize = 31;
+        // The two per-bar terms the three moving sums are built from. Both are a
+        // pure function of the bar, so each bar is evaluated once on entry and read
+        // back when it leaves each of the three windows.
+        // One entry per bar of the longest window. Stays on the stack for every
+        // period up to 32, which covers the 7/14/28 default.
+        // Id, Type, Static Size
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Ensure that the time periods are ordered from shortest to longest.
@@ -281,53 +292,21 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
-        // Prime running totals used in moving averages
+        if optInTimePeriod3 < 1 { return RetCode::AllocErr; }
+        term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
+        term_trueRange = vec![0.0_f64; (optInTimePeriod3) as usize];
+        maxIdx_term = ((optInTimePeriod3) as usize) - 1;
+        term_Idx = 0;
+        // Prime running totals used in moving averages.
+        //
+        // One pass over the longest warm-up window replaces three overlapping
+        // passes. A bar inside the shorter windows is added to those totals as it
+        // is reached, so every total still accumulates exactly the same bars in
+        // exactly the same ascending order as three separate loops did.
         a1Total = 0.0;
         b1Total = 0.0;
-        // for( i = startIdx - (optInTimePeriod1) as usize + 1; i < startIdx; i += 1 )
-        i = startIdx - (optInTimePeriod1) as usize + 1;
-        while i < startIdx {
-            tempLT = inLow[i];
-            tempHT = inHigh[i];
-            tempCY = inClose[i - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[i] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a1Total += closeMinusTrueLow;
-            b1Total += trueRange;
-            i += 1;
-        }
         a2Total = 0.0;
         b2Total = 0.0;
-        // for( i = startIdx - (optInTimePeriod2) as usize + 1; i < startIdx; i += 1 )
-        i = startIdx - (optInTimePeriod2) as usize + 1;
-        while i < startIdx {
-            tempLT = inLow[i];
-            tempHT = inHigh[i];
-            tempCY = inClose[i - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[i] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a2Total += closeMinusTrueLow;
-            b2Total += trueRange;
-            i += 1;
-        }
         a3Total = 0.0;
         b3Total = 0.0;
         // for( i = startIdx - (optInTimePeriod3) as usize + 1; i < startIdx; i += 1 )
@@ -347,6 +326,18 @@ impl Core {
             if tempDouble > trueRange {
                 trueRange = tempDouble;
             }
+            term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+            term_trueRange[term_Idx] = trueRange;
+            term_Idx += 1;
+            if term_Idx > maxIdx_term { term_Idx = 0; }
+            if i >= startIdx - (optInTimePeriod1) as usize + 1 {
+                a1Total += closeMinusTrueLow;
+                b1Total += trueRange;
+            }
+            if i >= startIdx - (optInTimePeriod2) as usize + 1 {
+                a2Total += closeMinusTrueLow;
+                b2Total += trueRange;
+            }
             a3Total += closeMinusTrueLow;
             b3Total += trueRange;
             i += 1;
@@ -354,9 +345,17 @@ impl Core {
         // Calculate oscillator
         today = startIdx;
         outIdx = 0;
-        trailingIdx1 = today - (optInTimePeriod1) as usize + 1;
-        trailingIdx2 = today - (optInTimePeriod2) as usize + 1;
-        trailingIdx3 = today - (optInTimePeriod3) as usize + 1;
+        // The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
+        // `today` and, once advanced past it, the slot of the bar leaving the
+        // longest window. The two shorter windows trail it by a fixed offset.
+        trailingPos1 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod1) as usize + 1;
+        if trailingPos1 >= (optInTimePeriod3) as usize {
+            trailingPos1 -= (optInTimePeriod3) as usize;
+        }
+        trailingPos2 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod2) as usize + 1;
+        if trailingPos2 >= (optInTimePeriod3) as usize {
+            trailingPos2 -= (optInTimePeriod3) as usize;
+        }
         while today <= endIdx {
             // Add on today's terms
             tempLT = inLow[today];
@@ -373,6 +372,8 @@ impl Core {
             if tempDouble > trueRange {
                 trueRange = tempDouble;
             }
+            term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+            term_trueRange[term_Idx] = trueRange;
             a1Total += closeMinusTrueLow;
             a2Total += closeMinusTrueLow;
             a3Total += closeMinusTrueLow;
@@ -390,55 +391,24 @@ impl Core {
             if !((b3Total).abs() < 1e-14) {
                 output += a3Total / b3Total;
             }
-            // Remove the trailing terms to prepare for next day
-            tempLT = inLow[trailingIdx1];
-            tempHT = inHigh[trailingIdx1];
-            tempCY = inClose[trailingIdx1 - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
+            // Remove the trailing terms to prepare for next day. Each was evaluated
+            // once, when its bar entered the ring.
+            a1Total -= term_closeMinusTrueLow[trailingPos1];
+            b1Total -= term_trueRange[trailingPos1];
+            trailingPos1 += 1;
+            if trailingPos1 >= (optInTimePeriod3) as usize {
+                trailingPos1 = 0;
             }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
+            a2Total -= term_closeMinusTrueLow[trailingPos2];
+            b2Total -= term_trueRange[trailingPos2];
+            trailingPos2 += 1;
+            if trailingPos2 >= (optInTimePeriod3) as usize {
+                trailingPos2 = 0;
             }
-            a1Total -= closeMinusTrueLow;
-            b1Total -= trueRange;
-            tempLT = inLow[trailingIdx2];
-            tempHT = inHigh[trailingIdx2];
-            tempCY = inClose[trailingIdx2 - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a2Total -= closeMinusTrueLow;
-            b2Total -= trueRange;
-            tempLT = inLow[trailingIdx3];
-            tempHT = inHigh[trailingIdx3];
-            tempCY = inClose[trailingIdx3 - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a3Total -= closeMinusTrueLow;
-            b3Total -= trueRange;
+            term_Idx += 1;
+            if term_Idx > maxIdx_term { term_Idx = 0; }
+            a3Total -= term_closeMinusTrueLow[term_Idx];
+            b3Total -= term_trueRange[term_Idx];
             // Last operation is to write the output. Must
             // be done after the trailing index have all been
             // taken care of because the caller is allowed
@@ -448,9 +418,6 @@ impl Core {
             // Increment indexes
             outIdx += 1;
             today += 1;
-            trailingIdx1 += 1;
-            trailingIdx2 += 1;
-            trailingIdx3 += 1;
         }
         // All done. Indicate the output limits and return.
         (*outNBElement) = outIdx;
@@ -499,12 +466,15 @@ impl Core {
         let mut j: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
-        let mut trailingIdx1: usize = 0_usize;
-        let mut trailingIdx2: usize = 0_usize;
-        let mut trailingIdx3: usize = 0_usize;
+        let mut trailingPos1: usize = 0_usize;
+        let mut trailingPos2: usize = 0_usize;
         let mut usedFlag: [i32; 3 as usize] = [0i32; 3 as usize];
         let mut periods: [i32; 3 as usize] = [0i32; 3 as usize];
         let mut sortedPeriods: [i32; 3 as usize] = [0i32; 3 as usize];
+        let mut term_closeMinusTrueLow: Vec<f64> = Vec::new();
+        let mut term_trueRange: Vec<f64> = Vec::new();
+        let mut term_Idx: usize = 0;
+        let mut maxIdx_term: usize = 31;
         assert!(endIdx < inHigh.len());
         assert!(endIdx < inLow.len());
         assert!(endIdx < inClose.len());
@@ -547,52 +517,15 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        if optInTimePeriod3 < 1 { return RetCode::AllocErr; }
+        term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
+        term_trueRange = vec![0.0_f64; (optInTimePeriod3) as usize];
+        maxIdx_term = ((optInTimePeriod3) as usize) - 1;
+        term_Idx = 0;
         a1Total = 0.0;
         b1Total = 0.0;
-        // for( i = startIdx - (optInTimePeriod1) as usize + 1; i < startIdx; i += 1 )
-        i = startIdx - (optInTimePeriod1) as usize + 1;
-        while i < startIdx {
-            tempLT = inLow[i];
-            tempHT = inHigh[i];
-            tempCY = inClose[i - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[i] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a1Total += closeMinusTrueLow;
-            b1Total += trueRange;
-            i += 1;
-        }
         a2Total = 0.0;
         b2Total = 0.0;
-        // for( i = startIdx - (optInTimePeriod2) as usize + 1; i < startIdx; i += 1 )
-        i = startIdx - (optInTimePeriod2) as usize + 1;
-        while i < startIdx {
-            tempLT = inLow[i];
-            tempHT = inHigh[i];
-            tempCY = inClose[i - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[i] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a2Total += closeMinusTrueLow;
-            b2Total += trueRange;
-            i += 1;
-        }
         a3Total = 0.0;
         b3Total = 0.0;
         // for( i = startIdx - (optInTimePeriod3) as usize + 1; i < startIdx; i += 1 )
@@ -612,15 +545,32 @@ impl Core {
             if tempDouble > trueRange {
                 trueRange = tempDouble;
             }
+            term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+            term_trueRange[term_Idx] = trueRange;
+            term_Idx += 1;
+            if term_Idx > maxIdx_term { term_Idx = 0; }
+            if i >= startIdx - (optInTimePeriod1) as usize + 1 {
+                a1Total += closeMinusTrueLow;
+                b1Total += trueRange;
+            }
+            if i >= startIdx - (optInTimePeriod2) as usize + 1 {
+                a2Total += closeMinusTrueLow;
+                b2Total += trueRange;
+            }
             a3Total += closeMinusTrueLow;
             b3Total += trueRange;
             i += 1;
         }
         today = startIdx;
         outIdx = 0;
-        trailingIdx1 = today - (optInTimePeriod1) as usize + 1;
-        trailingIdx2 = today - (optInTimePeriod2) as usize + 1;
-        trailingIdx3 = today - (optInTimePeriod3) as usize + 1;
+        trailingPos1 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod1) as usize + 1;
+        if trailingPos1 >= (optInTimePeriod3) as usize {
+            trailingPos1 -= (optInTimePeriod3) as usize;
+        }
+        trailingPos2 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod2) as usize + 1;
+        if trailingPos2 >= (optInTimePeriod3) as usize {
+            trailingPos2 -= (optInTimePeriod3) as usize;
+        }
         while today <= endIdx {
             tempLT = inLow[today];
             tempHT = inHigh[today];
@@ -636,6 +586,8 @@ impl Core {
             if tempDouble > trueRange {
                 trueRange = tempDouble;
             }
+            term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+            term_trueRange[term_Idx] = trueRange;
             a1Total += closeMinusTrueLow;
             a2Total += closeMinusTrueLow;
             a3Total += closeMinusTrueLow;
@@ -652,60 +604,25 @@ impl Core {
             if !((b3Total).abs() < 1e-14) {
                 output += a3Total / b3Total;
             }
-            tempLT = inLow[trailingIdx1];
-            tempHT = inHigh[trailingIdx1];
-            tempCY = inClose[trailingIdx1 - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
+            a1Total -= term_closeMinusTrueLow[trailingPos1];
+            b1Total -= term_trueRange[trailingPos1];
+            trailingPos1 += 1;
+            if trailingPos1 >= (optInTimePeriod3) as usize {
+                trailingPos1 = 0;
             }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
+            a2Total -= term_closeMinusTrueLow[trailingPos2];
+            b2Total -= term_trueRange[trailingPos2];
+            trailingPos2 += 1;
+            if trailingPos2 >= (optInTimePeriod3) as usize {
+                trailingPos2 = 0;
             }
-            a1Total -= closeMinusTrueLow;
-            b1Total -= trueRange;
-            tempLT = inLow[trailingIdx2];
-            tempHT = inHigh[trailingIdx2];
-            tempCY = inClose[trailingIdx2 - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a2Total -= closeMinusTrueLow;
-            b2Total -= trueRange;
-            tempLT = inLow[trailingIdx3];
-            tempHT = inHigh[trailingIdx3];
-            tempCY = inClose[trailingIdx3 - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a3Total -= closeMinusTrueLow;
-            b3Total -= trueRange;
+            term_Idx += 1;
+            if term_Idx > maxIdx_term { term_Idx = 0; }
+            a3Total -= term_closeMinusTrueLow[term_Idx];
+            b3Total -= term_trueRange[term_Idx];
             outReal[outIdx] = 100.0 * (output / 7.0);
             outIdx += 1;
             today += 1;
-            trailingIdx1 += 1;
-            trailingIdx2 += 1;
-            trailingIdx3 += 1;
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
@@ -738,25 +655,14 @@ struct UltoscStreamState {
     b2Total: f64,
     b3Total: f64,
     output: f64,
+    trailingPos1: usize,
+    trailingPos2: usize,
+    term_Idx: usize,
+    maxIdx_term: usize,
     lag1_inClose: f64,
-    ringPos_trailingIdx1: usize,
-    ringCap_trailingIdx1: usize,
-    ringLag_trailingIdx1: usize,
-    ring_trailingIdx1_inHigh: Vec<f64>,
-    ring_trailingIdx1_inLow: Vec<f64>,
-    ring_trailingIdx1_inClose: Vec<f64>,
-    ringPos_trailingIdx2: usize,
-    ringCap_trailingIdx2: usize,
-    ringLag_trailingIdx2: usize,
-    ring_trailingIdx2_inHigh: Vec<f64>,
-    ring_trailingIdx2_inLow: Vec<f64>,
-    ring_trailingIdx2_inClose: Vec<f64>,
-    ringPos_trailingIdx3: usize,
-    ringCap_trailingIdx3: usize,
-    ringLag_trailingIdx3: usize,
-    ring_trailingIdx3_inHigh: Vec<f64>,
-    ring_trailingIdx3_inLow: Vec<f64>,
-    ring_trailingIdx3_inClose: Vec<f64>,
+    cbSize_term: usize,
+    cb_term_closeMinusTrueLow: Vec<f64>,
+    cb_term_trueRange: Vec<f64>,
 }
 
 #[allow(non_snake_case)]
@@ -774,15 +680,6 @@ impl Core {
         let mut tempHT: f64 = 0.0_f64;
         let mut tempLT: f64 = 0.0_f64;
         let mut tempCY: f64 = 0.0_f64;
-        sp.ring_trailingIdx1_inHigh[sp.ringPos_trailingIdx1] = inHigh;
-        sp.ring_trailingIdx1_inLow[sp.ringPos_trailingIdx1] = inLow;
-        sp.ring_trailingIdx1_inClose[sp.ringPos_trailingIdx1] = inClose;
-        sp.ring_trailingIdx2_inHigh[sp.ringPos_trailingIdx2] = inHigh;
-        sp.ring_trailingIdx2_inLow[sp.ringPos_trailingIdx2] = inLow;
-        sp.ring_trailingIdx2_inClose[sp.ringPos_trailingIdx2] = inClose;
-        sp.ring_trailingIdx3_inHigh[sp.ringPos_trailingIdx3] = inHigh;
-        sp.ring_trailingIdx3_inLow[sp.ringPos_trailingIdx3] = inLow;
-        sp.ring_trailingIdx3_inClose[sp.ringPos_trailingIdx3] = inClose;
         // Add on today's terms
         tempLT = inLow;
         tempHT = inHigh;
@@ -798,6 +695,8 @@ impl Core {
         if tempDouble > trueRange {
             trueRange = tempDouble;
         }
+        sp.cb_term_closeMinusTrueLow[sp.term_Idx] = closeMinusTrueLow;
+        sp.cb_term_trueRange[sp.term_Idx] = trueRange;
         sp.a1Total += closeMinusTrueLow;
         sp.a2Total += closeMinusTrueLow;
         sp.a3Total += closeMinusTrueLow;
@@ -815,55 +714,26 @@ impl Core {
         if !((sp.b3Total).abs() < 1e-14) {
             sp.output += sp.a3Total / sp.b3Total;
         }
-        // Remove the trailing terms to prepare for next day
-        tempLT = sp.ring_trailingIdx1_inLow[((sp.ringPos_trailingIdx1 + sp.ringCap_trailingIdx1 - sp.ringLag_trailingIdx1) % sp.ringCap_trailingIdx1) as usize];
-        tempHT = sp.ring_trailingIdx1_inHigh[((sp.ringPos_trailingIdx1 + sp.ringCap_trailingIdx1 - sp.ringLag_trailingIdx1) % sp.ringCap_trailingIdx1) as usize];
-        tempCY = sp.ring_trailingIdx1_inClose[((sp.ringPos_trailingIdx1 + sp.ringCap_trailingIdx1 - sp.ringLag_trailingIdx1 - 1) % sp.ringCap_trailingIdx1) as usize];
-        trueLow = (tempLT).min(tempCY);
-        closeMinusTrueLow = sp.ring_trailingIdx1_inClose[((sp.ringPos_trailingIdx1 + sp.ringCap_trailingIdx1 - sp.ringLag_trailingIdx1) % sp.ringCap_trailingIdx1) as usize] - trueLow;
-        trueRange = tempHT - tempLT;
-        tempDouble = (tempCY - tempHT).abs();
-        if tempDouble > trueRange {
-            trueRange = tempDouble;
+        // Remove the trailing terms to prepare for next day. Each was evaluated
+        // once, when its bar entered the ring.
+        sp.a1Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos1];
+        sp.b1Total -= sp.cb_term_trueRange[sp.trailingPos1];
+        sp.trailingPos1 += 1;
+        if sp.trailingPos1 >= (sp.optInTimePeriod3) as usize {
+            sp.trailingPos1 = 0;
         }
-        tempDouble = (tempCY - tempLT).abs();
-        if tempDouble > trueRange {
-            trueRange = tempDouble;
+        sp.a2Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos2];
+        sp.b2Total -= sp.cb_term_trueRange[sp.trailingPos2];
+        sp.trailingPos2 += 1;
+        if sp.trailingPos2 >= (sp.optInTimePeriod3) as usize {
+            sp.trailingPos2 = 0;
         }
-        sp.a1Total -= closeMinusTrueLow;
-        sp.b1Total -= trueRange;
-        tempLT = sp.ring_trailingIdx2_inLow[((sp.ringPos_trailingIdx2 + sp.ringCap_trailingIdx2 - sp.ringLag_trailingIdx2) % sp.ringCap_trailingIdx2) as usize];
-        tempHT = sp.ring_trailingIdx2_inHigh[((sp.ringPos_trailingIdx2 + sp.ringCap_trailingIdx2 - sp.ringLag_trailingIdx2) % sp.ringCap_trailingIdx2) as usize];
-        tempCY = sp.ring_trailingIdx2_inClose[((sp.ringPos_trailingIdx2 + sp.ringCap_trailingIdx2 - sp.ringLag_trailingIdx2 - 1) % sp.ringCap_trailingIdx2) as usize];
-        trueLow = (tempLT).min(tempCY);
-        closeMinusTrueLow = sp.ring_trailingIdx2_inClose[((sp.ringPos_trailingIdx2 + sp.ringCap_trailingIdx2 - sp.ringLag_trailingIdx2) % sp.ringCap_trailingIdx2) as usize] - trueLow;
-        trueRange = tempHT - tempLT;
-        tempDouble = (tempCY - tempHT).abs();
-        if tempDouble > trueRange {
-            trueRange = tempDouble;
+        sp.term_Idx = sp.term_Idx + 1;
+        if sp.term_Idx > sp.maxIdx_term {
+            sp.term_Idx = 0;
         }
-        tempDouble = (tempCY - tempLT).abs();
-        if tempDouble > trueRange {
-            trueRange = tempDouble;
-        }
-        sp.a2Total -= closeMinusTrueLow;
-        sp.b2Total -= trueRange;
-        tempLT = sp.ring_trailingIdx3_inLow[((sp.ringPos_trailingIdx3 + sp.ringCap_trailingIdx3 - sp.ringLag_trailingIdx3) % sp.ringCap_trailingIdx3) as usize];
-        tempHT = sp.ring_trailingIdx3_inHigh[((sp.ringPos_trailingIdx3 + sp.ringCap_trailingIdx3 - sp.ringLag_trailingIdx3) % sp.ringCap_trailingIdx3) as usize];
-        tempCY = sp.ring_trailingIdx3_inClose[((sp.ringPos_trailingIdx3 + sp.ringCap_trailingIdx3 - sp.ringLag_trailingIdx3 - 1) % sp.ringCap_trailingIdx3) as usize];
-        trueLow = (tempLT).min(tempCY);
-        closeMinusTrueLow = sp.ring_trailingIdx3_inClose[((sp.ringPos_trailingIdx3 + sp.ringCap_trailingIdx3 - sp.ringLag_trailingIdx3) % sp.ringCap_trailingIdx3) as usize] - trueLow;
-        trueRange = tempHT - tempLT;
-        tempDouble = (tempCY - tempHT).abs();
-        if tempDouble > trueRange {
-            trueRange = tempDouble;
-        }
-        tempDouble = (tempCY - tempLT).abs();
-        if tempDouble > trueRange {
-            trueRange = tempDouble;
-        }
-        sp.a3Total -= closeMinusTrueLow;
-        sp.b3Total -= trueRange;
+        sp.a3Total -= sp.cb_term_closeMinusTrueLow[sp.term_Idx];
+        sp.b3Total -= sp.cb_term_trueRange[sp.term_Idx];
         // Last operation is to write the output. Must
         // be done after the trailing index have all been
         // taken care of because the caller is allowed
@@ -872,27 +742,6 @@ impl Core {
         (*outReal) = 100.0 * (sp.output / 7.0);
         // Increment indexes
         sp.lag1_inClose = inClose;
-        sp.ring_trailingIdx1_inHigh[sp.ringPos_trailingIdx1] = inHigh;
-        sp.ring_trailingIdx1_inLow[sp.ringPos_trailingIdx1] = inLow;
-        sp.ring_trailingIdx1_inClose[sp.ringPos_trailingIdx1] = inClose;
-        sp.ringPos_trailingIdx1 = sp.ringPos_trailingIdx1 + 1;
-        if sp.ringPos_trailingIdx1 >= sp.ringCap_trailingIdx1 {
-            sp.ringPos_trailingIdx1 = 0;
-        }
-        sp.ring_trailingIdx2_inHigh[sp.ringPos_trailingIdx2] = inHigh;
-        sp.ring_trailingIdx2_inLow[sp.ringPos_trailingIdx2] = inLow;
-        sp.ring_trailingIdx2_inClose[sp.ringPos_trailingIdx2] = inClose;
-        sp.ringPos_trailingIdx2 = sp.ringPos_trailingIdx2 + 1;
-        if sp.ringPos_trailingIdx2 >= sp.ringCap_trailingIdx2 {
-            sp.ringPos_trailingIdx2 = 0;
-        }
-        sp.ring_trailingIdx3_inHigh[sp.ringPos_trailingIdx3] = inHigh;
-        sp.ring_trailingIdx3_inLow[sp.ringPos_trailingIdx3] = inLow;
-        sp.ring_trailingIdx3_inClose[sp.ringPos_trailingIdx3] = inClose;
-        sp.ringPos_trailingIdx3 = sp.ringPos_trailingIdx3 + 1;
-        if sp.ringPos_trailingIdx3 >= sp.ringCap_trailingIdx3 {
-            sp.ringPos_trailingIdx3 = 0;
-        }
     }
 
     /// Internal startIdx-anchored open behind [`Core::ultosc_open`] (composition seam).
@@ -947,12 +796,21 @@ impl Core {
         let mut j: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
-        let mut trailingIdx1: usize = 0_usize;
-        let mut trailingIdx2: usize = 0_usize;
-        let mut trailingIdx3: usize = 0_usize;
+        let mut trailingPos1: usize = 0_usize;
+        let mut trailingPos2: usize = 0_usize;
         let mut usedFlag: [i32; 3 as usize] = [0_i32; 3 as usize];
         let mut periods: [i32; 3 as usize] = [0_i32; 3 as usize];
         let mut sortedPeriods: [i32; 3 as usize] = [0_i32; 3 as usize];
+        let mut term_closeMinusTrueLow: Vec<f64> = Vec::new();
+        let mut term_trueRange: Vec<f64> = Vec::new();
+        let mut term_Idx: usize = 0;
+        let mut maxIdx_term: usize = 31;
+        // The two per-bar terms the three moving sums are built from. Both are a
+        // pure function of the bar, so each bar is evaluated once on entry and read
+        // back when it leaves each of the three windows.
+        // One entry per bar of the longest window. Stays on the stack for every
+        // period up to 32, which covers the 7/14/28 default.
+        // Id, Type, Static Size
         dummyBegIdx = 0;
         dummyNBElement = 0;
         // Ensure that the time periods are ordered from shortest to longest.
@@ -993,53 +851,21 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::BadParam);
         }
-        // Prime running totals used in moving averages
+        if optInTimePeriod3 < 1 { return Err(RetCode::AllocErr); }
+        term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
+        term_trueRange = vec![0.0_f64; (optInTimePeriod3) as usize];
+        maxIdx_term = ((optInTimePeriod3) as usize) - 1;
+        term_Idx = 0;
+        // Prime running totals used in moving averages.
+        //
+        // One pass over the longest warm-up window replaces three overlapping
+        // passes. A bar inside the shorter windows is added to those totals as it
+        // is reached, so every total still accumulates exactly the same bars in
+        // exactly the same ascending order as three separate loops did.
         a1Total = 0.0;
         b1Total = 0.0;
-        // for( i = startIdx - (optInTimePeriod1) as usize + 1; i < startIdx; i += 1 )
-        i = startIdx - (optInTimePeriod1) as usize + 1;
-        while i < startIdx {
-            tempLT = inLow[i];
-            tempHT = inHigh[i];
-            tempCY = inClose[i - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[i] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a1Total += closeMinusTrueLow;
-            b1Total += trueRange;
-            i += 1;
-        }
         a2Total = 0.0;
         b2Total = 0.0;
-        // for( i = startIdx - (optInTimePeriod2) as usize + 1; i < startIdx; i += 1 )
-        i = startIdx - (optInTimePeriod2) as usize + 1;
-        while i < startIdx {
-            tempLT = inLow[i];
-            tempHT = inHigh[i];
-            tempCY = inClose[i - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[i] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a2Total += closeMinusTrueLow;
-            b2Total += trueRange;
-            i += 1;
-        }
         a3Total = 0.0;
         b3Total = 0.0;
         // for( i = startIdx - (optInTimePeriod3) as usize + 1; i < startIdx; i += 1 )
@@ -1059,6 +885,18 @@ impl Core {
             if tempDouble > trueRange {
                 trueRange = tempDouble;
             }
+            term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+            term_trueRange[term_Idx] = trueRange;
+            term_Idx += 1;
+            if term_Idx > maxIdx_term { term_Idx = 0; }
+            if i >= startIdx - (optInTimePeriod1) as usize + 1 {
+                a1Total += closeMinusTrueLow;
+                b1Total += trueRange;
+            }
+            if i >= startIdx - (optInTimePeriod2) as usize + 1 {
+                a2Total += closeMinusTrueLow;
+                b2Total += trueRange;
+            }
             a3Total += closeMinusTrueLow;
             b3Total += trueRange;
             i += 1;
@@ -1066,9 +904,17 @@ impl Core {
         // Calculate oscillator
         today = startIdx;
         outIdx = 0;
-        trailingIdx1 = today - (optInTimePeriod1) as usize + 1;
-        trailingIdx2 = today - (optInTimePeriod2) as usize + 1;
-        trailingIdx3 = today - (optInTimePeriod3) as usize + 1;
+        // The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
+        // `today` and, once advanced past it, the slot of the bar leaving the
+        // longest window. The two shorter windows trail it by a fixed offset.
+        trailingPos1 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod1) as usize + 1;
+        if trailingPos1 >= (optInTimePeriod3) as usize {
+            trailingPos1 -= (optInTimePeriod3) as usize;
+        }
+        trailingPos2 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod2) as usize + 1;
+        if trailingPos2 >= (optInTimePeriod3) as usize {
+            trailingPos2 -= (optInTimePeriod3) as usize;
+        }
         while today <= endIdx {
             // Add on today's terms
             tempLT = inLow[today];
@@ -1085,6 +931,8 @@ impl Core {
             if tempDouble > trueRange {
                 trueRange = tempDouble;
             }
+            term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+            term_trueRange[term_Idx] = trueRange;
             a1Total += closeMinusTrueLow;
             a2Total += closeMinusTrueLow;
             a3Total += closeMinusTrueLow;
@@ -1102,55 +950,24 @@ impl Core {
             if !((b3Total).abs() < 1e-14) {
                 output += a3Total / b3Total;
             }
-            // Remove the trailing terms to prepare for next day
-            tempLT = inLow[trailingIdx1];
-            tempHT = inHigh[trailingIdx1];
-            tempCY = inClose[trailingIdx1 - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
+            // Remove the trailing terms to prepare for next day. Each was evaluated
+            // once, when its bar entered the ring.
+            a1Total -= term_closeMinusTrueLow[trailingPos1];
+            b1Total -= term_trueRange[trailingPos1];
+            trailingPos1 += 1;
+            if trailingPos1 >= (optInTimePeriod3) as usize {
+                trailingPos1 = 0;
             }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
+            a2Total -= term_closeMinusTrueLow[trailingPos2];
+            b2Total -= term_trueRange[trailingPos2];
+            trailingPos2 += 1;
+            if trailingPos2 >= (optInTimePeriod3) as usize {
+                trailingPos2 = 0;
             }
-            a1Total -= closeMinusTrueLow;
-            b1Total -= trueRange;
-            tempLT = inLow[trailingIdx2];
-            tempHT = inHigh[trailingIdx2];
-            tempCY = inClose[trailingIdx2 - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a2Total -= closeMinusTrueLow;
-            b2Total -= trueRange;
-            tempLT = inLow[trailingIdx3];
-            tempHT = inHigh[trailingIdx3];
-            tempCY = inClose[trailingIdx3 - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a3Total -= closeMinusTrueLow;
-            b3Total -= trueRange;
+            term_Idx += 1;
+            if term_Idx > maxIdx_term { term_Idx = 0; }
+            a3Total -= term_closeMinusTrueLow[term_Idx];
+            b3Total -= term_trueRange[term_Idx];
             // Last operation is to write the output. Must
             // be done after the trailing index have all been
             // taken care of because the caller is allowed
@@ -1160,104 +977,15 @@ impl Core {
             // Increment indexes
             outIdx += 1;
             today += 1;
-            trailingIdx1 += 1;
-            trailingIdx2 += 1;
-            trailingIdx3 += 1;
         }
         // All done. Indicate the output limits and return.
         dummyNBElement = outIdx;
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let capLag_trailingIdx1: i64 = (today as i64) - (trailingIdx1 as i64);
-        let cap_trailingIdx1: i64 = capLag_trailingIdx1 + 2;
-        if capLag_trailingIdx1 < 0 || cap_trailingIdx1 > historyLen as i64 {
+        let cbSize_term: usize = maxIdx_term + 1;
+        if cbSize_term > historyLen + 1 {
             return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx1: usize = if cap_trailingIdx1 > 0 { cap_trailingIdx1 as usize } else { 1 };
-        let mut ring_trailingIdx1_inHigh: Vec<f64> = vec![0.0_f64; allocN_trailingIdx1];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx1 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx1_inHigh[fillJ % cap_trailingIdx1 as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_trailingIdx1_inLow: Vec<f64> = vec![0.0_f64; allocN_trailingIdx1];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx1 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx1_inLow[fillJ % cap_trailingIdx1 as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_trailingIdx1_inClose: Vec<f64> = vec![0.0_f64; allocN_trailingIdx1];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx1 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx1_inClose[fillJ % cap_trailingIdx1 as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
-        }
-        let capLag_trailingIdx2: i64 = (today as i64) - (trailingIdx2 as i64);
-        let cap_trailingIdx2: i64 = capLag_trailingIdx2 + 2;
-        if capLag_trailingIdx2 < 0 || cap_trailingIdx2 > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx2: usize = if cap_trailingIdx2 > 0 { cap_trailingIdx2 as usize } else { 1 };
-        let mut ring_trailingIdx2_inHigh: Vec<f64> = vec![0.0_f64; allocN_trailingIdx2];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx2 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx2_inHigh[fillJ % cap_trailingIdx2 as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_trailingIdx2_inLow: Vec<f64> = vec![0.0_f64; allocN_trailingIdx2];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx2 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx2_inLow[fillJ % cap_trailingIdx2 as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_trailingIdx2_inClose: Vec<f64> = vec![0.0_f64; allocN_trailingIdx2];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx2 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx2_inClose[fillJ % cap_trailingIdx2 as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
-        }
-        let capLag_trailingIdx3: i64 = (today as i64) - (trailingIdx3 as i64);
-        let cap_trailingIdx3: i64 = capLag_trailingIdx3 + 2;
-        if capLag_trailingIdx3 < 0 || cap_trailingIdx3 > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx3: usize = if cap_trailingIdx3 > 0 { cap_trailingIdx3 as usize } else { 1 };
-        let mut ring_trailingIdx3_inHigh: Vec<f64> = vec![0.0_f64; allocN_trailingIdx3];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx3 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx3_inHigh[fillJ % cap_trailingIdx3 as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_trailingIdx3_inLow: Vec<f64> = vec![0.0_f64; allocN_trailingIdx3];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx3 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx3_inLow[fillJ % cap_trailingIdx3 as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_trailingIdx3_inClose: Vec<f64> = vec![0.0_f64; allocN_trailingIdx3];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx3 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx3_inClose[fillJ % cap_trailingIdx3 as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
         }
         let state = UltoscStreamState {
             optInTimePeriod1,
@@ -1270,25 +998,14 @@ impl Core {
             b2Total,
             b3Total,
             output,
+            trailingPos1,
+            trailingPos2,
+            term_Idx,
+            maxIdx_term,
             lag1_inClose: inClose[historyLen - 1],
-            ringPos_trailingIdx1: historyLen % cap_trailingIdx1 as usize,
-            ringCap_trailingIdx1: cap_trailingIdx1 as usize,
-            ringLag_trailingIdx1: capLag_trailingIdx1 as usize,
-            ring_trailingIdx1_inHigh,
-            ring_trailingIdx1_inLow,
-            ring_trailingIdx1_inClose,
-            ringPos_trailingIdx2: historyLen % cap_trailingIdx2 as usize,
-            ringCap_trailingIdx2: cap_trailingIdx2 as usize,
-            ringLag_trailingIdx2: capLag_trailingIdx2 as usize,
-            ring_trailingIdx2_inHigh,
-            ring_trailingIdx2_inLow,
-            ring_trailingIdx2_inClose,
-            ringPos_trailingIdx3: historyLen % cap_trailingIdx3 as usize,
-            ringCap_trailingIdx3: cap_trailingIdx3 as usize,
-            ringLag_trailingIdx3: capLag_trailingIdx3 as usize,
-            ring_trailingIdx3_inHigh,
-            ring_trailingIdx3_inLow,
-            ring_trailingIdx3_inClose,
+            cbSize_term: cbSize_term,
+            cb_term_closeMinusTrueLow: term_closeMinusTrueLow,
+            cb_term_trueRange: term_trueRange,
         };
         Ok((UltoscStream { core: self.clone(), state }, lastValue_outReal))
     }
@@ -1374,12 +1091,21 @@ impl Core {
         let mut j: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
-        let mut trailingIdx1: usize = 0_usize;
-        let mut trailingIdx2: usize = 0_usize;
-        let mut trailingIdx3: usize = 0_usize;
+        let mut trailingPos1: usize = 0_usize;
+        let mut trailingPos2: usize = 0_usize;
         let mut usedFlag: [i32; 3 as usize] = [0_i32; 3 as usize];
         let mut periods: [i32; 3 as usize] = [0_i32; 3 as usize];
         let mut sortedPeriods: [i32; 3 as usize] = [0_i32; 3 as usize];
+        let mut term_closeMinusTrueLow: Vec<f64> = Vec::new();
+        let mut term_trueRange: Vec<f64> = Vec::new();
+        let mut term_Idx: usize = 0;
+        let mut maxIdx_term: usize = 31;
+        // The two per-bar terms the three moving sums are built from. Both are a
+        // pure function of the bar, so each bar is evaluated once on entry and read
+        // back when it leaves each of the three windows.
+        // One entry per bar of the longest window. Stays on the stack for every
+        // period up to 32, which covers the 7/14/28 default.
+        // Id, Type, Static Size
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Ensure that the time periods are ordered from shortest to longest.
@@ -1420,53 +1146,21 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::BadParam);
         }
-        // Prime running totals used in moving averages
+        if optInTimePeriod3 < 1 { return Err(RetCode::AllocErr); }
+        term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
+        term_trueRange = vec![0.0_f64; (optInTimePeriod3) as usize];
+        maxIdx_term = ((optInTimePeriod3) as usize) - 1;
+        term_Idx = 0;
+        // Prime running totals used in moving averages.
+        //
+        // One pass over the longest warm-up window replaces three overlapping
+        // passes. A bar inside the shorter windows is added to those totals as it
+        // is reached, so every total still accumulates exactly the same bars in
+        // exactly the same ascending order as three separate loops did.
         a1Total = 0.0;
         b1Total = 0.0;
-        // for( i = startIdx - (optInTimePeriod1) as usize + 1; i < startIdx; i += 1 )
-        i = startIdx - (optInTimePeriod1) as usize + 1;
-        while i < startIdx {
-            tempLT = inLow[i];
-            tempHT = inHigh[i];
-            tempCY = inClose[i - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[i] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a1Total += closeMinusTrueLow;
-            b1Total += trueRange;
-            i += 1;
-        }
         a2Total = 0.0;
         b2Total = 0.0;
-        // for( i = startIdx - (optInTimePeriod2) as usize + 1; i < startIdx; i += 1 )
-        i = startIdx - (optInTimePeriod2) as usize + 1;
-        while i < startIdx {
-            tempLT = inLow[i];
-            tempHT = inHigh[i];
-            tempCY = inClose[i - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[i] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a2Total += closeMinusTrueLow;
-            b2Total += trueRange;
-            i += 1;
-        }
         a3Total = 0.0;
         b3Total = 0.0;
         // for( i = startIdx - (optInTimePeriod3) as usize + 1; i < startIdx; i += 1 )
@@ -1486,6 +1180,18 @@ impl Core {
             if tempDouble > trueRange {
                 trueRange = tempDouble;
             }
+            term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+            term_trueRange[term_Idx] = trueRange;
+            term_Idx += 1;
+            if term_Idx > maxIdx_term { term_Idx = 0; }
+            if i >= startIdx - (optInTimePeriod1) as usize + 1 {
+                a1Total += closeMinusTrueLow;
+                b1Total += trueRange;
+            }
+            if i >= startIdx - (optInTimePeriod2) as usize + 1 {
+                a2Total += closeMinusTrueLow;
+                b2Total += trueRange;
+            }
             a3Total += closeMinusTrueLow;
             b3Total += trueRange;
             i += 1;
@@ -1493,9 +1199,17 @@ impl Core {
         // Calculate oscillator
         today = startIdx;
         outIdx = 0;
-        trailingIdx1 = today - (optInTimePeriod1) as usize + 1;
-        trailingIdx2 = today - (optInTimePeriod2) as usize + 1;
-        trailingIdx3 = today - (optInTimePeriod3) as usize + 1;
+        // The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
+        // `today` and, once advanced past it, the slot of the bar leaving the
+        // longest window. The two shorter windows trail it by a fixed offset.
+        trailingPos1 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod1) as usize + 1;
+        if trailingPos1 >= (optInTimePeriod3) as usize {
+            trailingPos1 -= (optInTimePeriod3) as usize;
+        }
+        trailingPos2 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod2) as usize + 1;
+        if trailingPos2 >= (optInTimePeriod3) as usize {
+            trailingPos2 -= (optInTimePeriod3) as usize;
+        }
         while today <= endIdx {
             // Add on today's terms
             tempLT = inLow[today];
@@ -1512,6 +1226,8 @@ impl Core {
             if tempDouble > trueRange {
                 trueRange = tempDouble;
             }
+            term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+            term_trueRange[term_Idx] = trueRange;
             a1Total += closeMinusTrueLow;
             a2Total += closeMinusTrueLow;
             a3Total += closeMinusTrueLow;
@@ -1529,55 +1245,24 @@ impl Core {
             if !((b3Total).abs() < 1e-14) {
                 output += a3Total / b3Total;
             }
-            // Remove the trailing terms to prepare for next day
-            tempLT = inLow[trailingIdx1];
-            tempHT = inHigh[trailingIdx1];
-            tempCY = inClose[trailingIdx1 - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
+            // Remove the trailing terms to prepare for next day. Each was evaluated
+            // once, when its bar entered the ring.
+            a1Total -= term_closeMinusTrueLow[trailingPos1];
+            b1Total -= term_trueRange[trailingPos1];
+            trailingPos1 += 1;
+            if trailingPos1 >= (optInTimePeriod3) as usize {
+                trailingPos1 = 0;
             }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
+            a2Total -= term_closeMinusTrueLow[trailingPos2];
+            b2Total -= term_trueRange[trailingPos2];
+            trailingPos2 += 1;
+            if trailingPos2 >= (optInTimePeriod3) as usize {
+                trailingPos2 = 0;
             }
-            a1Total -= closeMinusTrueLow;
-            b1Total -= trueRange;
-            tempLT = inLow[trailingIdx2];
-            tempHT = inHigh[trailingIdx2];
-            tempCY = inClose[trailingIdx2 - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a2Total -= closeMinusTrueLow;
-            b2Total -= trueRange;
-            tempLT = inLow[trailingIdx3];
-            tempHT = inHigh[trailingIdx3];
-            tempCY = inClose[trailingIdx3 - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            a3Total -= closeMinusTrueLow;
-            b3Total -= trueRange;
+            term_Idx += 1;
+            if term_Idx > maxIdx_term { term_Idx = 0; }
+            a3Total -= term_closeMinusTrueLow[term_Idx];
+            b3Total -= term_trueRange[term_Idx];
             // Last operation is to write the output. Must
             // be done after the trailing index have all been
             // taken care of because the caller is allowed
@@ -1587,104 +1272,15 @@ impl Core {
             // Increment indexes
             outIdx += 1;
             today += 1;
-            trailingIdx1 += 1;
-            trailingIdx2 += 1;
-            trailingIdx3 += 1;
         }
         // All done. Indicate the output limits and return.
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let capLag_trailingIdx1: i64 = (today as i64) - (trailingIdx1 as i64);
-        let cap_trailingIdx1: i64 = capLag_trailingIdx1 + 2;
-        if capLag_trailingIdx1 < 0 || cap_trailingIdx1 > historyLen as i64 {
+        let cbSize_term: usize = maxIdx_term + 1;
+        if cbSize_term > historyLen + 1 {
             return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx1: usize = if cap_trailingIdx1 > 0 { cap_trailingIdx1 as usize } else { 1 };
-        let mut ring_trailingIdx1_inHigh: Vec<f64> = vec![0.0_f64; allocN_trailingIdx1];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx1 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx1_inHigh[fillJ % cap_trailingIdx1 as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_trailingIdx1_inLow: Vec<f64> = vec![0.0_f64; allocN_trailingIdx1];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx1 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx1_inLow[fillJ % cap_trailingIdx1 as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_trailingIdx1_inClose: Vec<f64> = vec![0.0_f64; allocN_trailingIdx1];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx1 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx1_inClose[fillJ % cap_trailingIdx1 as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
-        }
-        let capLag_trailingIdx2: i64 = (today as i64) - (trailingIdx2 as i64);
-        let cap_trailingIdx2: i64 = capLag_trailingIdx2 + 2;
-        if capLag_trailingIdx2 < 0 || cap_trailingIdx2 > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx2: usize = if cap_trailingIdx2 > 0 { cap_trailingIdx2 as usize } else { 1 };
-        let mut ring_trailingIdx2_inHigh: Vec<f64> = vec![0.0_f64; allocN_trailingIdx2];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx2 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx2_inHigh[fillJ % cap_trailingIdx2 as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_trailingIdx2_inLow: Vec<f64> = vec![0.0_f64; allocN_trailingIdx2];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx2 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx2_inLow[fillJ % cap_trailingIdx2 as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_trailingIdx2_inClose: Vec<f64> = vec![0.0_f64; allocN_trailingIdx2];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx2 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx2_inClose[fillJ % cap_trailingIdx2 as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
-        }
-        let capLag_trailingIdx3: i64 = (today as i64) - (trailingIdx3 as i64);
-        let cap_trailingIdx3: i64 = capLag_trailingIdx3 + 2;
-        if capLag_trailingIdx3 < 0 || cap_trailingIdx3 > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx3: usize = if cap_trailingIdx3 > 0 { cap_trailingIdx3 as usize } else { 1 };
-        let mut ring_trailingIdx3_inHigh: Vec<f64> = vec![0.0_f64; allocN_trailingIdx3];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx3 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx3_inHigh[fillJ % cap_trailingIdx3 as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_trailingIdx3_inLow: Vec<f64> = vec![0.0_f64; allocN_trailingIdx3];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx3 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx3_inLow[fillJ % cap_trailingIdx3 as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_trailingIdx3_inClose: Vec<f64> = vec![0.0_f64; allocN_trailingIdx3];
-        {
-            let mut fillJ: usize = historyLen - cap_trailingIdx3 as usize;
-            while fillJ < historyLen {
-                ring_trailingIdx3_inClose[fillJ % cap_trailingIdx3 as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
         }
         let state = UltoscStreamState {
             optInTimePeriod1,
@@ -1697,25 +1293,14 @@ impl Core {
             b2Total,
             b3Total,
             output,
+            trailingPos1,
+            trailingPos2,
+            term_Idx,
+            maxIdx_term,
             lag1_inClose: inClose[historyLen - 1],
-            ringPos_trailingIdx1: historyLen % cap_trailingIdx1 as usize,
-            ringCap_trailingIdx1: cap_trailingIdx1 as usize,
-            ringLag_trailingIdx1: capLag_trailingIdx1 as usize,
-            ring_trailingIdx1_inHigh,
-            ring_trailingIdx1_inLow,
-            ring_trailingIdx1_inClose,
-            ringPos_trailingIdx2: historyLen % cap_trailingIdx2 as usize,
-            ringCap_trailingIdx2: cap_trailingIdx2 as usize,
-            ringLag_trailingIdx2: capLag_trailingIdx2 as usize,
-            ring_trailingIdx2_inHigh,
-            ring_trailingIdx2_inLow,
-            ring_trailingIdx2_inClose,
-            ringPos_trailingIdx3: historyLen % cap_trailingIdx3 as usize,
-            ringCap_trailingIdx3: cap_trailingIdx3 as usize,
-            ringLag_trailingIdx3: capLag_trailingIdx3 as usize,
-            ring_trailingIdx3_inHigh,
-            ring_trailingIdx3_inLow,
-            ring_trailingIdx3_inClose,
+            cbSize_term: cbSize_term,
+            cb_term_closeMinusTrueLow: term_closeMinusTrueLow,
+            cb_term_trueRange: term_trueRange,
         };
         Ok(UltoscStream { core: self.clone(), state })
     }
