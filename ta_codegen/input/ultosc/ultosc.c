@@ -4,6 +4,7 @@
  *  -------------------------------------------------------------------
  *  DM       Drew McCormack (http://www.trade-strategist.com)
  *  MF       Mario Fortier
+ *  DX       Dex Hunter (https://github.com/dexhunter)
  *
  * Change history:
  *
@@ -11,6 +12,7 @@
  *  -------------------------------------------------------------------
  *  281206 DM   Initial Implementation
  *  010606 MF   Abstract local arrays. Detect divide by zero.
+ *  073126 DX   Evaluate each bar's terms once via a CIRCBUF ring (PR #154).
  */
 
 int ultosc_lookback(int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3)
@@ -34,6 +36,12 @@ TA_RetCode ultosc(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
+   /* The two per-bar terms the three moving sums are built from. Both are a
+    * pure function of the bar, so each bar is evaluated once on entry and read
+    * back when it leaves each of the three windows.
+    */
+   typedef struct { double closeMinusTrueLow; double trueRange; } UltOscTerm;
+
    double a1Total, a2Total, a3Total;
    double b1Total, b2Total, b3Total;
    double trueLow, trueRange, closeMinusTrueLow;
@@ -41,11 +49,16 @@ TA_RetCode ultosc(int startIdx, int endIdx,
    int lookbackTotal;
    int longestPeriod, longestIndex;
    int i,j,today,outIdx;
-   int trailingIdx1, trailingIdx2, trailingIdx3;
+   int trailingPos1, trailingPos2;
 
    int usedFlag[3];
    int periods[3];
    int sortedPeriods[3];
+
+   /* One entry per bar of the longest window. Stays on the stack for every
+    * period up to 32, which covers the 7/14/28 default.
+    */
+   CIRCBUF_PROLOG_CLASS( term, UltOscTerm, 32 ); /* Id, Type, Static Size */
 
    *outBegIdx = 0;
    *outNBElement = 0;
@@ -84,49 +97,22 @@ TA_RetCode ultosc(int startIdx, int endIdx,
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx ) return TA_SUCCESS;
 
-   /* Prime running totals used in moving averages */
+   CIRCBUF_INIT_CLASS( term, UltOscTerm, optInTimePeriod3 );
+
+   /* Prime running totals used in moving averages.
+    *
+    * One pass over the longest warm-up window replaces three overlapping
+    * passes. A bar inside the shorter windows is added to those totals as it
+    * is reached, so every total still accumulates exactly the same bars in
+    * exactly the same ascending order as three separate loops did.
+    */
    a1Total = 0;
    b1Total = 0;
-   for ( i = startIdx-optInTimePeriod1+1; i < startIdx; ++i )
-   {
-      tempLT = inLow[i];
-      tempHT = inHigh[i];
-      tempCY = inClose[i-1];
-      trueLow = min( tempLT, tempCY );
-      closeMinusTrueLow = inClose[i] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs( tempCY - tempHT );
-      if( tempDouble > trueRange )
-         trueRange = tempDouble;
-      tempDouble = fabs( tempCY - tempLT  );
-      if( tempDouble > trueRange )
-         trueRange = tempDouble;
-      a1Total += closeMinusTrueLow;
-      b1Total += trueRange;
-   }
-
    a2Total = 0;
    b2Total = 0;
-   for ( i = startIdx-optInTimePeriod2+1; i < startIdx; ++i )
-   {
-      tempLT = inLow[i];
-      tempHT = inHigh[i];
-      tempCY = inClose[i-1];
-      trueLow = min( tempLT, tempCY );
-      closeMinusTrueLow = inClose[i] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs( tempCY - tempHT );
-      if( tempDouble > trueRange )
-         trueRange = tempDouble;
-      tempDouble = fabs( tempCY - tempLT  );
-      if( tempDouble > trueRange )
-         trueRange = tempDouble;
-      a2Total += closeMinusTrueLow;
-      b2Total += trueRange;
-   }
-
    a3Total = 0;
    b3Total = 0;
+
    for ( i = startIdx-optInTimePeriod3+1; i < startIdx; ++i )
    {
       tempLT = inLow[i];
@@ -141,6 +127,21 @@ TA_RetCode ultosc(int startIdx, int endIdx,
       tempDouble = fabs( tempCY - tempLT  );
       if( tempDouble > trueRange )
          trueRange = tempDouble;
+
+      term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+      term_trueRange[term_Idx] = trueRange;
+      CIRCBUF_NEXT(term);
+
+      if( i >= startIdx-optInTimePeriod1+1 )
+      {
+         a1Total += closeMinusTrueLow;
+         b1Total += trueRange;
+      }
+      if( i >= startIdx-optInTimePeriod2+1 )
+      {
+         a2Total += closeMinusTrueLow;
+         b2Total += trueRange;
+      }
       a3Total += closeMinusTrueLow;
       b3Total += trueRange;
    }
@@ -148,9 +149,16 @@ TA_RetCode ultosc(int startIdx, int endIdx,
    /* Calculate oscillator */
    today = startIdx;
    outIdx = 0;
-   trailingIdx1 = today - optInTimePeriod1 + 1;
-   trailingIdx2 = today - optInTimePeriod2 + 1;
-   trailingIdx3 = today - optInTimePeriod3 + 1;
+
+   /* The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
+    * `today` and, once advanced past it, the slot of the bar leaving the
+    * longest window. The two shorter windows trail it by a fixed offset.
+    */
+   trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+   if( trailingPos1 >= optInTimePeriod3 ) trailingPos1 -= optInTimePeriod3;
+   trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+   if( trailingPos2 >= optInTimePeriod3 ) trailingPos2 -= optInTimePeriod3;
+
    while( today <= endIdx )
    {
       /* Add on today's terms */
@@ -166,6 +174,10 @@ TA_RetCode ultosc(int startIdx, int endIdx,
       tempDouble = fabs( tempCY - tempLT  );
       if( tempDouble > trueRange )
          trueRange = tempDouble;
+
+      term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+      term_trueRange[term_Idx] = trueRange;
+
       a1Total += closeMinusTrueLow;
       a2Total += closeMinusTrueLow;
       a3Total += closeMinusTrueLow;
@@ -180,51 +192,22 @@ TA_RetCode ultosc(int startIdx, int endIdx,
       if( !TA_IS_ZERO(b2Total) ) output += 2.0*(a2Total/b2Total);
       if( !TA_IS_ZERO(b3Total) ) output += a3Total/b3Total;
 
-      /* Remove the trailing terms to prepare for next day */
-      tempLT = inLow[trailingIdx1];
-      tempHT = inHigh[trailingIdx1];
-      tempCY = inClose[trailingIdx1-1];
-      trueLow = min( tempLT, tempCY );
-      closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs( tempCY - tempHT );
-      if( tempDouble > trueRange )
-         trueRange = tempDouble;
-      tempDouble = fabs( tempCY - tempLT  );
-      if( tempDouble > trueRange )
-         trueRange = tempDouble;
-      a1Total -= closeMinusTrueLow;
-      b1Total -= trueRange;
+      /* Remove the trailing terms to prepare for next day. Each was evaluated
+       * once, when its bar entered the ring.
+       */
+      a1Total -= term_closeMinusTrueLow[trailingPos1];
+      b1Total -= term_trueRange[trailingPos1];
+      trailingPos1++;
+      if( trailingPos1 >= optInTimePeriod3 ) trailingPos1 = 0;
 
-      tempLT = inLow[trailingIdx2];
-      tempHT = inHigh[trailingIdx2];
-      tempCY = inClose[trailingIdx2-1];
-      trueLow = min( tempLT, tempCY );
-      closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs( tempCY - tempHT );
-      if( tempDouble > trueRange )
-         trueRange = tempDouble;
-      tempDouble = fabs( tempCY - tempLT  );
-      if( tempDouble > trueRange )
-         trueRange = tempDouble;
-      a2Total -= closeMinusTrueLow;
-      b2Total -= trueRange;
+      a2Total -= term_closeMinusTrueLow[trailingPos2];
+      b2Total -= term_trueRange[trailingPos2];
+      trailingPos2++;
+      if( trailingPos2 >= optInTimePeriod3 ) trailingPos2 = 0;
 
-      tempLT = inLow[trailingIdx3];
-      tempHT = inHigh[trailingIdx3];
-      tempCY = inClose[trailingIdx3-1];
-      trueLow = min( tempLT, tempCY );
-      closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = fabs( tempCY - tempHT );
-      if( tempDouble > trueRange )
-         trueRange = tempDouble;
-      tempDouble = fabs( tempCY - tempLT  );
-      if( tempDouble > trueRange )
-         trueRange = tempDouble;
-      a3Total -= closeMinusTrueLow;
-      b3Total -= trueRange;
+      CIRCBUF_NEXT(term);
+      a3Total -= term_closeMinusTrueLow[term_Idx];
+      b3Total -= term_trueRange[term_Idx];
 
       /* Last operation is to write the output. Must
        * be done after the trailing index have all been
@@ -237,14 +220,13 @@ TA_RetCode ultosc(int startIdx, int endIdx,
       /* Increment indexes */
       outIdx++;
       today++;
-      trailingIdx1++;
-      trailingIdx2++;
-      trailingIdx3++;
    }
 
    /* All done. Indicate the output limits and return. */
    *outNBElement = outIdx;
    *outBegIdx    = startIdx;
+
+   CIRCBUF_DESTROY(term);
 
    return TA_SUCCESS;
 }

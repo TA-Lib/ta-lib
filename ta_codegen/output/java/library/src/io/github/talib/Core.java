@@ -177925,6 +177925,7 @@ public class Core {
  *  -------------------------------------------------------------------
  *  DM       Drew McCormack (http://www.trade-strategist.com)
  *  MF       Mario Fortier
+ *  DX       Dex Hunter (https://github.com/dexhunter)
  *
  * Change history:
  *
@@ -177932,6 +177933,7 @@ public class Core {
  *  -------------------------------------------------------------------
  *  281206 DM   Initial Implementation
  *  010606 MF   Abstract local arrays. Detect divide by zero.
+ *  073126 DX   Evaluate each bar's terms once via a CIRCBUF ring (PR #154).
  */
 
    /**
@@ -178007,12 +178009,15 @@ public class Core {
       int j = 0;
       int today = 0;
       int outIdx = 0;
-      int trailingIdx1 = 0;
-      int trailingIdx2 = 0;
-      int trailingIdx3 = 0;
+      int trailingPos1 = 0;
+      int trailingPos2 = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
+      double[] term_closeMinusTrueLow;
+      double[] term_trueRange;
+      int term_Idx = 0;
+      int maxIdx_term = (32)-1;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -178034,6 +178039,14 @@ public class Core {
       } else if( optInTimePeriod3 < 1 || optInTimePeriod3 > 100000 ) {
          return RetCode.BadParam;
       }
+      /* The two per-bar terms the three moving sums are built from. Both are a
+       * pure function of the bar, so each bar is evaluated once on entry and read
+       * back when it leaves each of the three windows.
+       */
+      /* One entry per bar of the longest window. Stays on the stack for every
+       * period up to 32, which covers the 7/14/28 default.
+       */
+      /* Id, Type, Static Size */
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Ensure that the time periods are ordered from shortest to longest.
@@ -178069,47 +178082,22 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      /* Prime running totals used in moving averages */
+      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      term_closeMinusTrueLow = new double[optInTimePeriod3];
+      term_trueRange = new double[optInTimePeriod3];
+      maxIdx_term = (optInTimePeriod3)-1;
+      term_Idx = 0;
+      /* Prime running totals used in moving averages.
+       *
+       * One pass over the longest warm-up window replaces three overlapping
+       * passes. A bar inside the shorter windows is added to those totals as it
+       * is reached, so every total still accumulates exactly the same bars in
+       * exactly the same ascending order as three separate loops did.
+       */
       a1Total = 0;
       b1Total = 0;
-      for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a1Total += closeMinusTrueLow;
-         b1Total += trueRange;
-      }
       a2Total = 0;
       b2Total = 0;
-      for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a2Total += closeMinusTrueLow;
-         b2Total += trueRange;
-      }
       a3Total = 0;
       b3Total = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
@@ -178127,15 +178115,36 @@ public class Core {
          if( tempDouble > trueRange ) {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( i >= startIdx - optInTimePeriod1 + 1 ) {
+            a1Total += closeMinusTrueLow;
+            b1Total += trueRange;
+         }
+         if( i >= startIdx - optInTimePeriod2 + 1 ) {
+            a2Total += closeMinusTrueLow;
+            b2Total += trueRange;
+         }
          a3Total += closeMinusTrueLow;
          b3Total += trueRange;
       }
       /* Calculate oscillator */
       today = startIdx;
       outIdx = 0;
-      trailingIdx1 = today - optInTimePeriod1 + 1;
-      trailingIdx2 = today - optInTimePeriod2 + 1;
-      trailingIdx3 = today - optInTimePeriod3 + 1;
+      /* The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
+       * `today` and, once advanced past it, the slot of the bar leaving the
+       * longest window. The two shorter windows trail it by a fixed offset.
+       */
+      trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+      if( trailingPos1 >= optInTimePeriod3 ) {
+         trailingPos1 -= optInTimePeriod3;
+      }
+      trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+      if( trailingPos2 >= optInTimePeriod3 ) {
+         trailingPos2 -= optInTimePeriod3;
+      }
       while( today <= endIdx ) {
          /* Add on today's terms */
          tempLT = inLow[today];
@@ -178152,6 +178161,8 @@ public class Core {
          if( tempDouble > trueRange ) {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
          a1Total += closeMinusTrueLow;
          a2Total += closeMinusTrueLow;
          a3Total += closeMinusTrueLow;
@@ -178169,55 +178180,25 @@ public class Core {
          if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
             output += a3Total / b3Total;
          }
-         /* Remove the trailing terms to prepare for next day */
-         tempLT = inLow[trailingIdx1];
-         tempHT = inHigh[trailingIdx1];
-         tempCY = inClose[trailingIdx1 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
+         /* Remove the trailing terms to prepare for next day. Each was evaluated
+          * once, when its bar entered the ring.
+          */
+         a1Total -= term_closeMinusTrueLow[trailingPos1];
+         b1Total -= term_trueRange[trailingPos1];
+         trailingPos1 += 1;
+         if( trailingPos1 >= optInTimePeriod3 ) {
+            trailingPos1 = 0;
          }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
+         a2Total -= term_closeMinusTrueLow[trailingPos2];
+         b2Total -= term_trueRange[trailingPos2];
+         trailingPos2 += 1;
+         if( trailingPos2 >= optInTimePeriod3 ) {
+            trailingPos2 = 0;
          }
-         a1Total -= closeMinusTrueLow;
-         b1Total -= trueRange;
-         tempLT = inLow[trailingIdx2];
-         tempHT = inHigh[trailingIdx2];
-         tempCY = inClose[trailingIdx2 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a2Total -= closeMinusTrueLow;
-         b2Total -= trueRange;
-         tempLT = inLow[trailingIdx3];
-         tempHT = inHigh[trailingIdx3];
-         tempCY = inClose[trailingIdx3 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a3Total -= closeMinusTrueLow;
-         b3Total -= trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         a3Total -= term_closeMinusTrueLow[term_Idx];
+         b3Total -= term_trueRange[term_Idx];
          /* Last operation is to write the output. Must
           * be done after the trailing index have all been
           * taken care of because the caller is allowed
@@ -178228,9 +178209,6 @@ public class Core {
          /* Increment indexes */
          outIdx += 1;
          today += 1;
-         trailingIdx1 += 1;
-         trailingIdx2 += 1;
-         trailingIdx3 += 1;
       }
       /* All done. Indicate the output limits and return. */
       outNBElement.value = outIdx;
@@ -178270,12 +178248,15 @@ public class Core {
       int j = 0;
       int today = 0;
       int outIdx = 0;
-      int trailingIdx1 = 0;
-      int trailingIdx2 = 0;
-      int trailingIdx3 = 0;
+      int trailingPos1 = 0;
+      int trailingPos2 = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
+      double[] term_closeMinusTrueLow;
+      double[] term_trueRange;
+      int term_Idx = 0;
+      int maxIdx_term = (32)-1;
       outBegIdx.value = 0;
       outNBElement.value = 0;
       periods[0] = optInTimePeriod1;
@@ -178306,46 +178287,15 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
+      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      term_closeMinusTrueLow = new double[optInTimePeriod3];
+      term_trueRange = new double[optInTimePeriod3];
+      maxIdx_term = (optInTimePeriod3)-1;
+      term_Idx = 0;
       a1Total = 0;
       b1Total = 0;
-      for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a1Total += closeMinusTrueLow;
-         b1Total += trueRange;
-      }
       a2Total = 0;
       b2Total = 0;
-      for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a2Total += closeMinusTrueLow;
-         b2Total += trueRange;
-      }
       a3Total = 0;
       b3Total = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
@@ -178363,14 +178313,31 @@ public class Core {
          if( tempDouble > trueRange ) {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( i >= startIdx - optInTimePeriod1 + 1 ) {
+            a1Total += closeMinusTrueLow;
+            b1Total += trueRange;
+         }
+         if( i >= startIdx - optInTimePeriod2 + 1 ) {
+            a2Total += closeMinusTrueLow;
+            b2Total += trueRange;
+         }
          a3Total += closeMinusTrueLow;
          b3Total += trueRange;
       }
       today = startIdx;
       outIdx = 0;
-      trailingIdx1 = today - optInTimePeriod1 + 1;
-      trailingIdx2 = today - optInTimePeriod2 + 1;
-      trailingIdx3 = today - optInTimePeriod3 + 1;
+      trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+      if( trailingPos1 >= optInTimePeriod3 ) {
+         trailingPos1 -= optInTimePeriod3;
+      }
+      trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+      if( trailingPos2 >= optInTimePeriod3 ) {
+         trailingPos2 -= optInTimePeriod3;
+      }
       while( today <= endIdx ) {
          tempLT = inLow[today];
          tempHT = inHigh[today];
@@ -178386,6 +178353,8 @@ public class Core {
          if( tempDouble > trueRange ) {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
          a1Total += closeMinusTrueLow;
          a2Total += closeMinusTrueLow;
          a3Total += closeMinusTrueLow;
@@ -178402,60 +178371,25 @@ public class Core {
          if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
             output += a3Total / b3Total;
          }
-         tempLT = inLow[trailingIdx1];
-         tempHT = inHigh[trailingIdx1];
-         tempCY = inClose[trailingIdx1 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
+         a1Total -= term_closeMinusTrueLow[trailingPos1];
+         b1Total -= term_trueRange[trailingPos1];
+         trailingPos1 += 1;
+         if( trailingPos1 >= optInTimePeriod3 ) {
+            trailingPos1 = 0;
          }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
+         a2Total -= term_closeMinusTrueLow[trailingPos2];
+         b2Total -= term_trueRange[trailingPos2];
+         trailingPos2 += 1;
+         if( trailingPos2 >= optInTimePeriod3 ) {
+            trailingPos2 = 0;
          }
-         a1Total -= closeMinusTrueLow;
-         b1Total -= trueRange;
-         tempLT = inLow[trailingIdx2];
-         tempHT = inHigh[trailingIdx2];
-         tempCY = inClose[trailingIdx2 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a2Total -= closeMinusTrueLow;
-         b2Total -= trueRange;
-         tempLT = inLow[trailingIdx3];
-         tempHT = inHigh[trailingIdx3];
-         tempCY = inClose[trailingIdx3 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a3Total -= closeMinusTrueLow;
-         b3Total -= trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         a3Total -= term_closeMinusTrueLow[term_Idx];
+         b3Total -= term_trueRange[term_Idx];
          outReal[outIdx] = 100.0 * (output / 7.0);
          outIdx += 1;
          today += 1;
-         trailingIdx1 += 1;
-         trailingIdx2 += 1;
-         trailingIdx3 += 1;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -178494,12 +178428,15 @@ public class Core {
       int j = 0;
       int today = 0;
       int outIdx = 0;
-      int trailingIdx1 = 0;
-      int trailingIdx2 = 0;
-      int trailingIdx3 = 0;
+      int trailingPos1 = 0;
+      int trailingPos2 = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
+      double[] term_closeMinusTrueLow;
+      double[] term_trueRange;
+      int term_Idx = 0;
+      int maxIdx_term = (32)-1;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -178551,46 +178488,15 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
+      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      term_closeMinusTrueLow = new double[optInTimePeriod3];
+      term_trueRange = new double[optInTimePeriod3];
+      maxIdx_term = (optInTimePeriod3)-1;
+      term_Idx = 0;
       a1Total = 0;
       b1Total = 0;
-      for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 ) {
-         tempLT = (double)inLow[i];
-         tempHT = (double)inHigh[i];
-         tempCY = (double)inClose[i - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = (double)inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a1Total += closeMinusTrueLow;
-         b1Total += trueRange;
-      }
       a2Total = 0;
       b2Total = 0;
-      for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 ) {
-         tempLT = (double)inLow[i];
-         tempHT = (double)inHigh[i];
-         tempCY = (double)inClose[i - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = (double)inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a2Total += closeMinusTrueLow;
-         b2Total += trueRange;
-      }
       a3Total = 0;
       b3Total = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
@@ -178608,14 +178514,31 @@ public class Core {
          if( tempDouble > trueRange ) {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( i >= startIdx - optInTimePeriod1 + 1 ) {
+            a1Total += closeMinusTrueLow;
+            b1Total += trueRange;
+         }
+         if( i >= startIdx - optInTimePeriod2 + 1 ) {
+            a2Total += closeMinusTrueLow;
+            b2Total += trueRange;
+         }
          a3Total += closeMinusTrueLow;
          b3Total += trueRange;
       }
       today = startIdx;
       outIdx = 0;
-      trailingIdx1 = today - optInTimePeriod1 + 1;
-      trailingIdx2 = today - optInTimePeriod2 + 1;
-      trailingIdx3 = today - optInTimePeriod3 + 1;
+      trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+      if( trailingPos1 >= optInTimePeriod3 ) {
+         trailingPos1 -= optInTimePeriod3;
+      }
+      trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+      if( trailingPos2 >= optInTimePeriod3 ) {
+         trailingPos2 -= optInTimePeriod3;
+      }
       while( today <= endIdx ) {
          tempLT = (double)inLow[today];
          tempHT = (double)inHigh[today];
@@ -178631,6 +178554,8 @@ public class Core {
          if( tempDouble > trueRange ) {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
          a1Total += closeMinusTrueLow;
          a2Total += closeMinusTrueLow;
          a3Total += closeMinusTrueLow;
@@ -178647,60 +178572,25 @@ public class Core {
          if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
             output += a3Total / b3Total;
          }
-         tempLT = (double)inLow[trailingIdx1];
-         tempHT = (double)inHigh[trailingIdx1];
-         tempCY = (double)inClose[trailingIdx1 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = (double)inClose[trailingIdx1] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
+         a1Total -= term_closeMinusTrueLow[trailingPos1];
+         b1Total -= term_trueRange[trailingPos1];
+         trailingPos1 += 1;
+         if( trailingPos1 >= optInTimePeriod3 ) {
+            trailingPos1 = 0;
          }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
+         a2Total -= term_closeMinusTrueLow[trailingPos2];
+         b2Total -= term_trueRange[trailingPos2];
+         trailingPos2 += 1;
+         if( trailingPos2 >= optInTimePeriod3 ) {
+            trailingPos2 = 0;
          }
-         a1Total -= closeMinusTrueLow;
-         b1Total -= trueRange;
-         tempLT = (double)inLow[trailingIdx2];
-         tempHT = (double)inHigh[trailingIdx2];
-         tempCY = (double)inClose[trailingIdx2 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = (double)inClose[trailingIdx2] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a2Total -= closeMinusTrueLow;
-         b2Total -= trueRange;
-         tempLT = (double)inLow[trailingIdx3];
-         tempHT = (double)inHigh[trailingIdx3];
-         tempCY = (double)inClose[trailingIdx3 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = (double)inClose[trailingIdx3] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a3Total -= closeMinusTrueLow;
-         b3Total -= trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         a3Total -= term_closeMinusTrueLow[term_Idx];
+         b3Total -= term_trueRange[term_Idx];
          outReal[outIdx] = 100.0 * (output / 7.0);
          outIdx += 1;
          today += 1;
-         trailingIdx1 += 1;
-         trailingIdx2 += 1;
-         trailingIdx3 += 1;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -178739,12 +178629,15 @@ public class Core {
       int j = 0;
       int today = 0;
       int outIdx = 0;
-      int trailingIdx1 = 0;
-      int trailingIdx2 = 0;
-      int trailingIdx3 = 0;
+      int trailingPos1 = 0;
+      int trailingPos2 = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
+      double[] term_closeMinusTrueLow;
+      double[] term_trueRange;
+      int term_Idx = 0;
+      int maxIdx_term = (32)-1;
       outBegIdx.value = 0;
       outNBElement.value = 0;
       periods[0] = optInTimePeriod1;
@@ -178775,46 +178668,15 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
+      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      term_closeMinusTrueLow = new double[optInTimePeriod3];
+      term_trueRange = new double[optInTimePeriod3];
+      maxIdx_term = (optInTimePeriod3)-1;
+      term_Idx = 0;
       a1Total = 0;
       b1Total = 0;
-      for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 ) {
-         tempLT = (double)inLow[i];
-         tempHT = (double)inHigh[i];
-         tempCY = (double)inClose[i - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = (double)inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a1Total += closeMinusTrueLow;
-         b1Total += trueRange;
-      }
       a2Total = 0;
       b2Total = 0;
-      for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 ) {
-         tempLT = (double)inLow[i];
-         tempHT = (double)inHigh[i];
-         tempCY = (double)inClose[i - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = (double)inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a2Total += closeMinusTrueLow;
-         b2Total += trueRange;
-      }
       a3Total = 0;
       b3Total = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
@@ -178832,14 +178694,31 @@ public class Core {
          if( tempDouble > trueRange ) {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( i >= startIdx - optInTimePeriod1 + 1 ) {
+            a1Total += closeMinusTrueLow;
+            b1Total += trueRange;
+         }
+         if( i >= startIdx - optInTimePeriod2 + 1 ) {
+            a2Total += closeMinusTrueLow;
+            b2Total += trueRange;
+         }
          a3Total += closeMinusTrueLow;
          b3Total += trueRange;
       }
       today = startIdx;
       outIdx = 0;
-      trailingIdx1 = today - optInTimePeriod1 + 1;
-      trailingIdx2 = today - optInTimePeriod2 + 1;
-      trailingIdx3 = today - optInTimePeriod3 + 1;
+      trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+      if( trailingPos1 >= optInTimePeriod3 ) {
+         trailingPos1 -= optInTimePeriod3;
+      }
+      trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+      if( trailingPos2 >= optInTimePeriod3 ) {
+         trailingPos2 -= optInTimePeriod3;
+      }
       while( today <= endIdx ) {
          tempLT = (double)inLow[today];
          tempHT = (double)inHigh[today];
@@ -178855,6 +178734,8 @@ public class Core {
          if( tempDouble > trueRange ) {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
          a1Total += closeMinusTrueLow;
          a2Total += closeMinusTrueLow;
          a3Total += closeMinusTrueLow;
@@ -178871,60 +178752,25 @@ public class Core {
          if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
             output += a3Total / b3Total;
          }
-         tempLT = (double)inLow[trailingIdx1];
-         tempHT = (double)inHigh[trailingIdx1];
-         tempCY = (double)inClose[trailingIdx1 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = (double)inClose[trailingIdx1] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
+         a1Total -= term_closeMinusTrueLow[trailingPos1];
+         b1Total -= term_trueRange[trailingPos1];
+         trailingPos1 += 1;
+         if( trailingPos1 >= optInTimePeriod3 ) {
+            trailingPos1 = 0;
          }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
+         a2Total -= term_closeMinusTrueLow[trailingPos2];
+         b2Total -= term_trueRange[trailingPos2];
+         trailingPos2 += 1;
+         if( trailingPos2 >= optInTimePeriod3 ) {
+            trailingPos2 = 0;
          }
-         a1Total -= closeMinusTrueLow;
-         b1Total -= trueRange;
-         tempLT = (double)inLow[trailingIdx2];
-         tempHT = (double)inHigh[trailingIdx2];
-         tempCY = (double)inClose[trailingIdx2 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = (double)inClose[trailingIdx2] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a2Total -= closeMinusTrueLow;
-         b2Total -= trueRange;
-         tempLT = (double)inLow[trailingIdx3];
-         tempHT = (double)inHigh[trailingIdx3];
-         tempCY = (double)inClose[trailingIdx3 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = (double)inClose[trailingIdx3] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a3Total -= closeMinusTrueLow;
-         b3Total -= trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         a3Total -= term_closeMinusTrueLow[term_Idx];
+         b3Total -= term_trueRange[term_Idx];
          outReal[outIdx] = 100.0 * (output / 7.0);
          outIdx += 1;
          today += 1;
-         trailingIdx1 += 1;
-         trailingIdx2 += 1;
-         trailingIdx3 += 1;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -179161,25 +179007,14 @@ public class Core {
       double b2Total;
       double b3Total;
       double output;
+      int trailingPos1;
+      int trailingPos2;
+      int term_Idx;
+      int maxIdx_term;
       double lag1_inClose;
-      int ringPos_trailingIdx1;
-      int ringCap_trailingIdx1;
-      int ringLag_trailingIdx1;
-      double[] ring_trailingIdx1_inHigh;
-      double[] ring_trailingIdx1_inLow;
-      double[] ring_trailingIdx1_inClose;
-      int ringPos_trailingIdx2;
-      int ringCap_trailingIdx2;
-      int ringLag_trailingIdx2;
-      double[] ring_trailingIdx2_inHigh;
-      double[] ring_trailingIdx2_inLow;
-      double[] ring_trailingIdx2_inClose;
-      int ringPos_trailingIdx3;
-      int ringCap_trailingIdx3;
-      int ringLag_trailingIdx3;
-      double[] ring_trailingIdx3_inHigh;
-      double[] ring_trailingIdx3_inLow;
-      double[] ring_trailingIdx3_inClose;
+      int cbSize_term;
+      double[] cb_term_closeMinusTrueLow;
+      double[] cb_term_trueRange;
       double cur_outReal;
       OutRange fillRange;
 
@@ -179203,25 +179038,14 @@ public class Core {
          this.b2Total = other.b2Total;
          this.b3Total = other.b3Total;
          this.output = other.output;
+         this.trailingPos1 = other.trailingPos1;
+         this.trailingPos2 = other.trailingPos2;
+         this.term_Idx = other.term_Idx;
+         this.maxIdx_term = other.maxIdx_term;
          this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_trailingIdx1 = other.ringPos_trailingIdx1;
-         this.ringCap_trailingIdx1 = other.ringCap_trailingIdx1;
-         this.ringLag_trailingIdx1 = other.ringLag_trailingIdx1;
-         this.ring_trailingIdx1_inHigh = other.ring_trailingIdx1_inHigh.clone();
-         this.ring_trailingIdx1_inLow = other.ring_trailingIdx1_inLow.clone();
-         this.ring_trailingIdx1_inClose = other.ring_trailingIdx1_inClose.clone();
-         this.ringPos_trailingIdx2 = other.ringPos_trailingIdx2;
-         this.ringCap_trailingIdx2 = other.ringCap_trailingIdx2;
-         this.ringLag_trailingIdx2 = other.ringLag_trailingIdx2;
-         this.ring_trailingIdx2_inHigh = other.ring_trailingIdx2_inHigh.clone();
-         this.ring_trailingIdx2_inLow = other.ring_trailingIdx2_inLow.clone();
-         this.ring_trailingIdx2_inClose = other.ring_trailingIdx2_inClose.clone();
-         this.ringPos_trailingIdx3 = other.ringPos_trailingIdx3;
-         this.ringCap_trailingIdx3 = other.ringCap_trailingIdx3;
-         this.ringLag_trailingIdx3 = other.ringLag_trailingIdx3;
-         this.ring_trailingIdx3_inHigh = other.ring_trailingIdx3_inHigh.clone();
-         this.ring_trailingIdx3_inLow = other.ring_trailingIdx3_inLow.clone();
-         this.ring_trailingIdx3_inClose = other.ring_trailingIdx3_inClose.clone();
+         this.cbSize_term = other.cbSize_term;
+         this.cb_term_closeMinusTrueLow = other.cb_term_closeMinusTrueLow.clone();
+         this.cb_term_trueRange = other.cb_term_trueRange.clone();
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
       }
@@ -179274,15 +179098,6 @@ public class Core {
       double tempHT = 0.0;
       double tempLT = 0.0;
       double tempCY = 0.0;
-      sp.ring_trailingIdx1_inHigh[sp.ringPos_trailingIdx1] = inHigh;
-      sp.ring_trailingIdx1_inLow[sp.ringPos_trailingIdx1] = inLow;
-      sp.ring_trailingIdx1_inClose[sp.ringPos_trailingIdx1] = inClose;
-      sp.ring_trailingIdx2_inHigh[sp.ringPos_trailingIdx2] = inHigh;
-      sp.ring_trailingIdx2_inLow[sp.ringPos_trailingIdx2] = inLow;
-      sp.ring_trailingIdx2_inClose[sp.ringPos_trailingIdx2] = inClose;
-      sp.ring_trailingIdx3_inHigh[sp.ringPos_trailingIdx3] = inHigh;
-      sp.ring_trailingIdx3_inLow[sp.ringPos_trailingIdx3] = inLow;
-      sp.ring_trailingIdx3_inClose[sp.ringPos_trailingIdx3] = inClose;
       /* Add on today's terms */
       tempLT = inLow;
       tempHT = inHigh;
@@ -179298,6 +179113,8 @@ public class Core {
       if( tempDouble > trueRange ) {
          trueRange = tempDouble;
       }
+      sp.cb_term_closeMinusTrueLow[sp.term_Idx] = closeMinusTrueLow;
+      sp.cb_term_trueRange[sp.term_Idx] = trueRange;
       sp.a1Total += closeMinusTrueLow;
       sp.a2Total += closeMinusTrueLow;
       sp.a3Total += closeMinusTrueLow;
@@ -179315,55 +179132,27 @@ public class Core {
       if( !((-0.00000000000001 < sp.b3Total) && (sp.b3Total < 0.00000000000001)) ) {
          sp.output += sp.a3Total / sp.b3Total;
       }
-      /* Remove the trailing terms to prepare for next day */
-      tempLT = sp.ring_trailingIdx1_inLow[(sp.ringPos_trailingIdx1 + sp.ringCap_trailingIdx1 - sp.ringLag_trailingIdx1) % sp.ringCap_trailingIdx1];
-      tempHT = sp.ring_trailingIdx1_inHigh[(sp.ringPos_trailingIdx1 + sp.ringCap_trailingIdx1 - sp.ringLag_trailingIdx1) % sp.ringCap_trailingIdx1];
-      tempCY = sp.ring_trailingIdx1_inClose[(sp.ringPos_trailingIdx1 + sp.ringCap_trailingIdx1 - sp.ringLag_trailingIdx1 - 1) % sp.ringCap_trailingIdx1];
-      trueLow = Math.min(tempLT, tempCY);
-      closeMinusTrueLow = sp.ring_trailingIdx1_inClose[(sp.ringPos_trailingIdx1 + sp.ringCap_trailingIdx1 - sp.ringLag_trailingIdx1) % sp.ringCap_trailingIdx1] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = Math.abs(tempCY - tempHT);
-      if( tempDouble > trueRange ) {
-         trueRange = tempDouble;
+      /* Remove the trailing terms to prepare for next day. Each was evaluated
+       * once, when its bar entered the ring.
+       */
+      sp.a1Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos1];
+      sp.b1Total -= sp.cb_term_trueRange[sp.trailingPos1];
+      sp.trailingPos1 += 1;
+      if( sp.trailingPos1 >= sp.optInTimePeriod3 ) {
+         sp.trailingPos1 = 0;
       }
-      tempDouble = Math.abs(tempCY - tempLT);
-      if( tempDouble > trueRange ) {
-         trueRange = tempDouble;
+      sp.a2Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos2];
+      sp.b2Total -= sp.cb_term_trueRange[sp.trailingPos2];
+      sp.trailingPos2 += 1;
+      if( sp.trailingPos2 >= sp.optInTimePeriod3 ) {
+         sp.trailingPos2 = 0;
       }
-      sp.a1Total -= closeMinusTrueLow;
-      sp.b1Total -= trueRange;
-      tempLT = sp.ring_trailingIdx2_inLow[(sp.ringPos_trailingIdx2 + sp.ringCap_trailingIdx2 - sp.ringLag_trailingIdx2) % sp.ringCap_trailingIdx2];
-      tempHT = sp.ring_trailingIdx2_inHigh[(sp.ringPos_trailingIdx2 + sp.ringCap_trailingIdx2 - sp.ringLag_trailingIdx2) % sp.ringCap_trailingIdx2];
-      tempCY = sp.ring_trailingIdx2_inClose[(sp.ringPos_trailingIdx2 + sp.ringCap_trailingIdx2 - sp.ringLag_trailingIdx2 - 1) % sp.ringCap_trailingIdx2];
-      trueLow = Math.min(tempLT, tempCY);
-      closeMinusTrueLow = sp.ring_trailingIdx2_inClose[(sp.ringPos_trailingIdx2 + sp.ringCap_trailingIdx2 - sp.ringLag_trailingIdx2) % sp.ringCap_trailingIdx2] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = Math.abs(tempCY - tempHT);
-      if( tempDouble > trueRange ) {
-         trueRange = tempDouble;
+      sp.term_Idx = sp.term_Idx + 1;
+      if( sp.term_Idx > sp.maxIdx_term ) {
+         sp.term_Idx = 0;
       }
-      tempDouble = Math.abs(tempCY - tempLT);
-      if( tempDouble > trueRange ) {
-         trueRange = tempDouble;
-      }
-      sp.a2Total -= closeMinusTrueLow;
-      sp.b2Total -= trueRange;
-      tempLT = sp.ring_trailingIdx3_inLow[(sp.ringPos_trailingIdx3 + sp.ringCap_trailingIdx3 - sp.ringLag_trailingIdx3) % sp.ringCap_trailingIdx3];
-      tempHT = sp.ring_trailingIdx3_inHigh[(sp.ringPos_trailingIdx3 + sp.ringCap_trailingIdx3 - sp.ringLag_trailingIdx3) % sp.ringCap_trailingIdx3];
-      tempCY = sp.ring_trailingIdx3_inClose[(sp.ringPos_trailingIdx3 + sp.ringCap_trailingIdx3 - sp.ringLag_trailingIdx3 - 1) % sp.ringCap_trailingIdx3];
-      trueLow = Math.min(tempLT, tempCY);
-      closeMinusTrueLow = sp.ring_trailingIdx3_inClose[(sp.ringPos_trailingIdx3 + sp.ringCap_trailingIdx3 - sp.ringLag_trailingIdx3) % sp.ringCap_trailingIdx3] - trueLow;
-      trueRange = tempHT - tempLT;
-      tempDouble = Math.abs(tempCY - tempHT);
-      if( tempDouble > trueRange ) {
-         trueRange = tempDouble;
-      }
-      tempDouble = Math.abs(tempCY - tempLT);
-      if( tempDouble > trueRange ) {
-         trueRange = tempDouble;
-      }
-      sp.a3Total -= closeMinusTrueLow;
-      sp.b3Total -= trueRange;
+      sp.a3Total -= sp.cb_term_closeMinusTrueLow[sp.term_Idx];
+      sp.b3Total -= sp.cb_term_trueRange[sp.term_Idx];
       /* Last operation is to write the output. Must
        * be done after the trailing index have all been
        * taken care of because the caller is allowed
@@ -179373,27 +179162,6 @@ public class Core {
       sp.cur_outReal = 100.0 * (sp.output / 7.0);
       /* Increment indexes */
       sp.lag1_inClose = inClose;
-      sp.ring_trailingIdx1_inHigh[sp.ringPos_trailingIdx1] = inHigh;
-      sp.ring_trailingIdx1_inLow[sp.ringPos_trailingIdx1] = inLow;
-      sp.ring_trailingIdx1_inClose[sp.ringPos_trailingIdx1] = inClose;
-      sp.ringPos_trailingIdx1 = sp.ringPos_trailingIdx1 + 1;
-      if( sp.ringPos_trailingIdx1 >= sp.ringCap_trailingIdx1 ) {
-         sp.ringPos_trailingIdx1 = 0;
-      }
-      sp.ring_trailingIdx2_inHigh[sp.ringPos_trailingIdx2] = inHigh;
-      sp.ring_trailingIdx2_inLow[sp.ringPos_trailingIdx2] = inLow;
-      sp.ring_trailingIdx2_inClose[sp.ringPos_trailingIdx2] = inClose;
-      sp.ringPos_trailingIdx2 = sp.ringPos_trailingIdx2 + 1;
-      if( sp.ringPos_trailingIdx2 >= sp.ringCap_trailingIdx2 ) {
-         sp.ringPos_trailingIdx2 = 0;
-      }
-      sp.ring_trailingIdx3_inHigh[sp.ringPos_trailingIdx3] = inHigh;
-      sp.ring_trailingIdx3_inLow[sp.ringPos_trailingIdx3] = inLow;
-      sp.ring_trailingIdx3_inClose[sp.ringPos_trailingIdx3] = inClose;
-      sp.ringPos_trailingIdx3 = sp.ringPos_trailingIdx3 + 1;
-      if( sp.ringPos_trailingIdx3 >= sp.ringCap_trailingIdx3 ) {
-         sp.ringPos_trailingIdx3 = 0;
-      }
    }
    private RetCode ultOscOpenBody( UltOscStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
@@ -179418,12 +179186,15 @@ public class Core {
       int j = 0;
       int today = 0;
       int outIdx = 0;
-      int trailingIdx1 = 0;
-      int trailingIdx2 = 0;
-      int trailingIdx3 = 0;
+      int trailingPos1 = 0;
+      int trailingPos2 = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
+      double[] term_closeMinusTrueLow;
+      double[] term_trueRange;
+      int term_Idx = 0;
+      int maxIdx_term = (32)-1;
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double lastValue_outReal = 0.0;
@@ -179447,6 +179218,14 @@ public class Core {
       } else if( optInTimePeriod3 < 1 || optInTimePeriod3 > 100000 ) {
          return RetCode.BadParam;
       }
+      /* The two per-bar terms the three moving sums are built from. Both are a
+       * pure function of the bar, so each bar is evaluated once on entry and read
+       * back when it leaves each of the three windows.
+       */
+      /* One entry per bar of the longest window. Stays on the stack for every
+       * period up to 32, which covers the 7/14/28 default.
+       */
+      /* Id, Type, Static Size */
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Ensure that the time periods are ordered from shortest to longest.
@@ -179482,47 +179261,22 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      /* Prime running totals used in moving averages */
+      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      term_closeMinusTrueLow = new double[optInTimePeriod3];
+      term_trueRange = new double[optInTimePeriod3];
+      maxIdx_term = (optInTimePeriod3)-1;
+      term_Idx = 0;
+      /* Prime running totals used in moving averages.
+       *
+       * One pass over the longest warm-up window replaces three overlapping
+       * passes. A bar inside the shorter windows is added to those totals as it
+       * is reached, so every total still accumulates exactly the same bars in
+       * exactly the same ascending order as three separate loops did.
+       */
       a1Total = 0;
       b1Total = 0;
-      for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a1Total += closeMinusTrueLow;
-         b1Total += trueRange;
-      }
       a2Total = 0;
       b2Total = 0;
-      for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a2Total += closeMinusTrueLow;
-         b2Total += trueRange;
-      }
       a3Total = 0;
       b3Total = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
@@ -179540,15 +179294,36 @@ public class Core {
          if( tempDouble > trueRange ) {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( i >= startIdx - optInTimePeriod1 + 1 ) {
+            a1Total += closeMinusTrueLow;
+            b1Total += trueRange;
+         }
+         if( i >= startIdx - optInTimePeriod2 + 1 ) {
+            a2Total += closeMinusTrueLow;
+            b2Total += trueRange;
+         }
          a3Total += closeMinusTrueLow;
          b3Total += trueRange;
       }
       /* Calculate oscillator */
       today = startIdx;
       outIdx = 0;
-      trailingIdx1 = today - optInTimePeriod1 + 1;
-      trailingIdx2 = today - optInTimePeriod2 + 1;
-      trailingIdx3 = today - optInTimePeriod3 + 1;
+      /* The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
+       * `today` and, once advanced past it, the slot of the bar leaving the
+       * longest window. The two shorter windows trail it by a fixed offset.
+       */
+      trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+      if( trailingPos1 >= optInTimePeriod3 ) {
+         trailingPos1 -= optInTimePeriod3;
+      }
+      trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+      if( trailingPos2 >= optInTimePeriod3 ) {
+         trailingPos2 -= optInTimePeriod3;
+      }
       while( today <= endIdx ) {
          /* Add on today's terms */
          tempLT = inLow[today];
@@ -179565,6 +179340,8 @@ public class Core {
          if( tempDouble > trueRange ) {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
          a1Total += closeMinusTrueLow;
          a2Total += closeMinusTrueLow;
          a3Total += closeMinusTrueLow;
@@ -179582,55 +179359,25 @@ public class Core {
          if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
             output += a3Total / b3Total;
          }
-         /* Remove the trailing terms to prepare for next day */
-         tempLT = inLow[trailingIdx1];
-         tempHT = inHigh[trailingIdx1];
-         tempCY = inClose[trailingIdx1 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
+         /* Remove the trailing terms to prepare for next day. Each was evaluated
+          * once, when its bar entered the ring.
+          */
+         a1Total -= term_closeMinusTrueLow[trailingPos1];
+         b1Total -= term_trueRange[trailingPos1];
+         trailingPos1 += 1;
+         if( trailingPos1 >= optInTimePeriod3 ) {
+            trailingPos1 = 0;
          }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
+         a2Total -= term_closeMinusTrueLow[trailingPos2];
+         b2Total -= term_trueRange[trailingPos2];
+         trailingPos2 += 1;
+         if( trailingPos2 >= optInTimePeriod3 ) {
+            trailingPos2 = 0;
          }
-         a1Total -= closeMinusTrueLow;
-         b1Total -= trueRange;
-         tempLT = inLow[trailingIdx2];
-         tempHT = inHigh[trailingIdx2];
-         tempCY = inClose[trailingIdx2 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a2Total -= closeMinusTrueLow;
-         b2Total -= trueRange;
-         tempLT = inLow[trailingIdx3];
-         tempHT = inHigh[trailingIdx3];
-         tempCY = inClose[trailingIdx3 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a3Total -= closeMinusTrueLow;
-         b3Total -= trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         a3Total -= term_closeMinusTrueLow[term_Idx];
+         b3Total -= term_trueRange[term_Idx];
          /* Last operation is to write the output. Must
           * be done after the trailing index have all been
           * taken care of because the caller is allowed
@@ -179641,67 +179388,14 @@ public class Core {
          /* Increment indexes */
          outIdx += 1;
          today += 1;
-         trailingIdx1 += 1;
-         trailingIdx2 += 1;
-         trailingIdx3 += 1;
       }
       /* All done. Indicate the output limits and return. */
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
-      int capLag_trailingIdx1 = today - trailingIdx1;
-      int cap_trailingIdx1 = capLag_trailingIdx1 + 2;
-      if( capLag_trailingIdx1 < 0 || cap_trailingIdx1 > historyLen ) {
+      int capCb_term = maxIdx_term + 1;
+      if( capCb_term > historyLen + 1 ) {
          return RetCode.InternalError;
-      }
-      int allocN_trailingIdx1 = (cap_trailingIdx1 > 0)? cap_trailingIdx1 : 1;
-      double[] capRing_trailingIdx1_inHigh = new double[allocN_trailingIdx1];
-      for( int fillJ = historyLen - cap_trailingIdx1; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx1_inHigh[fillJ % cap_trailingIdx1] = inHigh[fillJ];
-      }
-      double[] capRing_trailingIdx1_inLow = new double[allocN_trailingIdx1];
-      for( int fillJ = historyLen - cap_trailingIdx1; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx1_inLow[fillJ % cap_trailingIdx1] = inLow[fillJ];
-      }
-      double[] capRing_trailingIdx1_inClose = new double[allocN_trailingIdx1];
-      for( int fillJ = historyLen - cap_trailingIdx1; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx1_inClose[fillJ % cap_trailingIdx1] = inClose[fillJ];
-      }
-      int capLag_trailingIdx2 = today - trailingIdx2;
-      int cap_trailingIdx2 = capLag_trailingIdx2 + 2;
-      if( capLag_trailingIdx2 < 0 || cap_trailingIdx2 > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_trailingIdx2 = (cap_trailingIdx2 > 0)? cap_trailingIdx2 : 1;
-      double[] capRing_trailingIdx2_inHigh = new double[allocN_trailingIdx2];
-      for( int fillJ = historyLen - cap_trailingIdx2; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx2_inHigh[fillJ % cap_trailingIdx2] = inHigh[fillJ];
-      }
-      double[] capRing_trailingIdx2_inLow = new double[allocN_trailingIdx2];
-      for( int fillJ = historyLen - cap_trailingIdx2; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx2_inLow[fillJ % cap_trailingIdx2] = inLow[fillJ];
-      }
-      double[] capRing_trailingIdx2_inClose = new double[allocN_trailingIdx2];
-      for( int fillJ = historyLen - cap_trailingIdx2; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx2_inClose[fillJ % cap_trailingIdx2] = inClose[fillJ];
-      }
-      int capLag_trailingIdx3 = today - trailingIdx3;
-      int cap_trailingIdx3 = capLag_trailingIdx3 + 2;
-      if( capLag_trailingIdx3 < 0 || cap_trailingIdx3 > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_trailingIdx3 = (cap_trailingIdx3 > 0)? cap_trailingIdx3 : 1;
-      double[] capRing_trailingIdx3_inHigh = new double[allocN_trailingIdx3];
-      for( int fillJ = historyLen - cap_trailingIdx3; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx3_inHigh[fillJ % cap_trailingIdx3] = inHigh[fillJ];
-      }
-      double[] capRing_trailingIdx3_inLow = new double[allocN_trailingIdx3];
-      for( int fillJ = historyLen - cap_trailingIdx3; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx3_inLow[fillJ % cap_trailingIdx3] = inLow[fillJ];
-      }
-      double[] capRing_trailingIdx3_inClose = new double[allocN_trailingIdx3];
-      for( int fillJ = historyLen - cap_trailingIdx3; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx3_inClose[fillJ % cap_trailingIdx3] = inClose[fillJ];
       }
       sp.optInTimePeriod1 = optInTimePeriod1;
       sp.optInTimePeriod2 = optInTimePeriod2;
@@ -179713,25 +179407,14 @@ public class Core {
       sp.b2Total = b2Total;
       sp.b3Total = b3Total;
       sp.output = output;
+      sp.trailingPos1 = trailingPos1;
+      sp.trailingPos2 = trailingPos2;
+      sp.term_Idx = term_Idx;
+      sp.maxIdx_term = maxIdx_term;
       sp.lag1_inClose = inClose[historyLen - 1];
-      sp.ringPos_trailingIdx1 = historyLen % cap_trailingIdx1;
-      sp.ringCap_trailingIdx1 = cap_trailingIdx1;
-      sp.ringLag_trailingIdx1 = capLag_trailingIdx1;
-      sp.ring_trailingIdx1_inHigh = capRing_trailingIdx1_inHigh;
-      sp.ring_trailingIdx1_inLow = capRing_trailingIdx1_inLow;
-      sp.ring_trailingIdx1_inClose = capRing_trailingIdx1_inClose;
-      sp.ringPos_trailingIdx2 = historyLen % cap_trailingIdx2;
-      sp.ringCap_trailingIdx2 = cap_trailingIdx2;
-      sp.ringLag_trailingIdx2 = capLag_trailingIdx2;
-      sp.ring_trailingIdx2_inHigh = capRing_trailingIdx2_inHigh;
-      sp.ring_trailingIdx2_inLow = capRing_trailingIdx2_inLow;
-      sp.ring_trailingIdx2_inClose = capRing_trailingIdx2_inClose;
-      sp.ringPos_trailingIdx3 = historyLen % cap_trailingIdx3;
-      sp.ringCap_trailingIdx3 = cap_trailingIdx3;
-      sp.ringLag_trailingIdx3 = capLag_trailingIdx3;
-      sp.ring_trailingIdx3_inHigh = capRing_trailingIdx3_inHigh;
-      sp.ring_trailingIdx3_inLow = capRing_trailingIdx3_inLow;
-      sp.ring_trailingIdx3_inClose = capRing_trailingIdx3_inClose;
+      sp.cbSize_term = capCb_term;
+      sp.cb_term_closeMinusTrueLow = term_closeMinusTrueLow;
+      sp.cb_term_trueRange = term_trueRange;
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
@@ -179758,12 +179441,15 @@ public class Core {
       int j = 0;
       int today = 0;
       int outIdx = 0;
-      int trailingIdx1 = 0;
-      int trailingIdx2 = 0;
-      int trailingIdx3 = 0;
+      int trailingPos1 = 0;
+      int trailingPos2 = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
+      double[] term_closeMinusTrueLow;
+      double[] term_trueRange;
+      int term_Idx = 0;
+      int maxIdx_term = (32)-1;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       int startIdx = 0;
@@ -179788,6 +179474,14 @@ public class Core {
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          return RetCode.BadParam;
       }
+      /* The two per-bar terms the three moving sums are built from. Both are a
+       * pure function of the bar, so each bar is evaluated once on entry and read
+       * back when it leaves each of the three windows.
+       */
+      /* One entry per bar of the longest window. Stays on the stack for every
+       * period up to 32, which covers the 7/14/28 default.
+       */
+      /* Id, Type, Static Size */
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Ensure that the time periods are ordered from shortest to longest.
@@ -179823,47 +179517,22 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      /* Prime running totals used in moving averages */
+      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      term_closeMinusTrueLow = new double[optInTimePeriod3];
+      term_trueRange = new double[optInTimePeriod3];
+      maxIdx_term = (optInTimePeriod3)-1;
+      term_Idx = 0;
+      /* Prime running totals used in moving averages.
+       *
+       * One pass over the longest warm-up window replaces three overlapping
+       * passes. A bar inside the shorter windows is added to those totals as it
+       * is reached, so every total still accumulates exactly the same bars in
+       * exactly the same ascending order as three separate loops did.
+       */
       a1Total = 0;
       b1Total = 0;
-      for( i = startIdx - optInTimePeriod1 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a1Total += closeMinusTrueLow;
-         b1Total += trueRange;
-      }
       a2Total = 0;
       b2Total = 0;
-      for( i = startIdx - optInTimePeriod2 + 1; i < startIdx; i += 1 ) {
-         tempLT = inLow[i];
-         tempHT = inHigh[i];
-         tempCY = inClose[i - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[i] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a2Total += closeMinusTrueLow;
-         b2Total += trueRange;
-      }
       a3Total = 0;
       b3Total = 0;
       for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
@@ -179881,15 +179550,36 @@ public class Core {
          if( tempDouble > trueRange ) {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( i >= startIdx - optInTimePeriod1 + 1 ) {
+            a1Total += closeMinusTrueLow;
+            b1Total += trueRange;
+         }
+         if( i >= startIdx - optInTimePeriod2 + 1 ) {
+            a2Total += closeMinusTrueLow;
+            b2Total += trueRange;
+         }
          a3Total += closeMinusTrueLow;
          b3Total += trueRange;
       }
       /* Calculate oscillator */
       today = startIdx;
       outIdx = 0;
-      trailingIdx1 = today - optInTimePeriod1 + 1;
-      trailingIdx2 = today - optInTimePeriod2 + 1;
-      trailingIdx3 = today - optInTimePeriod3 + 1;
+      /* The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
+       * `today` and, once advanced past it, the slot of the bar leaving the
+       * longest window. The two shorter windows trail it by a fixed offset.
+       */
+      trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+      if( trailingPos1 >= optInTimePeriod3 ) {
+         trailingPos1 -= optInTimePeriod3;
+      }
+      trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+      if( trailingPos2 >= optInTimePeriod3 ) {
+         trailingPos2 -= optInTimePeriod3;
+      }
       while( today <= endIdx ) {
          /* Add on today's terms */
          tempLT = inLow[today];
@@ -179906,6 +179596,8 @@ public class Core {
          if( tempDouble > trueRange ) {
             trueRange = tempDouble;
          }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
          a1Total += closeMinusTrueLow;
          a2Total += closeMinusTrueLow;
          a3Total += closeMinusTrueLow;
@@ -179923,55 +179615,25 @@ public class Core {
          if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
             output += a3Total / b3Total;
          }
-         /* Remove the trailing terms to prepare for next day */
-         tempLT = inLow[trailingIdx1];
-         tempHT = inHigh[trailingIdx1];
-         tempCY = inClose[trailingIdx1 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx1] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
+         /* Remove the trailing terms to prepare for next day. Each was evaluated
+          * once, when its bar entered the ring.
+          */
+         a1Total -= term_closeMinusTrueLow[trailingPos1];
+         b1Total -= term_trueRange[trailingPos1];
+         trailingPos1 += 1;
+         if( trailingPos1 >= optInTimePeriod3 ) {
+            trailingPos1 = 0;
          }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
+         a2Total -= term_closeMinusTrueLow[trailingPos2];
+         b2Total -= term_trueRange[trailingPos2];
+         trailingPos2 += 1;
+         if( trailingPos2 >= optInTimePeriod3 ) {
+            trailingPos2 = 0;
          }
-         a1Total -= closeMinusTrueLow;
-         b1Total -= trueRange;
-         tempLT = inLow[trailingIdx2];
-         tempHT = inHigh[trailingIdx2];
-         tempCY = inClose[trailingIdx2 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx2] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a2Total -= closeMinusTrueLow;
-         b2Total -= trueRange;
-         tempLT = inLow[trailingIdx3];
-         tempHT = inHigh[trailingIdx3];
-         tempCY = inClose[trailingIdx3 - 1];
-         trueLow = Math.min(tempLT, tempCY);
-         closeMinusTrueLow = inClose[trailingIdx3] - trueLow;
-         trueRange = tempHT - tempLT;
-         tempDouble = Math.abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         tempDouble = Math.abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
-         a3Total -= closeMinusTrueLow;
-         b3Total -= trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         a3Total -= term_closeMinusTrueLow[term_Idx];
+         b3Total -= term_trueRange[term_Idx];
          /* Last operation is to write the output. Must
           * be done after the trailing index have all been
           * taken care of because the caller is allowed
@@ -179982,67 +179644,14 @@ public class Core {
          /* Increment indexes */
          outIdx += 1;
          today += 1;
-         trailingIdx1 += 1;
-         trailingIdx2 += 1;
-         trailingIdx3 += 1;
       }
       /* All done. Indicate the output limits and return. */
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
-      int capLag_trailingIdx1 = today - trailingIdx1;
-      int cap_trailingIdx1 = capLag_trailingIdx1 + 2;
-      if( capLag_trailingIdx1 < 0 || cap_trailingIdx1 > historyLen ) {
+      int capCb_term = maxIdx_term + 1;
+      if( capCb_term > historyLen + 1 ) {
          return RetCode.InternalError;
-      }
-      int allocN_trailingIdx1 = (cap_trailingIdx1 > 0)? cap_trailingIdx1 : 1;
-      double[] capRing_trailingIdx1_inHigh = new double[allocN_trailingIdx1];
-      for( int fillJ = historyLen - cap_trailingIdx1; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx1_inHigh[fillJ % cap_trailingIdx1] = inHigh[fillJ];
-      }
-      double[] capRing_trailingIdx1_inLow = new double[allocN_trailingIdx1];
-      for( int fillJ = historyLen - cap_trailingIdx1; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx1_inLow[fillJ % cap_trailingIdx1] = inLow[fillJ];
-      }
-      double[] capRing_trailingIdx1_inClose = new double[allocN_trailingIdx1];
-      for( int fillJ = historyLen - cap_trailingIdx1; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx1_inClose[fillJ % cap_trailingIdx1] = inClose[fillJ];
-      }
-      int capLag_trailingIdx2 = today - trailingIdx2;
-      int cap_trailingIdx2 = capLag_trailingIdx2 + 2;
-      if( capLag_trailingIdx2 < 0 || cap_trailingIdx2 > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_trailingIdx2 = (cap_trailingIdx2 > 0)? cap_trailingIdx2 : 1;
-      double[] capRing_trailingIdx2_inHigh = new double[allocN_trailingIdx2];
-      for( int fillJ = historyLen - cap_trailingIdx2; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx2_inHigh[fillJ % cap_trailingIdx2] = inHigh[fillJ];
-      }
-      double[] capRing_trailingIdx2_inLow = new double[allocN_trailingIdx2];
-      for( int fillJ = historyLen - cap_trailingIdx2; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx2_inLow[fillJ % cap_trailingIdx2] = inLow[fillJ];
-      }
-      double[] capRing_trailingIdx2_inClose = new double[allocN_trailingIdx2];
-      for( int fillJ = historyLen - cap_trailingIdx2; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx2_inClose[fillJ % cap_trailingIdx2] = inClose[fillJ];
-      }
-      int capLag_trailingIdx3 = today - trailingIdx3;
-      int cap_trailingIdx3 = capLag_trailingIdx3 + 2;
-      if( capLag_trailingIdx3 < 0 || cap_trailingIdx3 > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_trailingIdx3 = (cap_trailingIdx3 > 0)? cap_trailingIdx3 : 1;
-      double[] capRing_trailingIdx3_inHigh = new double[allocN_trailingIdx3];
-      for( int fillJ = historyLen - cap_trailingIdx3; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx3_inHigh[fillJ % cap_trailingIdx3] = inHigh[fillJ];
-      }
-      double[] capRing_trailingIdx3_inLow = new double[allocN_trailingIdx3];
-      for( int fillJ = historyLen - cap_trailingIdx3; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx3_inLow[fillJ % cap_trailingIdx3] = inLow[fillJ];
-      }
-      double[] capRing_trailingIdx3_inClose = new double[allocN_trailingIdx3];
-      for( int fillJ = historyLen - cap_trailingIdx3; fillJ < historyLen; fillJ++ ) {
-         capRing_trailingIdx3_inClose[fillJ % cap_trailingIdx3] = inClose[fillJ];
       }
       sp.optInTimePeriod1 = optInTimePeriod1;
       sp.optInTimePeriod2 = optInTimePeriod2;
@@ -180054,25 +179663,14 @@ public class Core {
       sp.b2Total = b2Total;
       sp.b3Total = b3Total;
       sp.output = output;
+      sp.trailingPos1 = trailingPos1;
+      sp.trailingPos2 = trailingPos2;
+      sp.term_Idx = term_Idx;
+      sp.maxIdx_term = maxIdx_term;
       sp.lag1_inClose = inClose[historyLen - 1];
-      sp.ringPos_trailingIdx1 = historyLen % cap_trailingIdx1;
-      sp.ringCap_trailingIdx1 = cap_trailingIdx1;
-      sp.ringLag_trailingIdx1 = capLag_trailingIdx1;
-      sp.ring_trailingIdx1_inHigh = capRing_trailingIdx1_inHigh;
-      sp.ring_trailingIdx1_inLow = capRing_trailingIdx1_inLow;
-      sp.ring_trailingIdx1_inClose = capRing_trailingIdx1_inClose;
-      sp.ringPos_trailingIdx2 = historyLen % cap_trailingIdx2;
-      sp.ringCap_trailingIdx2 = cap_trailingIdx2;
-      sp.ringLag_trailingIdx2 = capLag_trailingIdx2;
-      sp.ring_trailingIdx2_inHigh = capRing_trailingIdx2_inHigh;
-      sp.ring_trailingIdx2_inLow = capRing_trailingIdx2_inLow;
-      sp.ring_trailingIdx2_inClose = capRing_trailingIdx2_inClose;
-      sp.ringPos_trailingIdx3 = historyLen % cap_trailingIdx3;
-      sp.ringCap_trailingIdx3 = cap_trailingIdx3;
-      sp.ringLag_trailingIdx3 = capLag_trailingIdx3;
-      sp.ring_trailingIdx3_inHigh = capRing_trailingIdx3_inHigh;
-      sp.ring_trailingIdx3_inLow = capRing_trailingIdx3_inLow;
-      sp.ring_trailingIdx3_inClose = capRing_trailingIdx3_inClose;
+      sp.cbSize_term = capCb_term;
+      sp.cb_term_closeMinusTrueLow = term_closeMinusTrueLow;
+      sp.cb_term_trueRange = term_trueRange;
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
