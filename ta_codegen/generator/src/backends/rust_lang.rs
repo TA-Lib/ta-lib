@@ -2006,6 +2006,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
                                 }
                             } else if !target_is_real
                                 && (self.ctx.index_vars.contains(tname) || is_likely_index_var(tname))
+                                && !self.ctx.sentinel_vars.contains(tname)
                                 && expr_is_i32_typed(right)
                             {
                                 // usize target, i32 RHS: cast to usize

@@ -2884,6 +2884,28 @@ fn rust_compound_assign_casts_i32_param_into_inferred_usize_var() {
         rendered.contains("trailingPos1 -= (optInTimePeriod3) as usize"),
         "compound assign into a subscript-inferred usize var must cast the i32 RHS: {rendered}"
     );
+
+    // Ctx construction removes sentinels from index_vars, so in production a
+    // sentinel (i32-rendered) reaches this gate only through the name
+    // heuristic. Pin that arm: a heuristic-matched sentinel must stay uncast.
+    let mut sctx = backends::rust_lang::RustRenderCtx::for_lookback();
+    sctx.is_lookback = false;
+    sctx.sentinel_vars.insert("highestIdx".to_string());
+    let sstmt = ir::Statement::Assign {
+        target: ir::Expr::Var("highestIdx".to_string()),
+        value: ir::Expr::BinOp(
+            Box::new(ir::Expr::Var("highestIdx".to_string())),
+            ir::BinOp::Sub,
+            Box::new(ir::Expr::Var("optInTimePeriod3".to_string())),
+        ),
+        compound: true,
+    };
+    let rendered = render_rust_stmt_with_ctx(&sstmt, &sctx);
+    assert!(
+        rendered.contains("highestIdx -= optInTimePeriod3")
+            && !rendered.contains("as usize"),
+        "compound assign into a heuristic-named sentinel (i32) var must stay uncast: {rendered}"
+    );
 }
 
 #[test]
