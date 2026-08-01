@@ -7,6 +7,11 @@
  *
  * Usage:
  *   ./ta_bench_direct [--points=N] [--iters=N] [--function=RSI,SMA]
+ *                     [--shape=NAME] [--seed=N] [--regime-period=N] [--trend-strength=F]
+ *                     [--list-shapes] [--verify-corpus]
+ *
+ * --shape picks the input class from the corpus in bench_corpus.h; the default
+ * reproduces the series this tool has always used. --list-shapes prints them.
  */
 
 #include <stdio.h>
@@ -39,6 +44,7 @@ static char *win_strcasestr(const char *haystack, const char *needle)
 #endif
 
 #include "ta_libc.h"
+#include "bench_corpus.h"
 
 /* ---- Configuration ---- */
 
@@ -71,12 +77,15 @@ static long long get_nanotime(void) {
 #endif
 }
 
-/* ---- Test data (same seed=42 as ta_bench / ta_bench_cg) ---- */
+/* ---- Test data (same corpus as ta_bench / ta_bench_cg — bench_corpus.h) ---- */
 
 static TA_Real *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi;
+/* MAVP's per-bar period series, in its [2,30] range. Kept separate from the
+ * price arrays: it is the only TA_Input_Real that is not a price. */
+static TA_Real *g_periods;
 static int g_nPoints;
 
-static void generate_price_data(int n) {
+static void generate_price_data(int n, const BenchCorpusCfg *corpus) {
     g_nPoints = n;
     g_open   = calloc(n, sizeof(TA_Real));
     g_high   = calloc(n, sizeof(TA_Real));
@@ -84,19 +93,9 @@ static void generate_price_data(int n) {
     g_close  = calloc(n, sizeof(TA_Real));
     g_volume = calloc(n, sizeof(TA_Real));
     g_oi     = calloc(n, sizeof(TA_Real));
-    unsigned int seed = 42;
-    double price = 100.0;
-    for( int i = 0; i < n; i++ ) {
-        seed = seed * 1103515245 + 12345;
-        double r = ((double)(seed >> 16) / 32768.0) - 1.0;
-        double o = price, c = price + r * 2.0;
-        double h = fmax(o, c) + fabs(r) * 0.5;
-        double l = fmin(o, c) - fabs(r) * 0.5;
-        if( l < 1.0 ) l = 1.0;
-        g_open[i] = o; g_high[i] = h; g_low[i] = l; g_close[i] = c;
-        g_volume[i] = 1000000.0 + r * 500000.0;
-        price = c; if( price < 1.0 ) price = 1.0;
-    }
+    g_periods = calloc(n, sizeof(TA_Real));
+    bench_corpus_gen(corpus, n, g_open, g_high, g_low, g_close, g_volume, g_oi,
+                     g_periods);
 }
 
 /* ---- Output buffers ---- */
@@ -152,8 +151,16 @@ static void bench_ref_func(const TA_FuncInfo *fi, void *opaque) {
         if( info->type == TA_Input_Price ) {
             TA_SetInputParamPricePtr(params, i, g_open, g_high, g_low, g_close, g_volume, g_oi);
         } else {
-            /* TA_Input_Real — use close for first, high for second */
-            TA_SetInputParamRealPtr(params, i, (i == 0) ? g_close : g_high);
+            /* TA_Input_Real — close for the first, high for the second, EXCEPT
+             * MAVP's inPeriods, which is a per-bar period series and not a
+             * price. Feeding it g_high ran MAVP with periods in the hundreds
+             * while ta_bench_cg used the corpus's [2,30] series, so the ratio
+             * printed below compared two different workloads (the known ~24x
+             * false MAVP regression). Matched by name, as bench_gen.rs does. */
+            const TA_Real *src = (i == 0) ? g_close : g_high;
+            if( info->paramName && strcmp(info->paramName, "inPeriods") == 0 )
+                src = g_periods;
+            TA_SetInputParamRealPtr(params, i, src);
         }
     }
 
@@ -199,18 +206,58 @@ int main(int argc, char *argv[]) {
     int n_points = DEFAULT_POINTS;
     int n_iters  = DEFAULT_ITERS;
     const char *func_filter = NULL;
+    const char *shape_name = NULL;
+    int verify_corpus = 0;
+    BenchCorpusCfg corpus;
+    int seed = BENCH_CORPUS_SEED;
+    double trend_strength = BENCH_CORPUS_TREND;
+    int regime_period = BENCH_CORPUS_PERIOD;
+    int shape;
 
     for( int i = 1; i < argc; i++ ) {
         if( strncmp(argv[i], "--points=", 9) == 0 )       n_points = atoi(argv[i]+9);
         else if( strncmp(argv[i], "--iters=", 8) == 0 )    n_iters = atoi(argv[i]+8);
         else if( strncmp(argv[i], "--function=", 11) == 0 ) func_filter = argv[i]+11;
+        else if( strncmp(argv[i], "--shape=", 8) == 0 )     shape_name = argv[i]+8;
+        else if( strncmp(argv[i], "--seed=", 7) == 0 )      seed = atoi(argv[i]+7);
+        else if( strncmp(argv[i], "--regime-period=", 16) == 0 ) regime_period = atoi(argv[i]+16);
+        else if( strncmp(argv[i], "--trend-strength=", 17) == 0 ) trend_strength = atof(argv[i]+17);
+        else if( strcmp(argv[i], "--list-shapes") == 0 )  { bench_shape_list(); return 0; }
+        else if( strcmp(argv[i], "--verify-corpus") == 0 ) verify_corpus = 1;
+        else {
+            /* Reject rather than ignore: this binary forwards the corpus flags
+             * to ta_bench_cg, so an unrecognised flag here would desync the two
+             * halves of the ratio it prints. */
+            fprintf(stderr, "ta_bench_direct: unknown option '%s'\n", argv[i]);
+            return 2;
+        }
     }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
 
-    TA_Initialize();
-    generate_price_data(n_points);
+    shape = bench_shape_id(shape_name);
+    if( shape < 0 ) {
+        printf("ta_bench_direct: unknown --shape=%s\n\n", shape_name);
+        bench_shape_list();
+        return 1;
+    }
 
-    printf("ta_bench_direct: %d points, %d iters (direct calls)\n\n", n_points, n_iters);
+    bench_corpus_defaults(&corpus);
+    corpus.shape         = shape;
+    corpus.seed          = seed;
+    corpus.refPeriod     = regime_period;
+    corpus.trendStrength = trend_strength;
+
+    /* At the n actually benchmarked — the walk family's floor artefacts only
+     * appear around n=12000, so a small fixed n cannot see them. */
+    if( verify_corpus )
+        return bench_corpus_selfcheck(n_points, &corpus) ? 1 : 0;
+
+    TA_Initialize();
+    generate_price_data(n_points, &corpus);
+
+    printf("ta_bench_direct: %d points, %d iters, shape=%s seed=%d regime-period=%d"
+           " trend-strength=%.2f (direct calls)\n\n",
+           n_points, n_iters, bench_shape_name(shape), seed, regime_period, trend_strength);
 
     /* Phase 1: Reference timing via TA_CallFunc */
     printf("  Running reference (libta-lib.a)...\n");
@@ -220,9 +267,15 @@ int main(int argc, char *argv[]) {
     printf("  %d functions timed\n", g_nResults);
 
     /* Phase 2: Codegen timing via ta_bench_cg subprocess */
+    int cg_status = 0, cg_failed = 0;
     printf("  Running codegen (ta_bench_cg)...\n");
     char cmd[1024];
-    snprintf(cmd, sizeof(cmd), "./ta_bench_cg --points=%d --iters=%d", n_points, n_iters);
+    snprintf(cmd, sizeof(cmd),
+             /* %.17g, not %.6g: the child must reconstruct the SAME double, or
+                the two halves of the ratio below measure different series. */
+             "./ta_bench_cg --points=%d --iters=%d --shape=%s --seed=%d"
+             " --regime-period=%d --trend-strength=%.17g",
+             n_points, n_iters, bench_shape_name(shape), seed, regime_period, trend_strength);
     if( func_filter )
         snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " --function=%s", func_filter);
 
@@ -244,7 +297,16 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
-        pclose(fp);
+        /* The child's exit status is the ONLY signal that it rejected a flag we
+         * forwarded (ta_bench_cg returns 2 on unknown argv). Dropping it here
+         * would leave a dead or mis-invoked child looking like a 0.00x row. */
+        cg_status = pclose(fp);
+    }
+    if( cg_status != 0 ) {
+        fprintf(stderr,
+                "ta_bench_direct: ta_bench_cg failed (status %d) — "
+                "the codegen column below is not a measurement.\n", cg_status);
+        cg_failed = 1;
     }
 
     /* Phase 3: Print comparison table */
@@ -255,6 +317,13 @@ int main(int argc, char *argv[]) {
         double ratio = (g_results[i].ref_ns > 0 && g_results[i].cg_ns > 0)
             ? (double)g_results[i].cg_ns / (double)g_results[i].ref_ns
             : 0.0;
+        /* No codegen number is not a 0.00x measurement — say so, and never
+         * colour it, so a missing row cannot read as a spectacular win. */
+        if( ratio <= 0.0 ) {
+            printf("%-20s %10lld %10s %8s\n",
+                   g_results[i].name, g_results[i].ref_ns, "--", "--");
+            continue;
+        }
         const char *clr = (ratio > 1.10) ? "\033[31m" : (ratio < 0.90) ? "\033[32m" : "";
         const char *rst = (*clr) ? "\033[0m" : "";
         printf("%-20s %10lld %s%10lld%s %7.2fx\n",
@@ -262,11 +331,12 @@ int main(int argc, char *argv[]) {
                clr, g_results[i].cg_ns, rst, ratio);
     }
 
-    printf("\n%d indicators benchmarked (%d points, %d iters, direct calls)\n",
-           g_nResults, n_points, n_iters);
+    printf("\n%d indicators benchmarked (%d points, %d iters, shape=%s, direct calls)\n",
+           g_nResults, n_points, n_iters, bench_shape_name(shape));
     printf("(red >10%% slower, green >10%% faster than C-ref)\n");
 
     free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi);
+    free(g_periods);
     TA_Shutdown();
-    return 0;
+    return cg_failed ? 1 : 0;
 }

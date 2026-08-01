@@ -1,8 +1,14 @@
 //! Generates a standalone direct-call benchmark binary for the C backend.
 //!
-//! Unlike the JSON-RPC server, this binary generates its own price data
-//! (deterministic, seed=42) and calls indicator functions directly.
-//! Output: one `FUNCNAME timing_ns` line per function on stdout.
+//! Unlike the JSON-RPC server, this binary generates its own price data and
+//! calls indicator functions directly. Output: one `FUNCNAME timing_ns` line
+//! per function on stdout.
+//!
+//! The price data comes from `src/tools/ta_bench/bench_corpus.h`, the same
+//! corpus header ta_bench and ta_bench_direct use, so all four benchmark
+//! binaries measure the same series for a given (shape, seed, n) — see
+//! `--shape` / `--list-shapes`. The default shape reproduces the seed-42 walk
+//! these binaries generated inline before the corpus header existed.
 
 use crate::ir::{FuncDef, ParamType};
 use crate::server_gen::expand_input_names;
@@ -18,6 +24,9 @@ pub fn generate_c_bench(funcs: &[FuncDef]) -> String {
     s.push_str("#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n");
     s.push_str("#include <math.h>\n#include <time.h>\n");
     s.push_str("#ifdef __APPLE__\n#include <mach/mach_time.h>\n#endif\n\n");
+    // The shared benchmark input corpus (src/tools/ta_bench is on the include
+    // path — see the ta_bench_cg / ta_bench_stream gcc invocations in main.rs).
+    s.push_str("#include \"bench_corpus.h\"\n\n");
 
     // Include headers for unguarded and private function declarations
     s.push_str("#include \"ta_func_unguarded.h\"\n");
@@ -50,7 +59,7 @@ pub fn generate_c_bench(funcs: &[FuncDef]) -> String {
 
     s.push_str(FUNC_MATCHES);
     generate_bench_func(&mut s, funcs);
-    s.push_str(MAIN_FUNC);
+    s.push_str(&MAIN_FUNC.replace("__CORPUS_ARGS__", CORPUS_ARGS));
 
     s
 }
@@ -502,6 +511,9 @@ pub fn generate_c_stream_bench(funcs: &[FuncDef]) -> String {
     s.push_str("#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n");
     s.push_str("#include <math.h>\n#include <time.h>\n");
     s.push_str("#ifdef __APPLE__\n#include <mach/mach_time.h>\n#endif\n\n");
+    // The shared benchmark input corpus (src/tools/ta_bench is on the include
+    // path — see the ta_bench_cg / ta_bench_stream gcc invocations in main.rs).
+    s.push_str("#include \"bench_corpus.h\"\n\n");
 
     s.push_str("#include \"ta_func_unguarded.h\"\n");
     s.push_str("#include \"ta_func/ta_func_private.h\"\n\n");
@@ -543,7 +555,7 @@ pub fn generate_c_stream_bench(funcs: &[FuncDef]) -> String {
 
     s.push_str(FUNC_MATCHES);
     generate_stream_bench_func(&mut s, funcs);
-    s.push_str(STREAM_MAIN_FUNC);
+    s.push_str(&STREAM_MAIN_FUNC.replace("__CORPUS_ARGS__", CORPUS_ARGS));
     s
 }
 
@@ -598,15 +610,19 @@ int main(int argc, char *argv[]) {
     TA_Initialize();
     int n_points = 100000;
     int n_iters = 500;
+    int verify_corpus = 0;
     const char *func_filter = NULL;
     for( int i = 1; i < argc; i++ ) {
         if( strncmp(argv[i], "--points=", 9) == 0 )    n_points = atoi(argv[i]+9);
         else if( strncmp(argv[i], "--iters=", 8) == 0 ) n_iters = atoi(argv[i]+8);
         else if( strncmp(argv[i], "--function=", 11) == 0 ) func_filter = argv[i]+11;
-    }
+__CORPUS_ARGS__    }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
     if( n_points < BENCH_MASK + 1 ) n_points = BENCH_MASK + 1; /* the bar feed indexes it & BENCH_MASK */
     if( n_iters < 1 ) n_iters = 1;
+    /* After the loop, so the check runs at the n actually benchmarked
+       regardless of where --points sits in argv. */
+    if( verify_corpus ) return bench_corpus_selfcheck(n_points, &g_corpus) ? 1 : 0;
     generate_price_data(n_points);
     /* Growing history for batch@last: one buffer sized to hold the whole run
        (n_iters appended bars + lookback headroom) so it never recycles within a pass. */
@@ -656,6 +672,12 @@ const PRICE_DATA_GEN: &str = r"
 static double *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi, *g_periods;
 static int g_nPoints;
 
+/* Corpus selection (--shape / --seed / --regime-period / --trend-strength).
+ * The defaults reproduce the seed-42 walk this binary generated inline before
+ * bench_corpus.h existed. */
+static BenchCorpusCfg g_corpus = { BENCH_RANDWALK, BENCH_CORPUS_SEED,
+                                   BENCH_CORPUS_PERIOD, BENCH_CORPUS_TREND };
+
 static void generate_price_data(int n) {
     g_nPoints = n;
     g_open   = calloc(n, sizeof(double));
@@ -665,29 +687,37 @@ static void generate_price_data(int n) {
     g_volume = calloc(n, sizeof(double));
     g_oi     = calloc(n, sizeof(double));
     g_periods = calloc(n, sizeof(double));
-    unsigned int seed = 42;
-    double price = 100.0;
-    int period = 16;
-    for( int i = 0; i < n; i++ ) {
-        seed = seed * 1103515245 + 12345;
-        double r = ((double)(seed >> 16) / 32768.0) - 1.0;
-        double o = price, c = price + r * 2.0;
-        double h = fmax(o, c) + fabs(r) * 0.5;
-        double l = fmin(o, c) - fabs(r) * 0.5;
-        if( l < 1.0 ) l = 1.0;
-        g_open[i] = o; g_high[i] = h; g_low[i] = l; g_close[i] = c;
-        g_volume[i] = 1000000.0 + r * 500000.0;
-        price = c; if( price < 1.0 ) price = 1.0;
-        /* Wandering period series in MAVP's default [2..30] range: exercises
-         * the multi-period grouping, not just the single-period fast path. */
-        period += (int)((seed >> 8) % 7) - 3;
-        if( period < 2 ) period = 2;
-        if( period > 30 ) period = 30;
-        g_periods[i] = (double)period;
-    }
+    bench_corpus_gen(&g_corpus, n,
+                     g_open, g_high, g_low, g_close, g_volume, g_oi, g_periods);
 }
 
 ";
+
+/* Shared --shape / --seed / --regime-period / --list-shapes handling, spliced
+ * into both generated mains. Unknown shape names fail loudly rather than
+ * silently benchmarking the default. */
+const CORPUS_ARGS: &str = r#"        else if( strncmp(argv[i], "--shape=", 8) == 0 ) {
+            g_corpus.shape = bench_shape_id(argv[i]+8);
+            if( g_corpus.shape < 0 ) {
+                printf("unknown --shape=%s\n\n", argv[i]+8);
+                bench_shape_list();
+                return 1;
+            }
+        }
+        else if( strncmp(argv[i], "--seed=", 7) == 0 )   g_corpus.seed = atoi(argv[i]+7);
+        else if( strncmp(argv[i], "--regime-period=", 16) == 0 ) g_corpus.refPeriod = atoi(argv[i]+16);
+        else if( strncmp(argv[i], "--trend-strength=", 17) == 0 ) g_corpus.trendStrength = atof(argv[i]+17);
+        else if( strcmp(argv[i], "--list-shapes") == 0 ) { bench_shape_list(); return 0; }
+        else if( strcmp(argv[i], "--verify-corpus") == 0 ) verify_corpus = 1;
+        else {
+            /* Reject rather than ignore. ta_bench_direct forwards the corpus
+             * flags to this binary unconditionally, so a silently-dropped flag
+             * makes it time two DIFFERENT input classes and print the ratio as
+             * if they matched — a wrong answer with no diagnostic. */
+            fprintf(stderr, "%s: unknown option '%s'\n", argv[0], argv[i]);
+            return 2;
+        }
+"#;
 
 const FUNC_MATCHES: &str = r#"
 static int func_matches(const char *filter, const char *name) {
@@ -706,13 +736,17 @@ int main(int argc, char *argv[]) {
     TA_Initialize();
     int n_points = 100000;
     int n_iters = 200;
+    int verify_corpus = 0;
     const char *func_filter = NULL;
     for( int i = 1; i < argc; i++ ) {
         if( strncmp(argv[i], "--points=", 9) == 0 )    n_points = atoi(argv[i]+9);
         else if( strncmp(argv[i], "--iters=", 8) == 0 ) n_iters = atoi(argv[i]+8);
         else if( strncmp(argv[i], "--function=", 11) == 0 ) func_filter = argv[i]+11;
-    }
+__CORPUS_ARGS__    }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
+    /* After the loop, so the check runs at the n actually benchmarked
+       regardless of where --points sits in argv. */
+    if( verify_corpus ) return bench_corpus_selfcheck(n_points, &g_corpus) ? 1 : 0;
     generate_price_data(n_points);
     bench_all(func_filter, n_iters);
     free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi); free(g_periods);
