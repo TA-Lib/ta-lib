@@ -11,6 +11,8 @@
 #include <mach/mach_time.h>
 #endif
 
+#include "bench_corpus.h"
+
 #include "ta_func_unguarded.h"
 #include "ta_func/ta_func_private.h"
 
@@ -207,6 +209,12 @@ static long long get_nanotime(void) {
 static double *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi, *g_periods;
 static int g_nPoints;
 
+/* Corpus selection (--shape / --seed / --regime-period / --trend-strength).
+ * The defaults reproduce the seed-42 walk this binary generated inline before
+ * bench_corpus.h existed. */
+static BenchCorpusCfg g_corpus = { BENCH_RANDWALK, BENCH_CORPUS_SEED,
+                                   BENCH_CORPUS_PERIOD, BENCH_CORPUS_TREND };
+
 static void generate_price_data(int n) {
     g_nPoints = n;
     g_open   = calloc(n, sizeof(double));
@@ -216,26 +224,8 @@ static void generate_price_data(int n) {
     g_volume = calloc(n, sizeof(double));
     g_oi     = calloc(n, sizeof(double));
     g_periods = calloc(n, sizeof(double));
-    unsigned int seed = 42;
-    double price = 100.0;
-    int period = 16;
-    for( int i = 0; i < n; i++ ) {
-        seed = seed * 1103515245 + 12345;
-        double r = ((double)(seed >> 16) / 32768.0) - 1.0;
-        double o = price, c = price + r * 2.0;
-        double h = fmax(o, c) + fabs(r) * 0.5;
-        double l = fmin(o, c) - fabs(r) * 0.5;
-        if( l < 1.0 ) l = 1.0;
-        g_open[i] = o; g_high[i] = h; g_low[i] = l; g_close[i] = c;
-        g_volume[i] = 1000000.0 + r * 500000.0;
-        price = c; if( price < 1.0 ) price = 1.0;
-        /* Wandering period series in MAVP's default [2..30] range: exercises
-         * the multi-period grouping, not just the single-period fast path. */
-        period += (int)((seed >> 8) % 7) - 3;
-        if( period < 2 ) period = 2;
-        if( period > 30 ) period = 30;
-        g_periods[i] = (double)period;
-    }
+    bench_corpus_gen(&g_corpus, n,
+                     g_open, g_high, g_low, g_close, g_volume, g_oi, g_periods);
 }
 
 #define MAX_POINTS 200000
@@ -2972,13 +2962,38 @@ int main(int argc, char *argv[]) {
     TA_Initialize();
     int n_points = 100000;
     int n_iters = 200;
+    int verify_corpus = 0;
     const char *func_filter = NULL;
     for( int i = 1; i < argc; i++ ) {
         if( strncmp(argv[i], "--points=", 9) == 0 )    n_points = atoi(argv[i]+9);
         else if( strncmp(argv[i], "--iters=", 8) == 0 ) n_iters = atoi(argv[i]+8);
         else if( strncmp(argv[i], "--function=", 11) == 0 ) func_filter = argv[i]+11;
+        else if( strncmp(argv[i], "--shape=", 8) == 0 ) {
+            g_corpus.shape = bench_shape_id(argv[i]+8);
+            if( g_corpus.shape < 0 ) {
+                printf("unknown --shape=%s\n\n", argv[i]+8);
+                bench_shape_list();
+                return 1;
+            }
+        }
+        else if( strncmp(argv[i], "--seed=", 7) == 0 )   g_corpus.seed = atoi(argv[i]+7);
+        else if( strncmp(argv[i], "--regime-period=", 16) == 0 ) g_corpus.refPeriod = atoi(argv[i]+16);
+        else if( strncmp(argv[i], "--trend-strength=", 17) == 0 ) g_corpus.trendStrength = atof(argv[i]+17);
+        else if( strcmp(argv[i], "--list-shapes") == 0 ) { bench_shape_list(); return 0; }
+        else if( strcmp(argv[i], "--verify-corpus") == 0 ) verify_corpus = 1;
+        else {
+            /* Reject rather than ignore. ta_bench_direct forwards the corpus
+             * flags to this binary unconditionally, so a silently-dropped flag
+             * makes it time two DIFFERENT input classes and print the ratio as
+             * if they matched — a wrong answer with no diagnostic. */
+            fprintf(stderr, "%s: unknown option '%s'\n", argv[0], argv[i]);
+            return 2;
+        }
     }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
+    /* After the loop, so the check runs at the n actually benchmarked
+       regardless of where --points sits in argv. */
+    if( verify_corpus ) return bench_corpus_selfcheck(n_points, &g_corpus) ? 1 : 0;
     generate_price_data(n_points);
     bench_all(func_filter, n_iters);
     free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi); free(g_periods);

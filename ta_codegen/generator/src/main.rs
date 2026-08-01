@@ -988,6 +988,9 @@ fn build_servers(backend_filter: Option<&str>) {
                 let ta_abstract_serve_dir = root.join("ta_codegen/generator/templates/c");
                 // fuzz_data.h (shared seed-generator/hasher) for stream_verify.
                 let ta_regtest_dir = src_dir.join("tools/ta_regtest");
+                // bench_corpus.h (shared benchmark input corpus) for the two
+                // generated benchmark binaries below.
+                let ta_bench_dir = src_dir.join("tools/ta_bench");
                 let src = c_dir.join("ta_codegen_serve.c");
                 let dst = bin_dir.join("ta_codegen_serve_c");
                 match std::process::Command::new("gcc")
@@ -1030,6 +1033,7 @@ fn build_servers(backend_filter: Option<&str>) {
                             bench_dst.to_str().unwrap(),
                             bench_src.to_str().unwrap(),
                             &format!("-I{}", bench_inc_c.to_str().unwrap()),
+                            &format!("-I{}", ta_bench_dir.to_str().unwrap()),
                             &format!("-I{}", include_dir.to_str().unwrap()),
                             &format!("-I{}", src_dir.to_str().unwrap()),
                             &format!("-I{}", ta_func_dir.to_str().unwrap()),
@@ -1061,6 +1065,7 @@ fn build_servers(backend_filter: Option<&str>) {
                             sbench_dst.to_str().unwrap(),
                             sbench_src.to_str().unwrap(),
                             &format!("-I{}", bench_inc_c.to_str().unwrap()),
+                            &format!("-I{}", ta_bench_dir.to_str().unwrap()),
                             &format!("-I{}", include_dir.to_str().unwrap()),
                             &format!("-I{}", src_dir.to_str().unwrap()),
                             &format!("-I{}", ta_func_dir.to_str().unwrap()),

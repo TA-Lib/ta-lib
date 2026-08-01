@@ -6,6 +6,11 @@
  *
  * Usage:
  *   ./ta_bench [--points=N] [--iters=N] [--language=c,rust] [--function=RSI,SMA]
+ *              [--shape=NAME] [--seed=N] [--regime-period=N] [--trend-strength=F]
+ *              [--list-shapes] [--verify-corpus]
+ *
+ * --shape picks the input class from the corpus in bench_corpus.h; the default
+ * reproduces the series this tool has always used. --list-shapes prints them.
  */
 
 #include <stdio.h>
@@ -39,6 +44,7 @@ static char *win_strcasestr(const char *haystack, const char *needle)
 
 #include "ta_libc.h"
 #include "codegen_pipe.h"
+#include "bench_corpus.h"
 
 /* ---- Configuration ---- */
 
@@ -71,12 +77,12 @@ static long long get_nanotime(void) {
 #endif
 }
 
-/* ---- Test data ---- */
+/* ---- Test data (corpus shapes live in bench_corpus.h) ---- */
 
 static TA_Real *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi;
 static int g_nPoints;
 
-static void generate_price_data(int n) {
+static void generate_price_data(int n, const BenchCorpusCfg *corpus) {
     g_nPoints = n;
     g_open   = calloc(n, sizeof(TA_Real));
     g_high   = calloc(n, sizeof(TA_Real));
@@ -84,19 +90,7 @@ static void generate_price_data(int n) {
     g_close  = calloc(n, sizeof(TA_Real));
     g_volume = calloc(n, sizeof(TA_Real));
     g_oi     = calloc(n, sizeof(TA_Real));
-    unsigned int seed = 42;
-    double price = 100.0;
-    for( int i = 0; i < n; i++ ) {
-        seed = seed * 1103515245 + 12345;
-        double r = ((double)(seed >> 16) / 32768.0) - 1.0;
-        double o = price, c = price + r * 2.0;
-        double h = fmax(o, c) + fabs(r) * 0.5;
-        double l = fmin(o, c) - fabs(r) * 0.5;
-        if( l < 1.0 ) l = 1.0;
-        g_open[i] = o; g_high[i] = h; g_low[i] = l; g_close[i] = c;
-        g_volume[i] = 1000000.0 + r * 500000.0;
-        price = c; if( price < 1.0 ) price = 1.0;
-    }
+    bench_corpus_gen(corpus, n, g_open, g_high, g_low, g_close, g_volume, g_oi, NULL);
 }
 
 /* ---- JSON helpers ---- */
@@ -349,6 +343,13 @@ int main(int argc, char *argv[]) {
     int n_iters  = DEFAULT_ITERS;
     const char *lang_filter = NULL;
     const char *func_filter = NULL;
+    const char *shape_name = NULL;
+    int verify_corpus = 0;
+    BenchCorpusCfg corpus;
+    int seed = BENCH_CORPUS_SEED;
+    double trend_strength = BENCH_CORPUS_TREND;
+    int regime_period = 0;   /* 0 = derive (see below) */
+    int shape;
 
     for( int i = 1; i < argc; i++ ) {
         if( strncmp(argv[i], "--points=", 9) == 0 )       n_points = atoi(argv[i]+9);
@@ -356,13 +357,51 @@ int main(int argc, char *argv[]) {
         else if( strncmp(argv[i], "--language=", 11) == 0 ) lang_filter = argv[i]+11;
         else if( strncmp(argv[i], "--function=", 11) == 0 ) func_filter = argv[i]+11;
         else if( strncmp(argv[i], "--period=", 9) == 0 )    g_period_override = atoi(argv[i]+9);
+        else if( strncmp(argv[i], "--shape=", 8) == 0 )     shape_name = argv[i]+8;
+        else if( strncmp(argv[i], "--seed=", 7) == 0 )      seed = atoi(argv[i]+7);
+        else if( strncmp(argv[i], "--regime-period=", 16) == 0 ) regime_period = atoi(argv[i]+16);
+        else if( strncmp(argv[i], "--trend-strength=", 17) == 0 ) trend_strength = atof(argv[i]+17);
+        else if( strcmp(argv[i], "--list-shapes") == 0 )  { bench_shape_list(); return 0; }
+        else if( strcmp(argv[i], "--verify-corpus") == 0 ) verify_corpus = 1;
+        else {
+            /* Reject rather than ignore: a mistyped --shape= would otherwise
+             * silently benchmark the default class and report it as the one
+             * asked for. */
+            fprintf(stderr, "ta_bench: unknown option '%s'\n", argv[i]);
+            return 2;
+        }
     }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
 
-    TA_Initialize();
-    generate_price_data(n_points);
+    shape = bench_shape_id(shape_name);
+    if( shape < 0 ) {
+        printf("ta_bench: unknown --shape=%s\n\n", shape_name);
+        bench_shape_list();
+        return 1;
+    }
+    /* The regime length of the trend/chop shapes is relative to the rolling
+     * window under test, so when --period pins the window use that; otherwise
+     * fall back to the corpus default. */
+    if( regime_period <= 0 )
+        regime_period = (g_period_override > 0) ? g_period_override : BENCH_CORPUS_PERIOD;
 
-    printf("ta_bench: %d points, %d iters (server-side)\n\n", n_points, n_iters);
+    bench_corpus_defaults(&corpus);
+    corpus.shape         = shape;
+    corpus.seed          = seed;
+    corpus.refPeriod     = regime_period;
+    corpus.trendStrength = trend_strength;
+
+    /* At the n actually benchmarked — the walk family's floor artefacts only
+     * appear around n=12000, so a small fixed n cannot see them. */
+    if( verify_corpus )
+        return bench_corpus_selfcheck(n_points, &corpus) ? 1 : 0;
+
+    TA_Initialize();
+    generate_price_data(n_points, &corpus);
+
+    printf("ta_bench: %d points, %d iters, shape=%s seed=%d regime-period=%d"
+           " trend-strength=%.2f (server-side)\n\n",
+           n_points, n_iters, bench_shape_name(shape), seed, regime_period, trend_strength);
 
     /* Start servers + load data */
     char *reqBuf  = malloc(JSON_BUF_SIZE);
@@ -432,7 +471,8 @@ int main(int argc, char *argv[]) {
     };
     TA_ForEachFunc(bench_one_function, &ctx);
 
-    printf("\n%d indicators benchmarked (%d points, %d iters)\n", ctx.count, n_points, n_iters);
+    printf("\n%d indicators benchmarked (%d points, %d iters, shape=%s)\n",
+           ctx.count, n_points, n_iters, bench_shape_name(shape));
     printf("(red >10%% slower, green >10%% faster than C-ref)\n");
 
     /* Cleanup */
