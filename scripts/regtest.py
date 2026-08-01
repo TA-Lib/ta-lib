@@ -318,8 +318,18 @@ def main():
     # 1. cmake
     if not no_build:
         os.makedirs(build_dir, exist_ok=True)
-        if not os.path.exists(os.path.join(build_dir, "CMakeCache.txt")):
-            subprocess.run(["cmake", root, "-DCMAKE_BUILD_TYPE=Release"],
+        # BUILD_BENCHMARKS is OFF by default (developer-only), and steps 6/7 run
+        # the benches. Reconfigure when it is missing OR cached OFF — an existing
+        # cmake-build/ from a plain `cmake ..` would otherwise have no ta_bench
+        # target and fail the build below.
+        cache = os.path.join(build_dir, "CMakeCache.txt")
+        needs_cmake = not os.path.exists(cache)
+        if not needs_cmake:
+            with open(cache, encoding="utf-8", errors="replace") as fh:
+                needs_cmake = "BUILD_BENCHMARKS:BOOL=ON" not in fh.read()
+        if needs_cmake:
+            subprocess.run(["cmake", root, "-DCMAKE_BUILD_TYPE=Release",
+                            "-DBUILD_BENCHMARKS=ON"],
                            check=True, cwd=build_dir)
         print("=== Building ta_regtest + ta_bench ===")
         subprocess.run(["cmake", "--build", ".", "--target",

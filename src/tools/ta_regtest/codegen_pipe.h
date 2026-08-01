@@ -3,11 +3,21 @@
 
 #include "ta_error_number.h"
 
+/* Read buffer. Responses reach ~1.8MB, so a byte-at-a-time reader costs one
+ * syscall per byte; a chunked one amortises that. Must persist across calls:
+ * a read() can pull in bytes past the newline, and those belong to the next
+ * response. Heap, not inline — these structs are main() locals (and an array of
+ * SV_MAX_PIPES), which would not fit Windows' 1MB default stack. */
+#define CODEGEN_PIPE_RBUF (256 * 1024)
+
 /* Opaque handle for the ta_codegen subprocess */
 typedef struct {
     int to_child_fd;    /* fd to write JSON-RPC requests */
     int from_child_fd;  /* fd to read JSON-RPC responses */
     int child_pid;      /* pid of ta_codegen process */
+    char *rbuf;         /* CODEGEN_PIPE_RBUF bytes, owned; NULL until open */
+    int  rpos;          /* next unconsumed byte in rbuf */
+    int  rlen;          /* bytes valid in rbuf */
 } CodegenPipe;
 
 /* Start a JSON-RPC subprocess.
