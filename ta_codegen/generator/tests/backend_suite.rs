@@ -2863,6 +2863,30 @@ fn rust_vardecl_retcode_type_renders_retcode() {
 }
 
 #[test]
+fn rust_compound_assign_casts_i32_param_into_inferred_usize_var() {
+    // `trailingPos1` is usize only via subscript inference (ctx.index_vars) —
+    // its name matches no index heuristic — and the RHS is an i32 optIn param.
+    // Regression for the `usize -= i32` mismatch in PR #154's ULTOSC ring wraps.
+    let mut ctx = backends::rust_lang::RustRenderCtx::for_lookback();
+    ctx.is_lookback = false;
+    ctx.index_vars.insert("trailingPos1".to_string());
+    let stmt = ir::Statement::Assign {
+        target: ir::Expr::Var("trailingPos1".to_string()),
+        value: ir::Expr::BinOp(
+            Box::new(ir::Expr::Var("trailingPos1".to_string())),
+            ir::BinOp::Sub,
+            Box::new(ir::Expr::Var("optInTimePeriod3".to_string())),
+        ),
+        compound: true,
+    };
+    let rendered = render_rust_stmt_with_ctx(&stmt, &ctx);
+    assert!(
+        rendered.contains("trailingPos1 -= (optInTimePeriod3) as usize"),
+        "compound assign into a subscript-inferred usize var must cast the i32 RHS: {rendered}"
+    );
+}
+
+#[test]
 fn rust_vardecl_with_init_expr() {
     let stmt = ir::Statement::VarDecl {
         var_type: ir::VarType::Real,
