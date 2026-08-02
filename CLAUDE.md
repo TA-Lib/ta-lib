@@ -207,8 +207,20 @@ cd bin && ./ta_bench --language=cref,c --points=100000 --iters=200
 
 **Gotcha:** `ta_ref_serve` is statically linked — rebuild when `libta-lib.a`
 changes or benchmarks are invalid. `regtest.py` handles this automatically.
-Full-suite benchmark runs have 10–20% variance from icache pressure;
-use `--function=NAME --iters=500` for ground truth.
+
+Both hand-written benches report the **spread** of their own repeated passes,
+because a bare median is silent about whether the box was quiet enough for it
+to mean anything — at `--iters=50` the same five functions read 0.57–0.81x, at
+`--iters=200` they read 1.00x. Read the spread before the ratio. `--max-spread=N`
+(percent, default 25) exits non-zero when the run is too noisy to interpret, and
+`ta_bench_direct --jsonl=PATH` appends a run record for tracking over time.
+
+`ta_bench_direct`'s ratio is `ta_bench_cg` (single TU, `-flto`) over
+`libta-lib.a` (separate TUs, no LTO) — **a build-configuration difference, not
+an algorithm one**, which is why binary layout alone can move it further than
+the old ±10% colour band. It now colours only outside `--no-signal` (default
+1.20x) and only when the row's own spread is narrower than the effect claimed.
+`--reps=N` samples both arms instead of just the reference.
 
 `ta_bench` sends `no_output:1`, so servers return timings without serialising
 the output arrays — it only ever reads `timing_ns`. Without it a 100k-point run

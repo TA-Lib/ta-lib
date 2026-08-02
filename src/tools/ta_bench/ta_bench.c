@@ -224,6 +224,11 @@ static void thermal_wait(char *respBuf, int respSz) {
     }
 }
 
+/* Spread of the cref arm across BENCH_PASSES, accumulated over all rows. The
+ * ratio columns below are only as meaningful as this is small. */
+static double g_spread_sum = 0.0, g_spread_worst = 0.0;
+static int    g_spread_n = 0;
+
 /* ---- Per-indicator benchmark callback ---- */
 
 typedef struct {
@@ -266,6 +271,7 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
      * from running all 161 indicators back-to-back in one binary. */
     long long ref_ns = 0;
     long long timings[16] = {0};
+    long long t_max[16] = {0};
     long long timings_ung[16] = {0};
     int has_timing[16] = {0};
     int has_timing_ung[16] = {0};
@@ -287,6 +293,9 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
                 if( ns > 0 ) {
                     if( !has_timing[li] || ns < timings[li] )
                         timings[li] = ns;
+                    /* Widest and narrowest too: min alone cannot say whether
+                       the box was quiet enough for the row to mean anything. */
+                    if( !has_timing[li] || ns > t_max[li] ) t_max[li] = ns;
                     has_timing[li] = 1;
                 }
             }
@@ -301,9 +310,19 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
     }
 
     /* Extract ref timing for ratio coloring */
+    double ref_spread = -1.0;
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
-        if( has_timing[li] && strcmp(LANGUAGES[li].name, "cref") == 0 )
+        if( has_timing[li] && strcmp(LANGUAGES[li].name, "cref") == 0 ) {
             ref_ns = timings[li];
+            if( ref_ns > 0 )
+                ref_spread = (double)(t_max[li] - timings[li]) / (double)ref_ns;
+        }
+    }
+    /* Track the worst row so the footer can say whether the run was quiet. */
+    if( ref_spread >= 0.0 ) {
+        g_spread_sum += ref_spread;
+        g_spread_n++;
+        if( ref_spread > g_spread_worst ) g_spread_worst = ref_spread;
     }
 
     /* Print row */
@@ -348,6 +367,8 @@ int main(int argc, char *argv[]) {
     const char *func_filter = NULL;
     const char *shape_name = NULL;
     int verify_corpus = 0;
+    /* 0 disables the gate; 25% matches ta_bench_direct. */
+    double max_spread = 0.25;
     BenchCorpusCfg corpus;
     int seed = BENCH_CORPUS_SEED;
     double trend_strength = BENCH_CORPUS_TREND;
@@ -366,6 +387,7 @@ int main(int argc, char *argv[]) {
         else if( strncmp(argv[i], "--trend-strength=", 17) == 0 ) trend_strength = atof(argv[i]+17);
         else if( strcmp(argv[i], "--list-shapes") == 0 )  { bench_shape_list(); return 0; }
         else if( strcmp(argv[i], "--verify-corpus") == 0 ) verify_corpus = 1;
+        else if( strncmp(argv[i], "--max-spread=", 13) == 0 ) max_spread = atof(argv[i]+13)/100.0;
         else {
             /* Reject rather than ignore: a mistyped --shape= would otherwise
              * silently benchmark the default class and report it as the one
@@ -483,6 +505,25 @@ int main(int argc, char *argv[]) {
            ctx.count, n_points, n_iters, bench_shape_name(shape));
     printf("(red >10%% slower, green >10%% faster than C-ref)\n");
 
+    /* Say how quiet the box was. Without this the ratios above look equally
+       authoritative whether the spread was 2% or 200%. */
+    int too_noisy = 0;
+    if( g_spread_n > 0 ) {
+        double mean = g_spread_sum / (double)g_spread_n;
+        printf("C-ref spread over %d passes: mean %.0f%%, worst %.0f%% (%d rows).\n",
+               BENCH_PASSES, mean * 100.0, g_spread_worst * 100.0, g_spread_n);
+        if( max_spread > 0.0 && mean > max_spread ) {
+            fprintf(stderr,
+                    "ta_bench: mean C-ref spread %.0f%% exceeds --max-spread=%.0f%% — "
+                    "treat the ratios above as unresolved.\n",
+                    mean * 100.0, max_spread * 100.0);
+            too_noisy = 1;
+        }
+    } else if( !LANGUAGES[0].active ) {
+        printf("No C-ref column: the ratio colours above are uncalibrated "
+               "(add cref to --language).\n");
+    }
+
     /* Cleanup */
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
         if( LANGUAGES[li].active )
@@ -490,5 +531,5 @@ int main(int argc, char *argv[]) {
     free(reqBuf); free(respBuf);
     free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi);
     TA_Shutdown();
-    return 0;
+    return too_noisy ? 1 : 0;
 }
