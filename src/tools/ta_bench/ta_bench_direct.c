@@ -118,14 +118,115 @@ static int func_matches(const char *filter, const char *name) {
 
 /* ---- Reference timing storage ---- */
 
+/* Keep every sample, not just the winner. A single min hides whether the box
+ * was quiet enough for the number to mean anything -- three identical runs of
+ * this tool have been observed moving 120 of 168 rows across the +-10% colour
+ * boundary, so the verdict was reporting noise. */
+#define MAX_SAMPLES (BENCH_PASSES * 8)
+
 typedef struct {
     char name[64];
-    long long ref_ns;
-    long long cg_ns;
+    long long ref_ns;          /* median of ref_s */
+    long long cg_ns;           /* median of cg_s  */
+    long long ref_s[MAX_SAMPLES];
+    long long cg_s[MAX_SAMPLES];
+    int nref, ncg;
+    double ref_spread, cg_spread;   /* (max-min)/median; -1 when < 2 samples */
 } BenchResult;
 
 static BenchResult g_results[MAX_FUNCTIONS];
 static int g_nResults = 0;
+
+static int ll_cmp(const void *a, const void *b) {
+    long long x = *(const long long *)a, y = *(const long long *)b;
+    return (x > y) - (x < y);
+}
+
+/* Median + relative spread over n samples. Returns the median, sets *spread to
+ * (max-min)/median, or -1 when a single sample makes spread unknowable. */
+static long long samples_stat(long long *s, int n, double *spread)
+{
+    if( n <= 0 ) { *spread = -1.0; return 0; }
+    qsort(s, (size_t)n, sizeof(s[0]), ll_cmp);
+    long long med = s[n / 2];
+    *spread = (n < 2 || med <= 0) ? -1.0
+            : (double)(s[n - 1] - s[0]) / (double)med;
+    return med;
+}
+
+static void result_add(BenchResult *r, long long ref, long long cg)
+{
+    if( ref > 0 && r->nref < MAX_SAMPLES ) r->ref_s[r->nref++] = ref;
+    if( cg  > 0 && r->ncg  < MAX_SAMPLES ) r->cg_s[r->ncg++]  = cg;
+}
+
+static int d_cmp(const void *a, const void *b) {
+    double x = *(const double *)a, y = *(const double *)b;
+    return (x > y) - (x < y);
+}
+
+/* Median of the per-row spreads: one number for "was the box quiet". */
+static double samples_stat_d(double *s, int n)
+{
+    if( n <= 0 ) return 0.0;
+    qsort(s, (size_t)n, sizeof(s[0]), d_cmp);
+    return s[n / 2];
+}
+
+/* Rows accumulate across repetitions, so a second pass must land on the same
+   row rather than appending a duplicate. */
+static BenchResult *result_row(const char *name)
+{
+    for( int i = 0; i < g_nResults; i++ )
+        if( strcmp(g_results[i].name, name) == 0 ) return &g_results[i];
+    if( g_nResults >= MAX_FUNCTIONS ) return NULL;
+    BenchResult *r = &g_results[g_nResults++];
+    memset(r, 0, sizeof(*r));
+    strncpy(r->name, name, sizeof(r->name) - 1);
+    return r;
+}
+
+/* Appended, one object per run, same shape as ta_regtest_timing.jsonl
+   (timestamp + git_sha + results) so both can be tracked by one reader. */
+static void write_jsonl(const char *path, int points, int iters, int reps,
+                        const char *shape, double med_spread)
+{
+    FILE *f = fopen(path, "a");
+    if( !f ) {
+        fprintf(stderr, "ta_bench_direct: cannot append to %s\n", path);
+        return;
+    }
+    char ts[32] = "";
+    time_t now = time(NULL);
+    struct tm tmv;
+#if defined(WIN32) || defined(_WIN32)
+    if( gmtime_s(&tmv, &now) == 0 )
+#else
+    if( gmtime_r(&now, &tmv) )
+#endif
+        strftime(ts, sizeof(ts), "%Y-%m-%dT%H:%M:%SZ", &tmv);
+
+    /* Same source as ta_regtest's report, so rows from the two line up. */
+    char sha[32] = "";
+    FILE *git = popen("git rev-parse --short HEAD 2>/dev/null", "r");
+    if( git ) {
+        if( fgets(sha, sizeof(sha), git) ) sha[strcspn(sha, "\r\n")] = '\0';
+        pclose(git);
+    }
+    fprintf(f, "{\"timestamp\":\"%s\",\"git_sha\":\"%s\",\"tool\":\"ta_bench_direct\","
+               "\"points\":%d,\"iters\":%d,\"reps\":%d,\"shape\":\"%s\","
+               "\"median_spread\":%.4f,\"results\":{",
+            ts, sha, points, iters, reps, shape, med_spread);
+    for( int i = 0; i < g_nResults; i++ ) {
+        const BenchResult *r = &g_results[i];
+        fprintf(f, "%s\"%s\":{\"ref_ns\":%lld,\"cg_ns\":%lld,"
+                   "\"ref_spread\":%.4f,\"cg_spread\":%.4f,\"n\":%d}",
+                i ? "," : "", r->name, r->ref_ns, r->cg_ns,
+                r->ref_spread, r->cg_spread, r->nref);
+    }
+    fprintf(f, "}}\n");
+    fclose(f);
+}
 
 /* ---- Callback context ---- */
 
@@ -179,25 +280,21 @@ static void bench_ref_func(const TA_FuncInfo *fi, void *opaque) {
         }
     }
 
-    /* Benchmark: 3 passes, keep minimum */
+    /* Every pass is kept: the spread across them is what says whether the
+     * median below is a measurement or a mood of the machine. */
     TA_Integer outBegIdx, outNbElement;
-    long long best = 0;
+    BenchResult *r = result_row(fi->name);
+    if( !r ) { TA_ParamHolderFree(params); return; }
     for( int pass = 0; pass < BENCH_PASSES; pass++ ) {
         long long t0 = get_nanotime();
         for( int it = 0; it < ctx->iters; it++ ) {
             TA_CallFunc(params, 0, g_nPoints - 1, &outBegIdx, &outNbElement);
         }
         long long elapsed = get_nanotime() - t0;
-        if( !best || elapsed < best ) best = elapsed;
+        result_add(r, elapsed / ctx->iters, 0);
     }
 
     TA_ParamHolderFree(params);
-
-    strncpy(g_results[g_nResults].name, fi->name, 63);
-    g_results[g_nResults].name[63] = '\0';
-    g_results[g_nResults].ref_ns = best / ctx->iters;
-    g_results[g_nResults].cg_ns = 0;
-    g_nResults++;
 }
 
 /* ---- Main ---- */
@@ -208,6 +305,14 @@ int main(int argc, char *argv[]) {
     const char *func_filter = NULL;
     const char *shape_name = NULL;
     int verify_corpus = 0;
+    int n_reps = 1;
+    /* Defaults chosen from measurement on this tree, not taste: the ratio's
+       own run-to-run scatter sits around 20%, so a 1.20x band is the smallest
+       honest one, and a median row spread above 25% means the box is too busy
+       for any of it to mean anything. */
+    double no_signal = 1.20;
+    double max_spread = 0.25;
+    const char *jsonl_path = NULL;
     BenchCorpusCfg corpus;
     int seed = BENCH_CORPUS_SEED;
     double trend_strength = BENCH_CORPUS_TREND;
@@ -224,6 +329,10 @@ int main(int argc, char *argv[]) {
         else if( strncmp(argv[i], "--trend-strength=", 17) == 0 ) trend_strength = atof(argv[i]+17);
         else if( strcmp(argv[i], "--list-shapes") == 0 )  { bench_shape_list(); return 0; }
         else if( strcmp(argv[i], "--verify-corpus") == 0 ) verify_corpus = 1;
+        else if( strncmp(argv[i], "--reps=", 7) == 0 )        n_reps = atoi(argv[i]+7);
+        else if( strncmp(argv[i], "--max-spread=", 13) == 0 ) max_spread = atof(argv[i]+13)/100.0;
+        else if( strncmp(argv[i], "--no-signal=", 12) == 0 )  no_signal = atof(argv[i]+12);
+        else if( strncmp(argv[i], "--jsonl=", 8) == 0 )       jsonl_path = argv[i]+8;
         else {
             /* Reject rather than ignore: this binary forwards the corpus flags
              * to ta_bench_cg, so an unrecognised flag here would desync the two
@@ -259,6 +368,13 @@ int main(int argc, char *argv[]) {
            " trend-strength=%.2f (direct calls)\n\n",
            n_points, n_iters, bench_shape_name(shape), seed, regime_period, trend_strength);
 
+    int cg_status = 0, cg_failed = 0;
+    /* Interleaved, not phase-1-then-phase-2 N times: a thermal or scheduling
+       drift over the run then hits both arms alike instead of biasing the
+       ratio toward whichever arm ran while the box was quiet. */
+    for( int rep = 0; rep < n_reps; rep++ ) {
+    if( n_reps > 1 ) printf("  rep %d/%d\n", rep + 1, n_reps);
+
     /* Phase 1: Reference timing via TA_CallFunc */
     printf("  Running reference (libta-lib.a)...\n");
 
@@ -267,7 +383,6 @@ int main(int argc, char *argv[]) {
     printf("  %d functions timed\n", g_nResults);
 
     /* Phase 2: Codegen timing via ta_bench_cg subprocess */
-    int cg_status = 0, cg_failed = 0;
     printf("  Running codegen (ta_bench_cg)...\n");
     char cmd[1024];
     snprintf(cmd, sizeof(cmd),
@@ -288,13 +403,8 @@ int main(int argc, char *argv[]) {
             char fname[64];
             long long ns;
             if( sscanf(line, "%63s %lld", fname, &ns) == 2 ) {
-                /* Find matching result */
-                for( int i = 0; i < g_nResults; i++ ) {
-                    if( strcmp(g_results[i].name, fname) == 0 ) {
-                        g_results[i].cg_ns = ns;
-                        break;
-                    }
-                }
+                BenchResult *r = result_row(fname);
+                if( r ) result_add(r, 0, ns);
             }
         }
         /* The child's exit status is the ONLY signal that it rejected a flag we
@@ -307,36 +417,96 @@ int main(int argc, char *argv[]) {
                 "ta_bench_direct: ta_bench_cg failed (status %d) — "
                 "the codegen column below is not a measurement.\n", cg_status);
         cg_failed = 1;
+        break;
+    }
+    } /* rep */
+
+    /* Collapse the samples once, before anything reads ref_ns/cg_ns. */
+    for( int i = 0; i < g_nResults; i++ ) {
+        BenchResult *r = &g_results[i];
+        r->ref_ns = samples_stat(r->ref_s, r->nref, &r->ref_spread);
+        r->cg_ns  = samples_stat(r->cg_s,  r->ncg,  &r->cg_spread);
     }
 
-    /* Phase 3: Print comparison table */
-    printf("\n%-20s %10s %10s %8s\n", "Function", "C-ref", "C", "Ratio");
-    printf("%-20s %10s %10s %8s\n", "--------", "------", "------", "-----");
+    /* Phase 3: Print comparison table.
+     *
+     * The two arms are DIFFERENT BUILDS of the same generated source -- C-ref is
+     * libta-lib.a (separate TUs, no LTO), C is ta_bench_cg (one TU, -flto). The
+     * ratio measures that, not an algorithm difference, and binary layout alone
+     * moves it by more than the old +-10% colour band. So colour only outside a
+     * stated no-signal band, and never colour a row whose own samples are
+     * spread wider than the effect being claimed. */
+    printf("\n%-20s %10s %6s %10s %6s %8s\n",
+           "Function", "C-ref", "+-", "C", "+-", "Ratio");
+    printf("%-20s %10s %6s %10s %6s %8s\n",
+           "--------", "------", "-----", "------", "-----", "-----");
+
+    double spreads[MAX_FUNCTIONS];
+    int nspread = 0, n_noisy = 0;
 
     for( int i = 0; i < g_nResults; i++ ) {
-        double ratio = (g_results[i].ref_ns > 0 && g_results[i].cg_ns > 0)
-            ? (double)g_results[i].cg_ns / (double)g_results[i].ref_ns
-            : 0.0;
+        BenchResult *r = &g_results[i];
+        char rs[16], cs[16];
+        if( r->ref_spread >= 0.0 ) snprintf(rs, sizeof(rs), "%.0f%%", r->ref_spread * 100.0);
+        else                       snprintf(rs, sizeof(rs), "%s", "?");
+        if( r->cg_spread >= 0.0 )  snprintf(cs, sizeof(cs), "%.0f%%", r->cg_spread * 100.0);
+        else                       snprintf(cs, sizeof(cs), "%s", "?");
+        if( r->ref_spread >= 0.0 ) spreads[nspread++] = r->ref_spread;
+
+        double ratio = (r->ref_ns > 0 && r->cg_ns > 0)
+            ? (double)r->cg_ns / (double)r->ref_ns : 0.0;
         /* No codegen number is not a 0.00x measurement — say so, and never
          * colour it, so a missing row cannot read as a spectacular win. */
         if( ratio <= 0.0 ) {
-            printf("%-20s %10lld %10s %8s\n",
-                   g_results[i].name, g_results[i].ref_ns, "--", "--");
+            printf("%-20s %10lld %6s %10s %6s %8s\n", r->name, r->ref_ns, rs, "--", "--", "--");
             continue;
         }
-        const char *clr = (ratio > 1.10) ? "\033[31m" : (ratio < 0.90) ? "\033[32m" : "";
+        /* Widest known spread on the row. A single cg sample is not "unknown
+           noise" -- ta_bench_cg already reports the min of its own 3 passes, so
+           it is at least as quiet as the ref arm; fall back to the ref spread
+           rather than refusing to call anything at --reps=1. */
+        double noise = (r->ref_spread >= 0.0) ? r->ref_spread : 1.0e9;
+        if( r->cg_spread > noise ) noise = r->cg_spread;
+
+        int resolved = (ratio > no_signal || ratio < 1.0 / no_signal)
+                    && (noise < no_signal - 1.0);
+        if( !resolved && (ratio > no_signal || ratio < 1.0 / no_signal) ) n_noisy++;
+
+        const char *clr = !resolved ? ""
+                        : (ratio > 1.0) ? "\033[31m" : "\033[32m";
         const char *rst = (*clr) ? "\033[0m" : "";
-        printf("%-20s %10lld %s%10lld%s %7.2fx\n",
-               g_results[i].name, g_results[i].ref_ns,
-               clr, g_results[i].cg_ns, rst, ratio);
+        printf("%-20s %10lld %6s %10lld %6s %s%7.2fx%s\n",
+               r->name, r->ref_ns, rs, r->cg_ns, cs, clr, ratio, rst);
     }
 
-    printf("\n%d indicators benchmarked (%d points, %d iters, shape=%s, direct calls)\n",
-           g_nResults, n_points, n_iters, bench_shape_name(shape));
-    printf("(red >10%% slower, green >10%% faster than C-ref)\n");
+    double med_spread = samples_stat_d(spreads, nspread);
+    printf("\n%d indicators benchmarked (%d points, %d iters, %d rep%s, shape=%s, direct calls)\n",
+           g_nResults, n_points, n_iters, n_reps, n_reps == 1 ? "" : "s",
+           bench_shape_name(shape));
+    printf("Ratio = ta_bench_cg (single TU, -flto) / libta-lib.a (separate TUs, no LTO):\n"
+           "a build-configuration difference, not an algorithm one. Coloured only\n"
+           "outside %.2fx and only when the row's own spread is narrower than that.\n",
+           no_signal);
+    printf("Median per-row spread %.0f%%", med_spread * 100.0);
+    if( n_noisy )
+        printf("; %d row(s) exceeded %.2fx but were too noisy to call", n_noisy, no_signal);
+    printf(".\n");
+    if( n_reps == 1 )
+        printf("Only the C column is repeated (%d passes); --reps=3 samples both arms.\n",
+               BENCH_PASSES);
+
+    int too_noisy = (max_spread > 0.0 && med_spread > max_spread);
+    if( too_noisy )
+        fprintf(stderr,
+                "ta_bench_direct: median spread %.0f%% exceeds --max-spread=%.0f%% — "
+                "these numbers are not trustworthy; quiet the machine or raise --iters.\n",
+                med_spread * 100.0, max_spread * 100.0);
+
+    if( jsonl_path ) write_jsonl(jsonl_path, n_points, n_iters, n_reps,
+                                 bench_shape_name(shape), med_spread);
 
     free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi);
     free(g_periods);
     TA_Shutdown();
-    return cg_failed ? 1 : 0;
+    return (cg_failed || too_noisy) ? 1 : 0;
 }
