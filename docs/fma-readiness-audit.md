@@ -79,10 +79,10 @@ flip-free — is left byte-for-byte unchanged.)
 `ta_codegen/generator/src/backends/fma.rs` holds the shared detector
 (`fuse_operands`) and the master gate (`const EMIT_FMA`, now `true`). Set it
 `false`, `cargo run -- generate`, diff the generated code to see every fused site
-(and confirm the pre-FMA output is byte-identical), then revert. The three
-independent backends (C `fma`, Rust `mul_add`, Java `Math.fma`) call the one
-detector, so they fuse the identical sites; `.NET` P/Invokes the generated C and
-inherits it.
+(and confirm the pre-FMA output is byte-identical), then revert. The four
+independent backends (C `fma`, Rust `mul_add`, Java `Math.fma`, C#
+`Math.FusedMultiplyAdd`) call the one detector, so they fuse the identical
+sites.
 
 ## Implemented
 

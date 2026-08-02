@@ -88,7 +88,6 @@ cmake-build*/
 rust/target
 
 # Build artifacts (platform-specific, rebuilt locally)
-ta_codegen/output/c/tools/ta_codegen_funcs.c
 ta_codegen/output/csharp/tools/bin/
 ta_codegen/output/csharp/tools/obj/
 ta_codegen/output/csharp/library/bin/

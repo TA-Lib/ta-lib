@@ -365,7 +365,7 @@ ta-lib/
 │   ├── c/tools/              # C server + bench (the C library ships from src/ — the backcompat exception)
 │   ├── rust/{library,tools}/ # library/ = ta-lib crate; tools/ = server/bench (a Cargo workspace)
 │   ├── java/{library,tools}/ # library/ = shipped io.github.talib package + generated metadata registry; tools/ = JSON-RPC server
-│   └── csharp/tools/         # C# P/Invoke server (tools-only; no managed library)
+│   └── csharp/{library,tools}/ # library/ = shipped TALib package (src/ generated, scaffolding hand-written); tools/ = managed JSON-RPC server
 ├── ta_codegen/generator/         # The Rust code generator (see its CLAUDE.md)
 ├── src/
 │   ├── ta_func/              # The shipped C library, generated in place by ta_codegen
