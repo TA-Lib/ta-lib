@@ -21,7 +21,7 @@ use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType, PriceCompo
 // Constants
 // ---------------------------------------------------------------------------
 
-const LICENSE: &str = "\
+pub(crate) const LICENSE: &str = "\
 /* TA-LIB Copyright (c) 1999-2026, Mario Fortier
  * All rights reserved.
  *

@@ -265,6 +265,9 @@ def get_all_generated_files() -> list:
     """
     return [
         'ta_codegen/output/java/library/src/**',
+        # C# library: the enums are generated; TALib.csproj is hand-written and
+        # is deliberately not listed.
+        'ta_codegen/output/csharp/library/*.cs',
     ]  + get_src_generated_files()
 
 def expand_globs(root_dir: str, file_list: list) -> list:
