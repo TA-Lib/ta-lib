@@ -200,7 +200,7 @@ def build_xlanghash(root_dir: str, build_dir: str, jobs: int) -> int:
     code (non-zero on any divergence). Rust crosses the JSON boundary with a seed
     (gen_present); Java crosses it with lossless hex-bits inputs (#114) and relaxes
     its transcendental-using calls to a tolerance (fdlibm != the C libm). Needs the
-    JDK for the Java server; .NET P/Invokes C == C by construction, so no .NET SDK.
+    JDK for the Java server; C# P/Invokes C == C by construction, so no .NET SDK.
     """
     # 1. Generate + compile the language servers into bin/ (Rust + Java).
     run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', '--backend=rust,java')

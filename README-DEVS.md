@@ -54,7 +54,7 @@ For more control, run `ta_regtest` directly from `bin/`:
 
 ## How to run ta_codegen
 
-`ta_codegen` is the single code generator: it generates the C library (in place under `src/`), the Rust/Java/.NET bindings, and the JSON-RPC test servers:
+`ta_codegen` is the single code generator: it generates the C library (in place under `src/`), the Rust/Java/C# bindings, and the JSON-RPC test servers:
 
 ```
 cd ta_codegen/generator

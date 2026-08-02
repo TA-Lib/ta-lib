@@ -85,7 +85,7 @@
  *    case in one run instead of aborting on the first.
  *
  * When --codegen is active every successful hand-written call is
- * also verified against the language servers (C, Rust, Java, .NET)
+ * also verified against the language servers (C, Rust, Java, C#)
  * through server_verify.
  */
 

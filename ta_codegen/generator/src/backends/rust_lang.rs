@@ -201,7 +201,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     // C's pointer-based scratch-buffer election becomes a rename here, so the
     // batch bodies below run the calculation directly in the caller's output
     // slices instead of allocating and copying (issue #146). Rust-only: the C,
-    // Java and .NET backends assign the pointer/reference and need no rewrite,
+    // Java and C# backends assign the pointer/reference and need no rewrite,
     // and the stream tier keeps the untransformed `func` (it composes its own
     // scratch buffers). See [`ScratchElection`].
     let elected = elect_output_scratch(func);
@@ -402,7 +402,7 @@ fn gen_guarded_func(
     // Output-distinctness (issue #108): aliasing two different output buffers has
     // no correct result. The borrow checker already forbids a safe caller from
     // passing the same `&mut` slice twice, so this only guards the unsafe/FFI
-    // boundary; it is kept for parity with the C/Java/.NET backends. Input ==
+    // boundary; it is kept for parity with the C/Java/C# backends. Input ==
     // output aliasing stays allowed.
     if func.outputs.len() >= 2 {
         let mut pairs: Vec<String> = Vec::new();

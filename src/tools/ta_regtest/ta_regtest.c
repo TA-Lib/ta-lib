@@ -257,8 +257,7 @@ int main( int argc, char **argv )
        * (regtest.py compiles servers with --backend=rust), so spawning it would
        * execvp a missing binary and surface as a confusing first-call pipe EOF.
        * The Rust abstract parity below has the matching guard for "rust". */
-      if( doCodegenTest &&
-          ( codegenLanguageFilter == NULL || strstr(codegenLanguageFilter, "c") != NULL ) )
+      if( doCodegenTest && svLanguageEnabled( codegenLanguageFilter, "c" ) )
       {
          /* Build server path relative to the ta_regtest executable,
           * so it works regardless of the current working directory. */
@@ -389,8 +388,8 @@ int main( int argc, char **argv )
       if( !codegenOnly )
       {
          /* When codegen mode is active, also verify hand-written tests
-          * against every available language server (C, Rust, Java, .NET),
-          * honoring --language=CSV. The Java/.NET launch commands are
+          * against every available language server (C, Rust, Java, C#),
+          * honoring --language=CSV. The Java/C# launch commands are
           * relative to the bin directory (same as test_codegen.c).
           */
          CodegenPipe svPipes[SV_MAX_PIPES];
@@ -416,13 +415,13 @@ int main( int argc, char **argv )
             const char *const svArgvRust[]   = {svPathRust, NULL};
             const char *const svArgvJava[]   = {"java", "-cp", "ta_codegen_java",
                                                 "TaCodegenServe", NULL};
-            const char *const svArgvDotnet[] = {"dotnet",
-                                                "ta_codegen_dotnet/TaCodegenServe.dll", NULL};
+            const char *const svArgvCsharp[] = {"dotnet",
+                                                "ta_codegen_csharp/TaCodegenServe.dll", NULL};
             const struct { const char *lang; const char *const *argvSv; } svServers[] = {
                { "c",      svArgvC },
                { "rust",   svArgvRust },
                { "java",   svArgvJava },
-               { "dotnet", svArgvDotnet },
+               { "csharp", svArgvCsharp },
             };
             unsigned int svIdx;
             for( svIdx = 0; svIdx < sizeof(svServers)/sizeof(svServers[0]); svIdx++ )
@@ -683,7 +682,7 @@ static void printUsage(void)
       printf( "\n" );
       printf( "    --codegen[=LANG[,LANG,...]]\n" );
       printf( "       After normal tests, verify ta_codegen output against C reference.\n" );
-      printf( "       Languages: rust, c, java, dotnet (default: all)\n" );
+      printf( "       Languages: rust, c, java, csharp (default: all)\n" );
       printf( "       Example: --codegen=rust,java\n" );
       printf( "\n" );
       printf( "    --codegen-only\n" );
@@ -693,7 +692,7 @@ static void printUsage(void)
       printf( "\n" );
       printf( "    --language=LANG[,LANG,...]\n" );
       printf( "       Filter which language servers to test with --codegen / --codegen-only.\n" );
-      printf( "       Valid values: rust, c, java, dotnet (default: all)\n" );
+      printf( "       Valid values: rust, c, java, csharp (default: all)\n" );
       printf( "       Example: --language=c,rust\n" );
       printf( "\n" );
       printf( "       Requires language server binaries in the bin directory.\n" );

@@ -45,7 +45,7 @@ use std::path::Path;
 /// registered in exactly one place ([`all`]) instead of being threaded through
 /// several `match backend { ... }` sites.
 pub trait LanguageBackend {
-    /// Short backend identifier used on the CLI (`c`, `rust`, `java`, `dotnet`).
+    /// Short backend identifier used on the CLI (`c`, `rust`, `java`, `csharp`).
     fn name(&self) -> &'static str;
 
     /// Render the per-indicator source for `func`.
@@ -75,7 +75,7 @@ pub trait LanguageBackend {
 
     /// Whether this backend emits per-indicator library source files. A backend
     /// that returns `false` produces only a JSON-RPC test server (no shipped
-    /// library): .NET is a P/Invoke harness over the C shared library, so it has
+    /// library): C# is a P/Invoke harness over the C shared library, so it has
     /// no managed indicator source to generate or clean.
     fn emits_lib_files(&self) -> bool {
         true
@@ -243,18 +243,19 @@ impl LanguageBackend for JavaBackend {
     }
 }
 
-/// The .NET P/Invoke wrappers backend.
-pub struct DotNetBackend;
-impl LanguageBackend for DotNetBackend {
+/// The C# backend. Today a P/Invoke test-server harness over the C shared
+/// library; the managed C# library it will emit is not implemented yet.
+pub struct CSharpBackend;
+impl LanguageBackend for CSharpBackend {
     fn name(&self) -> &'static str {
-        "dotnet"
+        "csharp"
     }
-    /// .NET is a P/Invoke server over the C shared library — no managed library,
-    /// so no per-indicator source files are emitted (only the server).
+    /// The C# server P/Invokes the C shared library — no managed library, so no
+    /// per-indicator source files are emitted (only the server).
     fn emits_lib_files(&self) -> bool {
         false
     }
-    /// No per-indicator source is generated for .NET (see `emits_lib_files`);
+    /// No per-indicator source is generated for C# (see `emits_lib_files`);
     /// the P/Invoke server in `generate_server` is the whole backend.
     fn generate(
         &self,
@@ -266,13 +267,15 @@ impl LanguageBackend for DotNetBackend {
         String::new()
     }
     fn out_subdir(&self) -> &'static str {
-        "dotnet"
+        "csharp"
     }
+    /// Inert while `emits_lib_files()` is false; `.cs` (not the C++/CLI-era
+    /// `.h`) so it is already correct when the managed backend turns it on.
     fn file_name(&self, func: &FuncDef) -> String {
-        format!("Core_{}.h", func.name)
+        format!("Core_{}.cs", func.name)
     }
     fn clean_glob(&self) -> (&'static str, &'static str) {
-        ("Core_", ".h")
+        ("Core_", ".cs")
     }
     fn generate_server(
         &self,
@@ -280,12 +283,12 @@ impl LanguageBackend for DotNetBackend {
         enums: &HashMap<String, EnumDef>,
         out_base: &Path,
     ) {
-        let output = server_gen::generate_dotnet_server(funcs, enums);
-        let dir = out_base.join("dotnet/tools");
+        let output = server_gen::generate_csharp_server(funcs, enums);
+        let dir = out_base.join("csharp/tools");
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("TaCodegenServe.cs");
         std::fs::write(&path, &output).unwrap();
-        println!("  .NET server -> {}", path.display());
+        println!("  C# server -> {}", path.display());
     }
 }
 
@@ -296,11 +299,11 @@ pub fn all() -> Vec<Box<dyn LanguageBackend>> {
         Box::new(CBackend),
         Box::new(RustBackend),
         Box::new(JavaBackend),
-        Box::new(DotNetBackend),
+        Box::new(CSharpBackend),
     ]
 }
 
-/// The canonical backend names (`["c", "rust", "java", "dotnet"]`).
+/// The canonical backend names (`["c", "rust", "java", "csharp"]`).
 pub fn all_names() -> Vec<&'static str> {
     all().iter().map(|b| b.name()).collect()
 }
