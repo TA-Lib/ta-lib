@@ -229,6 +229,42 @@ Anything that needs the values (`--codegen`, `--xlang-hash`, `server_verify`)
 simply omits the flag. `cref` is a frozen binary and predates it, so runs
 including `cref` stay slower than C-only ones.
 
+### The same source, six binaries
+
+Every benchmark ratio in this tree compares two *builds*, and they are not the
+same build. Measured `.text` on x86-64 gcc:
+
+| binary | build | TU model | bytes |
+|---|---|---|---|
+| `libta-lib.a` | CMake Release | separate TUs, no LTO | 2,890,487 |
+| `libta-lib.so` | CMake Release | separate TUs, PIC | 2,870,694 |
+| `ta_codegen_serve_c` | `gcc -O3 -flto` | single TU + ta_abstract | 3,940,182 |
+| `ta_bench_stream` | `gcc -O3 -flto` | single TU + streaming | 1,955,238 |
+| `ta_bench_cg` | `gcc -O3 -flto` | single TU, indicators only | 1,021,939 |
+| autotools `libta-lib` | libtool | separate TUs, no LTO | not built here |
+
+3.9x between the extremes, from identical source. The generator's flags live in
+one place (`COMMON_GCC_FLAGS`, `main.rs`); `-ffp-contract=off` is set by all
+three build systems and is load-bearing for the FMA contract (PR #96), not a
+performance knob.
+
+Which tool measures which:
+
+- `ta_bench_direct` — C-ref column is `libta-lib.a`, C column is `ta_bench_cg`.
+  Its ratio is therefore rows 1 vs 5 above.
+- `ta_bench --language=c` — `ta_codegen_serve_c` (row 3), *not* `ta_bench_cg`.
+- `ta_bench --language=cref` — `ta_ref_serve`, the frozen pre-cutover source.
+  Different code, not just a different build; the only cross-*version* number.
+- `ta_bench_stream` — itself, both arms, which is why its speedup column is the
+  one ratio here that isn't cross-configuration.
+
+Consequences worth internalising before quoting any number: a function's ns from
+`ta_bench_direct` and from `ta_bench --language=c` are not comparable; a ratio
+near 1.0 in `ta_bench_direct` means single-TU + LTO bought nothing for that
+function, not that the two are the same code path; and layout alone moves these
+ratios further than the old ±10% colour band allowed, which is why the band is
+now 1.20x and spread-gated.
+
 ### Streaming vs batch
 
 `ta_bench_stream` answers the question streaming has to justify itself on: is
