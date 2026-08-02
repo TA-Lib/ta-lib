@@ -46,9 +46,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utilities.common import (
-    check_prerequisites, PREREQS_BUILD_SERVERS,
-    PREREQS_CMAKE, PREREQS_CARGO, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
-    PREREQS_DOTNET,
+    check_prerequisites, prereqs_for_languages, backends_for_languages,
 )
 import serve_version
 
@@ -75,33 +73,9 @@ def get_filter(args, prefix):
     return None
 
 
-# Tools each --language= backend needs, on top of the base set below. Unknown
-# tokens (ta_bench also accepts "cref") contribute nothing, so a typo can only
-# widen the check, never shrink it below the base.
-LANG_PREREQS = {
-    "c":      [PREREQS_GCC],
-    "rust":   [],                            # cargo is already in the base set
-    "java":   [PREREQS_JAVAC, PREREQS_JAVA],
-    "csharp": [PREREQS_DOTNET],
-}
-
-
-def prereqs_for(lang_filter):
-    """Prerequisites this run actually needs (issue #150).
-
-    Without --language every backend is generated and built, so the full set
-    applies. With one, only that backend's toolchain is required — a JDK/.NET-less
-    machine could not reach `--codegen-only --language=c,rust` at all before.
-    cmake and cargo stay unconditional: the generator itself is the Rust binary
-    driving generate/generate-servers/build, so even --language=c runs cargo."""
-    if not lang_filter:
-        return PREREQS_BUILD_SERVERS
-    prereqs = [PREREQS_CMAKE, PREREQS_CARGO]
-    for lang in lang_filter.split(","):
-        for tool in LANG_PREREQS.get(lang.strip().lower(), []):
-            if tool not in prereqs:
-                prereqs.append(tool)
-    return prereqs
+# LANG_PREREQS / prereqs_for_languages moved to utilities/common.py so that
+# scripts/build.py enforces the same rule — a machine that can reach
+# `--language=c,rust` here must be able to reach it there too (issue #150).
 
 
 # Reference-as-server: the reference C library is frozen at this immutable tag
@@ -307,7 +281,16 @@ def main():
     lang_filter = get_filter(passthrough, "--language")
 
     # Must follow --language parsing: the prerequisite set depends on it.
-    check_prerequisites(prereqs_for(lang_filter))
+    # The ta_codegen `--backend=` value for this run. Derived from --language,
+    # but only real backend names survive: ta_bench also accepts "cref" (a frozen
+    # prebuilt binary that is never generated or built here), and forwarding that
+    # verbatim made the generator hard-error on an otherwise valid invocation.
+    backend_filter = backends_for_languages(lang_filter)
+    # Derived from the RESOLVED backend list, not the raw filter, so the tools we
+    # demand always match the backends we go on to build. `--language=cref` names
+    # no backend, so it resolves to None = "build everything" — and then the full
+    # toolchain is required rather than a short list followed by a Java compile.
+    check_prerequisites(prereqs_for_languages(backend_filter))
 
     root = find_repo_root()
     build_dir = os.path.join(root, "cmake-build")
@@ -355,8 +338,8 @@ def main():
     if not no_gen_ind:
         print("\n=== Regenerating indicator files ===")
         cmd = ["cargo", "run", "--release", "--", "generate"]
-        if lang_filter:
-            cmd.append(f"--backend={lang_filter}")
+        if backend_filter:
+            cmd.append(f"--backend={backend_filter}")
         if func_filter:
             cmd.append(f"--function={func_filter}")
         subprocess.run(cmd, check=True, cwd=codegen_dir)
@@ -365,8 +348,8 @@ def main():
     if not no_gen_srv:
         print("\n=== Regenerating server files ===")
         cmd = ["cargo", "run", "--release", "--", "generate-servers"]
-        if lang_filter:
-            cmd.append(f"--backend={lang_filter}")
+        if backend_filter:
+            cmd.append(f"--backend={backend_filter}")
         subprocess.run(cmd, check=True, cwd=codegen_dir)
 
     # 3b. generate bench binary source
@@ -380,8 +363,8 @@ def main():
     if did_generate:
         print("\n=== Compiling servers ===")
         cmd = ["cargo", "run", "--release", "--", "build"]
-        if lang_filter:
-            cmd.append(f"--backend={lang_filter}")
+        if backend_filter:
+            cmd.append(f"--backend={backend_filter}")
         subprocess.run(cmd, check=True, cwd=codegen_dir)
 
         # Debug-profile Rust server: rebuild just the Rust server bin without
