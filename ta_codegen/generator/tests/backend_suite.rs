@@ -7212,3 +7212,113 @@ TA_RetCode bbands( int startIdx, int endIdx,
          nothing ever assigns: {rust}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// C# enums (M1). These assert on EMITTED CONTENT, not merely that the emitter
+// ran: a test that only checks "generate() did not panic" is the shape that has
+// passed vacuously in this repo before.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn csharp_matype_emits_every_yaml_variant_with_its_value() {
+    let enums = load_enums();
+    let src = backends::csharp_enums::render_matype(&enums);
+    let ma = enums.get("MAType").expect("MAType in enums.yaml");
+
+    for v in &ma.variants {
+        let decl = format!("    {} = {},", v.pascal_name, v.value);
+        assert!(
+            src.contains(&decl),
+            "MAType.cs is missing `{decl}` -- a variant silently dropped from the \
+             emitted enum reorders the optInMAType ABI:\n{src}"
+        );
+    }
+    // Count the members, so an EXTRA emitted variant fails too. Match the
+    // member shape specifically -- the BSD header has comma-terminated prose.
+    let emitted = src
+        .lines()
+        .filter(|l| l.starts_with("    ") && l.contains(" = ") && l.trim_end().ends_with(','))
+        .count();
+    assert_eq!(
+        emitted,
+        ma.variants.len(),
+        "MAType.cs emitted {emitted} members for {} YAML variants",
+        ma.variants.len()
+    );
+}
+
+#[test]
+fn csharp_funcunstid_pins_the_all_sentinel_and_the_count() {
+    let enums = load_enums();
+    let src = backends::csharp_enums::render_funcunstid(&enums);
+    let fu = enums.get("FuncUnstId").expect("FuncUnstId in enums.yaml");
+
+    // The ABI pin. C pins TA_FUNC_UNST_ALL at 65535; a renumber here silently
+    // repoints every caller's set_unstable_period and nothing else catches it.
+    assert!(
+        src.contains("All = 65535,"),
+        "FuncUnstId.cs must pin `All = 65535`:\n{src}"
+    );
+    assert!(
+        src.contains(&format!("public const int Count = {};", fu.variants.len())),
+        "FuncUnstIds.Count must equal the {} function ids (and must NOT be an \
+         enum member -- that would make it an id):\n{src}",
+        fu.variants.len()
+    );
+    for v in &fu.variants {
+        let decl = format!("    {} = {},", v.pascal_name, v.value);
+        assert!(
+            src.contains(&decl),
+            "FuncUnstId.cs is missing `{decl}`:\n{src}"
+        );
+    }
+    // Count must not silently include the All sentinel.
+    assert!(
+        !src.contains(&format!("public const int Count = {};", fu.variants.len() + 1)),
+        "Count must exclude the All sentinel"
+    );
+}
+
+#[test]
+fn csharp_resolve_call_agrees_with_pascal_method_naming() {
+    // If Registry::csharp_base and the emitter's method naming disagree, every
+    // cross-indicator call targets a method that does not exist -- and that will
+    // not surface until the backend emits bodies, as a wall of CS0103.
+    let registry = make_registry();
+
+    // Pinned literals first. The structural checks below are self-consistent
+    // whatever csharp_base returns -- deriving it from the dir-name yields
+    // `Willr` and still satisfies every one of them. Only these catch that.
+    for (dir, want) in [
+        ("willr", "WillRUnguarded"),
+        ("stochf", "StochFUnguarded"),
+        ("ma", "MovingAverageUnguarded"),
+    ] {
+        assert_eq!(
+            registry.resolve_call(dir, ta_codegen_lib::registry::Lang::CSharp),
+            want,
+            "{dir}: C# base must be the PascalCase of the YAML camel_case, not of \
+             the directory name"
+        );
+    }
+
+    for name in discover_indicators() {
+        let bare = registry.resolve_call(&name, ta_codegen_lib::registry::Lang::CSharp);
+        let lookback = registry.resolve_call(&format!("{name}_lookback"), ta_codegen_lib::registry::Lang::CSharp);
+        assert!(
+            bare.ends_with("Unguarded"),
+            "{name}: bare cross-indicator call must resolve to the Unguarded \
+             variant, got {bare}"
+        );
+        let base = bare.trim_end_matches("Unguarded");
+        assert_eq!(
+            lookback,
+            format!("{base}Lookback"),
+            "{name}: lookback and unguarded names disagree on the PascalCase base"
+        );
+        assert!(
+            base.chars().next().is_some_and(char::is_uppercase),
+            "{name}: C# base name must be PascalCase, got {base}"
+        );
+    }
+}

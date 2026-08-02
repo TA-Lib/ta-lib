@@ -3,6 +3,8 @@ pub mod c;
 pub mod c_stream;
 pub mod cmake_lists;
 pub mod common;
+pub mod csharp;
+pub mod csharp_enums;
 pub mod doc_meta;
 pub mod docs_patch;
 pub mod docs_site;
@@ -255,16 +257,17 @@ impl LanguageBackend for CSharpBackend {
     fn emits_lib_files(&self) -> bool {
         false
     }
-    /// No per-indicator source is generated for C# (see `emits_lib_files`);
-    /// the P/Invoke server in `generate_server` is the whole backend.
+    /// Delegates to the (still stubbed) `csharp` emitter. While
+    /// `emits_lib_files()` is false no caller writes the result; flipping that
+    /// flag is what turns this into the managed backend.
     fn generate(
         &self,
-        _func: &FuncDef,
-        _enums: &HashMap<String, EnumDef>,
-        _registry: &Registry,
-        _helpers: &HelperRegistry,
+        func: &FuncDef,
+        enums: &HashMap<String, EnumDef>,
+        registry: &Registry,
+        helpers: &HelperRegistry,
     ) -> String {
-        String::new()
+        csharp::generate(func, enums, registry, helpers)
     }
     fn out_subdir(&self) -> &'static str {
         "csharp"

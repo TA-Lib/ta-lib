@@ -696,6 +696,17 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
             );
         }
     }
+
+    // Shipped C# library. Only the enums are generated today; the per-indicator
+    // files arrive with the managed backend. Unlike Java there is no
+    // `func_filter.is_none()` guard to inherit — C# uses partial classes, one
+    // file per indicator, so a --func subset is correct rather than destructive.
+    if backends_to_run.contains(&"csharp") {
+        let csharp_lib = root.join("ta_codegen/output/csharp/library");
+        std::fs::create_dir_all(&csharp_lib).unwrap();
+        backends::csharp_enums::generate(&enums, &csharp_lib.join("FuncUnstId.cs"));
+        backends::csharp_enums::generate_matype(&enums, &csharp_lib.join("MAType.cs"));
+    }
 }
 
 /// Load all YAML function definitions (no C source parsing, no filter).

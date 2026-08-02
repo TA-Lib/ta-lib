@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Shipped TA-Lib C# library. Hand-written and committed; ta_codegen never
+       opens this file. Today it compiles only the two generated enums — the
+       per-indicator `partial class Core` files arrive with the managed backend.
+
+       netstandard2.0 is reachable because the API is double-only (no generic
+       math); net10.0 gets the modern target. LangVersion is set explicitly so
+       the netstandard2.0 leg still accepts file-scoped namespaces. -->
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>TALib</RootNamespace>
+    <AssemblyName>TALib</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>
