@@ -1314,8 +1314,9 @@ public class TaCodegenServe {
         double[] outArr2 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Accbands(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1329,8 +1330,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AccbandsUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1361,8 +1363,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Acos(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1374,8 +1377,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AcosUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1413,8 +1417,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Ad(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1426,8 +1431,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AdUnguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1459,8 +1465,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Add(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1472,8 +1479,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AddUnguarded(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1513,8 +1521,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.AdOsc(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1526,8 +1535,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AdOscUnguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1564,8 +1574,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Adx(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1577,8 +1588,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AdxUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1614,8 +1626,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Adxr(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1627,8 +1640,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AdxrUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1660,8 +1674,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Apo(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1673,8 +1688,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.ApoUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1708,8 +1724,9 @@ public class TaCodegenServe {
         double[] outArr1 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Aroon(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1722,8 +1739,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AroonUnguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1757,8 +1775,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.AroonOsc(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1770,8 +1789,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AroonOscUnguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1800,8 +1820,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Asin(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1813,8 +1834,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AsinUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1843,8 +1865,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Atan(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1856,8 +1879,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AtanUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1894,8 +1918,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Atr(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1907,8 +1932,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AtrUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1938,8 +1964,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.AvgDev(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -1951,8 +1978,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AvgDevUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -1990,8 +2018,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.AvgPrice(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2003,8 +2032,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.AvgPriceUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2039,8 +2069,9 @@ public class TaCodegenServe {
         double[] outArr2 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Bbands(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2054,8 +2085,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.BbandsUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2090,8 +2122,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Beta(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2103,8 +2136,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.BetaUnguarded(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2142,8 +2176,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Bop(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2155,8 +2190,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.BopUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2192,8 +2228,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cci(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2205,8 +2242,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CciUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2244,8 +2282,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cdl2Crows(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2257,8 +2296,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.Cdl2CrowsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2296,8 +2336,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cdl3BlackCrows(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2309,8 +2350,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.Cdl3BlackCrowsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2348,8 +2390,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cdl3Inside(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2361,8 +2404,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.Cdl3InsideUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2400,8 +2444,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cdl3LineStrike(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2413,8 +2458,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.Cdl3LineStrikeUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2452,8 +2498,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cdl3Outside(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2465,8 +2512,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.Cdl3OutsideUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2504,8 +2552,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cdl3StarsInSouth(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2517,8 +2566,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.Cdl3StarsInSouthUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2556,8 +2606,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cdl3WhiteSoldiers(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2569,8 +2620,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.Cdl3WhiteSoldiersUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2609,8 +2661,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlAbandonedBaby(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2622,8 +2675,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlAbandonedBabyUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2661,8 +2715,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlAdvanceBlock(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2674,8 +2729,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlAdvanceBlockUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2713,8 +2769,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlBeltHold(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2726,8 +2783,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlBeltHoldUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2765,8 +2823,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlBreakaway(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2778,8 +2837,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlBreakawayUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2817,8 +2877,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlClosingMarubozu(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2830,8 +2891,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlClosingMarubozuUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2869,8 +2931,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlConcealBabysWall(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2882,8 +2945,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlConcealBabysWallUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2921,8 +2985,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlCounterAttack(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2934,8 +2999,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlCounterAttackUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -2974,8 +3040,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlDarkCloudCover(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -2987,8 +3054,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlDarkCloudCoverUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3026,8 +3094,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlDoji(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3039,8 +3108,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlDojiUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3078,8 +3148,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlDojiStar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3091,8 +3162,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlDojiStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3130,8 +3202,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlDragonflyDoji(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3143,8 +3216,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlDragonflyDojiUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3182,8 +3256,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlEngulfing(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3195,8 +3270,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlEngulfingUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3235,8 +3311,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlEveningDojiStar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3248,8 +3325,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlEveningDojiStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3288,8 +3366,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlEveningStar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3301,8 +3380,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlEveningStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3340,8 +3420,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlGapSideSideWhite(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3353,8 +3434,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlGapSideSideWhiteUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3392,8 +3474,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlGravestoneDoji(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3405,8 +3488,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlGravestoneDojiUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3444,8 +3528,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlHammer(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3457,8 +3542,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlHammerUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3496,8 +3582,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlHangingMan(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3509,8 +3596,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlHangingManUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3548,8 +3636,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlHarami(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3561,8 +3650,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlHaramiUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3600,8 +3690,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlHaramiCross(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3613,8 +3704,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlHaramiCrossUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3652,8 +3744,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlHignWave(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3665,8 +3758,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlHignWaveUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3704,8 +3798,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlHikkake(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3717,8 +3812,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlHikkakeUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3756,8 +3852,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlHikkakeMod(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3769,8 +3866,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlHikkakeModUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3808,8 +3906,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlHomingPigeon(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3821,8 +3920,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlHomingPigeonUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3860,8 +3960,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlIdentical3Crows(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3873,8 +3974,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlIdentical3CrowsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3912,8 +4014,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlInNeck(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3925,8 +4028,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlInNeckUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -3964,8 +4068,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlInvertedHammer(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -3977,8 +4082,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlInvertedHammerUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4016,8 +4122,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlKicking(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4029,8 +4136,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlKickingUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4068,8 +4176,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlKickingByLength(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4081,8 +4190,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlKickingByLengthUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4120,8 +4230,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlLadderBottom(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4133,8 +4244,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlLadderBottomUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4172,8 +4284,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlLongLeggedDoji(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4185,8 +4298,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlLongLeggedDojiUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4224,8 +4338,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlLongLine(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4237,8 +4352,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlLongLineUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4276,8 +4392,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlMarubozu(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4289,8 +4406,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlMarubozuUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4328,8 +4446,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlMatchingLow(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4341,8 +4460,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlMatchingLowUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4381,8 +4501,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlMatHold(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4394,8 +4515,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlMatHoldUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4434,8 +4556,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlMorningDojiStar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4447,8 +4570,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlMorningDojiStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4487,8 +4611,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlMorningStar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4500,8 +4625,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlMorningStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4539,8 +4665,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlOnNeck(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4552,8 +4679,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlOnNeckUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4591,8 +4719,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlPiercing(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4604,8 +4733,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlPiercingUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4643,8 +4773,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlRickshawMan(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4656,8 +4787,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlRickshawManUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4695,8 +4827,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlRiseFall3Methods(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4708,8 +4841,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlRiseFall3MethodsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4747,8 +4881,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlSeperatingLines(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4760,8 +4895,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlSeperatingLinesUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4799,8 +4935,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlShootingStar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4812,8 +4949,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlShootingStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4851,8 +4989,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlShortLine(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4864,8 +5003,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlShortLineUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4903,8 +5043,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlSpinningTop(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4916,8 +5057,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlSpinningTopUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -4955,8 +5097,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlStalledPattern(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -4968,8 +5111,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlStalledPatternUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5007,8 +5151,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlStickSandwich(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5020,8 +5165,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlStickSandwichUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5059,8 +5205,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlTakuri(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5072,8 +5219,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlTakuriUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5111,8 +5259,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlTasukiGap(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5124,8 +5273,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlTasukiGapUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5163,8 +5313,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlThrusting(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5176,8 +5327,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlThrustingUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5215,8 +5367,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlTristar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5228,8 +5381,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlTristarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5267,8 +5421,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlUnique3River(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5280,8 +5435,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlUnique3RiverUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5319,8 +5475,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlUpsideGap2Crows(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5332,8 +5489,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlUpsideGap2CrowsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5371,8 +5529,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.CdlXSideGap3Methods(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5384,8 +5543,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CdlXSideGap3MethodsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5414,8 +5574,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Ceil(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5427,8 +5588,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CeilUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5467,8 +5629,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cmf(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5480,8 +5643,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CmfUnguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5512,8 +5676,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cmo(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5525,8 +5690,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CmoUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5556,8 +5722,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cmou(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5569,8 +5736,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CmouUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5603,8 +5771,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Correl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5616,8 +5785,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CorrelUnguarded(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5646,8 +5816,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cos(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5659,8 +5830,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CosUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5689,8 +5861,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Cosh(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5702,8 +5875,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.CoshUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5733,8 +5907,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Dema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5746,8 +5921,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.DemaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5779,8 +5955,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Div(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5792,8 +5969,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.DivUnguarded(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5830,8 +6008,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Dx(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5843,8 +6022,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.DxUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5875,8 +6055,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Ema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5888,8 +6069,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.EmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5918,8 +6100,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Exp(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5931,8 +6114,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.ExpUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -5961,8 +6145,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Floor(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -5974,8 +6159,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.FloorUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6005,8 +6191,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Hma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6018,8 +6205,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.HmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6049,8 +6237,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.HtDcPeriod(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6062,8 +6251,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.HtDcPeriodUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6093,8 +6283,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.HtDcPhase(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6106,8 +6297,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.HtDcPhaseUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6138,8 +6330,9 @@ public class TaCodegenServe {
         double[] outArr1 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.HtPhasor(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6152,8 +6345,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.HtPhasorUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6185,8 +6379,9 @@ public class TaCodegenServe {
         double[] outArr1 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.HtSine(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6199,8 +6394,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.HtSineUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6231,8 +6427,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.HtTrendline(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6244,8 +6441,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.HtTrendlineUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6275,8 +6473,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.HtTrendMode(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6288,8 +6487,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.HtTrendModeUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6322,8 +6522,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Imi(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6335,8 +6536,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.ImiUnguarded(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6367,8 +6569,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Kama(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6380,8 +6583,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.KamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6411,8 +6615,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.LinearReg(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6424,8 +6629,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.LinearRegUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6455,8 +6661,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.LinearRegAngle(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6468,8 +6675,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.LinearRegAngleUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6499,8 +6707,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.LinearRegIntercept(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6512,8 +6721,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.LinearRegInterceptUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6543,8 +6753,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.LinearRegSlope(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6556,8 +6767,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.LinearRegSlopeUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6586,8 +6798,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Ln(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6599,8 +6812,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.LnUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6629,8 +6843,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Log10(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6642,8 +6857,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.Log10Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6674,8 +6890,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MovingAverage(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6687,8 +6904,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MovingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6722,8 +6940,9 @@ public class TaCodegenServe {
         double[] outArr2 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6737,8 +6956,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MacdUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6777,8 +6997,9 @@ public class TaCodegenServe {
         double[] outArr2 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MacdExt(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6792,8 +7013,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MacdExtUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6827,8 +7049,9 @@ public class TaCodegenServe {
         double[] outArr2 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MacdFix(startIdx, endIdx, inReal, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6842,8 +7065,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MacdFixUnguarded(startIdx, endIdx, inReal, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6878,8 +7102,9 @@ public class TaCodegenServe {
         double[] outArr1 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Mama(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6892,8 +7117,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MamaUnguarded(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6929,8 +7155,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MovingAverageVariablePeriod(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6942,8 +7169,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MovingAverageVariablePeriodUnguarded(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -6973,8 +7201,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Max(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -6986,8 +7215,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MaxUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7017,8 +7247,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MaxIndex(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7030,8 +7261,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MaxIndexUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7063,8 +7295,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MedPrice(startIdx, endIdx, inHigh, inLow, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7076,8 +7309,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MedPriceUnguarded(startIdx, endIdx, inHigh, inLow, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7116,8 +7350,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Mfi(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7129,8 +7364,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MfiUnguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7160,8 +7396,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MidPoint(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7173,8 +7410,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MidPointUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7207,8 +7445,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MidPrice(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7220,8 +7459,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MidPriceUnguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7251,8 +7491,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Min(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7264,8 +7505,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MinUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7295,8 +7537,9 @@ public class TaCodegenServe {
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MinIndex(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7308,8 +7551,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MinIndexUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7340,8 +7584,9 @@ public class TaCodegenServe {
         double[] outArr1 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MinMax(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7354,8 +7599,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MinMaxUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7387,8 +7633,9 @@ public class TaCodegenServe {
         int[] outArr1 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MinMaxIndex(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7401,8 +7648,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MinMaxIndexUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7440,8 +7688,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MinusDI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7453,8 +7702,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MinusDIUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7488,8 +7738,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.MinusDM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7501,8 +7752,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MinusDMUnguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7532,8 +7784,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Mom(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7545,8 +7798,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MomUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7578,8 +7832,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Mult(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7591,8 +7846,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.MultUnguarded(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7629,8 +7885,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Natr(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7642,8 +7899,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.NatrUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7675,8 +7933,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Nvi(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7688,8 +7947,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.NviUnguarded(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7721,8 +7981,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Obv(startIdx, endIdx, inReal, inVolume, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7734,8 +7995,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.ObvUnguarded(startIdx, endIdx, inReal, inVolume, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7772,8 +8034,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.PlusDI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7785,8 +8048,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.PlusDIUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7820,8 +8084,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.PlusDM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7833,8 +8098,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.PlusDMUnguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7866,8 +8132,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Ppo(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7879,8 +8146,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.PpoUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7912,8 +8180,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Pvi(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7925,8 +8194,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.PviUnguarded(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -7958,8 +8228,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Pvo(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -7971,8 +8242,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.PvoUnguarded(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8002,8 +8274,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Roc(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8015,8 +8288,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.RocUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8046,8 +8320,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.RocP(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8059,8 +8334,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.RocPUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8090,8 +8366,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.RocR(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8103,8 +8380,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.RocRUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8134,8 +8412,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.RocR100(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8147,8 +8426,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.RocR100Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8179,8 +8459,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Rsi(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8192,8 +8473,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.RsiUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8227,8 +8509,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Sar(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8240,8 +8523,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.SarUnguarded(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8281,8 +8565,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.SarExt(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8294,8 +8579,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.SarExtUnguarded(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8324,8 +8610,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Sin(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8337,8 +8624,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.SinUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8367,8 +8655,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Sinh(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8380,8 +8669,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.SinhUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8411,8 +8701,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Sma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8424,8 +8715,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.SmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8454,8 +8746,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Sqrt(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8467,8 +8760,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.SqrtUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8499,8 +8793,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.StdDev(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8512,8 +8807,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.StdDevUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8554,8 +8850,9 @@ public class TaCodegenServe {
         double[] outArr1 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Stoch(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8568,8 +8865,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.StochUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8609,8 +8907,9 @@ public class TaCodegenServe {
         double[] outArr1 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.StochF(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8623,8 +8922,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.StochFUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8659,8 +8959,9 @@ public class TaCodegenServe {
         double[] outArr1 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.StochRsi(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8673,8 +8974,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.StochRsiUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8707,8 +9009,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Sub(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8720,8 +9023,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.SubUnguarded(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8751,8 +9055,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Sum(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8764,8 +9069,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.SumUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8797,8 +9103,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.T3(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8810,8 +9117,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.T3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8840,8 +9148,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Tan(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8853,8 +9162,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.TanUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8883,8 +9193,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Tanh(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8896,8 +9207,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.TanhUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8927,8 +9239,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Tema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8940,8 +9253,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.TemaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -8976,8 +9290,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.TrueRange(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -8989,8 +9304,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.TrueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -9020,8 +9336,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Trima(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -9033,8 +9350,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.TrimaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -9064,8 +9382,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Trix(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -9077,8 +9396,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.TrixUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -9108,8 +9428,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Tsf(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -9121,8 +9442,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.TsfUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -9157,8 +9479,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.TypPrice(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -9170,8 +9493,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.TypPriceUnguarded(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -9209,8 +9533,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.UltOsc(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -9222,8 +9547,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.UltOscUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -9254,8 +9580,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Variance(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -9267,8 +9594,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.VarianceUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -9301,8 +9629,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Vwma(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -9314,8 +9643,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.VwmaUnguarded(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -9350,8 +9680,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.WclPrice(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -9363,8 +9694,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.WclPriceUnguarded(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -9400,8 +9732,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.WillR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -9413,8 +9746,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.WillRUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
@@ -9444,8 +9778,9 @@ public class TaCodegenServe {
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
-        long _t0 = GetNanoTime();
-        for (int _bi = 0; _bi < bench_iters; _bi++) {
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
             rc = core.Wma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
@@ -9457,8 +9792,9 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = GetNanoTime();
-        for (int _biu = 0; _biu < bench_iters; _biu++) {
+        long _t0u = 0;
+        for (int _biu = 0; _biu <= bench_iters; _biu++) {
+            if (_biu == 1) _t0u = GetNanoTime();
             rc = core.WmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
         }
         long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;

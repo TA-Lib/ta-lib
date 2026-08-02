@@ -1752,9 +1752,24 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
         ));
         s.push_str("        }\n");
 
-        // Single timing block around ALL iterations — amortizes timer overhead
-        s.push_str("        long _t0 = get_nanotime();\n");
-        s.push_str("        for( int _bi = 0; _bi < bench_iters; _bi++ ) {\n");
+        // Single timing block around ALL iterations — amortizes timer overhead.
+        // Iteration 0 is ALWAYS a discarded warm-up, on every path including the
+        // correctness ones. Two reasons, and the second is the important one:
+        //
+        //  1. Benchmarking: the cold call page-faults the output arrays, pulls
+        //     the input into cache, and on the managed servers forces the JIT.
+        //     It measures 1.5-10x the steady state, which at --iters=1 IS the
+        //     whole number.
+        //  2. Correctness: because the reported/hashed output now comes from a
+        //     SECOND call while the golden is the in-process C library called
+        //     ONCE, every gate becomes an idempotency check for free. A function
+        //     that mutates its input, or uses its output buffer as scratch while
+        //     assuming it starts clean, diverges from the golden and fails.
+        //
+        // The branch is per-iteration, not per-bar — free against a whole indicator.
+        s.push_str("        long _t0 = 0;\n");
+        s.push_str("        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {\n");
+        s.push_str("        if( _bi == 1 ) _t0 = get_nanotime();\n");
 
         // Call the function
         s.push_str(&format!("        rc = TA_{}(\n", func.name));
@@ -1828,8 +1843,9 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
 
         // Unguarded timing pass — skipped when built as ta_ref_serve (no _Unguarded in libta-lib.a)
         s.push_str("#ifndef TA_REF_SERVE\n");
-        s.push_str("        long _t0_ung = get_nanotime();\n");
-        s.push_str("        for( int _biu = 0; _biu < bench_iters; _biu++ ) {\n");
+        s.push_str("        long _t0_ung = 0;\n");
+        s.push_str("        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {\n");
+        s.push_str("        if( _biu == 1 ) _t0_ung = get_nanotime();\n");
         s.push_str(&format!("        rc = TA_{}_Unguarded(\n", func.name));
         s.push_str("            startIdx, endIdx,\n");
         for (j, _name) in input_names.iter().enumerate() {
@@ -2584,9 +2600,12 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("        MInteger outNBElement = new MInteger();\n");
         s.push_str("        RetCode rc = RetCode.Success;\n");
 
-        // Benchmark iteration loop with timing
-        s.push_str("        long startNs = System.nanoTime();\n");
-        s.push_str("        for (int _bi = 0; _bi < bench_iters; _bi++) {\n");
+        // Benchmark iteration loop with timing. Iteration 0 is always a
+        // discarded warm-up — see the C emitter: it removes the cold-call bias
+        // AND makes every correctness gate an idempotency check.
+        s.push_str("        long startNs = 0;\n");
+        s.push_str("        for (int _bi = 0; _bi <= bench_iters; _bi++) {\n");
+        s.push_str("        if (_bi == 1) startNs = System.nanoTime();\n");
 
         // Call
         s.push_str(&format!("        rc = core.{func_lower}Internal(\n"));
@@ -2631,8 +2650,9 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
         // Unguarded timing loop
         let unguarded_name = format!("{func_lower}UnguardedInternal");
-        s.push_str("        long startNsUng = System.nanoTime();\n");
-        s.push_str("        for (int _biu = 0; _biu < bench_iters; _biu++) {\n");
+        s.push_str("        long startNsUng = 0;\n");
+        s.push_str("        for (int _biu = 0; _biu <= bench_iters; _biu++) {\n");
+        s.push_str("        if (_biu == 1) startNsUng = System.nanoTime();\n");
         s.push_str(&format!("        rc = core.{unguarded_name}(\n"));
         s.push_str("            startIdx, endIdx,\n");
         for name in &input_names {
@@ -3147,8 +3167,12 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         for k in 0..outputs.len() {
             call_args.push_str(&format!(", outArr{k}"));
         }
-        s.push_str("        long _t0 = GetNanoTime();\n");
-        s.push_str("        for (int _bi = 0; _bi < bench_iters; _bi++) {\n");
+        // Iteration 0 is always a discarded warm-up — see the C emitter. It
+        // matters most here (the cold call is 1.5-10x steady state) and it makes
+        // every correctness gate an idempotency check.
+        s.push_str("        long _t0 = 0;\n");
+        s.push_str("        for (int _bi = 0; _bi <= bench_iters; _bi++) {\n");
+        s.push_str("            if (_bi == 1) _t0 = GetNanoTime();\n");
         s.push_str(&format!("            rc = core.{base}({call_args});\n"));
         s.push_str("        }\n");
         s.push_str("        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;\n");
@@ -3175,8 +3199,9 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("        }\n");
 
         // Unguarded timing loop.
-        s.push_str("        long _t0u = GetNanoTime();\n");
-        s.push_str("        for (int _biu = 0; _biu < bench_iters; _biu++) {\n");
+        s.push_str("        long _t0u = 0;\n");
+        s.push_str("        for (int _biu = 0; _biu <= bench_iters; _biu++) {\n");
+        s.push_str("            if (_biu == 1) _t0u = GetNanoTime();\n");
         s.push_str(&format!("            rc = core.{base}Unguarded({call_args});\n"));
         s.push_str("        }\n");
         s.push_str("        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;\n");
@@ -3628,9 +3653,11 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("            let mut outNBElement: usize = 0;\n");
         s.push_str("            let mut rc = RetCode::Success;\n");
 
-        // Guarded timing loop
-        s.push_str("            let start_time = Instant::now();\n");
-        s.push_str("            for _bi in 0..bench_iters {\n");
+        // Guarded timing loop. Iteration 0 is always a discarded warm-up — see
+        // the C emitter: cold-call bias, plus a free idempotency check.
+        s.push_str("            let mut start_time = Instant::now();\n");
+        s.push_str("            for _bi in 0..=bench_iters {\n");
+        s.push_str("                if _bi == 1 { start_time = Instant::now(); }\n");
         s.push_str(&format!(
             "            rc = core.{fn_name}(\n"
         ));
@@ -3692,8 +3719,9 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("            }\n");
 
         // Unguarded timing loop (same signature as guarded, no extra params)
-        s.push_str("            let start_time_ung = Instant::now();\n");
-        s.push_str("            for _biu in 0..bench_iters {\n");
+        s.push_str("            let mut start_time_ung = Instant::now();\n");
+        s.push_str("            for _biu in 0..=bench_iters {\n");
+        s.push_str("                if _biu == 1 { start_time_ung = Instant::now(); }\n");
         s.push_str(&format!(
             "            rc = core.{fn_name}_unguarded(\n"
         ));
