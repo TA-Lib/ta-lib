@@ -441,10 +441,12 @@ jobs:
   # servers must compute BIT-IDENTICAL outputs to the shipped in-process C library
   # (no tolerance — the seed/hex + hash design routes around the JSON-RPC
   # float-serialization limit that forces --codegen's 1e-6). Rust crosses the
-  # boundary with a seed (gen_present); Java with lossless hex inputs (#114), its
-  # transcendental-using calls relaxed to a tolerance (fdlibm != the C libm).
+  # boundary with a seed (gen_present); Java and C# with lossless hex inputs
+  # (#114). Only Java relaxes its transcendental-using calls to a tolerance
+  # (fdlibm != the C libm); the managed C# reaches the platform libm through
+  # Math.*, so it is bitwise everywhere, transcendentals included.
   # cmake+gcc+cargo are preinstalled on ubuntu-latest; the Java server needs the
-  # JDK (no .NET — it P/Invokes C == C by construction).
+  # JDK and the managed C# server needs the .NET SDK (both set up below).
   xlang-hash:
     name: xlang matching (C vs Rust + Java + C#, seed/hex+hash)
     needs: test
@@ -683,6 +685,12 @@ jobs:
           # ta_bench_cg.c / ta_bench_stream.c outside this gate and they can
           # drift from bench_gen.rs unnoticed.
           (cd ta_codegen/generator && cargo run --release -- generate-bench --backend=c)
+          # Same gap, same fix, for the four JSON-RPC servers: `generate-servers`
+          # is only ever called by `build.py servers` / `regtest.py`, so the
+          # committed TaCodegenServe sources (C, Rust, Java, C#) could drift from
+          # server_gen.rs without any gate noticing. Generation is cargo-only —
+          # no JDK or .NET SDK needed to WRITE the sources, only to compile them.
+          (cd ta_codegen/generator && cargo run --release -- generate-servers)
           status="$(git status --porcelain)"
           if [ -n "$status" ]; then
             echo "::error::ta_codegen output is out of date. Run 'scripts/build.py generate' and commit the regenerated files."

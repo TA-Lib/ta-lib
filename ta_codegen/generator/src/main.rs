@@ -1168,9 +1168,9 @@ fn build_servers(backend_filter: Option<&str>) {
                 }
                 // The shipped library itself (the artifact users get) — the
                 // server build above proves nothing about its csproj, its
-                // netstandard2.1 target, or its doc-comment gate (CS1591 via
-                // TreatWarningsAsErrors), so build it too, like Java's library
-                // step.
+                // net8.0 leg (the server is net10.0 only), or its doc-comment
+                // gate (CS1591 via TreatWarningsAsErrors), so build it too,
+                // like Java's library step.
                 if !build_csharp_library(&root) {
                     failures += 1;
                 }

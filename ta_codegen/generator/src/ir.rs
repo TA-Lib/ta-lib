@@ -348,7 +348,7 @@ pub enum CircBufLayout {
 
 /// A circular FIFO buffer operation (the `CIRCBUF_*` macros from `ta_memory.h`).
 /// Lowered per-backend: C stack-first hybrid (static array + heap fallback),
-/// Rust `Vec`, Java `new[]`, C# no-op (P/Invoke has no body).
+/// Rust `Vec`, Java `new[]`, C# `new[]`.
 #[derive(Debug, Clone)]
 pub enum CircBuf {
     /// `CIRCBUF_PROLOG(Id,Type,N)` / `_PROLOG_CLASS`. Declares storage, `<id>_Idx`, `maxIdx_<id>`.
