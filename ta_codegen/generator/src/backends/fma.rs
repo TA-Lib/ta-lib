@@ -7,7 +7,7 @@
 //! Explicit `fma` / `f64::mul_add` / `Math.fma` all compute the IEEE-754
 //! correctly-rounded fused product-sum, identical on every platform — so fusing
 //! the SAME sites in C, Rust and Java keeps the three backends bit-identical to
-//! one another (the .NET binding P/Invokes the generated C, inheriting it).
+//! one another (the C# binding P/Invokes the generated C, inheriting it).
 //!
 //! The regtest cross-language comparison only enforces a 1e-6 tolerance, so it
 //! would NOT catch two backends fusing slightly different site sets (they would

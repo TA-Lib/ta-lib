@@ -118,7 +118,7 @@ pub(crate) fn expand_input_names(inputs: &[Input]) -> Vec<String> {
 
 /// Map a price-component input name to its reference array name prefix.
 /// Returns None for non-price input names.
-/// Used by Java and .NET servers (e.g., "inHigh" -> "refHigh").
+/// Used by Java and C# servers (e.g., "inHigh" -> "refHigh").
 fn price_input_to_ref(name: &str) -> Option<&'static str> {
     match name {
         "inOpen" => Some("refOpen"),
@@ -2758,19 +2758,19 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s
 }
 
-/// Generate a .NET (C#) JSON-RPC server source file.
+/// Generate a C# JSON-RPC server source file.
 ///
 /// Emits a complete C# program that uses P/Invoke to call the generated C shared
 /// library (`ta_codegen_funcs`), reads JSON-RPC requests from stdin, dispatches to
 /// the imported TA functions, and writes JSON responses to stdout.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 #[allow(clippy::implicit_hasher)]
-pub fn generate_dotnet_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
+pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 
-    s.push_str("// Auto-generated JSON-RPC server for ta_codegen .NET output.\n");
+    s.push_str("// Auto-generated JSON-RPC server for ta_codegen C# output.\n");
     s.push_str("// Uses P/Invoke to call the generated C shared library.\n");
-    s.push_str("// Requires: dotnet 8.0+, libta_codegen_funcs.dylib/.so in bin/\n");
+    s.push_str("// Requires: .NET SDK 8.0+, libta_codegen_funcs.dylib/.so in bin/\n");
     s.push_str("using System;\n");
     s.push_str("using System.IO;\n");
     s.push_str("using System.Text.Json;\n");
@@ -3133,7 +3133,7 @@ pub fn generate_dotnet_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     // FNV-1a output hasher for want_hash mode (server_verify / issue #115),
     // byte-for-byte identical to fuzz_data.h: FNV-1a over each value's
     // LITTLE-ENDIAN raw bytes (DoubleToInt64Bits preserves -0.0 / NaN payloads)
-    // + fmix64 finalizer. .NET P/Invokes the C library, so this is expected
+    // + fmix64 finalizer. C# P/Invokes the C library, so this is expected
     // bit-identical to the in-process C golden (a build-flag drift guard).
     s.push_str("    static ulong SvHashInit() => 1469598103934665603UL;\n");
     s.push_str("    static ulong SvHashF64(ulong h, double[] a, int n) {\n");

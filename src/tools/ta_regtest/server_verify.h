@@ -8,7 +8,7 @@
 #define SV_MAX_PIPES 4
 
 /* Initialize server verification with one or more server pipes.
- * `langs[i]` is the language token of pipes[i] ("c"/"rust"/"java"/"dotnet"),
+ * `langs[i]` is the language token of pipes[i] ("c"/"rust"/"java"/"csharp"),
  * used to pick the per-pipe comparison policy (bitwise vs the Java-transcendental
  * tolerance). Called from ta_regtest.c when --codegen is active. */
 void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes);

@@ -1,6 +1,6 @@
-// Auto-generated JSON-RPC server for ta_codegen .NET output.
+// Auto-generated JSON-RPC server for ta_codegen C# output.
 // Uses P/Invoke to call the generated C shared library.
-// Requires: dotnet 8.0+, libta_codegen_funcs.dylib/.so in bin/
+// Requires: .NET SDK 8.0+, libta_codegen_funcs.dylib/.so in bin/
 using System;
 using System.IO;
 using System.Text.Json;

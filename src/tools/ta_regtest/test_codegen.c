@@ -47,15 +47,15 @@ int g_hideUnguarded = 0;
 /* ---- Language definitions ---- */
 
 typedef struct {
-    const char *name;           /* "rust", "c", "java", "dotnet" */
-    const char *display;        /* "Rust", "C", "Java", ".NET" */
+    const char *name;           /* "rust", "c", "java", "csharp" */
+    const char *display;        /* "Rust", "C", "Java", "C#" */
     const char *const *argv;    /* NULL-terminated command array */
 } CodegenLanguage;
 
 static const char *const argv_rust[]  = {"./ta_codegen_serve_rust", NULL};
 static const char *const argv_c[]     = {"./ta_codegen_serve_c", NULL};
 static const char *const argv_java[]  = {"java", "-cp", "ta_codegen_java", "TaCodegenServe", NULL};
-static const char *const argv_dotnet[]= {"dotnet", "ta_codegen_dotnet/TaCodegenServe.dll", NULL};
+static const char *const argv_csharp[]= {"dotnet", "ta_codegen_csharp/TaCodegenServe.dll", NULL};
 /* Reference oracle (reference-as-server, task #7): the frozen reference C
  * library exposed as a JSON-RPC server. NOT a tested language — it is the
  * baseline every language server (including the generated C server) is diffed
@@ -66,7 +66,7 @@ static const CodegenLanguage ALL_LANGUAGES[] = {
     {"c",      "C",            argv_c},
     {"rust",   "Rust",         argv_rust},
     {"java",   "Java",         argv_java},
-    {"dotnet", ".NET",         argv_dotnet},
+    {"csharp", "C#",           argv_csharp},
 };
 #define NUM_LANGUAGES (sizeof(ALL_LANGUAGES) / sizeof(ALL_LANGUAGES[0]))
 
@@ -2495,9 +2495,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 static ErrorNumber test_predicate_parity(CodegenPipe *cp, const CodegenLanguage *lang,
                                          char *reqBuf, char *respBuf)
 {
-    /* .NET P/Invokes the C library and does not re-implement these builtins, so
-     * eval_predicate is a C/Rust/Java check only. */
-    if( strcmp(lang->name, "dotnet") == 0 )
+    /* C# P/Invokes the C library and does not re-implement these builtins, so
+     * eval_predicate is a C/Rust/Java check only. Drop this skip when the
+     * managed C# backend lands — it will re-implement them. */
+    if( strcmp(lang->name, "csharp") == 0 )
         return TA_TEST_PASS;
 
     /* Finite boundary table (NaN/inf excluded: the servers parse them
@@ -4358,7 +4359,7 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
  * are none of the #98/#107 carve-outs; every case is bitwise except Java's
  * transcendentals.
  *
- * .NET P/Invokes the C library (== C by construction) so it is not a distinct
+ * C# P/Invokes the C library (== C by construction) so it is not a distinct
  * cross-language check. See fuzz_data.h and src/tools/ta_regtest/CLAUDE.md.
  * ======================================================================== */
 
@@ -5335,7 +5336,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
      * is the golden, not a server row). Rust uses the seed transport
      * (gen_present + fuzz_in_hash); Java uses the lossless hex-bits transport
      * (usesSeed=0 — its server has no fuzz_gen port, #114) and relaxes its
-     * transcendental-using calls to a tolerance (fdlibm != the C libm). .NET
+     * transcendental-using calls to a tolerance (fdlibm != the C libm). C#
      * P/Invokes the C library (== C by construction), so it is not a row. */
     static XlangServer servers[] = {
         {"rust", "Rust", argv_rust, 1, {0}, 0, 0, 0, 0},
@@ -5376,7 +5377,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     if( nrequested == 0 )
     {
         printf("FAIL — no language server matched --language=%s "
-               "(valid: rust, java; C is the in-process golden, .NET == C).\n",
+               "(valid: rust, java; C is the in-process golden, C# == C).\n",
                languageFilter ? languageFilter : "");
         free(ctx.reqBuf); free(ctx.respBuf);
         return TA_CODEGEN_OUTPUT_MISMATCH;
@@ -5810,6 +5811,33 @@ ErrorNumber test_codegen(const TA_History *history,
     printf("=============================================\n");
     printf("Codegen Multi-Language Verification\n");
     printf("=============================================\n");
+
+    /* Reject unknown --language= tokens. The langsTested==0 check below only
+     * fires when EVERY token misses, so "c,csharpp" would silently test C alone
+     * and report green for a language nobody ran. */
+    if( languageFilter )
+    {
+        char filterCopy[1024];
+        char *token;
+        strncpy(filterCopy, languageFilter, sizeof(filterCopy) - 1);
+        filterCopy[sizeof(filterCopy) - 1] = '\0';
+        token = strtok(filterCopy, ",");
+        while( token != NULL )
+        {
+            unsigned int li;
+            for( li = 0; li < NUM_LANGUAGES; li++ )
+                if( strcmp(token, ALL_LANGUAGES[li].name) == 0 ) break;
+            if( li == NUM_LANGUAGES )
+            {
+                printf("\nFAIL - unknown --language token '%s' (valid:", token);
+                for( li = 0; li < NUM_LANGUAGES; li++ )
+                    printf(" %s", ALL_LANGUAGES[li].name);
+                printf(").\n");
+                return TA_REGTEST_BAD_USER_PARAM;
+            }
+            token = strtok(NULL, ",");
+        }
+    }
 
     /* Non-vacuity guard for the candlestick pattern data shape. */
     errNb = verify_fuzz_candle_nonvacuous();

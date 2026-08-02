@@ -27,7 +27,7 @@ ta_codegen/output/       (per-language products: library/ (shipped) + tools/ (se
   c/tools/               (server + bench + aggregation TUs; C library ships from src/)
   rust/library/ + rust/tools/  (ta-lib crate + server/bench — a Cargo workspace)
   java/library/ + java/tools/  (shipped package + meta/  +  JSON-RPC server)
-  dotnet/tools/          (P/Invoke server; no managed library)
+  csharp/tools/          (P/Invoke server; no managed library)
 include/ta_func.h        (generated public header)
 ```
 
@@ -113,7 +113,7 @@ Value gates that need the *generated* library live in the crate itself, as
 **Fully working:**
 - `codegen_pipe.c/h` in ta_regtest — complete subprocess pipe abstraction (fork, exec, stdin/stdout JSON-RPC)
 - `test_codegen.c/h` in ta_regtest — full orchestration: multi-language loop, JSON helpers, `doRangeTest` integration, epsilon comparison (`1e-6`), language/function filters
-- Server generation for all 4 languages (C, Java, .NET, Rust)
+- Server generation for all 4 languages (C, Java, C#, Rust)
 - `ta_codegen build` compiles servers into executables in `bin/`
 
 **What's working end-to-end:**
@@ -250,9 +250,9 @@ if the local is assigned again while still in scope.
 pins that by sweeping every indicator and asserting the pass fires for `bbands`
 alone.
 
-The C, Java and .NET backends need none of this — they assign the pointer or
+The C, Java and C# backends need none of this — they assign the pointer or
 reference directly — so the transform must never change their output. `generate`
-followed by `git diff` over `src/ta_func/`, `output/java/` and `output/dotnet/` is
+followed by `git diff` over `src/ta_func/`, `output/java/` and `output/csharp/` is
 the check. `templates/rust/scratch_election.rs` is the value gate.
 
 ### Debug-safe decrements

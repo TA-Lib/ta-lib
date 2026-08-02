@@ -12,7 +12,7 @@ indicator is defined by two files in `ta_codegen/input/<name>/`:
 - `<name>.c` — the algorithm, written as plain C (see `docs/ta_codegen_input_code.md`)
 
 From these it generates all **four** backends: **C** (in place under `src/ta_func` /
-`src/ta_abstract`), **Rust**, **Java**, **.NET** (under `ta_codegen/output/`).
+`src/ta_abstract`), **Rust**, **Java**, **C#** (under `ta_codegen/output/`).
 
 > All ~161 indicators are already converted. Use this skill to **add a brand-new**
 > indicator, **modify** an existing one, or **extend the generator** to support a new
@@ -119,7 +119,7 @@ If the parser panics or output is wrong, extend:
 | New type keyword | `parser/c_source.rs` + backends |
 | New variable mapping | `Expr::Var` match in each backend's `render_expr()` |
 
-**When extending the IR you MUST update ALL 4 backends** (C, Rust, Java, .NET) or Rust
+**When extending the IR you MUST update ALL 4 backends** (C, Rust, Java, C#) or Rust
 exhaustiveness errors will point you to each.
 
 ### 5. Verify across languages and commit
@@ -142,7 +142,7 @@ the change is wrong.
 | `ta_codegen/generator/src/ir.rs` | IR types (FuncDef, Statement, Expr, ParamType) |
 | `ta_codegen/generator/src/parser/c_source.rs` | C-source → IR parser |
 | `ta_codegen/generator/src/parser/yaml.rs` | YAML metadata parser |
-| `ta_codegen/generator/src/backends/*.rs` | Backends (c, rust_lang, java, dotnet) |
+| `ta_codegen/generator/src/backends/*.rs` | Backends (c, rust_lang, java, csharp) |
 | `ta_codegen/generator/src/server_gen.rs` | JSON-RPC server generation |
 | `ta_codegen/generator/tests/validate.sh` | Dev validation harness |
 | `docs/ta_codegen_input_yaml.md` | YAML schema reference |

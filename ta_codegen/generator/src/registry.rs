@@ -7,7 +7,7 @@ pub enum Lang {
     C,
     Rust,
     Java,
-    DotNet,
+    CSharp,
 }
 
 /// Registry of discovered indicators, used for cross-function call resolution.
@@ -126,7 +126,7 @@ impl Registry {
                     Lang::Rust => format!("{base}_private"),
                     Lang::C => format!("TA_{}_Private", base.to_uppercase()),
                     Lang::Java => format!("{}Private", self.java_base(base)),
-                    Lang::DotNet => {
+                    Lang::CSharp => {
                         let pascal = capitalize(base);
                         format!("{pascal}Private")
                     }
@@ -145,7 +145,7 @@ impl Registry {
                 Lang::Rust => format!("{func_name}_unguarded"),
                 Lang::C => format!("TA_{}_Unguarded", func_name.to_uppercase()),
                 Lang::Java => format!("{}UnguardedInternal", self.java_base(func_name)),
-                Lang::DotNet => {
+                Lang::CSharp => {
                     let pascal = capitalize(func_name);
                     format!("{pascal}Logic")
                 }
@@ -160,7 +160,7 @@ impl Registry {
             Lang::Rust => func_name.to_string(),
             Lang::C => to_c_name(&indicator, &suffix),
             Lang::Java => format!("{}{}", self.java_base(&indicator), capitalize(&suffix)),
-            Lang::DotNet => to_pascal_case(func_name),
+            Lang::CSharp => to_pascal_case(func_name),
         }
     }
 
@@ -293,13 +293,13 @@ mod tests {
             "movingAverageLookback"
         );
 
-        // .NET backend (bare names resolve to Logic)
+        // C# backend (bare names resolve to Logic)
         assert_eq!(
-            registry.resolve_call("sma_lookback", Lang::DotNet),
+            registry.resolve_call("sma_lookback", Lang::CSharp),
             "SmaLookback"
         );
-        assert_eq!(registry.resolve_call("sma", Lang::DotNet), "SmaLogic");
-        assert_eq!(registry.resolve_call("ema_private", Lang::DotNet), "EmaPrivate");
+        assert_eq!(registry.resolve_call("sma", Lang::CSharp), "SmaLogic");
+        assert_eq!(registry.resolve_call("ema_private", Lang::CSharp), "EmaPrivate");
     }
 
     #[test]

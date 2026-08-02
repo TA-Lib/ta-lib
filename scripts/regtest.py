@@ -82,7 +82,7 @@ LANG_PREREQS = {
     "c":      [PREREQS_GCC],
     "rust":   [],                            # cargo is already in the base set
     "java":   [PREREQS_JAVAC, PREREQS_JAVA],
-    "dotnet": [PREREQS_DOTNET],
+    "csharp": [PREREQS_DOTNET],
 }
 
 

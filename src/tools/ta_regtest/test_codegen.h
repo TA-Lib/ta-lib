@@ -6,7 +6,7 @@
 
 /* Run codegen verification tests against one or more languages.
  * languageFilter: comma-separated list of languages to test (NULL = test all).
- *   Valid values: "rust", "c", "java", "dotnet"
+ *   Valid values: "rust", "c", "java", "csharp"
  * functionFilter: CSV list of function names to test (NULL = test all).
  * Errors loudly if a requested language's server cannot be started.
  */
@@ -15,7 +15,7 @@ ErrorNumber test_codegen(const TA_History *history,
                          const char *functionFilter);
 
 /* Can this language server select a compatibility variant?
- * C still carries the deprecated TA_SetCompatibility and .NET P/Invokes into it.
+ * C still carries the deprecated TA_SetCompatibility and C# P/Invokes into it.
  * Neither Rust nor Java does: both are pinned to Default with no public setter,
  * and the Java backend now constant-folds the Metastock branches out of the
  * generated code entirely, so those arms do not exist to be selected. A

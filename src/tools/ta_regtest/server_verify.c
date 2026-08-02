@@ -11,7 +11,7 @@
  * --xlang-hash (issue #113), differing only in input source: here the inputs are
  * the test's exact arrays, sent losslessly as hex-of-IEEE-bits strings, and the
  * server returns a full-precision out_hash we diff via the shared
- * codegen_hash_compare(). Zero tolerance for C/Rust/.NET; a narrow tolerance for
+ * codegen_hash_compare(). Zero tolerance for C/Rust/C#; a narrow tolerance for
  * Java on transcendental-using functions only (fdlibm != system libm ~1 ULP).
  */
 
@@ -38,7 +38,7 @@
 /* ---- Global state ---- */
 
 static CodegenPipe *g_pipes[SV_MAX_PIPES];
-static const char  *g_pipeLang[SV_MAX_PIPES];          /* "c"/"rust"/"java"/"dotnet" */
+static const char  *g_pipeLang[SV_MAX_PIPES];          /* "c"/"rust"/"java"/"csharp" */
 static int          g_nbPipes = 0;
 static char        *g_reqBuf  = NULL;
 static char        *g_respBuf = NULL;
@@ -515,7 +515,7 @@ ErrorNumber server_verify(
 
     /* Decide transcendental-ness once (per call — it depends on the MAType
      * argument, not just the function name). Only Java relaxes to a tolerance
-     * for these; C/Rust/.NET stay bitwise even here. */
+     * for these; C/Rust/C# stay bitwise even here. */
     const TA_FuncHandle *handle = NULL;
     int isTranscendental = 0;
     if( TA_GetFuncHandle(funcName, &handle) == TA_SUCCESS )

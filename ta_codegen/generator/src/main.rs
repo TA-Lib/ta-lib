@@ -120,7 +120,7 @@ fn main() {
             eprintln!(
                 "  --backend=NAME[,NAME,...]    Only generate specified backends (default: all)"
             );
-            eprintln!("                               Backends: c, rust, java, dotnet");
+            eprintln!("                               Backends: c, rust, java, csharp");
             eprintln!();
             eprintln!("Options for 'extract':");
             eprintln!(
@@ -663,7 +663,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     }
 
     // Take over gen_code's Java role: generate the shipped Java library files into
-    // java/src/io/github/talib/ (the Rust/.NET bindings have no canonical home
+    // java/src/io/github/talib/ (the Rust/C# bindings have no canonical home
     // and stay under ta_codegen/output/, but Java — like C — is a shipped product).
     if backends_to_run.contains(&"java") {
         let java_pkg = root.join("ta_codegen/output/java/library/src/io/github/talib");
@@ -823,7 +823,15 @@ fn generate_servers(func_filter: Option<&str>, backend_filter: Option<&str>) {
     for backend in &backends_to_run {
         match backends::get(backend) {
             Some(b) => b.generate_server(&funcs, &enums, &out_base),
-            None => eprintln!("Unknown backend: {}", backend),
+            // Hard error: a typo'd --backend must not read as "generated nothing, fine".
+            None => {
+                eprintln!(
+                    "Error: unknown backend '{}' (valid: {}).",
+                    backend,
+                    backends::all_names().join(", ")
+                );
+                std::process::exit(1);
+            }
         }
     }
 
@@ -1118,19 +1126,19 @@ fn build_servers(backend_filter: Option<&str>) {
                     failures += 1;
                 }
             }
-            "dotnet" => {
-                // Build shared library from generated C files (needed by .NET P/Invoke)
+            "csharp" => {
+                // Build shared library from generated C files (needed by C# P/Invoke)
                 if !build_shared_lib(&out_base, &bin_dir) {
                     failures += 1;
                 }
 
-                print!("  Building .NET server... ");
-                let dotnet_dir = out_base.join("dotnet/tools");
-                let dotnet_out = bin_dir.join("ta_codegen_dotnet");
-                std::fs::create_dir_all(&dotnet_out).ok();
+                print!("  Building C# server... ");
+                let csharp_dir = out_base.join("csharp/tools");
+                let csharp_out = bin_dir.join("ta_codegen_csharp");
+                std::fs::create_dir_all(&csharp_out).ok();
 
                 // Create a minimal .csproj if not present
-                let csproj_path = dotnet_dir.join("TaCodegenServe.csproj");
+                let csproj_path = csharp_dir.join("TaCodegenServe.csproj");
                 if !csproj_path.exists() {
                     let csproj = r#"<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -1148,20 +1156,20 @@ fn build_servers(backend_filter: Option<&str>) {
                         "-c",
                         "Release",
                         "-o",
-                        dotnet_out.to_str().unwrap(),
-                        dotnet_dir.to_str().unwrap(),
+                        csharp_out.to_str().unwrap(),
+                        csharp_dir.to_str().unwrap(),
                     ])
                     .status()
                 {
                     Ok(s) if s.success() => {
-                        // Copy shared lib into dotnet output dir for P/Invoke discovery
+                        // Copy shared lib into the C# output dir for P/Invoke discovery
                         let lib_name = if cfg!(target_os = "macos") {
                             "libta_codegen_funcs.dylib"
                         } else {
                             "libta_codegen_funcs.so"
                         };
                         let lib_src = bin_dir.join(lib_name);
-                        let lib_dst = dotnet_out.join(lib_name);
+                        let lib_dst = csharp_out.join(lib_name);
                         if lib_src.exists() {
                             std::fs::copy(&lib_src, &lib_dst).ok();
                         }
@@ -1205,7 +1213,10 @@ fn build_servers(backend_filter: Option<&str>) {
                     }
                 }
             }
+            // Counted as a failure: an unrecognised backend built nothing, and
+            // exiting 0 here lets ta_regtest reuse a stale binary and read green.
             _ => {
+                failures += 1;
                 eprintln!("  Unknown backend: {}", backend);
             }
         }
@@ -1404,9 +1415,9 @@ fn collect_java_sources(
 }
 
 /// Build a shared library from the generated C files.
-/// This is used by both the Python (ctypes) and .NET (P/Invoke) servers.
+/// This is used by both the Python (ctypes) and C# (P/Invoke) servers.
 /// The shared lib exports all TA_* functions and is placed in bin/.
-/// Returns `true` on success so the caller can count a failure (the .NET server
+/// Returns `true` on success so the caller can count a failure (the C# server
 /// needs this native lib; a silent failure here used to still exit 0).
 fn build_shared_lib(out_base: &Path, bin_dir: &Path) -> bool {
     let marker = bin_dir.join(".shared_lib_built");
@@ -2067,7 +2078,7 @@ fn clean_generated_files(out_base: &Path, backend: &str) {
     let Some(backend) = backends::get(backend) else {
         return;
     };
-    // Server-only backends (e.g. .NET) emit no per-indicator files to clean.
+    // Server-only backends (e.g. C#) emit no per-indicator files to clean.
     if !backend.emits_lib_files() {
         return;
     }
@@ -2110,7 +2121,7 @@ fn generate_backend(
         eprintln!("Unknown backend: {}", backend);
         return;
     };
-    // Server-only backends (e.g. .NET P/Invoke) emit no per-indicator library files.
+    // Server-only backends (e.g. C# P/Invoke) emit no per-indicator library files.
     if !backend.emits_lib_files() {
         return;
     }

@@ -131,14 +131,14 @@ static const char *const argv_cref[]   = {"./ta_ref_serve", NULL};
 static const char *const argv_c[]      = {"./ta_codegen_serve_c", NULL};
 static const char *const argv_rust[]   = {"./ta_codegen_serve_rust", NULL};
 static const char *const argv_java[]   = {"java", "-cp", "ta_codegen_java", "TaCodegenServe", NULL};
-static const char *const argv_dotnet[] = {"dotnet", "ta_codegen_dotnet/TaCodegenServe.dll", NULL};
+static const char *const argv_csharp[] = {"dotnet", "ta_codegen_csharp/TaCodegenServe.dll", NULL};
 
 static BenchLanguage LANGUAGES[] = {
     {"cref",     "C-ref",    argv_cref,     {0}, 0, 0},
     {"c",        "C",        argv_c,        {0}, 0, 0},
     {"rust",     "Rust",     argv_rust,     {0}, 0, 0},
     {"java",     "Java",     argv_java,     {0}, 0, 0},
-    {"dotnet",   ".NET",     argv_dotnet,   {0}, 0, 0},
+    {"csharp",   "C#",       argv_csharp,   {0}, 0, 0},
 };
 #define NUM_LANGUAGES (sizeof(LANGUAGES)/sizeof(LANGUAGES[0]))
 
@@ -240,9 +240,21 @@ typedef struct {
     int count;
 } BenchContext;
 
+/* Exact-token match, not substring: "csharp" contains "c", so a substring test
+ * would silently run the C row for --language=csharp. */
 static int lang_matches(const char *filter, const char *name) {
+    char filterCopy[1024];
+    char *token;
     if( !filter ) return 1;
-    return strstr(filter, name) != NULL;
+    strncpy(filterCopy, filter, sizeof(filterCopy) - 1);
+    filterCopy[sizeof(filterCopy) - 1] = '\0';
+    token = strtok(filterCopy, ",");
+    while( token != NULL )
+    {
+        if( strcmp(name, token) == 0 ) return 1;
+        token = strtok(NULL, ",");
+    }
+    return 0;
 }
 
 static int func_matches(const char *filter, const char *name) {
