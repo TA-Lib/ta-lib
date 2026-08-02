@@ -468,7 +468,7 @@ def main():
         if bench_rc != 0 and rc == 0:
             rc = bench_rc
 
-    # 7. direct bench (zero-overhead, no server)
+    # 7. direct bench (in-process libta-lib.a vs the single-TU ta_bench_cg)
     # Runs unless --no-test; independent of --no-perftest
     if (not no_test or direct_only) and "--no-direct-bench" not in argv:
         bench_direct = os.path.join(bin_dir, "ta_bench_direct")
@@ -483,7 +483,7 @@ def main():
             print("  Run without --direct-bench-only to build them first.")
         else:
             print("\n" + "=" * 60)
-            print("DIRECT BENCH — zero-overhead (direct function calls)")
+            print("DIRECT BENCH — libta-lib.a vs ta_bench_cg (different builds)")
             print("=" * 60, flush=True)
             direct_args = [a for a in passthrough
                            if a.startswith("--function=")

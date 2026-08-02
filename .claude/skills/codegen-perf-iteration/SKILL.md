@@ -40,7 +40,12 @@ cd bin && ./ta_regtest --codegen --language=c
 
 ### BENCHMARK
 
-**Primary tool: `ta_bench_direct`** (zero-overhead, direct function calls):
+**Read the spread before the ratio.** Both tools print a `+-` column; at low
+`--iters` the same functions have read 0.57x and 1.00x on consecutive runs.
+A number without a narrow spread beside it is not a measurement.
+
+**Primary tool: `ta_bench_direct`** — the only thing that times `libta-lib.a`,
+the artifact a real consumer links:
 ```bash
 # Isolated — ground truth, no icache noise
 cd bin && ./ta_bench_direct --function=NAME --iters=500 --points=100000
@@ -48,11 +53,18 @@ cd bin && ./ta_bench_direct --function=NAME --iters=500 --points=100000
 # Full suite — overview, verify outliers in isolation
 cd bin && ./ta_bench_direct --iters=200 --points=100000
 ```
+Its ratio is `ta_bench_cg` (single TU, `-flto`) over `libta-lib.a` (separate
+TUs, no LTO) — a build-configuration difference, not an algorithm one. See
+"The same source, six binaries" in the root CLAUDE.md before quoting it.
 
-**Secondary tool: `ta_bench`** (server-based, includes transport overhead):
+**Secondary tool: `ta_bench`** — cross-language, and the only way to reach the
+frozen pre-cutover reference (`cref`). Its `timing_ns` is measured *inside* the
+server around the call, so JSON-RPC transport is NOT in the timed region:
 ```bash
 cd bin && ./ta_bench --language=cref,c --function=NAME --points=100000 --iters=500
 ```
+Note it times `ta_codegen_serve_c`, a different binary from `ta_bench_direct`'s
+C column, so the two tools' absolute ns are not comparable with each other.
 
 Parse direct bench output:
 ```python
@@ -158,7 +170,7 @@ For one-off runs: just invoke `/codegen-perf-iteration` directly.
 1. **Never wait for human input.** Log questions to `.plans/perf-iteration-questions.md`, pick faster-to-test approach, keep going.
 2. **One change per cycle.** Don't fix three things at once.
 3. **Use subagents for analysis.** Dispatch one subagent per slow indicator — they read assembly, count cycles, find root causes.
-4. **Trust isolation over full-run.** Full 161-indicator run has ~10-20% noise from icache. `ta_bench_direct` isolated benchmarks are ground truth.
+4. **Trust isolation over full-run.** Full 161-indicator run has ~10-20% noise from icache. Isolated `ta_bench_direct` runs are the best available signal — but check the `+-` column, they are not automatically ground truth.
 5. **Revert failures quickly.** Don't spend 3 cycles saving a bad idea.
 6. **Consult external AI when stuck.** 2+ failed cycles on the same indicator → get a second opinion.
 7. **Log everything.** Each iteration → `.plans/perf-iteration-log.md`: what changed, why, before/after, outcome.
@@ -185,7 +197,7 @@ cc -O3 -DNDEBUG -Wno-everything -I ta_codegen/output/c -o bin/ta_ref_serve /tmp/
 - Candle macros (`TA_CANDLERANGE`/`TA_CANDLEAVERAGE`) match reference pattern
 - Short-circuit `&&` split for CDL patterns with dual `TA_CANDLEAVERAGE` (CDLHARAMI 1.39x → 0.82x)
 - MINMAX was never slow (0.68x) — server overhead inflated it to 1.25x
-- `ta_bench_direct` provides zero-overhead ground-truth benchmarking
+- `ta_bench_direct` times libta-lib.a in-process; report its spread with its ratio
 
 ### Remaining (icache/layout, not code quality)
 - CDL3BLACKCROWS: 1.16x isolated — compiler short-circuits correctly, minor fdiv interleaving diff
