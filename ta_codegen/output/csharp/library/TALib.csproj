@@ -1,21 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!-- Shipped TA-Lib C# library. Hand-written and committed; ta_codegen never
-       opens this file. Today it compiles only the two generated enums — the
-       per-indicator `partial class Core` files arrive with the managed backend.
+       opens this file. Generated sources (the enums and the per-indicator
+       `partial class Core` files) live under src/; the hand-written
+       scaffolding (Core.cs, RetCode.cs, OutRange.cs, ...) sits at this level.
 
-       netstandard2.0 is reachable because the API is double-only (no generic
-       math); net10.0 gets the modern target. LangVersion is set explicitly so
-       the netstandard2.0 leg still accepts file-scoped namespaces. -->
+       net8.0 (LTS) is the floor — not netstandard: the generated indicators
+       call Math.FusedMultiplyAdd (the cross-language FMA bit-parity contract,
+       PR #96), which no netstandard version has, and a software FMA
+       substitute would break bit-parity, which is the one thing this port
+       must not do. net10.0 gets the modern target.
+
+       TreatWarningsAsErrors + GenerateDocumentationFile makes CS1591 (missing
+       XML doc on a public member) an error — the C# analog of the Java
+       -Xdoclint gate. -->
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>TALib</RootNamespace>
     <AssemblyName>TALib</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- NuGet packaging (PackageId, Version, license, readme) arrives with the
+         release milestone; until then `dotnet pack` must not produce a
+         placeholder package. -->
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
 </Project>

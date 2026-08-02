@@ -259,6 +259,36 @@ pub fn emit_java_unpacking(settings: &BTreeSet<String>, indent: usize) -> String
     out
 }
 
+/// Emit C# unpacking lines for the given candle settings.
+///
+/// ```csharp
+/// int BodyLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyLong].rangeType;
+/// int BodyLong_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyLong].avgPeriod;
+/// double BodyLong_factor = this.candleSettings[(int)CandleSettingType.BodyLong].factor;
+/// ```
+///
+/// The shipped-`Core.cs` access form: `candleSettings` is a `CandleSetting[]`
+/// indexed by `CandleSettingType` values (C# enums cast with `(int)`, there is
+/// no `ordinal()`). `rangeType` is a `RangeType` enum there, cast to the `int`
+/// local the candle ternaries compare against (`RealBody`=0, `HighLow`=1,
+/// `Shadows`=2) — the same values as the Java and C forms.
+pub fn emit_csharp_unpacking(settings: &BTreeSet<String>, indent: usize) -> String {
+    let pad = " ".repeat(indent);
+    let mut out = String::new();
+    for setting in settings {
+        out.push_str(&format!(
+            "{pad}int {setting}_rangeType = (int)this.candleSettings[(int)CandleSettingType.{setting}].rangeType;\n"
+        ));
+        out.push_str(&format!(
+            "{pad}int {setting}_avgPeriod = this.candleSettings[(int)CandleSettingType.{setting}].avgPeriod;\n"
+        ));
+        out.push_str(&format!(
+            "{pad}double {setting}_factor = this.candleSettings[(int)CandleSettingType.{setting}].factor;\n"
+        ));
+    }
+    out
+}
+
 /// Convert `PascalCase` to `snake_case`.
 ///
 /// `"BodyLong"` -> `"body_long"`, `"ShadowVeryShort"` -> `"shadow_very_short"`

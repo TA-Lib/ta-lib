@@ -3,7 +3,9 @@ pub mod c;
 pub mod c_stream;
 pub mod cmake_lists;
 pub mod common;
+pub mod compat_fold;
 pub mod csharp;
+pub mod csharp_doc;
 pub mod csharp_enums;
 pub mod doc_meta;
 pub mod docs_patch;
@@ -77,8 +79,9 @@ pub trait LanguageBackend {
 
     /// Whether this backend emits per-indicator library source files. A backend
     /// that returns `false` produces only a JSON-RPC test server (no shipped
-    /// library): C# is a P/Invoke harness over the C shared library, so it has
-    /// no managed indicator source to generate or clean.
+    /// library). Every current backend emits library files (C# was the last
+    /// server-only holdout, until its managed backend landed); the hook stays
+    /// for a future server-only bring-up.
     fn emits_lib_files(&self) -> bool {
         true
     }
@@ -245,21 +248,15 @@ impl LanguageBackend for JavaBackend {
     }
 }
 
-/// The C# backend. Today a P/Invoke test-server harness over the C shared
-/// library; the managed C# library it will emit is not implemented yet.
+/// The managed C# backend: one `Core_<NAME>.cs` per indicator (`public partial
+/// class Core`) into the shipped library tree, plus a managed JSON-RPC server
+/// whose csproj compiles those exact library sources — the same-text identity
+/// proof Java gets by splicing, without the splice.
 pub struct CSharpBackend;
 impl LanguageBackend for CSharpBackend {
     fn name(&self) -> &'static str {
         "csharp"
     }
-    /// The C# server P/Invokes the C shared library — no managed library, so no
-    /// per-indicator source files are emitted (only the server).
-    fn emits_lib_files(&self) -> bool {
-        false
-    }
-    /// Delegates to the (still stubbed) `csharp` emitter. While
-    /// `emits_lib_files()` is false no caller writes the result; flipping that
-    /// flag is what turns this into the managed backend.
     fn generate(
         &self,
         func: &FuncDef,
@@ -269,11 +266,12 @@ impl LanguageBackend for CSharpBackend {
     ) -> String {
         csharp::generate(func, enums, registry, helpers)
     }
+    /// Generated sources only (`Core_*.cs` + the enums); the hand-written
+    /// scaffolding (`Core.cs`, `RetCode.cs`, `OutRange.cs`, ..., the csproj)
+    /// lives one level up in `csharp/library/`, outside the clean sweep.
     fn out_subdir(&self) -> &'static str {
-        "csharp"
+        "csharp/library/src"
     }
-    /// Inert while `emits_lib_files()` is false; `.cs` (not the C++/CLI-era
-    /// `.h`) so it is already correct when the managed backend turns it on.
     fn file_name(&self, func: &FuncDef) -> String {
         format!("Core_{}.cs", func.name)
     }
@@ -291,6 +289,10 @@ impl LanguageBackend for CSharpBackend {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("TaCodegenServe.cs");
         std::fs::write(&path, &output).unwrap();
+        // The csproj is generated too: it compiles the shipped library sources
+        // into the server assembly (the same-text identity proof).
+        let csproj = dir.join("TaCodegenServe.csproj");
+        std::fs::write(&csproj, server_gen::csharp_server_csproj()).unwrap();
         println!("  C# server -> {}", path.display());
     }
 }

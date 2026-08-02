@@ -70,12 +70,14 @@ static const CodegenLanguage ALL_LANGUAGES[] = {
 };
 #define NUM_LANGUAGES (sizeof(ALL_LANGUAGES) / sizeof(ALL_LANGUAGES[0]))
 
-/* See test_codegen.h. Rust and Java pin compatibility to Default and expose no
- * setter, so their Metastock legs are skipped rather than run vacuously. */
+/* See test_codegen.h. Rust, Java and (managed) C# pin compatibility to Default
+ * and expose no setter, so their Metastock legs are skipped rather than run
+ * vacuously. */
 int codegen_lang_has_compatibility_api(const char *lang)
 {
     if( !lang ) return 1;
-    return !(strcmp(lang, "rust") == 0 || strcmp(lang, "java") == 0);
+    return !(strcmp(lang, "rust") == 0 || strcmp(lang, "java") == 0
+             || strcmp(lang, "csharp") == 0);
 }
 
 /* One line per language per kind of skipped leg, so the coverage a language
@@ -2495,12 +2497,6 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 static ErrorNumber test_predicate_parity(CodegenPipe *cp, const CodegenLanguage *lang,
                                          char *reqBuf, char *respBuf)
 {
-    /* C# P/Invokes the C library and does not re-implement these builtins, so
-     * eval_predicate is a C/Rust/Java check only. Drop this skip when the
-     * managed C# backend lands — it will re-implement them. */
-    if( strcmp(lang->name, "csharp") == 0 )
-        return TA_TEST_PASS;
-
     /* Finite boundary table (NaN/inf excluded: the servers parse them
      * inconsistently and TA-Lib does not define NaN behaviour). Values are sent
      * with %.17g. The forms are semantically identical, so the goal is to catch a
@@ -4359,8 +4355,9 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
  * are none of the #98/#107 carve-outs; every case is bitwise except Java's
  * transcendentals.
  *
- * C# P/Invokes the C library (== C by construction) so it is not a distinct
- * cross-language check. See fuzz_data.h and src/tools/ta_regtest/CLAUDE.md.
+ * The managed C# backend has no row here YET (planned follow-up): its bitwise
+ * coverage today is server_verify's hex-input hash compare during --codegen
+ * runs. See fuzz_data.h and src/tools/ta_regtest/CLAUDE.md.
  * ======================================================================== */
 
 typedef struct {
@@ -5336,8 +5333,9 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
      * is the golden, not a server row). Rust uses the seed transport
      * (gen_present + fuzz_in_hash); Java uses the lossless hex-bits transport
      * (usesSeed=0 — its server has no fuzz_gen port, #114) and relaxes its
-     * transcendental-using calls to a tolerance (fdlibm != the C libm). C#
-     * P/Invokes the C library (== C by construction), so it is not a row. */
+     * transcendental-using calls to a tolerance (fdlibm != the C libm). The
+     * managed C# backend has no row yet (planned follow-up); until then its
+     * bitwise coverage is server_verify during --codegen runs. */
     static XlangServer servers[] = {
         {"rust", "Rust", argv_rust, 1, {0}, 0, 0, 0, 0},
         {"java", "Java", argv_java, 0, {0}, 0, 0, 0, 0},
@@ -5377,7 +5375,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     if( nrequested == 0 )
     {
         printf("FAIL — no language server matched --language=%s "
-               "(valid: rust, java; C is the in-process golden, C# == C).\n",
+               "(valid: rust, java; C is the in-process golden; the managed C# row is a planned follow-up).\n",
                languageFilter ? languageFilter : "");
         free(ctx.reqBuf); free(ctx.respBuf);
         return TA_CODEGEN_OUTPUT_MISMATCH;
