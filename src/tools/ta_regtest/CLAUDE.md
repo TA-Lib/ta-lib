@@ -338,8 +338,7 @@ hard failure.
 
 Build + run everything with `scripts/build.py xlang-hash`. Both CI nightlies
 (dev + main) run it as a gate (`xlang-hash` job). Needs cmake + gcc + cargo, plus
-the **JDK** for the Java server — the managed C# backend has no row here yet
-(planned follow-up; its bitwise coverage today is `server_verify`).
+the **JDK** for the Java server and the **.NET SDK** for the managed C# server.
 
 Architecture (see `fuzz_data.h`, the Rust port in
 `ta_codegen/generator/templates/rust/fuzz.rs`, and `xlang_hash` in
@@ -348,8 +347,11 @@ Architecture (see `fuzz_data.h`, the Rust port in
   `ta_regtest`, so there is no JSON-RPC boundary on the C side — it is called
   directly (`TA_CallFunc`) and its raw output hashed (`fuzz_hash_local`), exactly
   as `--fuzz-064` treats the current library. Each language server crosses the
-  boundary and is diffed against it: **Rust** and **Java** today; the managed
-  **C#** backend's row is a planned follow-up.
+  boundary and is diffed against it: **Rust**, **Java** and the managed **C#**.
+  C# rides the Java-style hex transport (no `fuzz_gen` port) but its tolerance
+  lane is a separate per-server flag it does NOT take — every C# call,
+  transcendentals included, is bitwise (`xlang_java_illcond`'s constant-shape
+  skip is tolerance-lane-only, so C# gates HT_DCPHASE/HT_SINE there like Rust).
 - **Two transports (per-server `usesSeed` flag).**
   - **Seed (Rust).** A request with `"gen_present":1` + `(gen_shape,gen_seed,gen_n)`
     makes the server generate the OHLCV inputs from its own bit-exact `fuzz_gen`

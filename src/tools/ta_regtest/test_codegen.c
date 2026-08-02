@@ -4350,23 +4350,32 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
  *     libm, ~1 ULP) drops to a CODEGEN_JAVA_TRANSCENDENTAL_TOL (1e-9) element
  *     compare, and HT_DCPHASE/HT_SINE on the zero-variance constant shape are
  *     skipped outright (xlang_java_illcond — atan2 of a null signal amplifies
- *     the ULP unboundedly; C==Rust stay bitwise there).
+ *     the ULP unboundedly; C==Rust==C# stay bitwise there).
+ *   - C#: the same hex-bits transport as Java (the managed server has no
+ *     fuzz_gen port either), but the tolerance lane is a separate per-server
+ *     flag and C# does NOT take it: every call, transcendentals included, is
+ *     diffed BITWISE (.NET's Math.* delegates to the platform libm and
+ *     Math.FusedMultiplyAdd is correctly rounded).
  * There is NO 0.6.4 here (current-vs-current), so — unlike --fuzz-064 — there
  * are none of the #98/#107 carve-outs; every case is bitwise except Java's
- * transcendentals.
- *
- * The managed C# backend has no row here YET (planned follow-up): its bitwise
- * coverage today is server_verify's hex-input hash compare during --codegen
- * runs. See fuzz_data.h and src/tools/ta_regtest/CLAUDE.md.
+ * transcendentals. See fuzz_data.h and src/tools/ta_regtest/CLAUDE.md.
  * ======================================================================== */
 
 typedef struct {
-    const char        *name;      /* "rust", "java" — matches --language= tokens */
-    const char        *display;   /* "Rust", "Java"                           */
+    const char        *name;      /* "rust", "java", "csharp" — --language= tokens */
+    const char        *display;   /* "Rust", "Java", "C#"                     */
     const char *const *argv;      /* server launch command                   */
     int                usesSeed;  /* transport: 1 = seed (gen_present + fuzz_in_hash
                                    * self-check), 0 = lossless hex-bits inputs (no
-                                   * fuzz_gen port — Java, #114)              */
+                                   * fuzz_gen port — Java #114, C#)           */
+    int                tolTranscendental; /* 1 = calls reaching a transcendental
+                                   * drop to the 1e-9 element compare (Java's
+                                   * fdlibm != the C libm); 0 = every call is
+                                   * bitwise (Rust and C# use the platform
+                                   * libm). DELIBERATELY independent of the
+                                   * transport: inheriting the tolerance with
+                                   * usesSeed=0 would silently untest 20
+                                   * functions at bit level for C#.           */
     CodegenPipe        cp;
     int                open;      /* 1 once the subprocess is up              */
     long long          cases;     /* cases compared against the golden        */
@@ -5213,10 +5222,12 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
                     /* Each server's request follows its transport. Seed servers
                      * (Rust) regenerate inputs from (shape,seed,n) via
-                     * gen_present; hex servers (Java, no fuzz_gen port) get the
-                     * driver's exact arrays losslessly. A hex call is bitwise
-                     * (want_hash) unless it reaches a transcendental (fdlibm !=
-                     * the C libm), which drops to the tolerance element-compare. */
+                     * gen_present; hex servers (Java, C# — no fuzz_gen port) get
+                     * the driver's exact arrays losslessly. The tolerance lane is
+                     * a SEPARATE per-server flag, not implied by the transport:
+                     * only Java (tolTranscendental) drops a transcendental-using
+                     * call to the element compare — C# stays bitwise on all of
+                     * them. */
                     int tolPath = 0;
                     if( sv->usesSeed )
                         fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0);
@@ -5229,11 +5240,13 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                          * resolved and in-range" is an unguarded PRECONDITION (see
                          * the VARIANT gate section of CLAUDE.md) — sending one down
                          * that path killed the Java server. */
-                        tolPath = kind[k] != FUZZ_VEC_REJECT &&
+                        tolPath = sv->tolTranscendental &&
+                                  kind[k] != FUZZ_VEC_REJECT &&
                                   codegen_call_is_transcendental(funcInfo->handle, vec[k],
                                                                  (int)funcInfo->nbOptInput);
                         /* Chaotic phase of a null signal — not comparable across
-                         * libms; C==Rust bitwise, all other shapes gated. */
+                         * libms; only the tolerance-lane server (Java) skips:
+                         * C==Rust==C# stay bitwise there. */
                         if( tolPath && xlang_java_illcond(funcInfo->name, shape) )
                         { ctx->illcondSkipped++; continue; }
                         xlang_build_hex_request(ctx->reqBuf, funcInfo, &hist, n, s, e, vec[k], !tolPath);
@@ -5331,14 +5344,16 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
 
     /* Each generated language server, diffed against the in-process C golden (C
      * is the golden, not a server row). Rust uses the seed transport
-     * (gen_present + fuzz_in_hash); Java uses the lossless hex-bits transport
-     * (usesSeed=0 — its server has no fuzz_gen port, #114) and relaxes its
-     * transcendental-using calls to a tolerance (fdlibm != the C libm). The
-     * managed C# backend has no row yet (planned follow-up); until then its
-     * bitwise coverage is server_verify during --codegen runs. */
+     * (gen_present + fuzz_in_hash); Java and the managed C# use the lossless
+     * hex-bits transport (usesSeed=0 — no fuzz_gen port). Java additionally
+     * relaxes its transcendental-using calls to a tolerance
+     * (tolTranscendental=1 — fdlibm != the C libm); C# stays fully bitwise,
+     * transcendentals included (.NET's Math.* delegates to the platform
+     * libm). */
     static XlangServer servers[] = {
-        {"rust", "Rust", argv_rust, 1, {0}, 0, 0, 0, 0},
-        {"java", "Java", argv_java, 0, {0}, 0, 0, 0, 0},
+        {"rust",   "Rust", argv_rust,   1, 0, {0}, 0, 0, 0, 0},
+        {"java",   "Java", argv_java,   0, 1, {0}, 0, 0, 0, 0},
+        {"csharp", "C#",   argv_csharp, 0, 0, {0}, 0, 0, 0, 0},
     };
     int nsv = (int)(sizeof(servers)/sizeof(servers[0]));
 
@@ -5375,7 +5390,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     if( nrequested == 0 )
     {
         printf("FAIL — no language server matched --language=%s "
-               "(valid: rust, java; C is the in-process golden; the managed C# row is a planned follow-up).\n",
+               "(valid: rust, java, csharp; C is the in-process golden).\n",
                languageFilter ? languageFilter : "");
         free(ctx.reqBuf); free(ctx.respBuf);
         return TA_CODEGEN_OUTPUT_MISMATCH;
@@ -5421,7 +5436,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     if( ctx.illcondSkipped > 0 )
         printf("  (%lld Java HT_DCPHASE/HT_SINE call(s) skipped on the constant "
                "shape: atan2 phase of a null signal, ill-conditioned across libms "
-               "— C==Rust bitwise there)\n", ctx.illcondSkipped);
+               "— C==Rust==C# bitwise there)\n", ctx.illcondSkipped);
     printf("param contract (#148): reject %lld batch + %lld lookback, sentinel %lld batch "
            "+ %lld lookback; %lld lookback case(s) total\n",
            ctx.oorCases, ctx.lbOorCases, ctx.sentCases, ctx.lbSentCases, ctx.lbCases);

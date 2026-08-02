@@ -2995,11 +2995,57 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("                return \"{\\\"outInteger\\\":[\" + string.Join(\",\", parts) + \"]}\";\n");
     s.push_str("            }\n");
 
+    // abstract_get_lookback — the lookback-tier RPC the --xlang-hash gate
+    // sweeps every parameter vector through (out-of-range vectors must come
+    // back as -1, exactly what the guarded *Lookback methods return).
+    s.push_str("            else if (method == \"abstract_get_lookback\") {\n");
+    s.push_str("                string fn = p.GetProperty(\"funcName\").GetString()!;\n");
+    s.push_str("                return $\"{{\\\"lookback\\\":{ComputeLookback(fn, p)}}}\";\n");
+    s.push_str("            }\n");
     // Unknown method: an error RESPONSE (not a crash) — this is the driver's
     // capability-probe path (stream_verify, fuzz_in_hash, abstract RPCs).
     s.push_str("            else {\n");
     s.push_str("                return $\"{{\\\"error\\\":\\\"Unknown method: {method}\\\"}}\";\n");
     s.push_str("            }\n");
+    s.push_str("    }\n\n");
+
+    // ComputeLookback: parse a function's opt params (same JSON keys and 0/0.0
+    // absent-field fallbacks as the per-function handlers) and call its guarded
+    // <Name>Lookback. Mirrors the Java server's computeLookback.
+    s.push_str("    static long ComputeLookback(string funcName, JsonElement p) {\n");
+    s.push_str("        switch (funcName) {\n");
+    for func in funcs {
+        let base = crate::backends::csharp::to_csharp_method_name(
+            &func.name,
+            func.camel_case.as_deref(),
+        );
+        s.push_str(&format!("        case \"{}\": {{\n", func.name));
+        for opt in &func.optional_inputs {
+            match &opt.param_type {
+                ParamType::Real => s.push_str(&format!(
+                    "            double {name} = GetDouble(p, \"{name}\", 0.0);\n",
+                    name = opt.name
+                )),
+                ParamType::Enum(enum_name) => s.push_str(&format!(
+                    "            {ty} {name} = ({ty})GetInt(p, \"{name}\", 0);\n",
+                    ty = enum_name,
+                    name = opt.name
+                )),
+                _ => s.push_str(&format!(
+                    "            int {name} = GetInt(p, \"{name}\", 0);\n",
+                    name = opt.name
+                )),
+            }
+        }
+        let args: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+        s.push_str(&format!(
+            "            return core.{base}Lookback({});\n",
+            args.join(", ")
+        ));
+        s.push_str("        }\n");
+    }
+    s.push_str("        default: return -1;\n");
+    s.push_str("        }\n");
     s.push_str("    }\n\n");
 
     // Per-function handler methods.
