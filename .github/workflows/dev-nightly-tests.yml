@@ -428,6 +428,15 @@ jobs:
         shell: bash
         run: python3 scripts/build.py fuzz-064
 
+      # build.py grew the same per-language prerequisite narrowing regtest.py has
+      # had since #150, so it needs the same live regression test: on this runner
+      # (no JDK, no .NET) the target must build the C and Rust servers without
+      # demanding a toolchain it will never invoke. It fails loudly if the
+      # prerequisite set ever goes back to being derived from the raw filter.
+      - name: build.py honours --language on a runner with no JDK and no .NET
+        shell: bash
+        run: python3 scripts/build.py servers --language=c,rust
+
       # The ref differential sweep — the suite that silently truncated on arm64
       # (131 variants/21 functions when it aborted, 613/74 once the oracle stopped
       # fusing). --language=c,rust is also the invocation that was unreachable
@@ -436,6 +445,66 @@ jobs:
       - name: Ref differential sweep (C + Rust)
         shell: bash
         run: python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen-only --language=c,rust
+
+  # C# on arm64 — the one place the managed FMA contract can diverge and nothing
+  # would notice. Math.FusedMultiplyAdd is a JIT intrinsic: on x86-64 it becomes
+  # vfmadd only when the CPU has FMA3, while on aarch64 FMADD is baseline, so the
+  # two platforms reach fused arithmetic by different routes. Every other C# job
+  # runs on x86-64, so without this the aarch64 route is never executed at all.
+  #
+  # Deliberately a SEPARATE job from arm64-linux rather than adding .NET there:
+  # that job's value depends on being a runner with no JDK and no .NET, which is
+  # what makes its --language=c,rust steps a live regression test.
+  #
+  # Scoped to the C# row of --xlang-hash (not the full four-language sweep) to
+  # keep the nightly's arm64 cost down — it is the row that answers the FMA
+  # question, and it is bitwise against the in-process C library on the same
+  # machine, so any aarch64-specific fusion difference fails it.
+  arm64-csharp:
+    name: arm64 Linux (C# bitwise parity — managed FMA on aarch64)
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      # The arm64 images carry a smaller toolset than their x86-64 counterparts,
+      # so nothing is assumed preinstalled the way ubuntu-latest allows.
+      - name: Install build tooling
+        shell: bash
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential cmake
+
+      - name: Install Rust
+        shell: bash
+        run: |
+          # rust-toolchain.toml pins the version; --default-toolchain none lets
+          # rustup honour the pin on first use instead of fetching stable twice.
+          if ! command -v cargo >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+              | sh -s -- -y --default-toolchain none
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      # --language=csharp reaches this at all only because build.py's prerequisite
+      # check and backend filter became per-language; before that the target
+      # hard-required a JDK this runner does not have.
+      - name: Bitwise parity, C# vs the in-process C library (aarch64)
+        shell: bash
+        run: python3 scripts/build.py xlang-hash --language=csharp
 
   # Cross-language BITWISE parity gate (issue #113): the generated language
   # servers must compute BIT-IDENTICAL outputs to the shipped in-process C library

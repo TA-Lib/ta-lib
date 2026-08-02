@@ -230,18 +230,21 @@ def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) 
             if b in ('rust', 'java', 'csharp')]
     if not rows:
         print(f"Error: --language={lang_filter} selects no xlang-hash row "
-              f"(valid: rust, java, csharp; C is the in-process golden).")
+              f"(valid: rust, java, csharp; C is the in-process golden).", flush=True)
         return 2
     backends = ','.join(rows)
     if lang_filter:
-        print(f"=== xlang-hash limited to: {backends} ===")
+        # flush: this script's stdout is block-buffered when CI captures it,
+        # while the cargo/ta_regtest subprocesses write straight to the pipe —
+        # without it these lines land after the output they are labelling.
+        print(f"=== xlang-hash limited to: {backends} ===", flush=True)
     # 1. Generate + compile the language servers into bin/.
     run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', f'--backend={backends}')
     run_codegen(root_dir, 'run', '--release', '--', 'build', f'--backend={backends}')
     # 2. The C test runner links the in-process C golden; stage it into bin/.
     cmake_build(build_dir, target='ensure_ta_regtest_in_bin', jobs=jobs)
     # 3. Run the gate (server argv is relative "./", so cwd must be bin/).
-    print("=== Running ta_regtest --xlang-hash ===")
+    print("=== Running ta_regtest --xlang-hash ===", flush=True)
     cmd = [os.path.join(root_dir, "bin", "ta_regtest"), "--xlang-hash"]
     if lang_filter:
         cmd.append(f"--language={backends}")
