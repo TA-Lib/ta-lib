@@ -198,14 +198,14 @@ def build_xlanghash(root_dir: str, build_dir: str, jobs: int) -> int:
     full-precision output hashes with NO tolerance. Builds the Rust + Java servers
     + ta_regtest, then runs `ta_regtest --xlang-hash`. Returns ta_regtest's exit
     code (non-zero on any divergence). Rust crosses the JSON boundary with a seed
-    (gen_present); Java crosses it with lossless hex-bits inputs (#114) and relaxes
-    its transcendental-using calls to a tolerance (fdlibm != the C libm). Needs the
-    JDK for the Java server; the managed C# backend has no --xlang-hash row yet
-    (its bitwise coverage today is server_verify during --codegen runs).
+    (gen_present); Java and C# cross it with lossless hex-bits inputs (#114). Java
+    relaxes its transcendental-using calls to a tolerance (fdlibm != the C libm);
+    the managed C# is fully bitwise, transcendentals included. Needs the JDK for
+    the Java server and the .NET SDK for the C# server.
     """
-    # 1. Generate + compile the language servers into bin/ (Rust + Java).
-    run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', '--backend=rust,java')
-    run_codegen(root_dir, 'run', '--release', '--', 'build', '--backend=rust,java')
+    # 1. Generate + compile the language servers into bin/ (Rust + Java + C#).
+    run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', '--backend=rust,java,csharp')
+    run_codegen(root_dir, 'run', '--release', '--', 'build', '--backend=rust,java,csharp')
     # 2. The C test runner links the in-process C golden; stage it into bin/.
     cmake_build(build_dir, target='ensure_ta_regtest_in_bin', jobs=jobs)
     # 3. Run the gate (server argv is relative "./", so cwd must be bin/).

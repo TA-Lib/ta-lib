@@ -446,7 +446,7 @@ jobs:
   # cmake+gcc+cargo are preinstalled on ubuntu-latest; the Java server needs the
   # JDK (no .NET — it P/Invokes C == C by construction).
   xlang-hash:
-    name: xlang matching (C vs Rust + Java, seed/hex+hash)
+    name: xlang matching (C vs Rust + Java + C#, seed/hex+hash)
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
@@ -467,6 +467,11 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y openjdk-21-jdk
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
 
       - name: Bitwise-diff each language server vs the in-process C library
         shell: bash

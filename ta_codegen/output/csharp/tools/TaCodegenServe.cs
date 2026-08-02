@@ -650,9 +650,645 @@ public class TaCodegenServe {
                 }
                 return "{\"outInteger\":[" + string.Join(",", parts) + "]}";
             }
+            else if (method == "abstract_get_lookback") {
+                string fn = p.GetProperty("funcName").GetString()!;
+                return $"{{\"lookback\":{ComputeLookback(fn, p)}}}";
+            }
             else {
                 return $"{{\"error\":\"Unknown method: {method}\"}}";
             }
+    }
+
+    static long ComputeLookback(string funcName, JsonElement p) {
+        switch (funcName) {
+        case "ACCBANDS": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AccbandsLookback(optInTimePeriod);
+        }
+        case "ACOS": {
+            return core.AcosLookback();
+        }
+        case "AD": {
+            return core.AdLookback();
+        }
+        case "ADD": {
+            return core.AddLookback();
+        }
+        case "ADOSC": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            return core.AdOscLookback(optInFastPeriod, optInSlowPeriod);
+        }
+        case "ADX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AdxLookback(optInTimePeriod);
+        }
+        case "ADXR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AdxrLookback(optInTimePeriod);
+        }
+        case "APO": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            return core.ApoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        }
+        case "AROON": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AroonLookback(optInTimePeriod);
+        }
+        case "AROONOSC": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AroonOscLookback(optInTimePeriod);
+        }
+        case "ASIN": {
+            return core.AsinLookback();
+        }
+        case "ATAN": {
+            return core.AtanLookback();
+        }
+        case "ATR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AtrLookback(optInTimePeriod);
+        }
+        case "AVGDEV": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.AvgDevLookback(optInTimePeriod);
+        }
+        case "AVGPRICE": {
+            return core.AvgPriceLookback();
+        }
+        case "BBANDS": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInNbDevUp = GetDouble(p, "optInNbDevUp", 0.0);
+            double optInNbDevDn = GetDouble(p, "optInNbDevDn", 0.0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            return core.BbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+        }
+        case "BETA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.BetaLookback(optInTimePeriod);
+        }
+        case "BOP": {
+            return core.BopLookback();
+        }
+        case "CCI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.CciLookback(optInTimePeriod);
+        }
+        case "CDL2CROWS": {
+            return core.Cdl2CrowsLookback();
+        }
+        case "CDL3BLACKCROWS": {
+            return core.Cdl3BlackCrowsLookback();
+        }
+        case "CDL3INSIDE": {
+            return core.Cdl3InsideLookback();
+        }
+        case "CDL3LINESTRIKE": {
+            return core.Cdl3LineStrikeLookback();
+        }
+        case "CDL3OUTSIDE": {
+            return core.Cdl3OutsideLookback();
+        }
+        case "CDL3STARSINSOUTH": {
+            return core.Cdl3StarsInSouthLookback();
+        }
+        case "CDL3WHITESOLDIERS": {
+            return core.Cdl3WhiteSoldiersLookback();
+        }
+        case "CDLABANDONEDBABY": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdlAbandonedBabyLookback(optInPenetration);
+        }
+        case "CDLADVANCEBLOCK": {
+            return core.CdlAdvanceBlockLookback();
+        }
+        case "CDLBELTHOLD": {
+            return core.CdlBeltHoldLookback();
+        }
+        case "CDLBREAKAWAY": {
+            return core.CdlBreakawayLookback();
+        }
+        case "CDLCLOSINGMARUBOZU": {
+            return core.CdlClosingMarubozuLookback();
+        }
+        case "CDLCONCEALBABYSWALL": {
+            return core.CdlConcealBabysWallLookback();
+        }
+        case "CDLCOUNTERATTACK": {
+            return core.CdlCounterAttackLookback();
+        }
+        case "CDLDARKCLOUDCOVER": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdlDarkCloudCoverLookback(optInPenetration);
+        }
+        case "CDLDOJI": {
+            return core.CdlDojiLookback();
+        }
+        case "CDLDOJISTAR": {
+            return core.CdlDojiStarLookback();
+        }
+        case "CDLDRAGONFLYDOJI": {
+            return core.CdlDragonflyDojiLookback();
+        }
+        case "CDLENGULFING": {
+            return core.CdlEngulfingLookback();
+        }
+        case "CDLEVENINGDOJISTAR": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdlEveningDojiStarLookback(optInPenetration);
+        }
+        case "CDLEVENINGSTAR": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdlEveningStarLookback(optInPenetration);
+        }
+        case "CDLGAPSIDESIDEWHITE": {
+            return core.CdlGapSideSideWhiteLookback();
+        }
+        case "CDLGRAVESTONEDOJI": {
+            return core.CdlGravestoneDojiLookback();
+        }
+        case "CDLHAMMER": {
+            return core.CdlHammerLookback();
+        }
+        case "CDLHANGINGMAN": {
+            return core.CdlHangingManLookback();
+        }
+        case "CDLHARAMI": {
+            return core.CdlHaramiLookback();
+        }
+        case "CDLHARAMICROSS": {
+            return core.CdlHaramiCrossLookback();
+        }
+        case "CDLHIGHWAVE": {
+            return core.CdlHignWaveLookback();
+        }
+        case "CDLHIKKAKE": {
+            return core.CdlHikkakeLookback();
+        }
+        case "CDLHIKKAKEMOD": {
+            return core.CdlHikkakeModLookback();
+        }
+        case "CDLHOMINGPIGEON": {
+            return core.CdlHomingPigeonLookback();
+        }
+        case "CDLIDENTICAL3CROWS": {
+            return core.CdlIdentical3CrowsLookback();
+        }
+        case "CDLINNECK": {
+            return core.CdlInNeckLookback();
+        }
+        case "CDLINVERTEDHAMMER": {
+            return core.CdlInvertedHammerLookback();
+        }
+        case "CDLKICKING": {
+            return core.CdlKickingLookback();
+        }
+        case "CDLKICKINGBYLENGTH": {
+            return core.CdlKickingByLengthLookback();
+        }
+        case "CDLLADDERBOTTOM": {
+            return core.CdlLadderBottomLookback();
+        }
+        case "CDLLONGLEGGEDDOJI": {
+            return core.CdlLongLeggedDojiLookback();
+        }
+        case "CDLLONGLINE": {
+            return core.CdlLongLineLookback();
+        }
+        case "CDLMARUBOZU": {
+            return core.CdlMarubozuLookback();
+        }
+        case "CDLMATCHINGLOW": {
+            return core.CdlMatchingLowLookback();
+        }
+        case "CDLMATHOLD": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdlMatHoldLookback(optInPenetration);
+        }
+        case "CDLMORNINGDOJISTAR": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdlMorningDojiStarLookback(optInPenetration);
+        }
+        case "CDLMORNINGSTAR": {
+            double optInPenetration = GetDouble(p, "optInPenetration", 0.0);
+            return core.CdlMorningStarLookback(optInPenetration);
+        }
+        case "CDLONNECK": {
+            return core.CdlOnNeckLookback();
+        }
+        case "CDLPIERCING": {
+            return core.CdlPiercingLookback();
+        }
+        case "CDLRICKSHAWMAN": {
+            return core.CdlRickshawManLookback();
+        }
+        case "CDLRISEFALL3METHODS": {
+            return core.CdlRiseFall3MethodsLookback();
+        }
+        case "CDLSEPARATINGLINES": {
+            return core.CdlSeperatingLinesLookback();
+        }
+        case "CDLSHOOTINGSTAR": {
+            return core.CdlShootingStarLookback();
+        }
+        case "CDLSHORTLINE": {
+            return core.CdlShortLineLookback();
+        }
+        case "CDLSPINNINGTOP": {
+            return core.CdlSpinningTopLookback();
+        }
+        case "CDLSTALLEDPATTERN": {
+            return core.CdlStalledPatternLookback();
+        }
+        case "CDLSTICKSANDWICH": {
+            return core.CdlStickSandwichLookback();
+        }
+        case "CDLTAKURI": {
+            return core.CdlTakuriLookback();
+        }
+        case "CDLTASUKIGAP": {
+            return core.CdlTasukiGapLookback();
+        }
+        case "CDLTHRUSTING": {
+            return core.CdlThrustingLookback();
+        }
+        case "CDLTRISTAR": {
+            return core.CdlTristarLookback();
+        }
+        case "CDLUNIQUE3RIVER": {
+            return core.CdlUnique3RiverLookback();
+        }
+        case "CDLUPSIDEGAP2CROWS": {
+            return core.CdlUpsideGap2CrowsLookback();
+        }
+        case "CDLXSIDEGAP3METHODS": {
+            return core.CdlXSideGap3MethodsLookback();
+        }
+        case "CEIL": {
+            return core.CeilLookback();
+        }
+        case "CMF": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.CmfLookback(optInTimePeriod);
+        }
+        case "CMO": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.CmoLookback(optInTimePeriod);
+        }
+        case "CMOU": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.CmouLookback(optInTimePeriod);
+        }
+        case "CORREL": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.CorrelLookback(optInTimePeriod);
+        }
+        case "COS": {
+            return core.CosLookback();
+        }
+        case "COSH": {
+            return core.CoshLookback();
+        }
+        case "DEMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.DemaLookback(optInTimePeriod);
+        }
+        case "DIV": {
+            return core.DivLookback();
+        }
+        case "DX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.DxLookback(optInTimePeriod);
+        }
+        case "EMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.EmaLookback(optInTimePeriod);
+        }
+        case "EXP": {
+            return core.ExpLookback();
+        }
+        case "FLOOR": {
+            return core.FloorLookback();
+        }
+        case "HMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.HmaLookback(optInTimePeriod);
+        }
+        case "HT_DCPERIOD": {
+            return core.HtDcPeriodLookback();
+        }
+        case "HT_DCPHASE": {
+            return core.HtDcPhaseLookback();
+        }
+        case "HT_PHASOR": {
+            return core.HtPhasorLookback();
+        }
+        case "HT_SINE": {
+            return core.HtSineLookback();
+        }
+        case "HT_TRENDLINE": {
+            return core.HtTrendlineLookback();
+        }
+        case "HT_TRENDMODE": {
+            return core.HtTrendModeLookback();
+        }
+        case "IMI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.ImiLookback(optInTimePeriod);
+        }
+        case "KAMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.KamaLookback(optInTimePeriod);
+        }
+        case "LINEARREG": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.LinearRegLookback(optInTimePeriod);
+        }
+        case "LINEARREG_ANGLE": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.LinearRegAngleLookback(optInTimePeriod);
+        }
+        case "LINEARREG_INTERCEPT": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.LinearRegInterceptLookback(optInTimePeriod);
+        }
+        case "LINEARREG_SLOPE": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.LinearRegSlopeLookback(optInTimePeriod);
+        }
+        case "LN": {
+            return core.LnLookback();
+        }
+        case "LOG10": {
+            return core.Log10Lookback();
+        }
+        case "MA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            return core.MovingAverageLookback(optInTimePeriod, optInMAType);
+        }
+        case "MACD": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
+            return core.MacdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        }
+        case "MACDEXT": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            MAType optInFastMAType = (MAType)GetInt(p, "optInFastMAType", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            MAType optInSlowMAType = (MAType)GetInt(p, "optInSlowMAType", 0);
+            int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
+            MAType optInSignalMAType = (MAType)GetInt(p, "optInSignalMAType", 0);
+            return core.MacdExtLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+        }
+        case "MACDFIX": {
+            int optInSignalPeriod = GetInt(p, "optInSignalPeriod", 0);
+            return core.MacdFixLookback(optInSignalPeriod);
+        }
+        case "MAMA": {
+            double optInFastLimit = GetDouble(p, "optInFastLimit", 0.0);
+            double optInSlowLimit = GetDouble(p, "optInSlowLimit", 0.0);
+            return core.MamaLookback(optInFastLimit, optInSlowLimit);
+        }
+        case "MAVP": {
+            int optInMinPeriod = GetInt(p, "optInMinPeriod", 0);
+            int optInMaxPeriod = GetInt(p, "optInMaxPeriod", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            return core.MovingAverageVariablePeriodLookback(optInMinPeriod, optInMaxPeriod, optInMAType);
+        }
+        case "MAX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MaxLookback(optInTimePeriod);
+        }
+        case "MAXINDEX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MaxIndexLookback(optInTimePeriod);
+        }
+        case "MEDPRICE": {
+            return core.MedPriceLookback();
+        }
+        case "MFI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MfiLookback(optInTimePeriod);
+        }
+        case "MIDPOINT": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MidPointLookback(optInTimePeriod);
+        }
+        case "MIDPRICE": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MidPriceLookback(optInTimePeriod);
+        }
+        case "MIN": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MinLookback(optInTimePeriod);
+        }
+        case "MININDEX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MinIndexLookback(optInTimePeriod);
+        }
+        case "MINMAX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MinMaxLookback(optInTimePeriod);
+        }
+        case "MINMAXINDEX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MinMaxIndexLookback(optInTimePeriod);
+        }
+        case "MINUS_DI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MinusDILookback(optInTimePeriod);
+        }
+        case "MINUS_DM": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MinusDMLookback(optInTimePeriod);
+        }
+        case "MOM": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.MomLookback(optInTimePeriod);
+        }
+        case "MULT": {
+            return core.MultLookback();
+        }
+        case "NATR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.NatrLookback(optInTimePeriod);
+        }
+        case "NVI": {
+            return core.NviLookback();
+        }
+        case "OBV": {
+            return core.ObvLookback();
+        }
+        case "PLUS_DI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.PlusDILookback(optInTimePeriod);
+        }
+        case "PLUS_DM": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.PlusDMLookback(optInTimePeriod);
+        }
+        case "PPO": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            return core.PpoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        }
+        case "PVI": {
+            return core.PviLookback();
+        }
+        case "PVO": {
+            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
+            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
+            MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
+            return core.PvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        }
+        case "ROC": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.RocLookback(optInTimePeriod);
+        }
+        case "ROCP": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.RocPLookback(optInTimePeriod);
+        }
+        case "ROCR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.RocRLookback(optInTimePeriod);
+        }
+        case "ROCR100": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.RocR100Lookback(optInTimePeriod);
+        }
+        case "RSI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.RsiLookback(optInTimePeriod);
+        }
+        case "SAR": {
+            double optInAcceleration = GetDouble(p, "optInAcceleration", 0.0);
+            double optInMaximum = GetDouble(p, "optInMaximum", 0.0);
+            return core.SarLookback(optInAcceleration, optInMaximum);
+        }
+        case "SAREXT": {
+            double optInStartValue = GetDouble(p, "optInStartValue", 0.0);
+            double optInOffsetOnReverse = GetDouble(p, "optInOffsetOnReverse", 0.0);
+            double optInAccelerationInitLong = GetDouble(p, "optInAccelerationInitLong", 0.0);
+            double optInAccelerationLong = GetDouble(p, "optInAccelerationLong", 0.0);
+            double optInAccelerationMaxLong = GetDouble(p, "optInAccelerationMaxLong", 0.0);
+            double optInAccelerationInitShort = GetDouble(p, "optInAccelerationInitShort", 0.0);
+            double optInAccelerationShort = GetDouble(p, "optInAccelerationShort", 0.0);
+            double optInAccelerationMaxShort = GetDouble(p, "optInAccelerationMaxShort", 0.0);
+            return core.SarExtLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+        }
+        case "SIN": {
+            return core.SinLookback();
+        }
+        case "SINH": {
+            return core.SinhLookback();
+        }
+        case "SMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.SmaLookback(optInTimePeriod);
+        }
+        case "SQRT": {
+            return core.SqrtLookback();
+        }
+        case "STDDEV": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInNbDev = GetDouble(p, "optInNbDev", 0.0);
+            return core.StdDevLookback(optInTimePeriod, optInNbDev);
+        }
+        case "STOCH": {
+            int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
+            int optInSlowK_Period = GetInt(p, "optInSlowK_Period", 0);
+            MAType optInSlowK_MAType = (MAType)GetInt(p, "optInSlowK_MAType", 0);
+            int optInSlowD_Period = GetInt(p, "optInSlowD_Period", 0);
+            MAType optInSlowD_MAType = (MAType)GetInt(p, "optInSlowD_MAType", 0);
+            return core.StochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+        }
+        case "STOCHF": {
+            int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
+            int optInFastD_Period = GetInt(p, "optInFastD_Period", 0);
+            MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", 0);
+            return core.StochFLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        }
+        case "STOCHRSI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            int optInFastK_Period = GetInt(p, "optInFastK_Period", 0);
+            int optInFastD_Period = GetInt(p, "optInFastD_Period", 0);
+            MAType optInFastD_MAType = (MAType)GetInt(p, "optInFastD_MAType", 0);
+            return core.StochRsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        }
+        case "SUB": {
+            return core.SubLookback();
+        }
+        case "SUM": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.SumLookback(optInTimePeriod);
+        }
+        case "T3": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInVFactor = GetDouble(p, "optInVFactor", 0.0);
+            return core.T3Lookback(optInTimePeriod, optInVFactor);
+        }
+        case "TAN": {
+            return core.TanLookback();
+        }
+        case "TANH": {
+            return core.TanhLookback();
+        }
+        case "TEMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.TemaLookback(optInTimePeriod);
+        }
+        case "TRANGE": {
+            return core.TrueRangeLookback();
+        }
+        case "TRIMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.TrimaLookback(optInTimePeriod);
+        }
+        case "TRIX": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.TrixLookback(optInTimePeriod);
+        }
+        case "TSF": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.TsfLookback(optInTimePeriod);
+        }
+        case "TYPPRICE": {
+            return core.TypPriceLookback();
+        }
+        case "ULTOSC": {
+            int optInTimePeriod1 = GetInt(p, "optInTimePeriod1", 0);
+            int optInTimePeriod2 = GetInt(p, "optInTimePeriod2", 0);
+            int optInTimePeriod3 = GetInt(p, "optInTimePeriod3", 0);
+            return core.UltOscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+        }
+        case "VAR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInNbDev = GetDouble(p, "optInNbDev", 0.0);
+            return core.VarianceLookback(optInTimePeriod, optInNbDev);
+        }
+        case "VWMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.VwmaLookback(optInTimePeriod);
+        }
+        case "WCLPRICE": {
+            return core.WclPriceLookback();
+        }
+        case "WILLR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.WillRLookback(optInTimePeriod);
+        }
+        case "WMA": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.WmaLookback(optInTimePeriod);
+        }
+        default: return -1;
+        }
     }
 
     static string Handle_ACCBANDS(JsonElement p, int startIdx, int endIdx) {
