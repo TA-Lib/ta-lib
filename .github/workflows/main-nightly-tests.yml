@@ -159,8 +159,9 @@ jobs:
   # Cross-language BITWISE parity gate (issue #113): the generated language
   # servers must be BIT-IDENTICAL to the shipped in-process C library (no
   # tolerance). Rust crosses the JSON boundary with a seed; Java and C# with
-  # lossless hex inputs (#114). Only Java relaxes its transcendental-using calls
-  # to a tolerance (fdlibm != the C libm); the managed C# is bitwise everywhere.
+  # lossless hex inputs (#114). Java AND C# relax their transcendental-using
+  # calls to a 1e-9 tolerance (fdlibm != the C libm; .NET does not guarantee
+  # Math.* reaches the platform libm). Everything else stays bitwise.
   # cmake+gcc+cargo are preinstalled on ubuntu-latest; the Java server needs the
   # JDK and the managed C# server needs the .NET SDK (both set up below).
   xlang-hash:

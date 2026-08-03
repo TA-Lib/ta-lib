@@ -24,6 +24,11 @@ ErrorNumber test_codegen(const TA_History *history,
  * Returns 1 when the mode can be switched. */
 int codegen_lang_has_compatibility_api(const char *lang);
 
+/* True if this language must drop transcendental-reaching calls to the 1e-9
+ * element compare instead of a bitwise hash. Single definition shared by
+ * --xlang-hash and server_verify; see the comment on the implementation. */
+int codegen_lang_needs_transcendental_tol(const char *lang);
+
 /* Bit-exact differential fuzz of the current in-process library against the
  * frozen released v0.6.4 exposed as bin/ta_064_serve. Opt-in (--fuzz-064),
  * never part of default/nightly runs. functionFilter: CSV substring filter
@@ -35,8 +40,8 @@ ErrorNumber fuzz_ref064(const char *functionFilter);
  * seed-generated inputs, comparing full-precision output hashes with NO
  * tolerance. Rust crosses the boundary with a seed (gen_present); Java crosses
  * it with the lossless hex-bits transport (its server has no fuzz_gen port,
- * #114), and its transcendental-using calls fall back to a narrow tolerance
- * because fdlibm != the C libm (see codegen_call_is_transcendental below).
+ * #114). Java and C# both fall back to a narrow tolerance on transcendental-
+ * using calls (see codegen_lang_needs_transcendental_tol).
  * functionFilter/languageFilter: CSV filters (NULL = all). Returns TA_TEST_PASS
  * iff every server matches C (bitwise, or within tolerance where noted). */
 ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter);
@@ -82,16 +87,19 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
                          int goldNb, unsigned long long goldHash,
                          const XHashParsed *parsed);
 
-/* ---- Java-transcendental tolerance path (shared by --xlang-hash + server_verify)
- * Java's fdlibm differs from the C libm by ~1 ULP on transcendentals, so a call
- * that reaches one (atan/sin/cos/exp/log/...) cannot be bit-compared against
- * Java: those calls swap the bitwise out_hash path for a narrow element-compare
- * at this tolerance (relative for |v|>1, absolute otherwise). Every other
- * language, and every non-transcendental call, stays bitwise. Measured Java
- * drift over both gates' scenarios peaks ~9.7e-15 (HT_DCPHASE), so 1e-9 keeps
- * ~5 orders of margin over fdlibm noise while still failing any real algorithmic
- * regression (orders of magnitude larger). Equals CODEGEN_EPSILON_DOUBLE. ---- */
-#define CODEGEN_JAVA_TRANSCENDENTAL_TOL 1e-9
+/* ---- Transcendental tolerance path (shared by --xlang-hash + server_verify)
+ * A call reaching a transcendental (atan/sin/cos/exp/log/...) cannot be
+ * bit-compared against a language whose math does not resolve to the same libm
+ * the in-process golden uses: Java's fdlibm never does, and .NET's `Math.*` is
+ * not guaranteed to (proven host-dependent — see
+ * codegen_lang_needs_transcendental_tol). Those calls swap the bitwise out_hash
+ * path for a narrow element-compare at this tolerance (relative for |v|>1,
+ * absolute otherwise). Every other language, and every non-transcendental call,
+ * stays bitwise. Measured Java drift over both gates' scenarios peaks ~9.7e-15
+ * (HT_DCPHASE), so 1e-9 keeps ~5 orders of margin over libm noise while still
+ * failing any real algorithmic regression (orders of magnitude larger). Equals
+ * CODEGEN_EPSILON_DOUBLE. ---- */
+#define CODEGEN_TRANSCENDENTAL_TOL 1e-9
 
 /* True if the FUNCTION name calls a transcendental C math routine directly.
  * Source-derived fixed list (ta_codegen/input grep). */

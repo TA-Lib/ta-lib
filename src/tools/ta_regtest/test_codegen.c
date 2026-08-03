@@ -80,6 +80,27 @@ int codegen_lang_has_compatibility_api(const char *lang)
              || strcmp(lang, "csharp") == 0);
 }
 
+/* Which languages cannot be held bit-identical on a call that reaches a
+ * transcendental. THE single definition — both --xlang-hash (which copies it
+ * into XlangServer.tolTranscendental) and server_verify's own per-call check
+ * read it, because when they were two separate literals they disagreed.
+ *
+ * Java: fdlibm is not the C libm (#113).
+ * C#:   .NET does not guarantee `Math.*` reaches the platform libm, and on
+ *       some hosts it does not. dev-nightly run 30776189041 produced 25 TA_LN
+ *       mismatches on ubuntu-latest x86-64 from a commit that was bitwise-clean
+ *       on ubuntu-24.04-arm and on a glibc-2.39 + .NET-10.0.10 box. Not a
+ *       special-value problem: C and C# agree bit-for-bit on 0.0, -0.0 and
+ *       negatives including the NaN payload, so it is a normal-value 1 ULP
+ *       difference. A bitwise claim verified on one machine is a claim about
+ *       that machine.
+ * Rust: reaches the same libm as the in-process golden — stays bitwise. */
+int codegen_lang_needs_transcendental_tol(const char *lang)
+{
+    if( !lang ) return 0;
+    return strcmp(lang, "java") == 0 || strcmp(lang, "csharp") == 0;
+}
+
 /* One line per language per kind of skipped leg, so the coverage a language
  * cannot take is stated in the log instead of quietly vanishing. */
 #define MAX_COMPAT_NOTES (NUM_LANGUAGES * 4)
@@ -4347,18 +4368,22 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
  *     the exact seed-generated arrays losslessly (hex-of-IEEE-bits, the #115
  *     server_verify transport) and requests want_hash. Non-transcendental calls
  *     are diffed BITWISE; a call that reaches a transcendental (fdlibm != the C
- *     libm, ~1 ULP) drops to a CODEGEN_JAVA_TRANSCENDENTAL_TOL (1e-9) element
+ *     libm, ~1 ULP) drops to a CODEGEN_TRANSCENDENTAL_TOL (1e-9) element
  *     compare, and HT_DCPHASE/HT_SINE on the zero-variance constant shape are
- *     skipped outright (xlang_java_illcond — atan2 of a null signal amplifies
- *     the ULP unboundedly; C==Rust==C# stay bitwise there).
+ *     skipped outright (xlang_illcond — atan2 of a null signal amplifies
+ *     the ULP unboundedly; C and Rust stay bitwise there).
  *   - C#: the same hex-bits transport as Java (the managed server has no
- *     fuzz_gen port either), but the tolerance lane is a separate per-server
- *     flag and C# does NOT take it: every call, transcendentals included, is
- *     diffed BITWISE (.NET's Math.* delegates to the platform libm and
- *     Math.FusedMultiplyAdd is correctly rounded).
+ *     fuzz_gen port either), and it takes the SAME tolerance lane. It was
+ *     briefly configured as fully bitwise on the strength of a green local run;
+ *     dev-nightly 30776189041 then produced 25 TA_LN mismatches on
+ *     ubuntu-latest x86-64 from a commit that was clean on aarch64 and on the
+ *     dev box. .NET does not guarantee `Math.*` reaches the platform libm.
+ *     Math.FusedMultiplyAdd IS correctly rounded, so the FMA contract is
+ *     unaffected — only the transcendentals moved.
  * There is NO 0.6.4 here (current-vs-current), so — unlike --fuzz-064 — there
- * are none of the #98/#107 carve-outs; every case is bitwise except Java's
- * transcendentals. See fuzz_data.h and src/tools/ta_regtest/CLAUDE.md.
+ * are none of the #98/#107 carve-outs; every case is bitwise except the
+ * transcendental calls of Java and C#. See fuzz_data.h and
+ * src/tools/ta_regtest/CLAUDE.md.
  * ======================================================================== */
 
 typedef struct {
@@ -4369,13 +4394,27 @@ typedef struct {
                                    * self-check), 0 = lossless hex-bits inputs (no
                                    * fuzz_gen port — Java #114, C#)           */
     int                tolTranscendental; /* 1 = calls reaching a transcendental
-                                   * drop to the 1e-9 element compare (Java's
-                                   * fdlibm != the C libm); 0 = every call is
-                                   * bitwise (Rust and C# use the platform
-                                   * libm). DELIBERATELY independent of the
-                                   * transport: inheriting the tolerance with
-                                   * usesSeed=0 would silently untest 20
-                                   * functions at bit level for C#.           */
+                                   * drop to the 1e-9 element compare; 0 = every
+                                   * call is bitwise. DELIBERATELY independent
+                                   * of the transport: inheriting the tolerance
+                                   * with usesSeed=0 would silently untest 20
+                                   * functions at bit level.
+                                   *
+                                   * Java: fdlibm != the C libm, known since
+                                   * #113. C#: .NET does NOT guarantee `Math.*`
+                                   * defers to the platform libm, and on some
+                                   * hosts it does not — dev-nightly run
+                                   * 30776189041 hit 25 TA_LN mismatches on
+                                   * ubuntu-latest x86-64 while the SAME commit
+                                   * was bitwise-clean on ubuntu-24.04-arm and
+                                   * on a glibc-2.39 + .NET-10.0.10 dev box.
+                                   * Not special values: C and C# agree
+                                   * bit-for-bit on 0.0/-0.0/negatives incl. the
+                                   * NaN payload — it is a normal-value 1 ULP
+                                   * difference. A bitwise claim verified on one
+                                   * machine is a claim about that machine.
+                                   * Rust stays 0: it reaches the same libm the
+                                   * golden does.                             */
     CodegenPipe        cp;
     int                open;      /* 1 once the subprocess is up              */
     long long          cases;     /* cases compared against the golden        */
@@ -4398,7 +4437,7 @@ typedef struct {
                                       * tolerance path (the rest are bitwise)     */
     long long    illcondSkipped;     /* Java HT_DCPHASE/HT_SINE calls skipped on
                                       * the zero-variance constant shape (phase of
-                                      * a null signal — see xlang_java_illcond)    */
+                                      * a null signal — see xlang_illcond)    */
     long long    oorCases;           /* per-server comparisons on an out-of-range
                                       * parameter vector — the retCode-parity leg
                                       * (batch tier)                               */
@@ -4481,7 +4520,7 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
  * Which CALLS reach a transcendental C math routine (atan/sin/cos/exp/log/...) —
  * the only ones whose Java (fdlibm) output can differ from the C libm (~1 ULP),
  * hence the only ones --xlang-hash's Java leg and server_verify relax from
- * bitwise to CODEGEN_JAVA_TRANSCENDENTAL_TOL. Every other function — including
+ * bitwise to CODEGEN_TRANSCENDENTAL_TOL. Every other function — including
  * sqrt/ceil/floor users (IEEE correctly-rounded) — stays bit-identical across
  * languages. Source-derived from a grep of ta_codegen/input. ---- */
 static const char *const CODEGEN_TRANSCENDENTAL[] = {
@@ -4687,7 +4726,7 @@ static int xlang_selfcheck_inputs(XlangCtx *ctx)
  * separate it from fdlibm noise. The Java leg skips exactly these two functions
  * on exactly the constant shape (reported as a skip count for transparency);
  * every other shape, function, and language stays fully gated. */
-static int xlang_java_illcond(const char *name, int shape)
+static int xlang_illcond(const char *name, int shape)
 {
     return shape == FUZZ_CONSTANT &&
            (strcmp(name, "HT_DCPHASE") == 0 || strcmp(name, "HT_SINE") == 0);
@@ -5245,9 +5284,11 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                                   codegen_call_is_transcendental(funcInfo->handle, vec[k],
                                                                  (int)funcInfo->nbOptInput);
                         /* Chaotic phase of a null signal — not comparable across
-                         * libms; only the tolerance-lane server (Java) skips:
-                         * C==Rust==C# stay bitwise there. */
-                        if( tolPath && xlang_java_illcond(funcInfo->name, shape) )
+                         * libms. Gated on tolPath, so exactly the servers that
+                         * cannot be held bitwise on transcendentals skip it
+                         * (Java, and C# since run 30776189041). Rust and the C
+                         * golden stay bitwise there. */
+                        if( tolPath && xlang_illcond(funcInfo->name, shape) )
                         { ctx->illcondSkipped++; continue; }
                         xlang_build_hex_request(ctx->reqBuf, funcInfo, &hist, n, s, e, vec[k], !tolPath);
                     }
@@ -5268,7 +5309,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                         CTolVerdict cv = codegen_compare_tol(ctx->respBuf, funcInfo->nbOutput,
                                                              p.outputIsInteger, goldBufs,
                                                              curRc, curBeg, curNb,
-                                                             CODEGEN_JAVA_TRANSCENDENTAL_TOL, &d);
+                                                             CODEGEN_TRANSCENDENTAL_TOL, &d);
                         if( cv != CTOL_MATCH )
                         {
                             sv->mism++;
@@ -5284,7 +5325,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                                 if( cv == CTOL_VALUE && !d.isInt )
                                     printf("  out%d[%d] C=%.17g server=%.17g diff=%.3g (tol %g)",
                                            d.output, d.element, d.cReal, d.sReal,
-                                           fabs(d.cReal - d.sReal), CODEGEN_JAVA_TRANSCENDENTAL_TOL);
+                                           fabs(d.cReal - d.sReal), CODEGEN_TRANSCENDENTAL_TOL);
                                 else if( cv == CTOL_VALUE )
                                     printf("  int out%d[%d] C=%d server=%d",
                                            d.output, d.element, d.cInt, d.sInt);
@@ -5345,17 +5386,26 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     /* Each generated language server, diffed against the in-process C golden (C
      * is the golden, not a server row). Rust uses the seed transport
      * (gen_present + fuzz_in_hash); Java and the managed C# use the lossless
-     * hex-bits transport (usesSeed=0 — no fuzz_gen port). Java additionally
-     * relaxes its transcendental-using calls to a tolerance
-     * (tolTranscendental=1 — fdlibm != the C libm); C# stays fully bitwise,
-     * transcendentals included (.NET's Math.* delegates to the platform
-     * libm). */
+     * hex-bits transport (usesSeed=0 — no fuzz_gen port). Java and C# both
+     * relax their transcendental-using calls to the 1e-9 element compare
+     * (tolTranscendental=1) for different reasons: Java's fdlibm is not the C
+     * libm, and .NET does not guarantee `Math.*` reaches the platform libm.
+     * Every non-transcendental call in both stays bitwise. Rust reaches the
+     * same libm as the golden and is bitwise throughout. */
     static XlangServer servers[] = {
         {"rust",   "Rust", argv_rust,   1, 0, {0}, 0, 0, 0, 0},
-        {"java",   "Java", argv_java,   0, 1, {0}, 0, 0, 0, 0},
+        {"java",   "Java", argv_java,   0, 0, {0}, 0, 0, 0, 0},
         {"csharp", "C#",   argv_csharp, 0, 0, {0}, 0, 0, 0, 0},
     };
     int nsv = (int)(sizeof(servers)/sizeof(servers[0]));
+
+    /* tolTranscendental is FILLED IN from the shared predicate rather than
+     * written per row above: server_verify.c applies the same rule on its own
+     * path, and when the two were separate literals they disagreed — C# was
+     * bitwise here and Java-only there. One definition, both gates. */
+    for( int s = 0; s < nsv; s++ )
+        servers[s].tolTranscendental =
+            codegen_lang_needs_transcendental_tol(servers[s].name);
 
     XlangCtx ctx;
     memset(&ctx, 0, sizeof(ctx));
@@ -5431,12 +5481,14 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
         totalRestarts += servers[s].restarts;
     }
     if( ctx.tolCases > 0 )
-        printf("  (%lld Java call(s) compared at the transcendental tolerance %g; "
-               "every other call is bitwise)\n", ctx.tolCases, CODEGEN_JAVA_TRANSCENDENTAL_TOL);
+        printf("  (%lld tolerance-lane call(s) across Java+C# compared at the "
+               "transcendental tolerance %g; every other call is bitwise)\n",
+               ctx.tolCases, CODEGEN_TRANSCENDENTAL_TOL);
     if( ctx.illcondSkipped > 0 )
-        printf("  (%lld Java HT_DCPHASE/HT_SINE call(s) skipped on the constant "
-               "shape: atan2 phase of a null signal, ill-conditioned across libms "
-               "— C==Rust==C# bitwise there)\n", ctx.illcondSkipped);
+        printf("  (%lld HT_DCPHASE/HT_SINE call(s) skipped on the constant shape "
+               "across the tolerance-lane servers: atan2 phase of a null signal, "
+               "ill-conditioned across libms — C and Rust bitwise there)\n",
+               ctx.illcondSkipped);
     printf("param contract (#148): reject %lld batch + %lld lookback, sentinel %lld batch "
            "+ %lld lookback; %lld lookback case(s) total\n",
            ctx.oorCases, ctx.lbOorCases, ctx.sentCases, ctx.lbSentCases, ctx.lbCases);
@@ -5496,9 +5548,9 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     if( totalMism == 0 && inFails == 0 && ctx.error == TA_TEST_PASS )
     {
         printf("PASS — every server matches the in-process C library: BIT-IDENTICAL "
-               "(zero tolerance), Java transcendentals within %g "
+               "(zero tolerance), Java+C# transcendentals within %g "
                "(current-vs-current, all shapes, period>=2).\n",
-               CODEGEN_JAVA_TRANSCENDENTAL_TOL);
+               CODEGEN_TRANSCENDENTAL_TOL);
         return TA_TEST_PASS;
     }
     printf("FAIL — %lld output mismatch(es) + %d input-port mismatch(es) across %d function(s).\n",
