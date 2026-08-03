@@ -10,7 +10,7 @@ Autonomously evolve ta-lib's codegen output toward performance parity with the C
 ## The Core Loop
 
 ```
-GENERATE → BUILD → TEST → BENCHMARK → ANALYZE → CONSULT → PLAN → FIX → TEST → BENCHMARK → COMMIT/REVERT → repeat
+GENERATE → BUILD → TEST → BENCHMARK → ANALYZE → PLAN → FIX → TEST → BENCHMARK → COMMIT/REVERT → repeat
 ```
 
 ### GENERATE
@@ -90,30 +90,6 @@ For each slow indicator, **dispatch a subagent** for deep analysis:
 3. Trace the hot loop critical path — cycle-count per iteration
 4. Check for speculative computation (both sides of `&&` computed before short-circuit)
 5. Check for binary layout effects (identical assembly but different timing)
-
-### CONSULT (external AI for second opinions)
-
-For hard problems, get a second opinion from external models via `scripts/ask_ai.py`.
-Keys in `.env` (gitignored): `GEMINI_API_KEY`, `OPENAI_API_KEY`.
-
-**When to consult:**
-- Assembly looks identical but perf differs
-- Microarchitectural question (pipeline stalls, OoO scheduling, icache)
-- 2+ cycles with no improvement on the same indicator
-
-**How to consult:**
-```bash
-# Quick check (Flash Lite, no auto-escalation)
-python3 scripts/ask_ai.py --no-escalate "Why does this ARM64 fdiv chain run slower with constant propagation?"
-
-# If Flash Lite's answer is weak or you need deeper analysis, escalate manually:
-python3 scripts/ask_ai.py --model gemini-pro "Analyze these two assembly listings..."
-python3 scripts/ask_ai.py --model gpt "Is loop unswitching always better than constant propagation for CDL patterns?"
-```
-
-The script uses `gemini-3.1-flash-lite-preview` by default (no auto-escalation). Evaluate the response yourself. Escalate manually with `--model gemini-pro` or `--model gpt` only when Flash Lite's answer is insufficient, contradicts your analysis, or you need deeper microarchitectural reasoning.
-
-Send: the two assembly listings, the C source diff, cycle counts, and the specific question.
 
 ### PLAN
 Pick the **single highest-impact** fix. Priority:

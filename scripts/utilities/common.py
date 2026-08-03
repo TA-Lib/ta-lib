@@ -210,14 +210,6 @@ def is_msbuild_installed() -> bool:
             return False
     return False
 
-def is_brew_installed() -> bool:
-    try:
-        subprocess.run(['brew', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return False
-    return False
-
 def is_arm64_toolchain_installed() -> bool:
     if is_linux():
         try:

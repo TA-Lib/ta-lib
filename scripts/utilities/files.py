@@ -249,7 +249,3 @@ def force_delete_glob(path: str, pattern: str, sudo_pwd: str = ""):
     glob_targets = path_join(path, pattern)
     for target in glob.glob(glob_targets):
         force_delete(target, sudo_pwd)
-
-def calculate_file_sha256(file_path: str) -> str:
-    result = run_command(["shasum", "-a", "256", file_path])
-    return result.split()[0]

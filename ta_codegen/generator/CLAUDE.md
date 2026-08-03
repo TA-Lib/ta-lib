@@ -49,7 +49,6 @@ touching all three.
   (`backends/retcode.rs`) → `src/ta_common/ta_retcode.c`.
 - `templates/c/ta_abstract_serve.c` — hand-written abstract-serve handlers `#include`d
   into the C JSON-RPC server (added to the server compile's `-I` path).
-- `templates/c/ta_abstract_dump.c` — standalone dev tool dumping the ta_abstract API as JSON.
 
 ### Key Modules
 
