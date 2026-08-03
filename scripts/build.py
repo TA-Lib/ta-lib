@@ -212,10 +212,10 @@ def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) 
     servers + ta_regtest, then runs `ta_regtest --xlang-hash`. Returns
     ta_regtest's exit code (non-zero on any divergence). Rust crosses the JSON
     boundary with a seed (gen_present); Java and C# cross it with lossless
-    hex-bits inputs (#114). Java relaxes its transcendental-using calls to a
-    tolerance (fdlibm != the C libm); the managed C# is fully bitwise,
-    transcendentals included. Needs the JDK for the Java server and the .NET
-    SDK for the C# server.
+    hex-bits inputs (#114). Java and C# both relax their transcendental-using
+    calls to a 1e-9 tolerance (fdlibm != the C libm; .NET does not guarantee
+    Math.* reaches the platform libm). Everything else stays bitwise. Needs the
+    JDK for the Java server and the .NET SDK for the C# server.
 
     --language narrows the gate to a subset of those three, so a machine with no
     JDK or .NET SDK can still run the Rust leg. C is never a server row here —

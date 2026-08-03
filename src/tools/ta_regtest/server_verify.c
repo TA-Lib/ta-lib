@@ -11,8 +11,9 @@
  * --xlang-hash (issue #113), differing only in input source: here the inputs are
  * the test's exact arrays, sent losslessly as hex-of-IEEE-bits strings, and the
  * server returns a full-precision out_hash we diff via the shared
- * codegen_hash_compare(). Zero tolerance for C/Rust/C#; a narrow tolerance for
- * Java on transcendental-using functions only (fdlibm != system libm ~1 ULP).
+ * codegen_hash_compare(). Zero tolerance for C and Rust; a narrow tolerance for
+ * Java and C# on transcendental-using functions only (~1 ULP: fdlibm is not the
+ * system libm, and .NET's Math.* is not guaranteed to reach it either).
  */
 
 #include <stdio.h>
@@ -28,12 +29,13 @@
 
 #define SV_BUF_SIZE (256 * 1024)   /* 256KB request/response buffers */
 
-/* The Java-transcendental tolerance (CODEGEN_JAVA_TRANSCENDENTAL_TOL), the
+/* The transcendental tolerance (CODEGEN_TRANSCENDENTAL_TOL), the
  * transcendental-call test (codegen_call_is_transcendental), the lossless
  * hex-bits input writer (codegen_write_hexbits_array), and the tolerance
  * element-compare (codegen_compare_tol) are all shared with the --xlang-hash
  * gate via test_codegen.h — the two run the identical "in-process C <=> language
- * server, bit-for-bit (tolerance only for Java transcendentals)" operation. */
+ * server, bit-for-bit (tolerance only for transcendentals, and only in the
+ * languages that need it)" operation. */
 
 /* ---- Global state ---- */
 
@@ -529,7 +531,10 @@ ErrorNumber server_verify(
     {
         g_curPipe = p;
         const char *lang = g_pipeLang[p];
-        int bitwise = !(lang && strcmp(lang, "java") == 0 && isTranscendental);
+        /* Shared predicate, not a hardcoded "java": this line and the
+         * --xlang-hash server table used to carry the rule separately and
+         * drifted apart, leaving C# bitwise here and tolerant there. */
+        int bitwise = !(codegen_lang_needs_transcendental_tol(lang) && isTranscendental);
 
         /* Sync global state (unstable periods + compatibility) */
         ErrorNumber err = sync_unstable_periods(p);
@@ -615,7 +620,7 @@ ErrorNumber server_verify(
             /* Java transcendental: element compare at the narrow tolerance. */
             err = compare_output_tol(funcName, g_respBuf,
                                      crefRetCode, crefOutBegIdx, crefOutNbElement,
-                                     outReal, outInteger, CODEGEN_JAVA_TRANSCENDENTAL_TOL);
+                                     outReal, outInteger, CODEGEN_TRANSCENDENTAL_TOL);
             if( err != TA_TEST_PASS )
                 return err;
         }
