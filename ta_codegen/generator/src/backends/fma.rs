@@ -145,6 +145,7 @@ pub(crate) fn is_definitely_integer(expr: &Expr, ctx: &FmaCtx) -> bool {
                 || ctx.int_output_names.contains(name)
         }
         Expr::BinOp(a, _, b) => is_definitely_integer(a, ctx) || is_definitely_integer(b, ctx),
+        Expr::BitwiseNot(i) => is_definitely_integer(i, ctx),
         // IntLiteral and everything else: not definitely integer (literals coerce to f64).
         _ => false,
     }
@@ -316,6 +317,7 @@ fn expr_references(e: &Expr, name: &str) -> bool {
         Expr::BinOp(l, _, r) => expr_references(l, name) || expr_references(r, name),
         Expr::Cast(_, i)
         | Expr::Not(i)
+        | Expr::BitwiseNot(i)
         | Expr::AddressOf(i)
         | Expr::PostIncrement(i)
         | Expr::PostDecrement(i)

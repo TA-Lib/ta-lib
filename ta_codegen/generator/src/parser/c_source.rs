@@ -85,13 +85,18 @@ pub fn wire_parsed_source(func_def: &mut crate::ir::FuncDef, parsed: &ParsedCSou
 pub fn parse_c_source(path: &Path) -> ParsedCSource {
     let input = std::fs::read_to_string(path)
         .unwrap_or_else(|e| panic!("Failed to read {}: {}", path.display(), e));
-    parse_c_source_str(&input)
+    parse_c_source_named(&input, Some(&path.display().to_string()))
 }
 
 /// Parse C source from a string.
 pub fn parse_c_source_str(source: &str) -> ParsedCSource {
-    let (tokens, comments) = tokenize_with_comments(source);
-    extract_functions(&tokens, &comments)
+    parse_c_source_named(source, None)
+}
+
+/// Parse C source from a string, attributing diagnostics to `file` when given.
+fn parse_c_source_named(source: &str, file: Option<&str>) -> ParsedCSource {
+    let (tokens, tok_lines, comments) = tokenize_with_comments(source, file);
+    extract_functions(&tokens, &tok_lines, &comments, file)
 }
 
 /// Parse a helper C file containing standalone utility functions.
@@ -99,13 +104,17 @@ pub fn parse_c_source_str(source: &str) -> ParsedCSource {
 pub fn parse_helper_file(path: &Path) -> Vec<HelperDef> {
     let input = std::fs::read_to_string(path)
         .unwrap_or_else(|e| panic!("Failed to read {}: {}", path.display(), e));
-    parse_helper_file_str(&input)
+    parse_helper_file_named(&input, Some(&path.display().to_string()))
 }
 
 /// Parse helper functions from a string of C source code.
 pub fn parse_helper_file_str(source: &str) -> Vec<HelperDef> {
-    let tokens = tokenize(source);
-    extract_helper_functions(&tokens)
+    parse_helper_file_named(source, None)
+}
+
+fn parse_helper_file_named(source: &str, file: Option<&str>) -> Vec<HelperDef> {
+    let (tokens, tok_lines, _comments) = tokenize_with_comments(source, file);
+    extract_helper_functions(&tokens, &tok_lines, file)
 }
 
 // --- Tokenizer ---
@@ -135,7 +144,9 @@ enum Token {
     Pipe,
 }
 
-/// Strip #define and #undef lines (including multi-line continuations with \)
+/// Strip #define and #undef lines (including multi-line continuations with \).
+/// Stripped lines are replaced by empty lines (not removed) so that token line
+/// numbers derived from the result still point into the original file.
 fn strip_local_macros(input: &str) -> String {
     let mut result = Vec::new();
     let mut in_macro = false;
@@ -144,6 +155,7 @@ fn strip_local_macros(input: &str) -> String {
         if in_macro {
             // Continue skipping until a line doesn't end with backslash
             in_macro = trimmed.ends_with('\\');
+            result.push("");
             continue;
         }
         if trimmed.starts_with("#define ")
@@ -152,6 +164,7 @@ fn strip_local_macros(input: &str) -> String {
             || trimmed.starts_with("#undef\t")
         {
             in_macro = trimmed.ends_with('\\');
+            result.push("");
             continue;
         }
         result.push(line);
@@ -185,28 +198,59 @@ fn clean_comment_lines(raw: &str) -> Vec<String> {
 }
 
 /// Tokenize, dropping comments — the historical API used throughout the tests.
+#[cfg(test)]
 fn tokenize(input: &str) -> Vec<Token> {
-    tokenize_with_comments(input).0
+    tokenize_with_comments(input, None).0
 }
 
 /// Tokenize while capturing comments on the side. The returned token stream is
 /// byte-for-byte identical to [`tokenize`] (comment-free, so every existing
-/// parser path is unaffected); the second element lists each comment paired with
-/// the index of the token it immediately precedes (`tokens.len()` at capture
-/// time), plus its cleaned content lines. The parser re-associates these to
-/// statements positionally without ever seeing a comment token.
+/// parser path is unaffected); the second element gives each token's 1-based
+/// source line (parallel to the token stream, for diagnostics); the third lists
+/// each comment paired with the index of the token it immediately precedes
+/// (`tokens.len()` at capture time), plus its cleaned content lines. The parser
+/// re-associates these to statements positionally without ever seeing a comment
+/// token.
 #[allow(clippy::cognitive_complexity, clippy::too_many_lines, clippy::type_complexity)]
-fn tokenize_with_comments(input: &str) -> (Vec<Token>, Vec<(usize, Vec<String>, bool)>) {
+fn tokenize_with_comments(
+    input: &str,
+    file: Option<&str>,
+) -> (Vec<Token>, Vec<u32>, Vec<(usize, Vec<String>, bool)>) {
     let input = strip_local_macros(input);
     let mut tokens = Vec::new();
+    // 1-based source line of each token, parallel to `tokens`.
+    let mut tok_lines: Vec<u32> = Vec::new();
     // (index of the token this comment precedes, cleaned lines, trailing?).
     // `trailing` = the comment shares a source line with the preceding token
     // (no newline since) — i.e. `x && // note` vs a comment on its own line.
     let mut comments: Vec<(usize, Vec<String>, bool)> = Vec::new();
     let chars: Vec<char> = input.chars().collect();
+    // 1-based line number of each char position (a '\n' belongs to the line it
+    // ends); one sentinel entry past the end for tokens flush at EOF.
+    let line_of: Vec<u32> = {
+        let mut v = Vec::with_capacity(chars.len() + 1);
+        let mut ln = 1u32;
+        for &ch in &chars {
+            v.push(ln);
+            if ch == '\n' {
+                ln += 1;
+            }
+        }
+        v.push(ln);
+        v
+    };
     let mut i = 0;
     let mut newline_since_token = true;
     let mut last_token_count = 0usize;
+
+    // Push a token recording the source line it starts on (all current token
+    // kinds are single-line, so the line at the current scan position is it).
+    macro_rules! push_tok {
+        ($t:expr) => {{
+            tok_lines.push(line_of[i]);
+            tokens.push($t);
+        }};
+    }
 
     while i < chars.len() {
         // A token was emitted in the previous iteration → reset the newline flag.
@@ -255,55 +299,55 @@ fn tokenize_with_comments(input: &str) -> (Vec<Token>, Vec<(usize, Vec<String>, 
 
         // Semicolon
         if c == ';' {
-            tokens.push(Token::Semicolon);
+            push_tok!(Token::Semicolon);
             i += 1;
             continue;
         }
 
         // Comma
         if c == ',' {
-            tokens.push(Token::Comma);
+            push_tok!(Token::Comma);
             i += 1;
             continue;
         }
 
         // Colon
         if c == ':' {
-            tokens.push(Token::Colon);
+            push_tok!(Token::Colon);
             i += 1;
             continue;
         }
 
         // Parentheses
         if c == '(' {
-            tokens.push(Token::LParen);
+            push_tok!(Token::LParen);
             i += 1;
             continue;
         }
         if c == ')' {
-            tokens.push(Token::RParen);
+            push_tok!(Token::RParen);
             i += 1;
             continue;
         }
 
         // Braces and brackets
         if c == '{' {
-            tokens.push(Token::LBrace);
+            push_tok!(Token::LBrace);
             i += 1;
             continue;
         }
         if c == '}' {
-            tokens.push(Token::RBrace);
+            push_tok!(Token::RBrace);
             i += 1;
             continue;
         }
         if c == '[' {
-            tokens.push(Token::LBracket);
+            push_tok!(Token::LBracket);
             i += 1;
             continue;
         }
         if c == ']' {
-            tokens.push(Token::RBracket);
+            push_tok!(Token::RBracket);
             i += 1;
             continue;
         }
@@ -311,11 +355,11 @@ fn tokenize_with_comments(input: &str) -> (Vec<Token>, Vec<(usize, Vec<String>, 
         // Bang (!) — check for != first
         if c == '!' {
             if i + 1 < chars.len() && chars[i + 1] == '=' {
-                tokens.push(Token::Op("!=".to_string()));
+                push_tok!(Token::Op("!=".to_string()));
                 i += 2;
                 continue;
             }
-            tokens.push(Token::Bang);
+            push_tok!(Token::Bang);
             i += 1;
             continue;
         }
@@ -324,17 +368,17 @@ fn tokenize_with_comments(input: &str) -> (Vec<Token>, Vec<(usize, Vec<String>, 
         if c == '+' {
             if i + 1 < chars.len() {
                 if chars[i + 1] == '+' {
-                    tokens.push(Token::PlusPlus);
+                    push_tok!(Token::PlusPlus);
                     i += 2;
                     continue;
                 }
                 if chars[i + 1] == '=' {
-                    tokens.push(Token::Op("+=".to_string()));
+                    push_tok!(Token::Op("+=".to_string()));
                     i += 2;
                     continue;
                 }
             }
-            tokens.push(Token::Op("+".to_string()));
+            push_tok!(Token::Op("+".to_string()));
             i += 1;
             continue;
         }
@@ -343,17 +387,17 @@ fn tokenize_with_comments(input: &str) -> (Vec<Token>, Vec<(usize, Vec<String>, 
         if c == '-' {
             if i + 1 < chars.len() {
                 if chars[i + 1] == '-' {
-                    tokens.push(Token::MinusMinus);
+                    push_tok!(Token::MinusMinus);
                     i += 2;
                     continue;
                 }
                 if chars[i + 1] == '=' {
-                    tokens.push(Token::Op("-=".to_string()));
+                    push_tok!(Token::Op("-=".to_string()));
                     i += 2;
                     continue;
                 }
             }
-            tokens.push(Token::Op("-".to_string()));
+            push_tok!(Token::Op("-".to_string()));
             i += 1;
             continue;
         }
@@ -361,11 +405,11 @@ fn tokenize_with_comments(input: &str) -> (Vec<Token>, Vec<(usize, Vec<String>, 
         // Star: *=, or *
         if c == '*' {
             if i + 1 < chars.len() && chars[i + 1] == '=' {
-                tokens.push(Token::Op("*=".to_string()));
+                push_tok!(Token::Op("*=".to_string()));
                 i += 2;
                 continue;
             }
-            tokens.push(Token::Star);
+            push_tok!(Token::Star);
             i += 1;
             continue;
         }
@@ -373,18 +417,18 @@ fn tokenize_with_comments(input: &str) -> (Vec<Token>, Vec<(usize, Vec<String>, 
         // Slash: /= or /
         if c == '/' {
             if i + 1 < chars.len() && chars[i + 1] == '=' {
-                tokens.push(Token::Op("/=".to_string()));
+                push_tok!(Token::Op("/=".to_string()));
                 i += 2;
                 continue;
             }
-            tokens.push(Token::Op("/".to_string()));
+            push_tok!(Token::Op("/".to_string()));
             i += 1;
             continue;
         }
 
         // Percent: %
         if c == '%' {
-            tokens.push(Token::Op("%".to_string()));
+            push_tok!(Token::Op("%".to_string()));
             i += 1;
             continue;
         }
@@ -392,57 +436,92 @@ fn tokenize_with_comments(input: &str) -> (Vec<Token>, Vec<(usize, Vec<String>, 
         // Two-char operators starting with <, >, =, &, |
         if c == '<' {
             if i + 1 < chars.len() && chars[i + 1] == '=' {
-                tokens.push(Token::Op("<=".to_string()));
+                push_tok!(Token::Op("<=".to_string()));
                 i += 2;
             } else if i + 1 < chars.len() && chars[i + 1] == '<' {
-                tokens.push(Token::Op("<<".to_string()));
-                i += 2;
+                if i + 2 < chars.len() && chars[i + 2] == '=' {
+                    push_tok!(Token::Op("<<=".to_string()));
+                    i += 3;
+                } else {
+                    push_tok!(Token::Op("<<".to_string()));
+                    i += 2;
+                }
             } else {
-                tokens.push(Token::Op("<".to_string()));
+                push_tok!(Token::Op("<".to_string()));
                 i += 1;
             }
             continue;
         }
         if c == '>' {
             if i + 1 < chars.len() && chars[i + 1] == '=' {
-                tokens.push(Token::Op(">=".to_string()));
+                push_tok!(Token::Op(">=".to_string()));
                 i += 2;
             } else if i + 1 < chars.len() && chars[i + 1] == '>' {
-                tokens.push(Token::Op(">>".to_string()));
-                i += 2;
+                if i + 2 < chars.len() && chars[i + 2] == '=' {
+                    push_tok!(Token::Op(">>=".to_string()));
+                    i += 3;
+                } else {
+                    push_tok!(Token::Op(">>".to_string()));
+                    i += 2;
+                }
             } else {
-                tokens.push(Token::Op(">".to_string()));
+                push_tok!(Token::Op(">".to_string()));
                 i += 1;
             }
             continue;
         }
         if c == '=' {
             if i + 1 < chars.len() && chars[i + 1] == '=' {
-                tokens.push(Token::Op("==".to_string()));
+                push_tok!(Token::Op("==".to_string()));
                 i += 2;
             } else {
-                tokens.push(Token::Op("=".to_string()));
+                push_tok!(Token::Op("=".to_string()));
                 i += 1;
             }
             continue;
         }
         if c == '&' && i + 1 < chars.len() && chars[i + 1] == '&' {
-            tokens.push(Token::Op("&&".to_string()));
+            push_tok!(Token::Op("&&".to_string()));
+            i += 2;
+            continue;
+        }
+        if c == '&' && i + 1 < chars.len() && chars[i + 1] == '=' {
+            push_tok!(Token::Op("&=".to_string()));
             i += 2;
             continue;
         }
         if c == '&' {
-            tokens.push(Token::Ampersand);
+            push_tok!(Token::Ampersand);
             i += 1;
             continue;
         }
         if c == '|' {
             if i + 1 < chars.len() && chars[i + 1] == '|' {
-                tokens.push(Token::Op("||".to_string()));
+                push_tok!(Token::Op("||".to_string()));
                 i += 2;
                 continue;
             }
-            tokens.push(Token::Pipe);
+            if i + 1 < chars.len() && chars[i + 1] == '=' {
+                push_tok!(Token::Op("|=".to_string()));
+                i += 2;
+                continue;
+            }
+            push_tok!(Token::Pipe);
+            i += 1;
+            continue;
+        }
+        if c == '^' {
+            if i + 1 < chars.len() && chars[i + 1] == '=' {
+                push_tok!(Token::Op("^=".to_string()));
+                i += 2;
+                continue;
+            }
+            push_tok!(Token::Op("^".to_string()));
+            i += 1;
+            continue;
+        }
+        if c == '~' {
+            push_tok!(Token::Op("~".to_string()));
             i += 1;
             continue;
         }
@@ -473,10 +552,10 @@ fn tokenize_with_comments(input: &str) -> (Vec<Token>, Vec<(usize, Vec<String>, 
                 }
                 let s: String = chars[start..i].iter().collect();
                 let cleaned = s.trim_end_matches('f');
-                tokens.push(Token::Number(cleaned.parse().unwrap()));
+                push_tok!(Token::Number(cleaned.parse().unwrap()));
             } else {
                 let s: String = chars[start..i].iter().collect();
-                tokens.push(Token::IntNumber(s.parse().unwrap()));
+                push_tok!(Token::IntNumber(s.parse().unwrap()));
             }
             continue;
         }
@@ -488,20 +567,20 @@ fn tokenize_with_comments(input: &str) -> (Vec<Token>, Vec<(usize, Vec<String>, 
                 i += 1;
             }
             let s: String = chars[start..i].iter().collect();
-            tokens.push(Token::Ident(s));
+            push_tok!(Token::Ident(s));
             continue;
         }
 
         // Question mark (ternary operator)
         if c == '?' {
-            tokens.push(Token::Question);
+            push_tok!(Token::Question);
             i += 1;
             continue;
         }
 
         // Dot: struct member access (e.g., arr[idx].field)
         if c == '.' {
-            tokens.push(Token::Dot);
+            push_tok!(Token::Dot);
             i += 1;
             continue;
         }
@@ -514,10 +593,11 @@ fn tokenize_with_comments(input: &str) -> (Vec<Token>, Vec<(usize, Vec<String>, 
             continue;
         }
 
-        panic!("Unexpected character: {c:?} at position {i}");
+        let loc = file.map_or_else(String::new, |f| format!("{f}:{}: ", line_of[i]));
+        panic!("{loc}Unexpected character: {c:?}");
     }
 
-    (tokens, comments)
+    (tokens, tok_lines, comments)
 }
 
 // --- Function Extraction ---
@@ -609,7 +689,12 @@ fn body_comments(
         .collect()
 }
 
-fn extract_functions(tokens: &[Token], comments: &[(usize, Vec<String>, bool)]) -> ParsedCSource {
+fn extract_functions(
+    tokens: &[Token],
+    tok_lines: &[u32],
+    comments: &[(usize, Vec<String>, bool)],
+    file: Option<&str>,
+) -> ParsedCSource {
     let mut lookback_body = Vec::new();
     let mut functions = Vec::new();
     let mut first_func_tok: Option<usize> = None;
@@ -629,8 +714,9 @@ fn extract_functions(tokens: &[Token], comments: &[(usize, Vec<String>, bool)]) 
                         if let Some(brace_end) = find_matching_brace(tokens, brace_start) {
                             first_func_tok.get_or_insert(i);
                             let body_tokens = &tokens[brace_start + 1..brace_end];
+                            let body_lines = &tok_lines[brace_start + 1..brace_end];
                             let body_cmts = body_comments(comments, brace_start, brace_end);
-                            lookback_body = parse_body(body_tokens, &body_cmts);
+                            lookback_body = parse_body(body_tokens, body_lines, &body_cmts, file);
                             i = brace_end + 1;
                             continue;
                         }
@@ -664,10 +750,11 @@ fn extract_functions(tokens: &[Token], comments: &[(usize, Vec<String>, bool)]) 
                         if let Some(brace_end) = find_matching_brace(tokens, brace_start) {
                             first_func_tok.get_or_insert(i);
                             let body_tokens = &tokens[brace_start + 1..brace_end];
+                            let body_lines = &tok_lines[brace_start + 1..brace_end];
                             let body_cmts = body_comments(comments, brace_start, brace_end);
                             functions.push(ParsedCFunction {
                                 name: func_name,
-                                body: parse_body(body_tokens, &body_cmts),
+                                body: parse_body(body_tokens, body_lines, &body_cmts, file),
                                 params,
                             });
                             i = brace_end + 1;
@@ -701,7 +788,11 @@ fn extract_functions(tokens: &[Token], comments: &[(usize, Vec<String>, bool)]) 
 
 /// Scan tokens for standalone helper function definitions (not indicator functions).
 /// Each helper has the form: `return_type name(params...) { body }`
-fn extract_helper_functions(tokens: &[Token]) -> Vec<HelperDef> {
+fn extract_helper_functions(
+    tokens: &[Token],
+    tok_lines: &[u32],
+    file: Option<&str>,
+) -> Vec<HelperDef> {
     let mut helpers = Vec::new();
     let mut i = 0;
 
@@ -769,7 +860,8 @@ fn extract_helper_functions(tokens: &[Token]) -> Vec<HelperDef> {
 
         if let Some(brace_end) = find_matching_brace(tokens, pi) {
             let body_tokens = &tokens[pi + 1..brace_end];
-            let body = parse_body(body_tokens, &[]);
+            let body_lines = &tok_lines[pi + 1..brace_end];
+            let body = parse_body(body_tokens, body_lines, &[], file);
             helpers.push(HelperDef {
                 name,
                 return_type,
@@ -821,8 +913,15 @@ fn find_matching_brace(tokens: &[Token], open: usize) -> Option<usize> {
 /// body-local comments (index re-based to the slice) captured by
 /// [`tokenize_with_comments`]; they are flushed positionally as
 /// [`Statement::Comment`] nodes.
-fn parse_body(tokens: &[Token], comments: &[(usize, Vec<String>, bool)]) -> Vec<Statement> {
+fn parse_body(
+    tokens: &[Token],
+    tok_lines: &[u32],
+    comments: &[(usize, Vec<String>, bool)],
+    file: Option<&str>,
+) -> Vec<Statement> {
     let mut parser = Parser::with_comments(tokens.to_vec(), comments.to_vec());
+    parser.tok_lines = tok_lines.to_vec();
+    parser.file = file.map(str::to_string);
     parser.parse_statements()
 }
 
@@ -840,6 +939,11 @@ fn c_type_to_vartype(type_name: &str) -> VarType {
 struct Parser {
     tokens: Vec<Token>,
     pos: usize,
+    /// 1-based source line of each token (parallel to `tokens`), for
+    /// diagnostics. Empty when parsing synthetic token streams in tests.
+    tok_lines: Vec<u32>,
+    /// Input file the tokens came from, for diagnostics.
+    file: Option<String>,
     /// Comments captured by [`tokenize_with_comments`], each paired with the
     /// token index it precedes (in this body's re-based token space). Consumed
     /// in order via `comment_idx` and flushed as [`Statement::Comment`] at
@@ -863,11 +967,38 @@ impl Parser {
         Self {
             tokens,
             pos: 0,
+            tok_lines: Vec::new(),
+            file: None,
             comments,
             comment_idx: 0,
             struct_defs: HashMap::new(),
             circbufs: HashMap::new(),
         }
+    }
+
+    /// Abort with a diagnostic pointing into the *input* C file:
+    /// `<file>:<line>: <msg>`. The line is that of the most recently consumed
+    /// token (the parser reports errors right after advancing onto the
+    /// offending token). Location is omitted when unknown (synthetic streams).
+    fn fail(&self, msg: &str) -> ! {
+        let idx = self.pos.saturating_sub(1);
+        let loc = match (self.file.as_deref(), self.tok_lines.get(idx)) {
+            (Some(f), Some(l)) => format!("{f}:{l}: "),
+            (Some(f), None) => format!("{f}: "),
+            _ => String::new(),
+        };
+        panic!("{loc}{msg}")
+    }
+
+    /// Like [`fail`](Parser::fail), but for errors raised on a *peeked* (not yet
+    /// consumed) token: attributes the diagnostic to the upcoming token's line.
+    fn fail_peek(&self, msg: &str) -> ! {
+        let loc = match (self.file.as_deref(), self.tok_lines.get(self.pos)) {
+            (Some(f), Some(l)) => format!("{f}:{l}: "),
+            (Some(f), None) => format!("{f}: "),
+            _ => String::new(),
+        };
+        panic!("{loc}{msg}")
     }
 
     /// Emit a [`Statement::Comment`] for every buffered comment whose anchor
@@ -887,14 +1018,14 @@ impl Parser {
     fn expect_ident(&mut self) -> String {
         match self.advance() {
             Token::Ident(s) => s,
-            other => panic!("Expected identifier, got {other:?}"),
+            other => self.fail(&format!("Expected identifier, got {other:?}")),
         }
     }
 
     fn expect_int_literal(&mut self) -> i64 {
         match self.advance() {
             Token::IntNumber(n) => n,
-            other => panic!("CIRCBUF static size must be an int literal, got {other:?}"),
+            other => self.fail(&format!("CIRCBUF static size must be an int literal, got {other:?}")),
         }
     }
 
@@ -903,10 +1034,10 @@ impl Parser {
     fn circbuf_layout(&self, macro_name: &str, type_name: &str) -> CircBufLayout {
         if macro_name.ends_with("_CLASS") {
             let fields = self.struct_defs.get(type_name).cloned().unwrap_or_else(|| {
-                panic!(
+                self.fail(&format!(
                     "CIRCBUF *_CLASS: unknown struct '{type_name}' \
                      (typedef must precede PROLOG_CLASS in the function body)"
-                )
+                ))
             });
             CircBufLayout::Class(fields)
         } else {
@@ -920,7 +1051,7 @@ impl Parser {
         self.advance(); // typedef
         match self.advance() {
             Token::Ident(ref s) if s == "struct" => {}
-            other => panic!("Expected 'struct' after typedef, got {other:?}"),
+            other => self.fail(&format!("Expected 'struct' after typedef, got {other:?}")),
         }
         self.expect(&Token::LBrace);
         let mut fields = Vec::new();
@@ -942,7 +1073,9 @@ impl Parser {
     }
 
     fn advance(&mut self) -> Token {
-        let tok = self.tokens[self.pos].clone();
+        let Some(tok) = self.tokens.get(self.pos).cloned() else {
+            self.fail("Unexpected end of input");
+        };
         self.pos += 1;
         tok
     }
@@ -950,13 +1083,15 @@ impl Parser {
     fn expect_op(&mut self, op: &str) {
         match self.advance() {
             Token::Op(ref s) if s == op => {}
-            other => panic!("Expected '{op}', got {other:?}"),
+            other => self.fail(&format!("Expected '{op}', got {other:?}")),
         }
     }
 
     fn expect(&mut self, expected: &Token) {
         let tok = self.advance();
-        assert_eq!(&tok, expected, "Expected {expected:?}, got {tok:?}");
+        if &tok != expected {
+            self.fail(&format!("Expected {expected:?}, got {tok:?}"));
+        }
     }
 
     fn parse_statements(&mut self) -> Vec<Statement> {
@@ -1061,7 +1196,7 @@ impl Parser {
                 self.advance();
                 let name = match self.advance() {
                     Token::Ident(s) => s,
-                    other => panic!("Expected identifier after ++, got {other:?}"),
+                    other => self.fail(&format!("Expected identifier after ++, got {other:?}")),
                 };
                 self.consume_semicolon();
                 inc_dec_assign(name, BinOp::Add)
@@ -1071,7 +1206,7 @@ impl Parser {
                 self.advance();
                 let name = match self.advance() {
                     Token::Ident(s) => s,
-                    other => panic!("Expected identifier after --, got {other:?}"),
+                    other => self.fail(&format!("Expected identifier after --, got {other:?}")),
                 };
                 self.consume_semicolon();
                 inc_dec_assign(name, BinOp::Sub)
@@ -1124,7 +1259,7 @@ impl Parser {
     fn parse_macro_decl(&mut self) -> Statement {
         let macro_name = match self.advance() {
             Token::Ident(s) => s,
-            other => panic!("Expected macro name, got {other:?}"),
+            other => self.fail(&format!("Expected macro name, got {other:?}")),
         };
         self.expect(&Token::LParen);
 
@@ -1133,14 +1268,14 @@ impl Parser {
                 // ENUM_DECLARATION(RetCode) varName;
                 let type_name = match self.advance() {
                     Token::Ident(s) => s,
-                    other => panic!("Expected type name in ENUM_DECLARATION, got {other:?}"),
+                    other => self.fail(&format!("Expected type name in ENUM_DECLARATION, got {other:?}")),
                 };
                 self.expect(&Token::RParen);
                 let var_name = match self.advance() {
                     Token::Ident(s) => s,
-                    other => panic!(
+                    other => self.fail(&format!(
                         "Expected variable name after ENUM_DECLARATION({type_name}), got {other:?}"
-                    ),
+                    )),
                 };
                 self.consume_semicolon();
                 let var_type = if type_name == "RetCode" {
@@ -1158,7 +1293,7 @@ impl Parser {
                 // ARRAY_REF(buf);
                 let var_name = match self.advance() {
                     Token::Ident(s) => s,
-                    other => panic!("Expected variable name in ARRAY_REF, got {other:?}"),
+                    other => self.fail(&format!("Expected variable name in ARRAY_REF, got {other:?}")),
                 };
                 self.expect(&Token::RParen);
                 self.consume_semicolon();
@@ -1211,7 +1346,7 @@ impl Parser {
                     .circbufs
                     .get(&id)
                     .cloned()
-                    .unwrap_or_else(|| panic!("CIRCBUF_INIT before PROLOG for '{id}'"));
+                    .unwrap_or_else(|| self.fail(&format!("CIRCBUF_INIT before PROLOG for '{id}'")));
                 Statement::CircBuf(CircBuf::Init { id, layout, size })
             }
             "CIRCBUF_INIT_LOCAL_ONLY" => {
@@ -1223,7 +1358,7 @@ impl Parser {
                 self.consume_semicolon();
                 let layout =
                     self.circbufs.get(&id).cloned().unwrap_or_else(|| {
-                        panic!("CIRCBUF_INIT_LOCAL_ONLY before PROLOG for '{id}'")
+                        self.fail(&format!("CIRCBUF_INIT_LOCAL_ONLY before PROLOG for '{id}'"))
                     });
                 Statement::CircBuf(CircBuf::InitLocalOnly { id, layout })
             }
@@ -1241,14 +1376,14 @@ impl Parser {
                     .circbufs
                     .get(&id)
                     .cloned()
-                    .unwrap_or_else(|| panic!("CIRCBUF_DESTROY before PROLOG for '{id}'"));
+                    .unwrap_or_else(|| self.fail(&format!("CIRCBUF_DESTROY before PROLOG for '{id}'")));
                 Statement::CircBuf(CircBuf::Destroy { id, layout })
             }
             "CONSTANT_DOUBLE" => {
                 // CONSTANT_DOUBLE(name) = value;
                 let var_name = match self.advance() {
                     Token::Ident(s) => s,
-                    other => panic!("Expected variable name in CONSTANT_DOUBLE, got {other:?}"),
+                    other => self.fail(&format!("Expected variable name in CONSTANT_DOUBLE, got {other:?}")),
                 };
                 self.expect(&Token::RParen);
                 self.expect_op("=");
@@ -1264,7 +1399,7 @@ impl Parser {
                 // CONSTANT_INTEGER(name) = value;
                 let var_name = match self.advance() {
                     Token::Ident(s) => s,
-                    other => panic!("Expected variable name in CONSTANT_INTEGER, got {other:?}"),
+                    other => self.fail(&format!("Expected variable name in CONSTANT_INTEGER, got {other:?}")),
                 };
                 self.expect(&Token::RParen);
                 self.expect_op("=");
@@ -1287,7 +1422,7 @@ impl Parser {
                 // HILBERT_VARIABLES(prefix); -> declares multiple variables
                 let prefix = match self.advance() {
                     Token::Ident(s) => s,
-                    other => panic!("Expected identifier in HILBERT_VARIABLES, got {other:?}"),
+                    other => self.fail(&format!("Expected identifier in HILBERT_VARIABLES, got {other:?}")),
                 };
                 self.expect(&Token::RParen);
                 self.consume_semicolon();
@@ -1327,17 +1462,17 @@ impl Parser {
                     ],
                 }
             }
-            _ => panic!("Unhandled macro: {macro_name}"),
+            _ => self.fail(&format!("Unhandled macro: {macro_name}")),
         }
     }
 
-    fn type_from_keyword(s: &str) -> VarType {
+    fn type_from_keyword(&self, s: &str) -> VarType {
         match s {
             "int" => VarType::Integer,
             "double" => VarType::Real,
             "size_t" => VarType::Index,
             "TA_RetCode" => VarType::RetCodeType,
-            other => panic!("Unknown type keyword: {other}"),
+            other => self.fail(&format!("Unknown type keyword: {other}")),
         }
     }
 
@@ -1367,8 +1502,8 @@ impl Parser {
     fn parse_var_decl(&mut self) -> Vec<Statement> {
         let type_tok = self.advance();
         let var_type = match type_tok {
-            Token::Ident(ref s) => Self::type_from_keyword(s),
-            _ => panic!("Expected type keyword"),
+            Token::Ident(ref s) => self.type_from_keyword(s),
+            _ => self.fail("Expected type keyword"),
         };
 
         // Consume optional pointer declarator: `double *buf` or `int *ptr`
@@ -1403,7 +1538,7 @@ impl Parser {
     fn parse_single_var_decl(&mut self, var_type: VarType) -> Statement {
         let name = match self.advance() {
             Token::Ident(s) => s,
-            other => panic!("Expected identifier in var decl, got {other:?}"),
+            other => self.fail(&format!("Expected identifier in var decl, got {other:?}")),
         };
 
         // Refine int → Index for variables that are array indices / loop counters
@@ -1513,7 +1648,7 @@ impl Parser {
         self.advance(); // consume *
         let name = match self.advance() {
             Token::Ident(s) => s,
-            other => panic!("Expected identifier after *, got {other:?}"),
+            other => self.fail(&format!("Expected identifier after *, got {other:?}")),
         };
         self.expect_op("=");
         // Check for chained assignment: *ptr = name2 = expr
@@ -1540,7 +1675,7 @@ impl Parser {
         // expect "while"
         match self.advance() {
             Token::Ident(s) if s == "while" => {}
-            other => panic!("Expected 'while' after do block, got {other:?}"),
+            other => self.fail(&format!("Expected 'while' after do block, got {other:?}")),
         }
         self.expect(&Token::LParen);
         let condition = self.parse_expr();
@@ -1556,7 +1691,7 @@ impl Parser {
         self.expect(&Token::LParen);
         let count = match self.advance() {
             Token::IntNumber(n) if n > 0 => u32::try_from(n).expect("TA_UNROLL count too large"),
-            other => panic!("TA_UNROLL expects a positive integer count, got {other:?}"),
+            other => self.fail(&format!("TA_UNROLL expects a positive integer count, got {other:?}")),
         };
         self.expect(&Token::RParen);
         if self.peek() == Some(&Token::Semicolon) {
@@ -1651,7 +1786,7 @@ impl Parser {
             if Self::is_type_keyword(s) {
                 let type_tok = self.advance();
                 let var_type = match type_tok {
-                    Token::Ident(ref s) => Self::type_from_keyword(s),
+                    Token::Ident(ref s) => self.type_from_keyword(s),
                     _ => unreachable!(),
                 };
                 return self.parse_single_var_decl(var_type);
@@ -1666,7 +1801,7 @@ impl Parser {
             self.advance();
             let name = match self.advance() {
                 Token::Ident(s) => s,
-                other => panic!("Expected identifier after ++ in for update, got {other:?}"),
+                other => self.fail(&format!("Expected identifier after ++ in for update, got {other:?}")),
             };
             return inc_dec_assign(name, BinOp::Add);
         }
@@ -1675,14 +1810,14 @@ impl Parser {
             self.advance();
             let name = match self.advance() {
                 Token::Ident(s) => s,
-                other => panic!("Expected identifier after -- in for update, got {other:?}"),
+                other => self.fail(&format!("Expected identifier after -- in for update, got {other:?}")),
             };
             return inc_dec_assign(name, BinOp::Sub);
         }
         // Usually i++ or i-- or i += 1
         let name = match self.advance() {
             Token::Ident(s) => s,
-            other => panic!("Expected identifier in for update, got {other:?}"),
+            other => self.fail(&format!("Expected identifier in for update, got {other:?}")),
         };
 
         match self.peek() {
@@ -1885,13 +2020,13 @@ impl Parser {
                                 let enum_type = match self.advance() {
                                     Token::Ident(n) => n,
                                     other => {
-                                        panic!("Expected ENUM_CASE type name, got {other:?}")
+                                        self.fail(&format!("Expected ENUM_CASE type name, got {other:?}"))
                                     }
                                 };
                                 self.expect(&Token::Comma);
                                 let c_name = match self.advance() {
                                     Token::Ident(n) => n,
-                                    other => panic!("Expected ENUM_CASE C name, got {other:?}"),
+                                    other => self.fail(&format!("Expected ENUM_CASE C name, got {other:?}")),
                                 };
                                 self.expect(&Token::Comma);
                                 let _pascal_name = self.advance(); // e.g. Sma
@@ -1908,7 +2043,7 @@ impl Parser {
                             }
                         }
                         Token::IntNumber(n) => format!("{n}"),
-                        other => panic!("Expected case label, got {other:?}"),
+                        other => self.fail(&format!("Expected case label, got {other:?}")),
                     };
                     self.expect(&Token::Colon);
 
@@ -1948,7 +2083,7 @@ impl Parser {
                         }
                     }
                 }
-                other => panic!("Expected 'case' or 'default' in switch, got {other:?}"),
+                other => self.fail_peek(&format!("Expected 'case' or 'default' in switch, got {other:?}")),
             }
         }
         self.expect(&Token::RBrace);
@@ -2020,7 +2155,7 @@ impl Parser {
         // Expect a type keyword (void, int, double, etc.) or identifier
         let _type_name = match self.advance() {
             Token::Ident(s) => s,
-            other => panic!("Expected type identifier after '(', got {other:?}"),
+            other => self.fail(&format!("Expected type identifier after '(', got {other:?}")),
         };
         self.expect(&Token::RParen); // consume )
         // Consume the target expression until semicolon
@@ -2036,7 +2171,7 @@ impl Parser {
     fn parse_assignment_or_expr_stmt(&mut self) -> Statement {
         let name = match self.advance() {
             Token::Ident(s) => s,
-            other => panic!("Expected identifier, got {other:?}"),
+            other => self.fail(&format!("Expected identifier, got {other:?}")),
         };
 
         // Handle ALL_CAPS macro as standalone statement without args: CALCULATE_AD;
@@ -2146,7 +2281,7 @@ impl Parser {
                 self.advance(); // consume .
                 let field = match self.advance() {
                     Token::Ident(s) => s,
-                    other => panic!("Expected field name after '.', got {other:?}"),
+                    other => self.fail(&format!("Expected field name after '.', got {other:?}")),
                 };
                 let flat_name = format!("{name}_{field}");
                 match self.peek().cloned() {
@@ -2233,14 +2368,14 @@ impl Parser {
                 self.consume_semicolon();
                 Statement::Block { body: vec![] }
             }
-            other => panic!("Expected '=' or compound assignment after '{name}', got {other:?}"),
+            other => self.fail_peek(&format!("Expected '=' or compound assignment after '{name}', got {other:?}")),
         }
     }
 
     fn parse_assignment_no_semicolon(&mut self) -> Statement {
         let name = match self.advance() {
             Token::Ident(s) => s,
-            other => panic!("Expected identifier, got {other:?}"),
+            other => self.fail(&format!("Expected identifier, got {other:?}")),
         };
         self.expect_op("=");
         let value = self.parse_expr();
@@ -2306,11 +2441,33 @@ impl Parser {
     }
 
     fn parse_bitwise_or(&mut self) -> Expr {
-        let mut left = self.parse_comparison();
+        let mut left = self.parse_bitwise_xor();
         while self.peek() == Some(&Token::Pipe) {
             self.advance();
-            let right = self.parse_comparison();
+            let right = self.parse_bitwise_xor();
             left = Expr::BinOp(Box::new(left), BinOp::BitwiseOr, Box::new(right));
+        }
+        left
+    }
+
+    fn parse_bitwise_xor(&mut self) -> Expr {
+        let mut left = self.parse_bitwise_and();
+        while matches!(self.peek(), Some(Token::Op(op)) if op == "^") {
+            self.advance();
+            let right = self.parse_bitwise_and();
+            left = Expr::BinOp(Box::new(left), BinOp::BitwiseXor, Box::new(right));
+        }
+        left
+    }
+
+    // Infix `&` — unambiguous with address-of, which only appears in prefix
+    // position (consumed by `parse_unary` before any operand completes).
+    fn parse_bitwise_and(&mut self) -> Expr {
+        let mut left = self.parse_comparison();
+        while self.peek() == Some(&Token::Ampersand) {
+            self.advance();
+            let right = self.parse_comparison();
+            left = Expr::BinOp(Box::new(left), BinOp::BitwiseAnd, Box::new(right));
         }
         left
     }
@@ -2401,6 +2558,12 @@ impl Parser {
             let operand = self.parse_primary();
             return Expr::AddressOf(Box::new(operand));
         }
+        // Bitwise complement: ~expr
+        if matches!(self.peek(), Some(Token::Op(op)) if op == "~") {
+            self.advance();
+            let operand = self.parse_unary();
+            return Expr::BitwiseNot(Box::new(operand));
+        }
         // Unary dereference: *var
         if self.peek() == Some(&Token::Star) {
             self.advance();
@@ -2414,7 +2577,7 @@ impl Parser {
             if let Expr::Var(name) = operand {
                 return Expr::PointerDeref(name);
             }
-            panic!("Cannot dereference non-identifier expression");
+            self.fail("Cannot dereference non-identifier expression");
         }
         // Pre-increment: ++expr
         if self.peek() == Some(&Token::PlusPlus) {
@@ -2453,7 +2616,7 @@ impl Parser {
                     let type_name = s.clone();
                     self.advance();
                     self.expect(&Token::RParen);
-                    let var_type = Self::type_from_keyword(&type_name);
+                    let var_type = self.type_from_keyword(&type_name);
                     let operand = self.parse_unary();
                     return Expr::Cast(var_type, Box::new(operand));
                 }
@@ -2502,7 +2665,7 @@ impl Parser {
                             self.advance(); // consume .
                             let field = match self.advance() {
                                 Token::Ident(s) => s,
-                                other => panic!("Expected field name after '.', got {other:?}"),
+                                other => self.fail(&format!("Expected field name after '.', got {other:?}")),
                             };
                             format!("{name}_{field}")
                         } else {
@@ -2532,7 +2695,7 @@ impl Parser {
                     // Plain identifier — strip TA_ from enum-like values
                     Expr::Var(strip_ta_prefix(&name))
                 }
-                other => panic!("Unexpected token in expression: {other:?}"),
+                other => self.fail(&format!("Unexpected token in expression: {other:?}")),
             }
         }
     }
@@ -2585,13 +2748,19 @@ fn compound_op(op: &str) -> BinOp {
         "-=" => BinOp::Sub,
         "*=" => BinOp::Mul,
         "/=" => BinOp::Div,
+        "&=" => BinOp::BitwiseAnd,
+        "|=" => BinOp::BitwiseOr,
+        "^=" => BinOp::BitwiseXor,
+        "<<=" => BinOp::Shl,
+        ">>=" => BinOp::Shr,
         _ => panic!("Unknown compound operator: {op}"),
     }
 }
 
-/// True for the compound-assignment operator tokens (`+=`, `-=`, `*=`, `/=`).
+/// True for the compound-assignment operator tokens (`+=`, `-=`, `*=`, `/=`,
+/// `&=`, `|=`, `^=`, `<<=`, `>>=`).
 fn is_compound_assign_op(op: &str) -> bool {
-    matches!(op, "+=" | "-=" | "*=" | "/=")
+    matches!(op, "+=" | "-=" | "*=" | "/=" | "&=" | "|=" | "^=" | "<<=" | ">>=")
 }
 
 /// Desugar `++name` / `name++` (and the `--` forms) into `name = name <op> 1`.
@@ -2701,7 +2870,7 @@ mod tests {
     fn test_tokenize_with_comments_captures_anchors() {
         // Comments are captured on the side, anchored to the index of the token
         // they precede; the token stream itself stays comment-free.
-        let (tokens, comments) = tokenize_with_comments("int x; /* note */ int y;");
+        let (tokens, _lines, comments) = tokenize_with_comments("int x; /* note */ int y;", None);
         assert_eq!(tokens.len(), 6); // int x ; int y ;
         assert_eq!(comments.len(), 1);
         assert_eq!(comments[0].0, 3); // precedes the second `int` (token index 3)
@@ -3301,28 +3470,28 @@ TA_RetCode test_func(int startIdx, int endIdx, int *outBegIdx, int *outNBElement
         // Lines 85-86, 93-94: multi-line #define with backslash continuations
         let input = "#define FOO(x) \\\n    (x + 1)\nint y;";
         let result = strip_local_macros(input);
-        assert_eq!(result, "int y;");
+        assert_eq!(result, "\n\nint y;");
     }
 
     #[test]
     fn test_strip_local_macros_undef() {
         let input = "#undef FOO\nint y;";
         let result = strip_local_macros(input);
-        assert_eq!(result, "int y;");
+        assert_eq!(result, "\nint y;");
     }
 
     #[test]
     fn test_strip_local_macros_undef_tab() {
         let input = "#undef\tFOO\nint y;";
         let result = strip_local_macros(input);
-        assert_eq!(result, "int y;");
+        assert_eq!(result, "\nint y;");
     }
 
     #[test]
     fn test_strip_local_macros_define_tab() {
         let input = "#define\tFOO 1\nint y;";
         let result = strip_local_macros(input);
-        assert_eq!(result, "int y;");
+        assert_eq!(result, "\nint y;");
     }
 
     #[test]
@@ -3330,7 +3499,57 @@ TA_RetCode test_func(int startIdx, int endIdx, int *outBegIdx, int *outNBElement
         // A multi-line define where the continuation also ends with backslash
         let input = "#define FOO(x) \\\n    (x + 1) \\\n    + 2\nint z;";
         let result = strip_local_macros(input);
-        assert_eq!(result, "int z;");
+        assert_eq!(result, "\n\n\nint z;");
+    }
+
+    // ===== Diagnostics: parser aborts name the input file and line =====
+
+    fn panic_message(err: &(dyn std::any::Any + Send)) -> String {
+        err.downcast_ref::<String>().cloned().unwrap_or_else(|| {
+            err.downcast_ref::<&str>().map(ToString::to_string).unwrap_or_default()
+        })
+    }
+
+    #[test]
+    fn test_parser_diagnostic_carries_file_and_line() {
+        // `%=` is not a supported operator; the parser must point at the
+        // statement in the *input* file, not just a generator-internal line.
+        let src = "TA_RetCode foo( int startIdx )\n{\n   int x;\n   x %= 3;\n   return TA_SUCCESS;\n}\n";
+        let err = std::panic::catch_unwind(|| {
+            parse_c_source_named(src, Some("ta_codegen/input/foo/foo.c"));
+        })
+        .expect_err("parse must abort");
+        let msg = panic_message(&*err);
+        assert!(
+            msg.contains("ta_codegen/input/foo/foo.c:4: "),
+            "diagnostic lacks file:line, got: {msg}"
+        );
+    }
+
+    #[test]
+    fn test_parser_diagnostic_line_unshifted_by_stripped_defines() {
+        // #define lines are blanked, not removed — reported lines must still
+        // match the original file.
+        let src = "#define LOCAL_MACRO(x) \\\n   ((x)+1)\nTA_RetCode foo( int startIdx )\n{\n   int x;\n   x %= 3;\n   return TA_SUCCESS;\n}\n";
+        let err = std::panic::catch_unwind(|| {
+            parse_c_source_named(src, Some("foo.c"));
+        })
+        .expect_err("parse must abort");
+        let msg = panic_message(&*err);
+        assert!(msg.contains("foo.c:6: "), "diagnostic line shifted, got: {msg}");
+    }
+
+    #[test]
+    fn test_lexer_diagnostic_carries_file_and_line() {
+        let err = std::panic::catch_unwind(|| {
+            tokenize_with_comments("int x;\nint @;\n", Some("bar.c"));
+        })
+        .expect_err("tokenize must abort");
+        let msg = panic_message(&*err);
+        assert!(
+            msg.contains("bar.c:2: Unexpected character"),
+            "lexer diagnostic lacks file:line, got: {msg}"
+        );
     }
 
     // ===== Tokenizer: special operators =====
@@ -4533,6 +4752,121 @@ TA_RetCode test_func(int startIdx, int *outBegIdx)
         match expr {
             Expr::BinOp(_, BinOp::BitwiseOr, _) => {}
             other => panic!("Expected BitwiseOr, got {other:?}"),
+        }
+    }
+
+    // ===== Bitwise AND / XOR / NOT (issue #157) =====
+
+    #[test]
+    fn test_bitwise_and_expr() {
+        let tokens = tokenize("a & b");
+        let mut parser = Parser::new(tokens);
+        match parser.parse_expr() {
+            Expr::BinOp(_, BinOp::BitwiseAnd, _) => {}
+            other => panic!("Expected BitwiseAnd, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_bitwise_xor_expr() {
+        let tokens = tokenize("a ^ b");
+        let mut parser = Parser::new(tokens);
+        match parser.parse_expr() {
+            Expr::BinOp(_, BinOp::BitwiseXor, _) => {}
+            other => panic!("Expected BitwiseXor, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_bitwise_not_binds_tighter_than_and() {
+        // `~a & b` = `(~a) & b` — unary binds tighter
+        let tokens = tokenize("~a & b");
+        let mut parser = Parser::new(tokens);
+        match parser.parse_expr() {
+            Expr::BinOp(l, BinOp::BitwiseAnd, _) => {
+                assert!(matches!(*l, Expr::BitwiseNot(_)), "left must be ~a");
+            }
+            other => panic!("Expected (~a) & b, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_bitwise_precedence_and_over_xor_over_or() {
+        // C precedence: & > ^ > | ⇒ a | (b ^ (c & d))
+        let tokens = tokenize("a | b ^ c & d");
+        let mut parser = Parser::new(tokens);
+        match parser.parse_expr() {
+            Expr::BinOp(_, BinOp::BitwiseOr, r) => match *r {
+                Expr::BinOp(_, BinOp::BitwiseXor, r2) => {
+                    assert!(matches!(*r2, Expr::BinOp(_, BinOp::BitwiseAnd, _)));
+                }
+                other => panic!("Expected b ^ (c & d), got {other:?}"),
+            },
+            other => panic!("Expected a | ..., got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_bitwise_and_binds_looser_than_comparison() {
+        // The C wart: `a & b == c` is `a & (b == c)`
+        let tokens = tokenize("a & b == c");
+        let mut parser = Parser::new(tokens);
+        match parser.parse_expr() {
+            Expr::BinOp(l, BinOp::BitwiseAnd, r) => {
+                assert!(matches!(*l, Expr::Var(_)));
+                assert!(matches!(*r, Expr::BinOp(_, BinOp::Eq, _)));
+            }
+            other => panic!("Expected a & (b == c), got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_infix_ampersand_distinct_from_address_of() {
+        // Prefix position stays address-of even with infix `&` in the grammar
+        let tokens = tokenize("f(a, &b)");
+        let mut parser = Parser::new(tokens);
+        match parser.parse_expr() {
+            Expr::FuncCall(_, args) => {
+                assert_eq!(args.len(), 2);
+                assert!(matches!(args[1], Expr::AddressOf(_)));
+            }
+            other => panic!("Expected call with &b arg, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_bitwise_compound_assignments() {
+        for (src, want) in [
+            ("x &= 3;", BinOp::BitwiseAnd),
+            ("x |= 3;", BinOp::BitwiseOr),
+            ("x ^= 3;", BinOp::BitwiseXor),
+            ("x <<= 3;", BinOp::Shl),
+            ("x >>= 3;", BinOp::Shr),
+        ] {
+            let tokens = tokenize(src);
+            let mut parser = Parser::new(tokens);
+            let stmts = parser.parse_statements();
+            match &stmts[0] {
+                Statement::Assign { value: Expr::BinOp(_, op, _), compound: true, .. } => {
+                    assert_eq!(
+                        std::mem::discriminant(op),
+                        std::mem::discriminant(&want),
+                        "{src}: parsed op {op:?}"
+                    );
+                }
+                other => panic!("{src}: expected compound Assign, got {other:?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn test_shift_assign_lexes_distinct_from_relational() {
+        // `<<=` must not lex as `<=` / `<` `<=`
+        let tokens = tokenize("a <= b");
+        let mut parser = Parser::new(tokens);
+        match parser.parse_expr() {
+            Expr::BinOp(_, BinOp::LessEq, _) => {}
+            other => panic!("Expected a <= b, got {other:?}"),
         }
     }
 
