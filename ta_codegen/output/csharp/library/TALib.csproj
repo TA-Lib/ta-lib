@@ -5,18 +5,26 @@
        `partial class Core` files) live under src/; the hand-written
        scaffolding (Core.cs, RetCode.cs, OutRange.cs, ...) sits at this level.
 
-       net8.0 (LTS) is the floor — not netstandard: the generated indicators
-       call Math.FusedMultiplyAdd (the cross-language FMA bit-parity contract,
-       PR #96), which no netstandard version has, and a software FMA
-       substitute would break bit-parity, which is the one thing this port
-       must not do. net10.0 gets the modern target.
+       net10.0 (LTS, supported to Nov 2028) is the single target. Not
+       netstandard: the generated indicators call Math.FusedMultiplyAdd (the
+       cross-language FMA bit-parity contract, PR #96), which no netstandard
+       version has, and a software FMA substitute would break bit-parity —
+       the one thing this port must not do.
+
+       net8.0 was dropped rather than multi-targeted. The date that matters is
+       PUBLICATION, not today: landing on main is not a release (Java and Rust
+       sit on main unpublished too), and by the time this is on NuGet .NET 8
+       will be roughly a year past its 10 Nov 2026 end of support. Nothing here
+       needs an API newer than .NET Core 3.0, so an older TFM would have bought
+       reach and nothing else — and a TFM no gate executes is a promise nobody
+       checked. Re-adding one is a one-line change if a real consumer asks.
 
        TreatWarningsAsErrors + GenerateDocumentationFile makes CS1591 (missing
        XML doc on a public member) an error — the C# analog of the Java
        -Xdoclint gate. -->
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>TALib</RootNamespace>

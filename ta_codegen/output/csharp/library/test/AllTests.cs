@@ -60,9 +60,9 @@ namespace TALib.Test;
 /// <remarks>
 /// <para>One entry point rather than one Main per suite: a single assembly can
 /// only have one, and running each separately would pay the startup cost N
-/// times. Prints the running framework so a two-TFM run cannot be mistaken for
-/// one — that the net8.0 leg executes at all is the point of the
-/// multi-target.</para>
+/// times. Prints the running framework, so if the library ever multi-targets
+/// again the log says which TFM each pass actually ran on rather than leaving
+/// it to be inferred.</para>
 /// <para>Suites are DISCOVERED, not listed. The generator's Java runner carries
 /// the reason in a comment: a hardcoded roster is how the retired Java
 /// <c>AllTests</c> went vacuous — it named one class, a later change deleted
