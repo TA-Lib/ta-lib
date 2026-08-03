@@ -15794,8 +15794,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ACCBANDS(
             startIdx, endIdx,
             g_inBuf0,
@@ -15819,8 +15820,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ACCBANDS_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -15883,8 +15885,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ACOS(
             startIdx, endIdx,
             g_inBuf0,
@@ -15903,8 +15906,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ACOS_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -15955,8 +15959,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_AD(
             startIdx, endIdx,
             g_inBuf0,
@@ -15978,8 +15983,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_AD_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -16040,8 +16046,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ADD(
             startIdx, endIdx,
             g_inBuf0,
@@ -16061,8 +16068,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ADD_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -16119,8 +16127,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ADOSC(
             startIdx, endIdx,
             g_inBuf0,
@@ -16144,8 +16153,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ADOSC_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -16215,8 +16225,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ADX(
             startIdx, endIdx,
             g_inBuf0,
@@ -16238,8 +16249,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ADX_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -16301,8 +16313,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ADXR(
             startIdx, endIdx,
             g_inBuf0,
@@ -16324,8 +16337,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ADXR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -16387,8 +16401,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_APO(
             startIdx, endIdx,
             g_inBuf0,
@@ -16410,8 +16425,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_APO_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -16470,8 +16486,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_AROON(
             startIdx, endIdx,
             g_inBuf0,
@@ -16493,8 +16510,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_AROON_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -16553,8 +16571,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_AROONOSC(
             startIdx, endIdx,
             g_inBuf0,
@@ -16575,8 +16594,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_AROONOSC_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -16631,8 +16651,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ASIN(
             startIdx, endIdx,
             g_inBuf0,
@@ -16651,8 +16672,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ASIN_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -16700,8 +16722,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ATAN(
             startIdx, endIdx,
             g_inBuf0,
@@ -16720,8 +16743,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ATAN_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -16773,8 +16797,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ATR(
             startIdx, endIdx,
             g_inBuf0,
@@ -16796,8 +16821,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ATR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -16857,8 +16883,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_AVGDEV(
             startIdx, endIdx,
             g_inBuf0,
@@ -16878,8 +16905,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_AVGDEV_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -16933,8 +16961,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_AVGPRICE(
             startIdx, endIdx,
             g_inBuf0,
@@ -16956,8 +16985,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_AVGPRICE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -17021,8 +17051,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_BBANDS(
             startIdx, endIdx,
             g_inBuf0,
@@ -17047,8 +17078,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_BBANDS_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -17114,8 +17146,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_BETA(
             startIdx, endIdx,
             g_inBuf0,
@@ -17136,8 +17169,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_BETA_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -17195,8 +17229,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_BOP(
             startIdx, endIdx,
             g_inBuf0,
@@ -17218,8 +17253,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_BOP_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -17282,8 +17318,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CCI(
             startIdx, endIdx,
             g_inBuf0,
@@ -17305,8 +17342,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CCI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -17368,8 +17406,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDL2CROWS(
             startIdx, endIdx,
             g_inBuf0,
@@ -17391,8 +17430,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDL2CROWS_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -17455,8 +17495,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDL3BLACKCROWS(
             startIdx, endIdx,
             g_inBuf0,
@@ -17478,8 +17519,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDL3BLACKCROWS_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -17542,8 +17584,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDL3INSIDE(
             startIdx, endIdx,
             g_inBuf0,
@@ -17565,8 +17608,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDL3INSIDE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -17629,8 +17673,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDL3LINESTRIKE(
             startIdx, endIdx,
             g_inBuf0,
@@ -17652,8 +17697,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDL3LINESTRIKE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -17716,8 +17762,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDL3OUTSIDE(
             startIdx, endIdx,
             g_inBuf0,
@@ -17739,8 +17786,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDL3OUTSIDE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -17803,8 +17851,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDL3STARSINSOUTH(
             startIdx, endIdx,
             g_inBuf0,
@@ -17826,8 +17875,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDL3STARSINSOUTH_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -17890,8 +17940,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDL3WHITESOLDIERS(
             startIdx, endIdx,
             g_inBuf0,
@@ -17913,8 +17964,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDL3WHITESOLDIERS_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -17978,8 +18030,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLABANDONEDBABY(
             startIdx, endIdx,
             g_inBuf0,
@@ -18002,8 +18055,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLABANDONEDBABY_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -18069,8 +18123,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLADVANCEBLOCK(
             startIdx, endIdx,
             g_inBuf0,
@@ -18092,8 +18147,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLADVANCEBLOCK_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -18156,8 +18212,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLBELTHOLD(
             startIdx, endIdx,
             g_inBuf0,
@@ -18179,8 +18236,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLBELTHOLD_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -18243,8 +18301,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLBREAKAWAY(
             startIdx, endIdx,
             g_inBuf0,
@@ -18266,8 +18325,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLBREAKAWAY_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -18330,8 +18390,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLCLOSINGMARUBOZU(
             startIdx, endIdx,
             g_inBuf0,
@@ -18353,8 +18414,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLCLOSINGMARUBOZU_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -18417,8 +18479,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLCONCEALBABYSWALL(
             startIdx, endIdx,
             g_inBuf0,
@@ -18440,8 +18503,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLCONCEALBABYSWALL_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -18504,8 +18568,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLCOUNTERATTACK(
             startIdx, endIdx,
             g_inBuf0,
@@ -18527,8 +18592,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLCOUNTERATTACK_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -18592,8 +18658,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLDARKCLOUDCOVER(
             startIdx, endIdx,
             g_inBuf0,
@@ -18616,8 +18683,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLDARKCLOUDCOVER_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -18683,8 +18751,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLDOJI(
             startIdx, endIdx,
             g_inBuf0,
@@ -18706,8 +18775,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLDOJI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -18770,8 +18840,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLDOJISTAR(
             startIdx, endIdx,
             g_inBuf0,
@@ -18793,8 +18864,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLDOJISTAR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -18857,8 +18929,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLDRAGONFLYDOJI(
             startIdx, endIdx,
             g_inBuf0,
@@ -18880,8 +18953,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLDRAGONFLYDOJI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -18944,8 +19018,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLENGULFING(
             startIdx, endIdx,
             g_inBuf0,
@@ -18967,8 +19042,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLENGULFING_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -19032,8 +19108,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLEVENINGDOJISTAR(
             startIdx, endIdx,
             g_inBuf0,
@@ -19056,8 +19133,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLEVENINGDOJISTAR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -19124,8 +19202,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLEVENINGSTAR(
             startIdx, endIdx,
             g_inBuf0,
@@ -19148,8 +19227,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLEVENINGSTAR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -19215,8 +19295,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLGAPSIDESIDEWHITE(
             startIdx, endIdx,
             g_inBuf0,
@@ -19238,8 +19319,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLGAPSIDESIDEWHITE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -19302,8 +19384,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLGRAVESTONEDOJI(
             startIdx, endIdx,
             g_inBuf0,
@@ -19325,8 +19408,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLGRAVESTONEDOJI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -19389,8 +19473,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLHAMMER(
             startIdx, endIdx,
             g_inBuf0,
@@ -19412,8 +19497,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLHAMMER_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -19476,8 +19562,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLHANGINGMAN(
             startIdx, endIdx,
             g_inBuf0,
@@ -19499,8 +19586,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLHANGINGMAN_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -19563,8 +19651,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLHARAMI(
             startIdx, endIdx,
             g_inBuf0,
@@ -19586,8 +19675,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLHARAMI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -19650,8 +19740,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLHARAMICROSS(
             startIdx, endIdx,
             g_inBuf0,
@@ -19673,8 +19764,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLHARAMICROSS_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -19737,8 +19829,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLHIGHWAVE(
             startIdx, endIdx,
             g_inBuf0,
@@ -19760,8 +19853,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLHIGHWAVE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -19824,8 +19918,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLHIKKAKE(
             startIdx, endIdx,
             g_inBuf0,
@@ -19847,8 +19942,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLHIKKAKE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -19911,8 +20007,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLHIKKAKEMOD(
             startIdx, endIdx,
             g_inBuf0,
@@ -19934,8 +20031,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLHIKKAKEMOD_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -19998,8 +20096,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLHOMINGPIGEON(
             startIdx, endIdx,
             g_inBuf0,
@@ -20021,8 +20120,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLHOMINGPIGEON_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -20085,8 +20185,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLIDENTICAL3CROWS(
             startIdx, endIdx,
             g_inBuf0,
@@ -20108,8 +20209,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLIDENTICAL3CROWS_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -20172,8 +20274,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLINNECK(
             startIdx, endIdx,
             g_inBuf0,
@@ -20195,8 +20298,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLINNECK_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -20259,8 +20363,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLINVERTEDHAMMER(
             startIdx, endIdx,
             g_inBuf0,
@@ -20282,8 +20387,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLINVERTEDHAMMER_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -20346,8 +20452,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLKICKING(
             startIdx, endIdx,
             g_inBuf0,
@@ -20369,8 +20476,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLKICKING_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -20433,8 +20541,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLKICKINGBYLENGTH(
             startIdx, endIdx,
             g_inBuf0,
@@ -20456,8 +20565,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLKICKINGBYLENGTH_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -20520,8 +20630,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLLADDERBOTTOM(
             startIdx, endIdx,
             g_inBuf0,
@@ -20543,8 +20654,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLLADDERBOTTOM_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -20607,8 +20719,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLLONGLEGGEDDOJI(
             startIdx, endIdx,
             g_inBuf0,
@@ -20630,8 +20743,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLLONGLEGGEDDOJI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -20694,8 +20808,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLLONGLINE(
             startIdx, endIdx,
             g_inBuf0,
@@ -20717,8 +20832,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLLONGLINE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -20781,8 +20897,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLMARUBOZU(
             startIdx, endIdx,
             g_inBuf0,
@@ -20804,8 +20921,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLMARUBOZU_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -20868,8 +20986,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLMATCHINGLOW(
             startIdx, endIdx,
             g_inBuf0,
@@ -20891,8 +21010,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLMATCHINGLOW_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -20956,8 +21076,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLMATHOLD(
             startIdx, endIdx,
             g_inBuf0,
@@ -20980,8 +21101,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLMATHOLD_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -21048,8 +21170,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLMORNINGDOJISTAR(
             startIdx, endIdx,
             g_inBuf0,
@@ -21072,8 +21195,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLMORNINGDOJISTAR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -21140,8 +21264,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLMORNINGSTAR(
             startIdx, endIdx,
             g_inBuf0,
@@ -21164,8 +21289,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLMORNINGSTAR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -21231,8 +21357,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLONNECK(
             startIdx, endIdx,
             g_inBuf0,
@@ -21254,8 +21381,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLONNECK_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -21318,8 +21446,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLPIERCING(
             startIdx, endIdx,
             g_inBuf0,
@@ -21341,8 +21470,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLPIERCING_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -21405,8 +21535,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLRICKSHAWMAN(
             startIdx, endIdx,
             g_inBuf0,
@@ -21428,8 +21559,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLRICKSHAWMAN_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -21492,8 +21624,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLRISEFALL3METHODS(
             startIdx, endIdx,
             g_inBuf0,
@@ -21515,8 +21648,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLRISEFALL3METHODS_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -21579,8 +21713,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLSEPARATINGLINES(
             startIdx, endIdx,
             g_inBuf0,
@@ -21602,8 +21737,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLSEPARATINGLINES_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -21666,8 +21802,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLSHOOTINGSTAR(
             startIdx, endIdx,
             g_inBuf0,
@@ -21689,8 +21826,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLSHOOTINGSTAR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -21753,8 +21891,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLSHORTLINE(
             startIdx, endIdx,
             g_inBuf0,
@@ -21776,8 +21915,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLSHORTLINE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -21840,8 +21980,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLSPINNINGTOP(
             startIdx, endIdx,
             g_inBuf0,
@@ -21863,8 +22004,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLSPINNINGTOP_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -21927,8 +22069,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLSTALLEDPATTERN(
             startIdx, endIdx,
             g_inBuf0,
@@ -21950,8 +22093,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLSTALLEDPATTERN_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -22014,8 +22158,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLSTICKSANDWICH(
             startIdx, endIdx,
             g_inBuf0,
@@ -22037,8 +22182,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLSTICKSANDWICH_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -22101,8 +22247,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLTAKURI(
             startIdx, endIdx,
             g_inBuf0,
@@ -22124,8 +22271,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLTAKURI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -22188,8 +22336,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLTASUKIGAP(
             startIdx, endIdx,
             g_inBuf0,
@@ -22211,8 +22360,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLTASUKIGAP_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -22275,8 +22425,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLTHRUSTING(
             startIdx, endIdx,
             g_inBuf0,
@@ -22298,8 +22449,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLTHRUSTING_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -22362,8 +22514,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLTRISTAR(
             startIdx, endIdx,
             g_inBuf0,
@@ -22385,8 +22538,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLTRISTAR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -22449,8 +22603,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLUNIQUE3RIVER(
             startIdx, endIdx,
             g_inBuf0,
@@ -22472,8 +22627,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLUNIQUE3RIVER_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -22536,8 +22692,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLUPSIDEGAP2CROWS(
             startIdx, endIdx,
             g_inBuf0,
@@ -22559,8 +22716,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLUPSIDEGAP2CROWS_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -22623,8 +22781,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CDLXSIDEGAP3METHODS(
             startIdx, endIdx,
             g_inBuf0,
@@ -22646,8 +22805,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CDLXSIDEGAP3METHODS_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -22707,8 +22867,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CEIL(
             startIdx, endIdx,
             g_inBuf0,
@@ -22727,8 +22888,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CEIL_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -22780,8 +22942,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CMF(
             startIdx, endIdx,
             g_inBuf0,
@@ -22804,8 +22967,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CMF_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -22870,8 +23034,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CMO(
             startIdx, endIdx,
             g_inBuf0,
@@ -22891,8 +23056,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CMO_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -22944,8 +23110,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CMOU(
             startIdx, endIdx,
             g_inBuf0,
@@ -22965,8 +23132,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CMOU_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23019,8 +23187,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_CORREL(
             startIdx, endIdx,
             g_inBuf0,
@@ -23041,8 +23210,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_CORREL_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23097,8 +23267,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_COS(
             startIdx, endIdx,
             g_inBuf0,
@@ -23117,8 +23288,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_COS_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23166,8 +23338,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_COSH(
             startIdx, endIdx,
             g_inBuf0,
@@ -23186,8 +23359,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_COSH_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23236,8 +23410,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_DEMA(
             startIdx, endIdx,
             g_inBuf0,
@@ -23257,8 +23432,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_DEMA_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23310,8 +23486,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_DIV(
             startIdx, endIdx,
             g_inBuf0,
@@ -23331,8 +23508,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_DIV_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23388,8 +23566,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_DX(
             startIdx, endIdx,
             g_inBuf0,
@@ -23411,8 +23590,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_DX_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23473,8 +23653,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_EMA(
             startIdx, endIdx,
             g_inBuf0,
@@ -23494,8 +23675,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_EMA_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23546,8 +23728,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_EXP(
             startIdx, endIdx,
             g_inBuf0,
@@ -23566,8 +23749,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_EXP_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23615,8 +23799,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_FLOOR(
             startIdx, endIdx,
             g_inBuf0,
@@ -23635,8 +23820,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_FLOOR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23685,8 +23871,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_HMA(
             startIdx, endIdx,
             g_inBuf0,
@@ -23706,8 +23893,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_HMA_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23759,8 +23947,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_HT_DCPERIOD(
             startIdx, endIdx,
             g_inBuf0,
@@ -23779,8 +23968,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_HT_DCPERIOD_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23829,8 +24019,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_HT_DCPHASE(
             startIdx, endIdx,
             g_inBuf0,
@@ -23849,8 +24040,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_HT_DCPHASE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23899,8 +24091,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_HT_PHASOR(
             startIdx, endIdx,
             g_inBuf0,
@@ -23920,8 +24113,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_HT_PHASOR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -23972,8 +24166,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_HT_SINE(
             startIdx, endIdx,
             g_inBuf0,
@@ -23993,8 +24188,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_HT_SINE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24045,8 +24241,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_HT_TRENDLINE(
             startIdx, endIdx,
             g_inBuf0,
@@ -24065,8 +24262,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_HT_TRENDLINE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24115,8 +24313,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_HT_TRENDMODE(
             startIdx, endIdx,
             g_inBuf0,
@@ -24135,8 +24334,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_HT_TRENDMODE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24186,8 +24386,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_IMI(
             startIdx, endIdx,
             g_inBuf0,
@@ -24208,8 +24409,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_IMI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24266,8 +24468,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_KAMA(
             startIdx, endIdx,
             g_inBuf0,
@@ -24287,8 +24490,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_KAMA_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24340,8 +24544,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_LINEARREG(
             startIdx, endIdx,
             g_inBuf0,
@@ -24361,8 +24566,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_LINEARREG_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24414,8 +24620,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_LINEARREG_ANGLE(
             startIdx, endIdx,
             g_inBuf0,
@@ -24435,8 +24642,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_LINEARREG_ANGLE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24488,8 +24696,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_LINEARREG_INTERCEPT(
             startIdx, endIdx,
             g_inBuf0,
@@ -24509,8 +24718,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_LINEARREG_INTERCEPT_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24562,8 +24772,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_LINEARREG_SLOPE(
             startIdx, endIdx,
             g_inBuf0,
@@ -24583,8 +24794,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_LINEARREG_SLOPE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24635,8 +24847,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_LN(
             startIdx, endIdx,
             g_inBuf0,
@@ -24655,8 +24868,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_LN_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24704,8 +24918,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_LOG10(
             startIdx, endIdx,
             g_inBuf0,
@@ -24724,8 +24939,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_LOG10_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24775,8 +24991,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MA(
             startIdx, endIdx,
             g_inBuf0,
@@ -24797,8 +25014,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MA_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24855,8 +25073,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MACD(
             startIdx, endIdx,
             g_inBuf0,
@@ -24880,8 +25099,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MACD_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -24948,8 +25168,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MACDEXT(
             startIdx, endIdx,
             g_inBuf0,
@@ -24976,8 +25197,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MACDEXT_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25048,8 +25270,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MACDFIX(
             startIdx, endIdx,
             g_inBuf0,
@@ -25071,8 +25294,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MACDFIX_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25130,8 +25354,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MAMA(
             startIdx, endIdx,
             g_inBuf0,
@@ -25153,8 +25378,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MAMA_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25214,8 +25440,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MAVP(
             startIdx, endIdx,
             g_inBuf0,
@@ -25238,8 +25465,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MAVP_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25301,8 +25529,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MAX(
             startIdx, endIdx,
             g_inBuf0,
@@ -25322,8 +25551,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MAX_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25375,8 +25605,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MAXINDEX(
             startIdx, endIdx,
             g_inBuf0,
@@ -25396,8 +25627,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MAXINDEX_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25449,8 +25681,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MEDPRICE(
             startIdx, endIdx,
             g_inBuf0,
@@ -25470,8 +25703,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MEDPRICE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25527,8 +25761,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(4, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MFI(
             startIdx, endIdx,
             g_inBuf0,
@@ -25551,8 +25786,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MFI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25616,8 +25852,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MIDPOINT(
             startIdx, endIdx,
             g_inBuf0,
@@ -25637,8 +25874,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MIDPOINT_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25691,8 +25929,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MIDPRICE(
             startIdx, endIdx,
             g_inBuf0,
@@ -25713,8 +25952,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MIDPRICE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25770,8 +26010,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MIN(
             startIdx, endIdx,
             g_inBuf0,
@@ -25791,8 +26032,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MIN_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25844,8 +26086,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MININDEX(
             startIdx, endIdx,
             g_inBuf0,
@@ -25865,8 +26108,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MININDEX_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25918,8 +26162,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MINMAX(
             startIdx, endIdx,
             g_inBuf0,
@@ -25940,8 +26185,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MINMAX_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -25995,8 +26241,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MINMAXINDEX(
             startIdx, endIdx,
             g_inBuf0,
@@ -26017,8 +26264,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MINMAXINDEX_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -26075,8 +26323,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MINUS_DI(
             startIdx, endIdx,
             g_inBuf0,
@@ -26098,8 +26347,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MINUS_DI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -26161,8 +26411,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MINUS_DM(
             startIdx, endIdx,
             g_inBuf0,
@@ -26183,8 +26434,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MINUS_DM_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -26240,8 +26492,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MOM(
             startIdx, endIdx,
             g_inBuf0,
@@ -26261,8 +26514,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MOM_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -26314,8 +26568,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_MULT(
             startIdx, endIdx,
             g_inBuf0,
@@ -26335,8 +26590,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_MULT_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -26392,8 +26648,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_NATR(
             startIdx, endIdx,
             g_inBuf0,
@@ -26415,8 +26672,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_NATR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -26476,8 +26734,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_NVI(
             startIdx, endIdx,
             g_inBuf0,
@@ -26497,8 +26756,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_NVI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -26551,8 +26811,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_OBV(
             startIdx, endIdx,
             g_inBuf0,
@@ -26572,8 +26833,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_OBV_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -26629,8 +26891,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_PLUS_DI(
             startIdx, endIdx,
             g_inBuf0,
@@ -26652,8 +26915,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_PLUS_DI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -26715,8 +26979,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_PLUS_DM(
             startIdx, endIdx,
             g_inBuf0,
@@ -26737,8 +27002,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_PLUS_DM_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -26796,8 +27062,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_PPO(
             startIdx, endIdx,
             g_inBuf0,
@@ -26819,8 +27086,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_PPO_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -26878,8 +27146,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_PVI(
             startIdx, endIdx,
             g_inBuf0,
@@ -26899,8 +27168,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_PVI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -26955,8 +27225,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_PVO(
             startIdx, endIdx,
             g_inBuf0,
@@ -26978,8 +27249,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_PVO_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27037,8 +27309,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ROC(
             startIdx, endIdx,
             g_inBuf0,
@@ -27058,8 +27331,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ROC_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27111,8 +27385,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ROCP(
             startIdx, endIdx,
             g_inBuf0,
@@ -27132,8 +27407,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ROCP_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27185,8 +27461,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ROCR(
             startIdx, endIdx,
             g_inBuf0,
@@ -27206,8 +27483,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ROCR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27259,8 +27537,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ROCR100(
             startIdx, endIdx,
             g_inBuf0,
@@ -27280,8 +27559,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ROCR100_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27334,8 +27614,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_RSI(
             startIdx, endIdx,
             g_inBuf0,
@@ -27355,8 +27636,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_RSI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27410,8 +27692,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_SAR(
             startIdx, endIdx,
             g_inBuf0,
@@ -27433,8 +27716,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_SAR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27501,8 +27785,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_SAREXT(
             startIdx, endIdx,
             g_inBuf0,
@@ -27530,8 +27815,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_SAREXT_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27607,8 +27893,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_SIN(
             startIdx, endIdx,
             g_inBuf0,
@@ -27627,8 +27914,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_SIN_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27676,8 +27964,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_SINH(
             startIdx, endIdx,
             g_inBuf0,
@@ -27696,8 +27985,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_SINH_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27746,8 +28036,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_SMA(
             startIdx, endIdx,
             g_inBuf0,
@@ -27767,8 +28058,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_SMA_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27819,8 +28111,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_SQRT(
             startIdx, endIdx,
             g_inBuf0,
@@ -27839,8 +28132,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_SQRT_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27890,8 +28184,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_STDDEV(
             startIdx, endIdx,
             g_inBuf0,
@@ -27912,8 +28207,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_STDDEV_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -27974,8 +28270,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_STOCH(
             startIdx, endIdx,
             g_inBuf0,
@@ -28002,8 +28299,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_STOCH_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -28081,8 +28379,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_STOCHF(
             startIdx, endIdx,
             g_inBuf0,
@@ -28107,8 +28406,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_STOCHF_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -28179,8 +28479,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_STOCHRSI(
             startIdx, endIdx,
             g_inBuf0,
@@ -28204,8 +28505,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_STOCHRSI_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -28268,8 +28570,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_SUB(
             startIdx, endIdx,
             g_inBuf0,
@@ -28289,8 +28592,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_SUB_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -28343,8 +28647,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_SUM(
             startIdx, endIdx,
             g_inBuf0,
@@ -28364,8 +28669,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_SUM_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -28419,8 +28725,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_T3(
             startIdx, endIdx,
             g_inBuf0,
@@ -28441,8 +28748,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_T3_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -28496,8 +28804,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_TAN(
             startIdx, endIdx,
             g_inBuf0,
@@ -28516,8 +28825,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_TAN_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -28565,8 +28875,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_TANH(
             startIdx, endIdx,
             g_inBuf0,
@@ -28585,8 +28896,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_TANH_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -28635,8 +28947,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_TEMA(
             startIdx, endIdx,
             g_inBuf0,
@@ -28656,8 +28969,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_TEMA_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -28710,8 +29024,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_TRANGE(
             startIdx, endIdx,
             g_inBuf0,
@@ -28732,8 +29047,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_TRANGE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -28790,8 +29106,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_TRIMA(
             startIdx, endIdx,
             g_inBuf0,
@@ -28811,8 +29128,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_TRIMA_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -28864,8 +29182,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_TRIX(
             startIdx, endIdx,
             g_inBuf0,
@@ -28885,8 +29204,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_TRIX_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -28938,8 +29258,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_TSF(
             startIdx, endIdx,
             g_inBuf0,
@@ -28959,8 +29280,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_TSF_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -29013,8 +29335,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_TYPPRICE(
             startIdx, endIdx,
             g_inBuf0,
@@ -29035,8 +29358,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_TYPPRICE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -29097,8 +29421,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_ULTOSC(
             startIdx, endIdx,
             g_inBuf0,
@@ -29122,8 +29447,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_ULTOSC_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -29190,8 +29516,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_VAR(
             startIdx, endIdx,
             g_inBuf0,
@@ -29212,8 +29539,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_VAR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -29269,8 +29597,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(2, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_VWMA(
             startIdx, endIdx,
             g_inBuf0,
@@ -29291,8 +29620,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_VWMA_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -29349,8 +29679,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_WCLPRICE(
             startIdx, endIdx,
             g_inBuf0,
@@ -29371,8 +29702,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_WCLPRICE_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -29431,8 +29763,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(3, 1);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_WILLR(
             startIdx, endIdx,
             g_inBuf0,
@@ -29454,8 +29787,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_WILLR_Unguarded(
             startIdx, endIdx,
             g_inBuf0,
@@ -29515,8 +29849,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         if( use_preloaded ) {
             preload_to_working(1, 0);
         }
-        long _t0 = get_nanotime();
-        for( int _bi = 0; _bi < bench_iters; _bi++ ) {
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
         rc = TA_WMA(
             startIdx, endIdx,
             g_inBuf0,
@@ -29536,8 +29871,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
 #endif /* TA_REF_SERVE */
 #ifndef TA_REF_SERVE
-        long _t0_ung = get_nanotime();
-        for( int _biu = 0; _biu < bench_iters; _biu++ ) {
+        long _t0_ung = 0;
+        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {
+        if( _biu == 1 ) _t0_ung = get_nanotime();
         rc = TA_WMA_Unguarded(
             startIdx, endIdx,
             g_inBuf0,

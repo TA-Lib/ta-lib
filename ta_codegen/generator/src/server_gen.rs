@@ -118,7 +118,7 @@ pub(crate) fn expand_input_names(inputs: &[Input]) -> Vec<String> {
 
 /// Map a price-component input name to its reference array name prefix.
 /// Returns None for non-price input names.
-/// Used by Java and .NET servers (e.g., "inHigh" -> "refHigh").
+/// Used by Java and C# servers (e.g., "inHigh" -> "refHigh").
 fn price_input_to_ref(name: &str) -> Option<&'static str> {
     match name {
         "inOpen" => Some("refOpen"),
@@ -1752,9 +1752,24 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
         ));
         s.push_str("        }\n");
 
-        // Single timing block around ALL iterations — amortizes timer overhead
-        s.push_str("        long _t0 = get_nanotime();\n");
-        s.push_str("        for( int _bi = 0; _bi < bench_iters; _bi++ ) {\n");
+        // Single timing block around ALL iterations — amortizes timer overhead.
+        // Iteration 0 is ALWAYS a discarded warm-up, on every path including the
+        // correctness ones. Two reasons, and the second is the important one:
+        //
+        //  1. Benchmarking: the cold call page-faults the output arrays, pulls
+        //     the input into cache, and on the managed servers forces the JIT.
+        //     It measures 1.5-10x the steady state, which at --iters=1 IS the
+        //     whole number.
+        //  2. Correctness: because the reported/hashed output now comes from a
+        //     SECOND call while the golden is the in-process C library called
+        //     ONCE, every gate becomes an idempotency check for free. A function
+        //     that mutates its input, or uses its output buffer as scratch while
+        //     assuming it starts clean, diverges from the golden and fails.
+        //
+        // The branch is per-iteration, not per-bar — free against a whole indicator.
+        s.push_str("        long _t0 = 0;\n");
+        s.push_str("        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {\n");
+        s.push_str("        if( _bi == 1 ) _t0 = get_nanotime();\n");
 
         // Call the function
         s.push_str(&format!("        rc = TA_{}(\n", func.name));
@@ -1828,8 +1843,9 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
 
         // Unguarded timing pass — skipped when built as ta_ref_serve (no _Unguarded in libta-lib.a)
         s.push_str("#ifndef TA_REF_SERVE\n");
-        s.push_str("        long _t0_ung = get_nanotime();\n");
-        s.push_str("        for( int _biu = 0; _biu < bench_iters; _biu++ ) {\n");
+        s.push_str("        long _t0_ung = 0;\n");
+        s.push_str("        for( int _biu = 0; _biu <= bench_iters; _biu++ ) {\n");
+        s.push_str("        if( _biu == 1 ) _t0_ung = get_nanotime();\n");
         s.push_str(&format!("        rc = TA_{}_Unguarded(\n", func.name));
         s.push_str("            startIdx, endIdx,\n");
         for (j, _name) in input_names.iter().enumerate() {
@@ -2584,9 +2600,12 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("        MInteger outNBElement = new MInteger();\n");
         s.push_str("        RetCode rc = RetCode.Success;\n");
 
-        // Benchmark iteration loop with timing
-        s.push_str("        long startNs = System.nanoTime();\n");
-        s.push_str("        for (int _bi = 0; _bi < bench_iters; _bi++) {\n");
+        // Benchmark iteration loop with timing. Iteration 0 is always a
+        // discarded warm-up — see the C emitter: it removes the cold-call bias
+        // AND makes every correctness gate an idempotency check.
+        s.push_str("        long startNs = 0;\n");
+        s.push_str("        for (int _bi = 0; _bi <= bench_iters; _bi++) {\n");
+        s.push_str("        if (_bi == 1) startNs = System.nanoTime();\n");
 
         // Call
         s.push_str(&format!("        rc = core.{func_lower}Internal(\n"));
@@ -2631,8 +2650,9 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
         // Unguarded timing loop
         let unguarded_name = format!("{func_lower}UnguardedInternal");
-        s.push_str("        long startNsUng = System.nanoTime();\n");
-        s.push_str("        for (int _biu = 0; _biu < bench_iters; _biu++) {\n");
+        s.push_str("        long startNsUng = 0;\n");
+        s.push_str("        for (int _biu = 0; _biu <= bench_iters; _biu++) {\n");
+        s.push_str("        if (_biu == 1) startNsUng = System.nanoTime();\n");
         s.push_str(&format!("        rc = core.{unguarded_name}(\n"));
         s.push_str("            startIdx, endIdx,\n");
         for name in &input_names {
@@ -2758,26 +2778,35 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s
 }
 
-/// Generate a .NET (C#) JSON-RPC server source file.
+/// Generate the managed C# JSON-RPC server source file.
 ///
-/// Emits a complete C# program that uses P/Invoke to call the generated C shared
-/// library (`ta_codegen_funcs`), reads JSON-RPC requests from stdin, dispatches to
-/// the imported TA functions, and writes JSON responses to stdout.
+/// Emits a complete C# program whose csproj (see [`csharp_server_csproj`])
+/// compiles the **shipped library sources directly** — the same `.cs` files
+/// `output/csharp/library/` ships, not a spliced copy — so what the
+/// cross-language harness measures is byte-for-byte the shipped code. That is
+/// the same-text identity proof `inline_java_core_methods` gives Java, without
+/// the splice: C#'s `partial class Core` makes the server's `Core` and the
+/// library's the same type.
+///
+/// Coverage rule (no P/Invoke fallback, ever): every function dispatches to
+/// the managed core or errors. A hybrid server would let 161 functions
+/// vacuously "pass" by really being the C library — the exact failure mode
+/// this project bans.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 #[allow(clippy::implicit_hasher)]
-pub fn generate_dotnet_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
+pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 
-    s.push_str("// Auto-generated JSON-RPC server for ta_codegen .NET output.\n");
-    s.push_str("// Uses P/Invoke to call the generated C shared library.\n");
-    s.push_str("// Requires: dotnet 8.0+, libta_codegen_funcs.dylib/.so in bin/\n");
+    s.push_str("// Auto-generated JSON-RPC server for ta_codegen C# output (managed).\n");
+    s.push_str("// The csproj compiles the shipped library sources from ../library — the\n");
+    s.push_str("// server's Core IS the shipped partial class, not a copy.\n");
     s.push_str("using System;\n");
-    s.push_str("using System.IO;\n");
     s.push_str("using System.Text.Json;\n");
-    s.push_str("using System.Runtime.InteropServices;\n");
-    s.push_str("using System.Diagnostics;\n\n");
+    s.push_str("using System.Diagnostics;\n");
+    s.push_str("using TALib;\n\n");
 
     s.push_str("public class TaCodegenServe {\n");
+    s.push_str("    static Core core = new Core();\n");
     s.push_str("    const int MAX_ARRAY_SIZE = 200000;\n");
     s.push_str("    static double[] refOpen = new double[MAX_ARRAY_SIZE];\n");
     s.push_str("    static double[] refHigh = new double[MAX_ARRAY_SIZE];\n");
@@ -2787,335 +2816,29 @@ pub fn generate_dotnet_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("    static double[] refOI = new double[MAX_ARRAY_SIZE];\n");
     s.push_str("    static int refN = 0;\n\n");
 
-    // Cross-platform high-resolution nanosecond timer via Stopwatch
-    // Split into whole-seconds + fractional to avoid long overflow
+    // Cross-platform high-resolution nanosecond timer via Stopwatch.
+    // Split into whole-seconds + fractional to avoid long overflow.
     s.push_str("    static long GetNanoTime() {\n");
     s.push_str("        long ts = Stopwatch.GetTimestamp();\n");
     s.push_str("        long freq = Stopwatch.Frequency;\n");
     s.push_str("        return (ts / freq) * 1000000000L + (ts % freq) * 1000000000L / freq;\n");
     s.push_str("    }\n\n");
 
-    // P/Invoke for TA_Initialize
-    s.push_str("    [DllImport(\"ta_codegen_funcs\", EntryPoint = \"TA_Initialize\")]\n");
-    s.push_str("    static extern int TA_Initialize();\n\n");
-
-    // P/Invoke for unstable period setter
-    s.push_str("    [DllImport(\"ta_codegen_funcs\", EntryPoint = \"TA_SetUnstablePeriod\")]\n");
-    s.push_str("    static extern void TA_SetUnstablePeriod(int id, int period);\n\n");
-
-    // P/Invoke for compatibility setter (exported by ta_utility.c in the shared lib)
-    s.push_str("    [DllImport(\"ta_codegen_funcs\", EntryPoint = \"TA_SetCompatibility\")]\n");
-    s.push_str("    static extern int TA_SetCompatibility(int value);\n\n");
-
-    // P/Invoke declarations
-    for func in funcs {
-        let func_upper = &func.name;
-
-        // Expand Price inputs into individual component arrays.
-        let input_names = expand_input_names(&func.inputs);
-
-        s.push_str(&format!(
-            "    [DllImport(\"ta_codegen_funcs\", EntryPoint = \"TA_{func_upper}\")]\n"
-        ));
-        s.push_str(&format!("    static extern int TA_{func_upper}(\n"));
-        s.push_str("        int startIdx, int endIdx,\n");
-
-        for name in &input_names {
-            s.push_str(&format!("        double[] {name},\n"));
-        }
-
-        for opt in &func.optional_inputs {
-            let cs_type = if opt.param_type == ParamType::Real {
-                "double"
-            } else {
-                "int"
-            };
-            s.push_str(&format!("        {cs_type} {},\n", opt.name));
-        }
-
-        s.push_str("        out int outBegIdx, out int outNBElement");
-        for (k, out) in func.outputs.iter().enumerate() {
-            let arr_name = format!("outArr{k}");
-            let cs_arr_type = if out.param_type == ParamType::Integer { "int[]" } else { "double[]" };
-            s.push_str(&format!(",\n        {cs_arr_type} {arr_name}"));
-        }
-        s.push_str(");\n\n");
-
-        // Unguarded P/Invoke declaration
-        s.push_str(&format!(
-            "    [DllImport(\"ta_codegen_funcs\", EntryPoint = \"TA_{func_upper}_Unguarded\")]\n"
-        ));
-        s.push_str(&format!("    static extern int TA_{func_upper}_Unguarded(\n"));
-        s.push_str("        int startIdx, int endIdx,\n");
-        for name in &input_names {
-            s.push_str(&format!("        double[] {name},\n"));
-        }
-        for opt in &func.optional_inputs {
-            let cs_type = if opt.param_type == ParamType::Real {
-                "double"
-            } else {
-                "int"
-            };
-            s.push_str(&format!("        {cs_type} {},\n", opt.name));
-        }
-        s.push_str("        out int outBegIdx, out int outNBElement");
-        for (k, out) in func.outputs.iter().enumerate() {
-            let arr_name = format!("outArr{k}");
-            let cs_arr_type = if out.param_type == ParamType::Integer { "int[]" } else { "double[]" };
-            s.push_str(&format!(",\n        {cs_arr_type} {arr_name}"));
-        }
-        s.push_str(");\n\n");
-    }
-
-    // Dispatch method
-    s.push_str("    static string HandleRequest(string json) {\n");
-    s.push_str("        try {\n");
-    s.push_str("            using var doc = JsonDocument.Parse(json);\n");
-    s.push_str("            var root = doc.RootElement;\n");
-    s.push_str("            string method = root.GetProperty(\"method\").GetString()!;\n");
-    s.push_str("            var p = root.GetProperty(\"params\");\n\n");
-
-    // Handle load_data before extracting startIdx/endIdx (which load_data doesn't have)
-    s.push_str("            if (method == \"load_data\") {\n");
-    s.push_str("                double[] tmpOpen = GetDoubleArray(p, \"open\");\n");
-    s.push_str("                refN = tmpOpen.Length;\n");
-    s.push_str("                Array.Copy(tmpOpen, refOpen, refN);\n");
-    s.push_str("                Array.Copy(GetDoubleArray(p, \"high\"), refHigh, refN);\n");
-    s.push_str("                Array.Copy(GetDoubleArray(p, \"low\"), refLow, refN);\n");
-    s.push_str("                Array.Copy(GetDoubleArray(p, \"close\"), refClose, refN);\n");
-    s.push_str("                Array.Copy(GetDoubleArray(p, \"volume\"), refVolume, refN);\n");
-    s.push_str("                Array.Copy(GetDoubleArray(p, \"openInterest\"), refOI, refN);\n");
-    s.push_str("                return $\"{{\\\"status\\\":\\\"ok\\\",\\\"n\\\":{refN}}}\";\n");
-    s.push_str("            }\n\n");
-
-    // Tolerant extraction: state methods (set_unstable_period,
-    // set_compatibility, list_functions) have params without startIdx/endIdx
-    // and are dispatched further down.
-    s.push_str("            int startIdx = p.TryGetProperty(\"startIdx\", out var _startIdxEl) ? _startIdxEl.GetInt32() : 0;\n");
-    s.push_str("            int endIdx = p.TryGetProperty(\"endIdx\", out var _endIdxEl) ? _endIdxEl.GetInt32() : 0;\n");
-    s.push_str("            int n = endIdx - startIdx + 1;\n\n");
-
-    for (i, func) in funcs.iter().enumerate() {
-        let method_name = format!("TA_{}", func.name);
-        let cond = if i == 0 { "if" } else { "else if" };
-
-        // Expand Price inputs into individual component arrays.
-        let input_names = expand_input_names(&func.inputs);
-
-        s.push_str(&format!(
-            "            {cond} (method == \"{method_name}\") {{\n"
-        ));
-
-        // Check use_preloaded and iters
-        s.push_str("                int use_preloaded = p.TryGetProperty(\"use_preloaded\", out var _upre) ? _upre.GetInt32() : 0;\n");
-        s.push_str("                int bench_iters = p.TryGetProperty(\"iters\", out var _iters) ? _iters.GetInt32() : 1;\n");
-        s.push_str("                if (bench_iters < 1) bench_iters = 1;\n");
-
-        // Declare input arrays with default initialization (satisfies C# definite assignment)
-        for name in &input_names {
-            s.push_str(&format!(
-                "                double[] {name} = Array.Empty<double>();\n"
-            ));
-        }
-
-        // Populate from preloaded or JSON
-        s.push_str("                if (use_preloaded != 0 && refN > 0) {\n");
-        for (j, name) in input_names.iter().enumerate() {
-            let ref_src = if let Some(r) = price_input_to_ref(name) {
-                r.to_string()
-            } else if j == 0 {
-                "refClose".to_string()
-            } else {
-                "refHigh".to_string()
-            };
-            s.push_str(&format!(
-                "                    {name} = new double[refN]; Array.Copy({ref_src}, {name}, refN);\n"
-            ));
-        }
-        s.push_str("                } else {\n");
-        for name in &input_names {
-            s.push_str(&format!(
-                "                    {name} = GetDoubleArray(p, \"{name}\");\n"
-            ));
-        }
-        s.push_str("                }\n");
-
-        // Extract optional params
-        for opt in &func.optional_inputs {
-            if opt.param_type == ParamType::Real {
-                let default = opt.default.unwrap_or(0.0);
-                s.push_str(&format!(
-                    "                double {} = p.TryGetProperty(\"{}\", out var _{0}Val) ? _{0}Val.GetDouble() : {};\n",
-                    opt.name, opt.name, default
-                ));
-            } else {
-                #[allow(clippy::cast_possible_truncation)]
-                let default = opt.default.unwrap_or(0.0) as i64;
-                s.push_str(&format!(
-                    "                int {} = p.TryGetProperty(\"{}\", out var _{0}Val) ? _{0}Val.GetInt32() : {};\n",
-                    opt.name, opt.name, default
-                ));
-            }
-        }
-
-        // Apply unstable period if provided
-        if let Some(id) = func_unst_id(&func.name, enums) {
-            s.push_str("                int unstablePeriod = p.TryGetProperty(\"unstablePeriod\", out var _upVal) ? _upVal.GetInt32() : 0;\n");
-            s.push_str(&format!(
-                "                TA_SetUnstablePeriod({id}, unstablePeriod);\n"
-            ));
-        }
-
-        // Allocate output arrays — typed correctly (double[] or int[]) per output
-        let outputs = &func.outputs;
-        for (k, out) in outputs.iter().enumerate() {
-            let arr_name = format!("outArr{k}");
-            if out.param_type == ParamType::Integer {
-                s.push_str(&format!(
-                    "                int[] {arr_name} = new int[n];\n"
-                ));
-            } else {
-                s.push_str(&format!(
-                    "                double[] {arr_name} = new double[n];\n"
-                ));
-            }
-        }
-
-        // Benchmark iteration loop with timing
-        s.push_str("                int rc = 0;\n");
-        s.push_str("                int outBegIdx = 0, outNBElement = 0;\n");
-        s.push_str("                long _t0 = GetNanoTime();\n");
-        s.push_str("                for (int _bi = 0; _bi < bench_iters; _bi++) {\n");
-
-        // Call
-        s.push_str(&format!(
-            "                rc = TA_{}(startIdx, endIdx, ",
-            func.name
-        ));
-        for name in &input_names {
-            s.push_str(&format!("{name}, "));
-        }
-        for opt in &func.optional_inputs {
-            s.push_str(&format!("{}, ", opt.name));
-        }
-        s.push_str("out outBegIdx, out outNBElement");
-        for k in 0..outputs.len() {
-            s.push_str(&format!(", outArr{k}"));
-        }
-        s.push_str(");\n");
-        s.push_str("                }\n"); // end bench_iters loop
-        s.push_str("                long elapsedNs = (GetNanoTime() - _t0) / bench_iters;\n");
-
-        // want_hash mode (server_verify / issue #115): digest of the GUARDED
-        // output, returned before the unguarded rerun (rc == 0 is TA_SUCCESS).
-        s.push_str("                if ((p.TryGetProperty(\"want_hash\", out var _wh) ? _wh.GetInt32() : 0) != 0 &&\n");
-        s.push_str("                    (p.TryGetProperty(\"full_output\", out var _fo) ? _fo.GetInt32() : 0) == 0) {\n");
-        s.push_str("                    ulong _h = SvHashInit();\n");
-        s.push_str("                    if (rc == 0 && outNBElement > 0) {\n");
-        for (k, out) in outputs.iter().enumerate() {
-            if out.param_type == ParamType::Integer {
-                s.push_str(&format!(
-                    "                        _h = SvHashI32(_h, outArr{k}, outNBElement);\n"
-                ));
-            } else {
-                s.push_str(&format!(
-                    "                        _h = SvHashF64(_h, outArr{k}, outNBElement);\n"
-                ));
-            }
-        }
-        s.push_str("                    }\n");
-        s.push_str("                    _h = SvHashFin(_h);\n");
-        s.push_str("                    return $\"{{\\\"retCode\\\":{rc},\\\"outBegIdx\\\":{outBegIdx},\\\"outNBElement\\\":{outNBElement},\\\"out_hash\\\":\\\"{_h:x16}\\\"}}\";\n");
-        s.push_str("                }\n");
-
-        // Unguarded timing loop
-        s.push_str("                long _t0u = GetNanoTime();\n");
-        s.push_str("                for (int _biu = 0; _biu < bench_iters; _biu++) {\n");
-        s.push_str(&format!(
-            "                rc = TA_{}_Unguarded(startIdx, endIdx, ",
-            func.name
-        ));
-        for name in &input_names {
-            s.push_str(&format!("{name}, "));
-        }
-        for opt in &func.optional_inputs {
-            s.push_str(&format!("{}, ", opt.name));
-        }
-        s.push_str("out outBegIdx, out outNBElement");
-        for k in 0..outputs.len() {
-            s.push_str(&format!(", outArr{k}"));
-        }
-        s.push_str(");\n");
-        s.push_str("                }\n"); // end unguarded bench loop
-        s.push_str("                long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;\n");
-
-        // Build response — correct key names and serialisers per output type
-        s.push_str("                var sb = new System.Text.StringBuilder();\n");
-        s.push_str("                sb.Append($\"{{\\\"retCode\\\":{rc},\\\"outBegIdx\\\":{outBegIdx},\\\"outNBElement\\\":{outNBElement}\");\n");
-        for (k, out) in outputs.iter().enumerate() {
-            let arr_name = format!("outArr{k}");
-            let key = output_json_key(outputs, k);
-            if out.param_type == ParamType::Integer {
-                s.push_str(&format!(
-                    "                sb.Append($\",\\\"{key}\\\":\"); sb.Append(FormatIntArray({arr_name}, outNBElement));\n"
-                ));
-            } else {
-                s.push_str(&format!(
-                    "                sb.Append($\",\\\"{key}\\\":\"); sb.Append(FormatArray({arr_name}, outNBElement));\n"
-                ));
-            }
-        }
-        s.push_str("                sb.Append($\",\\\"timing_ns\\\":{elapsedNs}\");\n");
-        s.push_str("                sb.Append($\",\\\"timing_ns_unguarded\\\":{elapsedNsUng}\");\n");
-        s.push_str("                sb.Append(\"}\");\n");
-        s.push_str("                return sb.ToString();\n");
-        s.push_str("            }\n");
-    }
-
-    // list_functions method — returns {"functions":["TA_SMA","TA_RSI",...]}
-    s.push_str("            else if (method == \"list_functions\") {\n");
-    s.push_str("                var sb = new System.Text.StringBuilder(\"{\\\"functions\\\":[\");\n");
-    for (i, func) in funcs.iter().enumerate() {
-        if i > 0 {
-            s.push_str("                sb.Append(\",\");\n");
-        }
-        s.push_str(&format!(
-            "                sb.Append(\"\\\"TA_{}\\\"\");\n",
-            func.name
-        ));
-    }
-    s.push_str("                sb.Append(\"]}\");\n");
-    s.push_str("                return sb.ToString();\n");
-    s.push_str("            }\n");
-
-    // set_unstable_period method — {"method":"set_unstable_period","params":{"id":21,"period":10}}
-    s.push_str("            else if (method == \"set_unstable_period\") {\n");
-    s.push_str("                int id = p.GetProperty(\"id\").GetInt32();\n");
-    s.push_str("                int period = p.GetProperty(\"period\").GetInt32();\n");
-    s.push_str("                TA_SetUnstablePeriod(id, period);\n");
-    s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
-    s.push_str("            }\n");
-
-    // set_compatibility method
-    s.push_str("            else if (method == \"set_compatibility\") {\n");
-    s.push_str("                int mode = p.GetProperty(\"mode\").GetInt32();\n");
-    s.push_str("                TA_SetCompatibility(mode);\n");
-    s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
-    s.push_str("            }\n");
-
-    s.push_str("            else {\n");
-    s.push_str("                return $\"{{\\\"error\\\":\\\"Unknown method: {method}\\\"}}\";\n");
-    s.push_str("            }\n");
-    s.push_str("        } catch (Exception ex) {\n");
-    s.push_str("            return $\"{{\\\"error\\\":\\\"{ex.Message.Replace(\"\\\"\", \"'\")}\\\"}}\";\n");
-    s.push_str("        }\n");
+    // Tolerant JSON accessors (state methods lack most fields).
+    s.push_str("    static int GetInt(JsonElement p, string name, int def) =>\n");
+    s.push_str("        p.TryGetProperty(name, out var v) ? v.GetInt32() : def;\n\n");
+    s.push_str("    static double GetDouble(JsonElement p, string name, double def) =>\n");
+    s.push_str("        p.TryGetProperty(name, out var v) ? v.GetDouble() : def;\n\n");
+    s.push_str("    static void LoadRef(JsonElement p, string name, double[] dst) {\n");
+    s.push_str("        double[] tmp = GetDoubleArray(p, name);\n");
+    s.push_str("        Array.Copy(tmp, dst, Math.Min(tmp.Length, MAX_ARRAY_SIZE));\n");
     s.push_str("    }\n\n");
 
     // Helper: extract double array from JSON. Lossless hex-bits transport
     // (issue #115): a string of concatenated 16-hex groups, each one double's
     // IEEE-754 bit pattern. Decoded exactly; every other caller sends an array.
     s.push_str("    static double[] GetDoubleArray(JsonElement p, string name) {\n");
-    s.push_str("        var arr = p.GetProperty(name);\n");
+    s.push_str("        if (!p.TryGetProperty(name, out var arr)) return Array.Empty<double>();\n");
     s.push_str("        if (arr.ValueKind == JsonValueKind.String) {\n");
     s.push_str("            string hex = arr.GetString()!;\n");
     s.push_str("            int cnt = hex.Length / 16;\n");
@@ -3133,8 +2856,9 @@ pub fn generate_dotnet_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     // FNV-1a output hasher for want_hash mode (server_verify / issue #115),
     // byte-for-byte identical to fuzz_data.h: FNV-1a over each value's
     // LITTLE-ENDIAN raw bytes (DoubleToInt64Bits preserves -0.0 / NaN payloads)
-    // + fmix64 finalizer. .NET P/Invokes the C library, so this is expected
-    // bit-identical to the in-process C golden (a build-flag drift guard).
+    // + fmix64 finalizer. The managed library computes with the same IEEE ops
+    // and correctly-rounded FusedMultiplyAdd, so this is compared bitwise
+    // against the in-process C golden — zero tolerance.
     s.push_str("    static ulong SvHashInit() => 1469598103934665603UL;\n");
     s.push_str("    static ulong SvHashF64(ulong h, double[] a, int n) {\n");
     s.push_str("        for (int i = 0; i < n; i++) {\n");
@@ -3156,15 +2880,15 @@ pub fn generate_dotnet_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("        h ^= h >> 33; return h;\n");
     s.push_str("    }\n\n");
 
-    // Helper: format a double array as a JSON array string
+    // Array formatters. Default double.ToString() is shortest-round-trip on
+    // modern .NET, and the csproj pins InvariantGlobalization so the decimal
+    // separator cannot vary by locale.
     s.push_str("    static string FormatArray(double[] arr, int count) {\n");
     s.push_str("        var parts = new string[count];\n");
     s.push_str("        for (int i = 0; i < count; i++)\n");
-    s.push_str("            parts[i] = arr[i].ToString(\"G15\");\n");
+    s.push_str("            parts[i] = arr[i].ToString();\n");
     s.push_str("        return \"[\" + string.Join(\",\", parts) + \"]\";\n");
     s.push_str("    }\n\n");
-
-    // Helper: format an int array as a JSON array string
     s.push_str("    static string FormatIntArray(int[] arr, int count) {\n");
     s.push_str("        var parts = new string[count];\n");
     s.push_str("        for (int i = 0; i < count; i++)\n");
@@ -3172,9 +2896,343 @@ pub fn generate_dotnet_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("        return \"[\" + string.Join(\",\", parts) + \"]\";\n");
     s.push_str("    }\n\n");
 
+    // Dispatch method. NO blanket try/catch, deliberately: a .NET exception
+    // out of an indicator core (index out of range, overflow, ...) must kill
+    // the process so the driver's pipe read fails hard — the same crash
+    // contract as Java (uncaught exception exits the JVM) and Rust (panic
+    // aborts). A catch here would convert a crash into an {"error":...}
+    // response, which every driver path treats as "unsupported — skip", and
+    // a broken server would read as green (adversarial-review finding).
+    s.push_str("    static string HandleRequest(string json) {\n");
+    s.push_str("        using var doc = JsonDocument.Parse(json);\n");
+    s.push_str("        var root = doc.RootElement;\n");
+    s.push_str("        string method = root.GetProperty(\"method\").GetString()!;\n");
+    s.push_str("        var p = root.GetProperty(\"params\");\n\n");
+
+    // Handle load_data before extracting startIdx/endIdx (which load_data doesn't have)
+    // Each component copies at its own capped length (Java-server parity): a
+    // shorter secondary array must not turn the whole request into a crash.
+    s.push_str("            if (method == \"load_data\") {\n");
+    s.push_str("                double[] tmpOpen = GetDoubleArray(p, \"open\");\n");
+    s.push_str("                refN = Math.Min(tmpOpen.Length, MAX_ARRAY_SIZE);\n");
+    s.push_str("                Array.Copy(tmpOpen, refOpen, refN);\n");
+    s.push_str("                LoadRef(p, \"high\", refHigh);\n");
+    s.push_str("                LoadRef(p, \"low\", refLow);\n");
+    s.push_str("                LoadRef(p, \"close\", refClose);\n");
+    s.push_str("                LoadRef(p, \"volume\", refVolume);\n");
+    s.push_str("                LoadRef(p, \"openInterest\", refOI);\n");
+    s.push_str("                return $\"{{\\\"status\\\":\\\"ok\\\",\\\"n\\\":{refN}}}\";\n");
+    s.push_str("            }\n\n");
+
+    s.push_str("            int startIdx = GetInt(p, \"startIdx\", 0);\n");
+    s.push_str("            int endIdx = GetInt(p, \"endIdx\", 0);\n\n");
+
+    // Thin dispatch: each indicator delegates to its own static handler.
+    for (i, func) in funcs.iter().enumerate() {
+        let cond = if i == 0 { "if" } else { "else if" };
+        s.push_str(&format!(
+            "            {cond} (method == \"TA_{name}\") return Handle_{name}(p, startIdx, endIdx);\n",
+            name = func.name
+        ));
+    }
+
+    // list_functions method — returns {"functions":["TA_SMA","TA_RSI",...]}
+    s.push_str("            else if (method == \"list_functions\") {\n");
+    s.push_str("                var sb = new System.Text.StringBuilder(\"{\\\"functions\\\":[\");\n");
+    for (i, func) in funcs.iter().enumerate() {
+        if i > 0 {
+            s.push_str("                sb.Append(\",\");\n");
+        }
+        s.push_str(&format!("                sb.Append(\"\\\"TA_{}\\\"\");\n", func.name));
+    }
+    s.push_str("                sb.Append(\"]}\");\n");
+    s.push_str("                return sb.ToString();\n");
+    s.push_str("            }\n");
+
+    // set_unstable_period — FuncUnstId.All is the "set all" sentinel (matches
+    // C's TA_SetUnstablePeriod and the Java server).
+    s.push_str("            else if (method == \"set_unstable_period\") {\n");
+    s.push_str("                int id = GetInt(p, \"id\", -1);\n");
+    s.push_str("                int period = GetInt(p, \"period\", 0);\n");
+    s.push_str("                if (id == (int)FuncUnstId.All) {\n");
+    s.push_str("                    for (int i = 0; i < core.unstablePeriod.Length; i++) core.unstablePeriod[i] = period;\n");
+    s.push_str("                    return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
+    s.push_str("                }\n");
+    s.push_str("                if (id >= 0 && id < core.unstablePeriod.Length) {\n");
+    s.push_str("                    core.unstablePeriod[id] = period;\n");
+    s.push_str("                    return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
+    s.push_str("                }\n");
+    s.push_str("                return \"{\\\"error\\\":\\\"Invalid id\\\"}\";\n");
+    s.push_str("            }\n");
+
+    // set_compatibility — the C# library exposes no compatibility selector
+    // (the Metastock arms are constant-folded out of the generated code), so
+    // mode 0 is a no-op and any other mode is an explicit error. Mirrors the
+    // Rust and Java servers.
+    s.push_str("            else if (method == \"set_compatibility\") {\n");
+    s.push_str("                int mode = GetInt(p, \"mode\", 0);\n");
+    s.push_str("                if (mode == 0) {\n");
+    s.push_str("                    return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
+    s.push_str("                }\n");
+    s.push_str("                return \"{\\\"error\\\":\\\"csharp has no compatibility API (pinned to Default)\\\"}\";\n");
+    s.push_str("            }\n");
+
+    // eval_predicate — boolean near-zero builtin on each input value; the SAME
+    // C# form the generated indicators use (csharp_predicate_expr is the single
+    // source of both).
+    s.push_str("            else if (method == \"eval_predicate\") {\n");
+    s.push_str("                int which = GetInt(p, \"which\", 0);\n");
+    s.push_str("                double[] values = GetDoubleArray(p, \"values\");\n");
+    s.push_str("                double[] scale = GetDoubleArray(p, \"scale\");\n");
+    s.push_str("                var parts = new string[values.Length];\n");
+    s.push_str("                for (int i = 0; i < values.Length; i++) {\n");
+    s.push_str("                    double v = values[i];\n");
+    s.push_str("                    double sc = (i < scale.Length) ? scale[i] : 0.0;\n");
+    s.push_str("                    bool r;\n");
+    s.push_str(&format!(
+        "                    if (which == 1) r = {};\n",
+        crate::backends::csharp::csharp_predicate_expr(
+            SpecialBuiltin::IsZeroScaled,
+            &["v".to_string(), "sc".to_string()]
+        )
+    ));
+    s.push_str(&format!(
+        "                    else if (which == 2) r = {};\n",
+        crate::backends::csharp::csharp_predicate_expr(
+            SpecialBuiltin::IsZeroOrNeg,
+            &["v".to_string()]
+        )
+    ));
+    s.push_str(&format!(
+        "                    else r = {};\n",
+        crate::backends::csharp::csharp_predicate_expr(
+            SpecialBuiltin::IsZero,
+            &["v".to_string()]
+        )
+    ));
+    s.push_str("                    parts[i] = r ? \"1\" : \"0\";\n");
+    s.push_str("                }\n");
+    s.push_str("                return \"{\\\"outInteger\\\":[\" + string.Join(\",\", parts) + \"]}\";\n");
+    s.push_str("            }\n");
+
+    // abstract_get_lookback — the lookback-tier RPC the --xlang-hash gate
+    // sweeps every parameter vector through (out-of-range vectors must come
+    // back as -1, exactly what the guarded *Lookback methods return).
+    s.push_str("            else if (method == \"abstract_get_lookback\") {\n");
+    s.push_str("                string fn = p.GetProperty(\"funcName\").GetString()!;\n");
+    s.push_str("                return $\"{{\\\"lookback\\\":{ComputeLookback(fn, p)}}}\";\n");
+    s.push_str("            }\n");
+    // Unknown method: an error RESPONSE (not a crash) — this is the driver's
+    // capability-probe path (stream_verify, fuzz_in_hash, abstract RPCs).
+    s.push_str("            else {\n");
+    s.push_str("                return $\"{{\\\"error\\\":\\\"Unknown method: {method}\\\"}}\";\n");
+    s.push_str("            }\n");
+    s.push_str("    }\n\n");
+
+    // ComputeLookback: parse a function's opt params (same JSON keys and 0/0.0
+    // absent-field fallbacks as the per-function handlers) and call its guarded
+    // <Name>Lookback. Mirrors the Java server's computeLookback.
+    s.push_str("    static long ComputeLookback(string funcName, JsonElement p) {\n");
+    s.push_str("        switch (funcName) {\n");
+    for func in funcs {
+        let base = crate::backends::csharp::to_csharp_method_name(
+            &func.name,
+            func.camel_case.as_deref(),
+        );
+        s.push_str(&format!("        case \"{}\": {{\n", func.name));
+        for opt in &func.optional_inputs {
+            match &opt.param_type {
+                ParamType::Real => s.push_str(&format!(
+                    "            double {name} = GetDouble(p, \"{name}\", 0.0);\n",
+                    name = opt.name
+                )),
+                ParamType::Enum(enum_name) => s.push_str(&format!(
+                    "            {ty} {name} = ({ty})GetInt(p, \"{name}\", 0);\n",
+                    ty = enum_name,
+                    name = opt.name
+                )),
+                _ => s.push_str(&format!(
+                    "            int {name} = GetInt(p, \"{name}\", 0);\n",
+                    name = opt.name
+                )),
+            }
+        }
+        let args: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+        s.push_str(&format!(
+            "            return core.{base}Lookback({});\n",
+            args.join(", ")
+        ));
+        s.push_str("        }\n");
+    }
+    s.push_str("        default: return -1;\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
+
+    // Per-function handler methods.
+    for func in funcs {
+        let base = crate::backends::csharp::to_csharp_method_name(
+            &func.name,
+            func.camel_case.as_deref(),
+        );
+        let input_names = expand_input_names(&func.inputs);
+        let outputs = &func.outputs;
+
+        s.push_str(&format!(
+            "    static string Handle_{}(JsonElement p, int startIdx, int endIdx) {{\n",
+            func.name
+        ));
+        s.push_str("        int n = endIdx - startIdx + 1;\n");
+        s.push_str("        int use_preloaded = GetInt(p, \"use_preloaded\", 0);\n");
+        s.push_str("        int bench_iters = GetInt(p, \"iters\", 1);\n");
+        s.push_str("        if (bench_iters < 1) bench_iters = 1;\n");
+
+        // Inputs: preloaded reference data or from the request.
+        for name in &input_names {
+            s.push_str(&format!("        double[] {name};\n"));
+        }
+        s.push_str("        if (use_preloaded != 0 && refN > 0) {\n");
+        for (j, name) in input_names.iter().enumerate() {
+            let ref_src = if let Some(r) = price_input_to_ref(name) {
+                r.to_string()
+            } else if j == 0 {
+                "refClose".to_string()
+            } else {
+                "refHigh".to_string()
+            };
+            s.push_str(&format!(
+                "            {name} = new double[refN]; Array.Copy({ref_src}, {name}, refN);\n"
+            ));
+        }
+        s.push_str("        } else {\n");
+        for name in &input_names {
+            s.push_str(&format!("            {name} = GetDoubleArray(p, \"{name}\");\n"));
+        }
+        s.push_str("        }\n");
+
+        // Optional params (enum params read as int, cast to the enum type).
+        // An absent field defaults to 0/0.0, matching the C and Java servers
+        // exactly — the driver always sends every param, and a divergent
+        // fallback here could mask a driver bug behind a YAML default.
+        for opt in &func.optional_inputs {
+            match &opt.param_type {
+                ParamType::Real => {
+                    s.push_str(&format!(
+                        "        double {name} = GetDouble(p, \"{name}\", 0.0);\n",
+                        name = opt.name
+                    ));
+                }
+                ParamType::Enum(enum_name) => {
+                    s.push_str(&format!(
+                        "        {ty} {name} = ({ty})GetInt(p, \"{name}\", 0);\n",
+                        ty = enum_name,
+                        name = opt.name
+                    ));
+                }
+                _ => {
+                    s.push_str(&format!(
+                        "        int {name} = GetInt(p, \"{name}\", 0);\n",
+                        name = opt.name
+                    ));
+                }
+            }
+        }
+
+        // Apply unstable period if this function has one.
+        if let Some(id) = func_unst_id(&func.name, enums) {
+            s.push_str(&format!(
+                "        core.unstablePeriod[{id}] = GetInt(p, \"unstablePeriod\", 0);\n"
+            ));
+        }
+
+        // Output arrays, typed per output.
+        for (k, out) in outputs.iter().enumerate() {
+            if out.param_type == ParamType::Integer {
+                s.push_str(&format!("        int[] outArr{k} = new int[n];\n"));
+            } else {
+                s.push_str(&format!("        double[] outArr{k} = new double[n];\n"));
+            }
+        }
+        s.push_str("        int outBegIdx = 0, outNBElement = 0;\n");
+        s.push_str("        RetCode rc = RetCode.Success;\n");
+
+        // Guarded timing loop.
+        let mut call_args = String::from("startIdx, endIdx");
+        for name in &input_names {
+            call_args.push_str(&format!(", {name}"));
+        }
+        for opt in &func.optional_inputs {
+            call_args.push_str(&format!(", {}", opt.name));
+        }
+        call_args.push_str(", out outBegIdx, out outNBElement");
+        for k in 0..outputs.len() {
+            call_args.push_str(&format!(", outArr{k}"));
+        }
+        // Iteration 0 is always a discarded warm-up — see the C emitter. It
+        // matters most here (the cold call is 1.5-10x steady state) and it makes
+        // every correctness gate an idempotency check.
+        s.push_str("        long _t0 = 0;\n");
+        s.push_str("        for (int _bi = 0; _bi <= bench_iters; _bi++) {\n");
+        s.push_str("            if (_bi == 1) _t0 = GetNanoTime();\n");
+        s.push_str(&format!("            rc = core.{base}({call_args});\n"));
+        s.push_str("        }\n");
+        s.push_str("        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;\n");
+
+        // want_hash mode (server_verify / issue #115): digest of the GUARDED
+        // output, returned before the unguarded rerun.
+        s.push_str("        if (GetInt(p, \"want_hash\", 0) != 0 && GetInt(p, \"full_output\", 0) == 0) {\n");
+        s.push_str("            ulong _h = SvHashInit();\n");
+        s.push_str("            if (rc == RetCode.Success && outNBElement > 0) {\n");
+        for (k, out) in outputs.iter().enumerate() {
+            if out.param_type == ParamType::Integer {
+                s.push_str(&format!(
+                    "                _h = SvHashI32(_h, outArr{k}, outNBElement);\n"
+                ));
+            } else {
+                s.push_str(&format!(
+                    "                _h = SvHashF64(_h, outArr{k}, outNBElement);\n"
+                ));
+            }
+        }
+        s.push_str("            }\n");
+        s.push_str("            _h = SvHashFin(_h);\n");
+        s.push_str("            return $\"{{\\\"retCode\\\":{(int)rc},\\\"outBegIdx\\\":{outBegIdx},\\\"outNBElement\\\":{outNBElement},\\\"out_hash\\\":\\\"{_h:x16}\\\"}}\";\n");
+        s.push_str("        }\n");
+
+        // Unguarded timing loop.
+        s.push_str("        long _t0u = 0;\n");
+        s.push_str("        for (int _biu = 0; _biu <= bench_iters; _biu++) {\n");
+        s.push_str("            if (_biu == 1) _t0u = GetNanoTime();\n");
+        s.push_str(&format!("            rc = core.{base}Unguarded({call_args});\n"));
+        s.push_str("        }\n");
+        s.push_str("        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;\n");
+
+        // Response. no_output (ta_bench): timings only — serialising a
+        // 100k-element array nobody reads is ~97% of a bench run's wall clock.
+        s.push_str("        var sb = new System.Text.StringBuilder();\n");
+        s.push_str("        sb.Append($\"{{\\\"retCode\\\":{(int)rc},\\\"outBegIdx\\\":{outBegIdx},\\\"outNBElement\\\":{outNBElement}\");\n");
+        s.push_str("        if (GetInt(p, \"no_output\", 0) == 0) {\n");
+        for (k, out) in outputs.iter().enumerate() {
+            let key = output_json_key(outputs, k);
+            if out.param_type == ParamType::Integer {
+                s.push_str(&format!(
+                    "            sb.Append(\",\\\"{key}\\\":\"); sb.Append(FormatIntArray(outArr{k}, outNBElement));\n"
+                ));
+            } else {
+                s.push_str(&format!(
+                    "            sb.Append(\",\\\"{key}\\\":\"); sb.Append(FormatArray(outArr{k}, outNBElement));\n"
+                ));
+            }
+        }
+        s.push_str("        }\n");
+        s.push_str("        sb.Append($\",\\\"timing_ns\\\":{elapsedNs}\");\n");
+        s.push_str("        sb.Append($\",\\\"timing_ns_unguarded\\\":{elapsedNsUng}\");\n");
+        s.push_str("        sb.Append(\"}\");\n");
+        s.push_str("        return sb.ToString();\n");
+        s.push_str("    }\n\n");
+    }
+
     // Main
     s.push_str("    static void Main(string[] args) {\n");
-    s.push_str("        TA_Initialize();\n");
     s.push_str("        string? line;\n");
     s.push_str("        while ((line = Console.ReadLine()) != null) {\n");
     s.push_str("            if (string.IsNullOrWhiteSpace(line)) continue;\n");
@@ -3185,6 +3243,37 @@ pub fn generate_dotnet_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("}\n");
 
     s
+}
+
+/// The generated csproj for the managed C# server. Compiling the shipped
+/// library sources into the server's own assembly (rather than referencing a
+/// prebuilt TALib.dll) is deliberate on two counts: the harness provably runs
+/// the shipped source text, and the server can reach the `internal` cores and
+/// `unstablePeriod` state because `internal` is assembly-scoped.
+pub fn csharp_server_csproj() -> String {
+    r#"<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Auto-generated by ta_codegen (generate-servers) - do not edit. -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <!-- Pin invariant culture so double.ToString() cannot vary by locale. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The shipped library sources, compiled directly: same files, same
+         bytes, so the cross-language harness measures the shipped code. -->
+    <Compile Include="../library/*.cs" />
+    <Compile Include="../library/src/**/*.cs" />
+  </ItemGroup>
+
+</Project>
+"#
+    .to_string()
 }
 
 /// Format a default f64 value for Rust source code.
@@ -3564,9 +3653,11 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("            let mut outNBElement: usize = 0;\n");
         s.push_str("            let mut rc = RetCode::Success;\n");
 
-        // Guarded timing loop
-        s.push_str("            let start_time = Instant::now();\n");
-        s.push_str("            for _bi in 0..bench_iters {\n");
+        // Guarded timing loop. Iteration 0 is always a discarded warm-up — see
+        // the C emitter: cold-call bias, plus a free idempotency check.
+        s.push_str("            let mut start_time = Instant::now();\n");
+        s.push_str("            for _bi in 0..=bench_iters {\n");
+        s.push_str("                if _bi == 1 { start_time = Instant::now(); }\n");
         s.push_str(&format!(
             "            rc = core.{fn_name}(\n"
         ));
@@ -3628,8 +3719,9 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("            }\n");
 
         // Unguarded timing loop (same signature as guarded, no extra params)
-        s.push_str("            let start_time_ung = Instant::now();\n");
-        s.push_str("            for _biu in 0..bench_iters {\n");
+        s.push_str("            let mut start_time_ung = Instant::now();\n");
+        s.push_str("            for _biu in 0..=bench_iters {\n");
+        s.push_str("                if _biu == 1 { start_time_ung = Instant::now(); }\n");
         s.push_str(&format!(
             "            rc = core.{fn_name}_unguarded(\n"
         ));

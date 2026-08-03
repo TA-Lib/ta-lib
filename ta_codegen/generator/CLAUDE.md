@@ -27,7 +27,7 @@ ta_codegen/output/       (per-language products: library/ (shipped) + tools/ (se
   c/tools/               (server + bench + aggregation TUs; C library ships from src/)
   rust/library/ + rust/tools/  (ta-lib crate + server/bench — a Cargo workspace)
   java/library/ + java/tools/  (shipped package + meta/  +  JSON-RPC server)
-  dotnet/tools/          (P/Invoke server; no managed library)
+  csharp/library/ + csharp/tools/  (shipped TALib package + managed JSON-RPC server)
 include/ta_func.h        (generated public header)
 ```
 
@@ -62,6 +62,7 @@ touching all three.
 | `backends/rust_lang.rs` | Generates Rust indicator implementations (concrete `f64`, guarded + unguarded variants) |
 | `backends/rust_doc.rs` | Renders each function's canonical `<name>.md` as rustdoc on the generated Rust methods (summary/formula/notes, `# Arguments` with YAML numbers injected, `# Errors`/`# Panics`, a runnable doctest, `#[doc(alias)]`, intra-doc `# See also` links) |
 | `backends/java.rs` | Generates Java Core class methods |
+| `backends/csharp.rs` | Generates the shipped C# indicators — one `Core_<NAME>.cs` (`public partial class Core`) per function; XML docs via `csharp_doc.rs`, condition folding shared with Java via `compat_fold.rs` |
 | `backends/ta_abstract_c.rs` | Generates `ta_abstract` introspection layer (tables, frames, group index, runtime API) |
 | `backends/price_bundle.rs` | Folds the expanded price components back into the single `TA_Input_Price` descriptor (`inPriceHLC` + flags). Shared by the C, Rust and Java abstract backends — that name and flags word are **public ABI** (wrappers read them; ta-lib-python renders them as `{'prices': [...]}`), so they are derived once, from the YAML declaration carried on each `Input` as a `PriceRef`, never re-inferred from argument names |
 | `backends/func_api_xml.rs` | Generates `ta_func_api.xml` metadata |
@@ -113,7 +114,7 @@ Value gates that need the *generated* library live in the crate itself, as
 **Fully working:**
 - `codegen_pipe.c/h` in ta_regtest — complete subprocess pipe abstraction (fork, exec, stdin/stdout JSON-RPC)
 - `test_codegen.c/h` in ta_regtest — full orchestration: multi-language loop, JSON helpers, `doRangeTest` integration, epsilon comparison (`1e-6`), language/function filters
-- Server generation for all 4 languages (C, Java, .NET, Rust)
+- Server generation for all 4 languages (C, Java, C#, Rust)
 - `ta_codegen build` compiles servers into executables in `bin/`
 
 **What's working end-to-end:**
@@ -250,9 +251,9 @@ if the local is assigned again while still in scope.
 pins that by sweeping every indicator and asserting the pass fires for `bbands`
 alone.
 
-The C, Java and .NET backends need none of this — they assign the pointer or
+The C, Java and C# backends need none of this — they assign the pointer or
 reference directly — so the transform must never change their output. `generate`
-followed by `git diff` over `src/ta_func/`, `output/java/` and `output/dotnet/` is
+followed by `git diff` over `src/ta_func/`, `output/java/` and `output/csharp/` is
 the check. `templates/rust/scratch_election.rs` is the value gate.
 
 ### Debug-safe decrements

@@ -4,10 +4,10 @@
 //! TA-Lib adopted an explicit-FMA numerical contract (PR #96,
 //! `docs/fma-readiness-audit.md`): each function faithfully implements its
 //! algorithm within a documented ~1e-9 relative tolerance, not bit-for-bit.
-//! Explicit `fma` / `f64::mul_add` / `Math.fma` all compute the IEEE-754
-//! correctly-rounded fused product-sum, identical on every platform — so fusing
-//! the SAME sites in C, Rust and Java keeps the three backends bit-identical to
-//! one another (the .NET binding P/Invokes the generated C, inheriting it).
+//! Explicit `fma` / `f64::mul_add` / `Math.fma` / `Math.FusedMultiplyAdd` all
+//! compute the IEEE-754 correctly-rounded fused product-sum, identical on every
+//! platform — so fusing the SAME sites in C, Rust, Java and C# keeps the four
+//! backends bit-identical to one another.
 //!
 //! The regtest cross-language comparison only enforces a 1e-6 tolerance, so it
 //! would NOT catch two backends fusing slightly different site sets (they would

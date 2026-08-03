@@ -30,7 +30,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utilities.common import (
     check_prerequisites,
     PREREQS_BUILD_BASIC, PREREQS_BUILD_CODEGEN, PREREQS_BUILD_SERVERS,
-    PREREQS_CMAKE, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
+    PREREQS_CMAKE, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA, PREREQS_DOTNET,
+    prereqs_for_languages, backends_for_languages,
 )
 
 BUILD_DIR_NAME = "cmake-build"
@@ -118,11 +119,12 @@ def show_help():
                         frozen released v0.6.4 (opt-in; builds ta_064_serve then
                         runs ta_regtest --fuzz-064). C-only; needs the v0.6.4 tag.
     xlang-hash          Cross-language BITWISE parity gate (opt-in; issue #113):
-                        builds the Rust + Java servers + ta_regtest, then runs
+                        builds the Rust + Java + C# servers + ta_regtest, then runs
                         ta_regtest --xlang-hash — diffs each language server vs the
-                        in-process C library (Rust via seed inputs, Java via
+                        in-process C library (Rust via seed inputs, Java and C# via
                         lossless hex inputs) with no tolerance (except Java's
-                        transcendental calls: fdlibm != libm). Needs the JDK.
+                        transcendental calls: fdlibm != libm). Needs the JDK and
+                        the .NET SDK.
 
   Other:
     clean               Remove cmake-build/ and cmake-build-asan/
@@ -132,6 +134,11 @@ def show_help():
     --build-type=Debug  Set cmake build type (default: Release)
     --jobs=8            Parallel jobs (default: number of CPUs)
     --cmake-args="..."  Extra arguments passed to cmake configure
+    --language=c,rust   For servers/regtest/regtest-only/xlang-hash: build only
+                        these backends, and require only their toolchains. A
+                        machine with no JDK or .NET SDK can still run
+                        `servers --language=c,rust`. Omit it and every backend
+                        is built, which does need both.
     --sanitize          Build with AddressSanitizer + UBSan into cmake-build-asan
                         (Debug, static-only; e.g. build.py ta_regtest --sanitize)
 """)
@@ -170,10 +177,16 @@ def run_clippy(root_dir: str):
     print("  Clippy clean (generator + generated crate).")
 
 
-def build_servers(root_dir: str):
-    """Generate the JSON-RPC language servers and compile them (cargo)."""
-    run_codegen(root_dir, 'run', '--release', '--', 'generate-servers')
-    run_codegen(root_dir, 'run', '--release', '--', 'build')
+def build_servers(root_dir: str, lang_filter=None):
+    """Generate the JSON-RPC language servers and compile them (cargo).
+
+    With a --language filter only those backends are generated and built, so a
+    machine without the JDK or the .NET SDK is not forced to have them just to
+    exercise C and Rust (issue #150, extended from regtest.py to build.py)."""
+    backends = backends_for_languages(lang_filter)
+    extra = [f'--backend={backends}'] if backends else []
+    run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', *extra)
+    run_codegen(root_dir, 'run', '--release', '--', 'build', *extra)
 
 def build_fuzz064(root_dir: str, build_dir: str, jobs: int) -> int:
     """Opt-in bit-exact differential fuzz of the current library vs the frozen
@@ -192,25 +205,50 @@ def build_fuzz064(root_dir: str, build_dir: str, jobs: int) -> int:
     return subprocess.run([os.path.join(root_dir, "bin", "ta_regtest"), "--fuzz-064"],
                           cwd=os.path.join(root_dir, "bin")).returncode
 
-def build_xlanghash(root_dir: str, build_dir: str, jobs: int) -> int:
+def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) -> int:
     """Cross-language BITWISE parity gate (issue #113). Diffs each generated
     language server against the shipped in-process C library, comparing
-    full-precision output hashes with NO tolerance. Builds the Rust + Java servers
-    + ta_regtest, then runs `ta_regtest --xlang-hash`. Returns ta_regtest's exit
-    code (non-zero on any divergence). Rust crosses the JSON boundary with a seed
-    (gen_present); Java crosses it with lossless hex-bits inputs (#114) and relaxes
-    its transcendental-using calls to a tolerance (fdlibm != the C libm). Needs the
-    JDK for the Java server; .NET P/Invokes C == C by construction, so no .NET SDK.
+    full-precision output hashes with NO tolerance. Builds the Rust + Java + C#
+    servers + ta_regtest, then runs `ta_regtest --xlang-hash`. Returns
+    ta_regtest's exit code (non-zero on any divergence). Rust crosses the JSON
+    boundary with a seed (gen_present); Java and C# cross it with lossless
+    hex-bits inputs (#114). Java relaxes its transcendental-using calls to a
+    tolerance (fdlibm != the C libm); the managed C# is fully bitwise,
+    transcendentals included. Needs the JDK for the Java server and the .NET
+    SDK for the C# server.
+
+    --language narrows the gate to a subset of those three, so a machine with no
+    JDK or .NET SDK can still run the Rust leg. C is never a server row here —
+    it is the in-process golden every row is compared against — so it is dropped
+    from the filter rather than silently building a C server nobody consults.
+    The filter is ALSO forwarded to ta_regtest: without it the runner would try
+    to spawn the servers we deliberately did not build and merely print that
+    they are unavailable, turning a narrowed run into a quietly vacuous one.
+    CI passes no filter, so the nightly always runs all three rows.
     """
-    # 1. Generate + compile the language servers into bin/ (Rust + Java).
-    run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', '--backend=rust,java')
-    run_codegen(root_dir, 'run', '--release', '--', 'build', '--backend=rust,java')
+    rows = [b for b in (backends_for_languages(lang_filter) or 'rust,java,csharp').split(',')
+            if b in ('rust', 'java', 'csharp')]
+    if not rows:
+        print(f"Error: --language={lang_filter} selects no xlang-hash row "
+              f"(valid: rust, java, csharp; C is the in-process golden).", flush=True)
+        return 2
+    backends = ','.join(rows)
+    if lang_filter:
+        # flush: this script's stdout is block-buffered when CI captures it,
+        # while the cargo/ta_regtest subprocesses write straight to the pipe —
+        # without it these lines land after the output they are labelling.
+        print(f"=== xlang-hash limited to: {backends} ===", flush=True)
+    # 1. Generate + compile the language servers into bin/.
+    run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', f'--backend={backends}')
+    run_codegen(root_dir, 'run', '--release', '--', 'build', f'--backend={backends}')
     # 2. The C test runner links the in-process C golden; stage it into bin/.
     cmake_build(build_dir, target='ensure_ta_regtest_in_bin', jobs=jobs)
     # 3. Run the gate (server argv is relative "./", so cwd must be bin/).
-    print("=== Running ta_regtest --xlang-hash ===")
-    return subprocess.run([os.path.join(root_dir, "bin", "ta_regtest"), "--xlang-hash"],
-                          cwd=os.path.join(root_dir, "bin")).returncode
+    print("=== Running ta_regtest --xlang-hash ===", flush=True)
+    cmd = [os.path.join(root_dir, "bin", "ta_regtest"), "--xlang-hash"]
+    if lang_filter:
+        cmd.append(f"--language={backends}")
+    return subprocess.run(cmd, cwd=os.path.join(root_dir, "bin")).returncode
 
 def check_regtest_source_lists(root_dir: str) -> bool:
     """Verify the two hand-maintained ta_regtest source lists agree.
@@ -289,7 +327,12 @@ SIMPLE_TARGETS = {
     'regtest-only':'regtest-only',
 }
 
-# Map each target to the prerequisite set it requires.
+# Targets that build language servers and therefore honour --language, both for
+# which backends get built and for which toolchains must be present.
+LANG_FILTERED_TARGETS = ('servers', 'regtest', 'regtest-only', 'xlang-hash')
+
+# Map each target to the prerequisite set it requires. These are the
+# no---language defaults; see LANG_FILTERED_TARGETS above for the narrowed path.
 TARGET_PREREQS = {
     'all':          PREREQS_BUILD_BASIC,
     'ta_regtest':   PREREQS_BUILD_BASIC,
@@ -303,7 +346,10 @@ TARGET_PREREQS = {
     'regtest':      PREREQS_BUILD_SERVERS,
     'regtest-only': PREREQS_BUILD_SERVERS,
     'fuzz-064':     [PREREQS_CMAKE, PREREQS_GCC],
-    'xlang-hash':   PREREQS_BUILD_CODEGEN + [PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA],
+    # build_xlanghash builds --backend=rust,java,csharp, so the .NET SDK is as
+    # required here as the JDK. Without it the C# server silently never builds.
+    'xlang-hash':   PREREQS_BUILD_CODEGEN + [PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
+                                             PREREQS_DOTNET],
 }
 
 def main():
@@ -320,6 +366,11 @@ def main():
     parser.add_argument('--build-type', default=DEFAULT_BUILD_TYPE)
     parser.add_argument('--jobs', '-j', type=int, default=DEFAULT_JOBS)
     parser.add_argument('--cmake-args', default='')
+    # Narrows BOTH the prerequisite check and the backends actually built, so a
+    # machine without a JDK or the .NET SDK can still do `servers`/`regtest`
+    # for the backends it does have. Same tokens as regtest.py / ta_regtest.
+    parser.add_argument('--language', default=None,
+                        help='c,rust,java,csharp — limit which servers are built')
     parser.add_argument('--sanitize', action='store_true',
                         help='Build with AddressSanitizer + UBSan into cmake-build-asan (issue #94)')
     parser.add_argument('--help', '-h', action='store_true')
@@ -360,7 +411,20 @@ def main():
     if args.target == 'check-source-lists':
         sys.exit(0 if check_regtest_source_lists(root_dir) else 1)
 
-    check_prerequisites(TARGET_PREREQS.get(args.target, PREREQS_BUILD_BASIC))
+    # Targets that build language servers narrow their prerequisites to the
+    # backends actually requested: `servers --language=c,rust` must not demand a
+    # JDK or the .NET SDK.
+    #
+    # The prerequisites are derived from the RESOLVED backend list, not from the
+    # raw filter, so the check can never disagree with what gets built. A filter
+    # naming no real backend (`--language=cref`, or a typo) resolves to None,
+    # meaning "build everything" — and then the full toolchain is required,
+    # rather than promising a short tool list and building all four anyway.
+    _backends = backends_for_languages(args.language)
+    if args.target in LANG_FILTERED_TARGETS and _backends:
+        check_prerequisites(prereqs_for_languages(_backends))
+    else:
+        check_prerequisites(TARGET_PREREQS.get(args.target, PREREQS_BUILD_BASIC))
 
     # Rust ta_codegen targets build with cargo directly — no CMake involved.
     if args.target in CARGO_TARGETS:
@@ -375,7 +439,7 @@ def main():
         elif args.target == 'clippy':
             run_clippy(root_dir)
         else:  # servers
-            build_servers(root_dir)
+            build_servers(root_dir, args.language)
         return
 
     ensure_configured(root_dir, build_dir, args.build_type, args.cmake_args)
@@ -388,13 +452,13 @@ def main():
     # Cross-language BITWISE parity gate (opt-in; issue #113). Composite: build the
     # Rust server + ta_regtest, then diff each server vs the in-process C golden.
     if args.target == 'xlang-hash':
-        sys.exit(build_xlanghash(root_dir, build_dir, args.jobs))
+        sys.exit(build_xlanghash(root_dir, build_dir, args.jobs, args.language))
 
     # The cross-language tests run the C ta_regtest binary against the language
     # servers, so build the servers (cargo) first — the CMake regtest target no
     # longer does it.
     if args.target in ('regtest', 'regtest-only'):
-        build_servers(root_dir)
+        build_servers(root_dir, args.language)
 
     if args.target == 'all':
         cmake_build(build_dir, jobs=args.jobs)

@@ -925,8 +925,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.accbands(
                 startIdx, endIdx,
                 &inHigh,
@@ -947,8 +948,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.accbands_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -1001,8 +1003,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.acos(
                 startIdx, endIdx,
                 &inReal,
@@ -1018,8 +1021,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.acos_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -1088,8 +1092,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ad(
                 startIdx, endIdx,
                 &inHigh,
@@ -1108,8 +1113,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ad_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -1167,8 +1173,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.add(
                 startIdx, endIdx,
                 &inReal0,
@@ -1185,8 +1192,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.add_unguarded(
                 startIdx, endIdx,
                 &inReal0,
@@ -1258,8 +1266,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.adosc(
                 startIdx, endIdx,
                 &inHigh,
@@ -1280,8 +1289,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.adosc_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -1352,8 +1362,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.adx(
                 startIdx, endIdx,
                 &inHigh,
@@ -1372,8 +1383,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.adx_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -1439,8 +1451,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.adxr(
                 startIdx, endIdx,
                 &inHigh,
@@ -1459,8 +1472,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.adxr_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -1514,8 +1528,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.apo(
                 startIdx, endIdx,
                 &inReal,
@@ -1534,8 +1549,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.apo_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -1595,8 +1611,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.aroon(
                 startIdx, endIdx,
                 &inHigh,
@@ -1615,8 +1632,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.aroon_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -1675,8 +1693,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.aroonosc(
                 startIdx, endIdx,
                 &inHigh,
@@ -1694,8 +1713,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.aroonosc_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -1745,8 +1765,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.asin(
                 startIdx, endIdx,
                 &inReal,
@@ -1762,8 +1783,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.asin_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -1811,8 +1833,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.atan(
                 startIdx, endIdx,
                 &inReal,
@@ -1828,8 +1851,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.atan_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -1895,8 +1919,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.atr(
                 startIdx, endIdx,
                 &inHigh,
@@ -1915,8 +1940,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.atr_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -1968,8 +1994,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.avgdev(
                 startIdx, endIdx,
                 &inReal,
@@ -1986,8 +2013,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.avgdev_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -2057,8 +2085,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.avgprice(
                 startIdx, endIdx,
                 &inOpen,
@@ -2077,8 +2106,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.avgprice_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -2135,8 +2165,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.bbands(
                 startIdx, endIdx,
                 &inReal,
@@ -2158,8 +2189,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.bbands_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -2221,8 +2253,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.beta(
                 startIdx, endIdx,
                 &inReal0,
@@ -2240,8 +2273,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.beta_unguarded(
                 startIdx, endIdx,
                 &inReal0,
@@ -2312,8 +2346,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.bop(
                 startIdx, endIdx,
                 &inOpen,
@@ -2332,8 +2367,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.bop_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -2399,8 +2435,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cci(
                 startIdx, endIdx,
                 &inHigh,
@@ -2419,8 +2456,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cci_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -2492,8 +2530,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdl2crows(
                 startIdx, endIdx,
                 &inOpen,
@@ -2512,8 +2551,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdl2crows_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -2585,8 +2625,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdl3blackcrows(
                 startIdx, endIdx,
                 &inOpen,
@@ -2605,8 +2646,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdl3blackcrows_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -2678,8 +2720,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdl3inside(
                 startIdx, endIdx,
                 &inOpen,
@@ -2698,8 +2741,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdl3inside_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -2771,8 +2815,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdl3linestrike(
                 startIdx, endIdx,
                 &inOpen,
@@ -2791,8 +2836,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdl3linestrike_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -2864,8 +2910,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdl3outside(
                 startIdx, endIdx,
                 &inOpen,
@@ -2884,8 +2931,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdl3outside_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -2957,8 +3005,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdl3starsinsouth(
                 startIdx, endIdx,
                 &inOpen,
@@ -2977,8 +3026,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdl3starsinsouth_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -3050,8 +3100,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdl3whitesoldiers(
                 startIdx, endIdx,
                 &inOpen,
@@ -3070,8 +3121,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdl3whitesoldiers_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -3144,8 +3196,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlabandonedbaby(
                 startIdx, endIdx,
                 &inOpen,
@@ -3165,8 +3218,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlabandonedbaby_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -3239,8 +3293,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdladvanceblock(
                 startIdx, endIdx,
                 &inOpen,
@@ -3259,8 +3314,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdladvanceblock_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -3332,8 +3388,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlbelthold(
                 startIdx, endIdx,
                 &inOpen,
@@ -3352,8 +3409,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlbelthold_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -3425,8 +3483,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlbreakaway(
                 startIdx, endIdx,
                 &inOpen,
@@ -3445,8 +3504,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlbreakaway_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -3518,8 +3578,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlclosingmarubozu(
                 startIdx, endIdx,
                 &inOpen,
@@ -3538,8 +3599,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlclosingmarubozu_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -3611,8 +3673,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlconcealbabyswall(
                 startIdx, endIdx,
                 &inOpen,
@@ -3631,8 +3694,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlconcealbabyswall_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -3704,8 +3768,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlcounterattack(
                 startIdx, endIdx,
                 &inOpen,
@@ -3724,8 +3789,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlcounterattack_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -3798,8 +3864,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdldarkcloudcover(
                 startIdx, endIdx,
                 &inOpen,
@@ -3819,8 +3886,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdldarkcloudcover_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -3893,8 +3961,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdldoji(
                 startIdx, endIdx,
                 &inOpen,
@@ -3913,8 +3982,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdldoji_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -3986,8 +4056,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdldojistar(
                 startIdx, endIdx,
                 &inOpen,
@@ -4006,8 +4077,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdldojistar_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -4079,8 +4151,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdldragonflydoji(
                 startIdx, endIdx,
                 &inOpen,
@@ -4099,8 +4172,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdldragonflydoji_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -4172,8 +4246,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlengulfing(
                 startIdx, endIdx,
                 &inOpen,
@@ -4192,8 +4267,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlengulfing_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -4266,8 +4342,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdleveningdojistar(
                 startIdx, endIdx,
                 &inOpen,
@@ -4287,8 +4364,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdleveningdojistar_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -4362,8 +4440,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdleveningstar(
                 startIdx, endIdx,
                 &inOpen,
@@ -4383,8 +4462,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdleveningstar_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -4457,8 +4537,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlgapsidesidewhite(
                 startIdx, endIdx,
                 &inOpen,
@@ -4477,8 +4558,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlgapsidesidewhite_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -4550,8 +4632,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlgravestonedoji(
                 startIdx, endIdx,
                 &inOpen,
@@ -4570,8 +4653,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlgravestonedoji_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -4643,8 +4727,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlhammer(
                 startIdx, endIdx,
                 &inOpen,
@@ -4663,8 +4748,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlhammer_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -4736,8 +4822,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlhangingman(
                 startIdx, endIdx,
                 &inOpen,
@@ -4756,8 +4843,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlhangingman_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -4829,8 +4917,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlharami(
                 startIdx, endIdx,
                 &inOpen,
@@ -4849,8 +4938,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlharami_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -4922,8 +5012,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlharamicross(
                 startIdx, endIdx,
                 &inOpen,
@@ -4942,8 +5033,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlharamicross_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -5015,8 +5107,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlhighwave(
                 startIdx, endIdx,
                 &inOpen,
@@ -5035,8 +5128,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlhighwave_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -5108,8 +5202,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlhikkake(
                 startIdx, endIdx,
                 &inOpen,
@@ -5128,8 +5223,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlhikkake_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -5201,8 +5297,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlhikkakemod(
                 startIdx, endIdx,
                 &inOpen,
@@ -5221,8 +5318,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlhikkakemod_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -5294,8 +5392,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlhomingpigeon(
                 startIdx, endIdx,
                 &inOpen,
@@ -5314,8 +5413,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlhomingpigeon_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -5387,8 +5487,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlidentical3crows(
                 startIdx, endIdx,
                 &inOpen,
@@ -5407,8 +5508,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlidentical3crows_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -5480,8 +5582,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlinneck(
                 startIdx, endIdx,
                 &inOpen,
@@ -5500,8 +5603,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlinneck_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -5573,8 +5677,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlinvertedhammer(
                 startIdx, endIdx,
                 &inOpen,
@@ -5593,8 +5698,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlinvertedhammer_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -5666,8 +5772,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlkicking(
                 startIdx, endIdx,
                 &inOpen,
@@ -5686,8 +5793,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlkicking_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -5759,8 +5867,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlkickingbylength(
                 startIdx, endIdx,
                 &inOpen,
@@ -5779,8 +5888,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlkickingbylength_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -5852,8 +5962,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlladderbottom(
                 startIdx, endIdx,
                 &inOpen,
@@ -5872,8 +5983,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlladderbottom_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -5945,8 +6057,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdllongleggeddoji(
                 startIdx, endIdx,
                 &inOpen,
@@ -5965,8 +6078,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdllongleggeddoji_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -6038,8 +6152,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdllongline(
                 startIdx, endIdx,
                 &inOpen,
@@ -6058,8 +6173,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdllongline_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -6131,8 +6247,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlmarubozu(
                 startIdx, endIdx,
                 &inOpen,
@@ -6151,8 +6268,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlmarubozu_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -6224,8 +6342,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlmatchinglow(
                 startIdx, endIdx,
                 &inOpen,
@@ -6244,8 +6363,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlmatchinglow_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -6318,8 +6438,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlmathold(
                 startIdx, endIdx,
                 &inOpen,
@@ -6339,8 +6460,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlmathold_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -6414,8 +6536,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlmorningdojistar(
                 startIdx, endIdx,
                 &inOpen,
@@ -6435,8 +6558,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlmorningdojistar_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -6510,8 +6634,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlmorningstar(
                 startIdx, endIdx,
                 &inOpen,
@@ -6531,8 +6656,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlmorningstar_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -6605,8 +6731,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlonneck(
                 startIdx, endIdx,
                 &inOpen,
@@ -6625,8 +6752,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlonneck_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -6698,8 +6826,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlpiercing(
                 startIdx, endIdx,
                 &inOpen,
@@ -6718,8 +6847,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlpiercing_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -6791,8 +6921,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlrickshawman(
                 startIdx, endIdx,
                 &inOpen,
@@ -6811,8 +6942,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlrickshawman_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -6884,8 +7016,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlrisefall3methods(
                 startIdx, endIdx,
                 &inOpen,
@@ -6904,8 +7037,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlrisefall3methods_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -6977,8 +7111,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlseparatinglines(
                 startIdx, endIdx,
                 &inOpen,
@@ -6997,8 +7132,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlseparatinglines_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -7070,8 +7206,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlshootingstar(
                 startIdx, endIdx,
                 &inOpen,
@@ -7090,8 +7227,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlshootingstar_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -7163,8 +7301,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlshortline(
                 startIdx, endIdx,
                 &inOpen,
@@ -7183,8 +7322,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlshortline_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -7256,8 +7396,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlspinningtop(
                 startIdx, endIdx,
                 &inOpen,
@@ -7276,8 +7417,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlspinningtop_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -7349,8 +7491,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlstalledpattern(
                 startIdx, endIdx,
                 &inOpen,
@@ -7369,8 +7512,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlstalledpattern_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -7442,8 +7586,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlsticksandwich(
                 startIdx, endIdx,
                 &inOpen,
@@ -7462,8 +7607,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlsticksandwich_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -7535,8 +7681,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdltakuri(
                 startIdx, endIdx,
                 &inOpen,
@@ -7555,8 +7702,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdltakuri_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -7628,8 +7776,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdltasukigap(
                 startIdx, endIdx,
                 &inOpen,
@@ -7648,8 +7797,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdltasukigap_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -7721,8 +7871,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlthrusting(
                 startIdx, endIdx,
                 &inOpen,
@@ -7741,8 +7892,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlthrusting_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -7814,8 +7966,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdltristar(
                 startIdx, endIdx,
                 &inOpen,
@@ -7834,8 +7987,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdltristar_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -7907,8 +8061,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlunique3river(
                 startIdx, endIdx,
                 &inOpen,
@@ -7927,8 +8082,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlunique3river_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -8000,8 +8156,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlupsidegap2crows(
                 startIdx, endIdx,
                 &inOpen,
@@ -8020,8 +8177,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlupsidegap2crows_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -8093,8 +8251,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cdlxsidegap3methods(
                 startIdx, endIdx,
                 &inOpen,
@@ -8113,8 +8272,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cdlxsidegap3methods_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -8165,8 +8325,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ceil(
                 startIdx, endIdx,
                 &inReal,
@@ -8182,8 +8343,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ceil_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -8253,8 +8415,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cmf(
                 startIdx, endIdx,
                 &inHigh,
@@ -8274,8 +8437,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cmf_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -8331,8 +8495,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cmo(
                 startIdx, endIdx,
                 &inReal,
@@ -8349,8 +8514,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cmo_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -8400,8 +8566,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cmou(
                 startIdx, endIdx,
                 &inReal,
@@ -8418,8 +8585,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cmou_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -8476,8 +8644,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.correl(
                 startIdx, endIdx,
                 &inReal0,
@@ -8495,8 +8664,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.correl_unguarded(
                 startIdx, endIdx,
                 &inReal0,
@@ -8546,8 +8716,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cos(
                 startIdx, endIdx,
                 &inReal,
@@ -8563,8 +8734,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cos_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -8612,8 +8784,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.cosh(
                 startIdx, endIdx,
                 &inReal,
@@ -8629,8 +8802,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.cosh_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -8679,8 +8853,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.dema(
                 startIdx, endIdx,
                 &inReal,
@@ -8697,8 +8872,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.dema_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -8754,8 +8930,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.div(
                 startIdx, endIdx,
                 &inReal0,
@@ -8772,8 +8949,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.div_unguarded(
                 startIdx, endIdx,
                 &inReal0,
@@ -8840,8 +9018,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.dx(
                 startIdx, endIdx,
                 &inHigh,
@@ -8860,8 +9039,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.dx_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -8916,8 +9096,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ema(
                 startIdx, endIdx,
                 &inReal,
@@ -8934,8 +9115,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ema_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -8984,8 +9166,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.exp(
                 startIdx, endIdx,
                 &inReal,
@@ -9001,8 +9184,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.exp_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9050,8 +9234,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.floor(
                 startIdx, endIdx,
                 &inReal,
@@ -9067,8 +9252,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.floor_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9117,8 +9303,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.hma(
                 startIdx, endIdx,
                 &inReal,
@@ -9135,8 +9322,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.hma_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9188,8 +9376,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ht_dcperiod(
                 startIdx, endIdx,
                 &inReal,
@@ -9205,8 +9394,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ht_dcperiod_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9257,8 +9447,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ht_dcphase(
                 startIdx, endIdx,
                 &inReal,
@@ -9274,8 +9465,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ht_dcphase_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9327,8 +9519,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ht_phasor(
                 startIdx, endIdx,
                 &inReal,
@@ -9345,8 +9538,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ht_phasor_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9399,8 +9593,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ht_sine(
                 startIdx, endIdx,
                 &inReal,
@@ -9417,8 +9612,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ht_sine_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9470,8 +9666,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ht_trendline(
                 startIdx, endIdx,
                 &inReal,
@@ -9487,8 +9684,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ht_trendline_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9539,8 +9737,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ht_trendmode(
                 startIdx, endIdx,
                 &inReal,
@@ -9556,8 +9755,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ht_trendmode_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9613,8 +9813,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.imi(
                 startIdx, endIdx,
                 &inOpen,
@@ -9632,8 +9833,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.imi_unguarded(
                 startIdx, endIdx,
                 &inOpen,
@@ -9687,8 +9889,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.kama(
                 startIdx, endIdx,
                 &inReal,
@@ -9705,8 +9908,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.kama_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9756,8 +9960,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.linearreg(
                 startIdx, endIdx,
                 &inReal,
@@ -9774,8 +9979,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.linearreg_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9825,8 +10031,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.linearreg_angle(
                 startIdx, endIdx,
                 &inReal,
@@ -9843,8 +10050,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.linearreg_angle_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9894,8 +10102,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.linearreg_intercept(
                 startIdx, endIdx,
                 &inReal,
@@ -9912,8 +10121,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.linearreg_intercept_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -9963,8 +10173,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.linearreg_slope(
                 startIdx, endIdx,
                 &inReal,
@@ -9981,8 +10192,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.linearreg_slope_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -10031,8 +10243,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ln(
                 startIdx, endIdx,
                 &inReal,
@@ -10048,8 +10261,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ln_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -10097,8 +10311,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.log10(
                 startIdx, endIdx,
                 &inReal,
@@ -10114,8 +10329,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.log10_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -10165,8 +10381,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ma(
                 startIdx, endIdx,
                 &inReal,
@@ -10184,8 +10401,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ma_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -10240,8 +10458,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.macd(
                 startIdx, endIdx,
                 &inReal,
@@ -10262,8 +10481,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.macd_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -10324,8 +10544,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.macdext(
                 startIdx, endIdx,
                 &inReal,
@@ -10349,8 +10570,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.macdext_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -10409,8 +10631,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.macdfix(
                 startIdx, endIdx,
                 &inReal,
@@ -10429,8 +10652,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.macdfix_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -10487,8 +10711,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.mama(
                 startIdx, endIdx,
                 &inReal,
@@ -10507,8 +10732,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.mama_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -10569,8 +10795,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.mavp(
                 startIdx, endIdx,
                 &inReal0,
@@ -10590,8 +10817,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.mavp_unguarded(
                 startIdx, endIdx,
                 &inReal0,
@@ -10644,8 +10872,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.max(
                 startIdx, endIdx,
                 &inReal,
@@ -10662,8 +10891,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.max_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -10713,8 +10943,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.maxindex(
                 startIdx, endIdx,
                 &inReal,
@@ -10731,8 +10962,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.maxindex_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -10788,8 +11020,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.medprice(
                 startIdx, endIdx,
                 &inHigh,
@@ -10806,8 +11039,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.medprice_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -10878,8 +11112,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.mfi(
                 startIdx, endIdx,
                 &inHigh,
@@ -10899,8 +11134,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.mfi_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -10953,8 +11189,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.midpoint(
                 startIdx, endIdx,
                 &inReal,
@@ -10971,8 +11208,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.midpoint_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -11029,8 +11267,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.midprice(
                 startIdx, endIdx,
                 &inHigh,
@@ -11048,8 +11287,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.midprice_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -11100,8 +11340,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.min(
                 startIdx, endIdx,
                 &inReal,
@@ -11118,8 +11359,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.min_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -11169,8 +11411,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.minindex(
                 startIdx, endIdx,
                 &inReal,
@@ -11187,8 +11430,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.minindex_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -11239,8 +11483,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.minmax(
                 startIdx, endIdx,
                 &inReal,
@@ -11258,8 +11503,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.minmax_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -11311,8 +11557,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.minmaxindex(
                 startIdx, endIdx,
                 &inReal,
@@ -11330,8 +11577,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.minmaxindex_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -11399,8 +11647,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.minus_di(
                 startIdx, endIdx,
                 &inHigh,
@@ -11419,8 +11668,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.minus_di_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -11482,8 +11732,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.minus_dm(
                 startIdx, endIdx,
                 &inHigh,
@@ -11501,8 +11752,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.minus_dm_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -11553,8 +11805,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.mom(
                 startIdx, endIdx,
                 &inReal,
@@ -11571,8 +11824,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.mom_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -11628,8 +11882,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.mult(
                 startIdx, endIdx,
                 &inReal0,
@@ -11646,8 +11901,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.mult_unguarded(
                 startIdx, endIdx,
                 &inReal0,
@@ -11714,8 +11970,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.natr(
                 startIdx, endIdx,
                 &inHigh,
@@ -11734,8 +11991,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.natr_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -11793,8 +12051,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.nvi(
                 startIdx, endIdx,
                 &inClose,
@@ -11811,8 +12070,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.nvi_unguarded(
                 startIdx, endIdx,
                 &inClose,
@@ -11868,8 +12128,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.obv(
                 startIdx, endIdx,
                 &inReal,
@@ -11886,8 +12147,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.obv_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -11954,8 +12216,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.plus_di(
                 startIdx, endIdx,
                 &inHigh,
@@ -11974,8 +12237,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.plus_di_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -12037,8 +12301,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.plus_dm(
                 startIdx, endIdx,
                 &inHigh,
@@ -12056,8 +12321,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.plus_dm_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -12110,8 +12376,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ppo(
                 startIdx, endIdx,
                 &inReal,
@@ -12130,8 +12397,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ppo_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -12189,8 +12457,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.pvi(
                 startIdx, endIdx,
                 &inClose,
@@ -12207,8 +12476,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.pvi_unguarded(
                 startIdx, endIdx,
                 &inClose,
@@ -12260,8 +12530,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.pvo(
                 startIdx, endIdx,
                 &inVolume,
@@ -12280,8 +12551,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.pvo_unguarded(
                 startIdx, endIdx,
                 &inVolume,
@@ -12333,8 +12605,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.roc(
                 startIdx, endIdx,
                 &inReal,
@@ -12351,8 +12624,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.roc_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -12402,8 +12676,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.rocp(
                 startIdx, endIdx,
                 &inReal,
@@ -12420,8 +12695,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.rocp_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -12471,8 +12747,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.rocr(
                 startIdx, endIdx,
                 &inReal,
@@ -12489,8 +12766,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.rocr_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -12540,8 +12818,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.rocr100(
                 startIdx, endIdx,
                 &inReal,
@@ -12558,8 +12837,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.rocr100_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -12612,8 +12892,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.rsi(
                 startIdx, endIdx,
                 &inReal,
@@ -12630,8 +12911,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.rsi_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -12689,8 +12971,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.sar(
                 startIdx, endIdx,
                 &inHigh,
@@ -12709,8 +12992,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.sar_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -12776,8 +13060,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.sarext(
                 startIdx, endIdx,
                 &inHigh,
@@ -12802,8 +13087,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.sarext_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -12860,8 +13146,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.sin(
                 startIdx, endIdx,
                 &inReal,
@@ -12877,8 +13164,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.sin_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -12926,8 +13214,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.sinh(
                 startIdx, endIdx,
                 &inReal,
@@ -12943,8 +13232,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.sinh_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -12993,8 +13283,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.sma(
                 startIdx, endIdx,
                 &inReal,
@@ -13011,8 +13302,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.sma_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -13061,8 +13353,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.sqrt(
                 startIdx, endIdx,
                 &inReal,
@@ -13078,8 +13371,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.sqrt_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -13129,8 +13423,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.stddev(
                 startIdx, endIdx,
                 &inReal,
@@ -13148,8 +13443,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.stddev_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -13219,8 +13515,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.stoch(
                 startIdx, endIdx,
                 &inHigh,
@@ -13244,8 +13541,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.stoch_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -13319,8 +13617,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.stochf(
                 startIdx, endIdx,
                 &inHigh,
@@ -13342,8 +13641,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.stochf_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -13402,8 +13702,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.stochrsi(
                 startIdx, endIdx,
                 &inReal,
@@ -13424,8 +13725,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.stochrsi_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -13485,8 +13787,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.sub(
                 startIdx, endIdx,
                 &inReal0,
@@ -13503,8 +13806,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.sub_unguarded(
                 startIdx, endIdx,
                 &inReal0,
@@ -13554,8 +13858,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.sum(
                 startIdx, endIdx,
                 &inReal,
@@ -13572,8 +13877,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.sum_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -13627,8 +13933,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.t3(
                 startIdx, endIdx,
                 &inReal,
@@ -13646,8 +13953,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.t3_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -13697,8 +14005,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.tan(
                 startIdx, endIdx,
                 &inReal,
@@ -13714,8 +14023,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.tan_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -13763,8 +14073,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.tanh(
                 startIdx, endIdx,
                 &inReal,
@@ -13780,8 +14091,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.tanh_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -13830,8 +14142,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.tema(
                 startIdx, endIdx,
                 &inReal,
@@ -13848,8 +14161,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.tema_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -13912,8 +14226,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.trange(
                 startIdx, endIdx,
                 &inHigh,
@@ -13931,8 +14246,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.trange_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -13983,8 +14299,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.trima(
                 startIdx, endIdx,
                 &inReal,
@@ -14001,8 +14318,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.trima_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -14052,8 +14370,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.trix(
                 startIdx, endIdx,
                 &inReal,
@@ -14070,8 +14389,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.trix_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -14121,8 +14441,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.tsf(
                 startIdx, endIdx,
                 &inReal,
@@ -14139,8 +14460,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.tsf_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -14203,8 +14525,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.typprice(
                 startIdx, endIdx,
                 &inHigh,
@@ -14222,8 +14545,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.typprice_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -14290,8 +14614,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.ultosc(
                 startIdx, endIdx,
                 &inHigh,
@@ -14312,8 +14637,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.ultosc_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -14368,8 +14694,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.var(
                 startIdx, endIdx,
                 &inReal,
@@ -14387,8 +14714,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.var_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -14446,8 +14774,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.vwma(
                 startIdx, endIdx,
                 &inReal,
@@ -14465,8 +14794,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.vwma_unguarded(
                 startIdx, endIdx,
                 &inReal,
@@ -14530,8 +14860,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.wclprice(
                 startIdx, endIdx,
                 &inHigh,
@@ -14549,8 +14880,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.wclprice_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -14615,8 +14947,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.willr(
                 startIdx, endIdx,
                 &inHigh,
@@ -14635,8 +14968,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.willr_unguarded(
                 startIdx, endIdx,
                 &inHigh,
@@ -14688,8 +15022,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
-            let start_time = Instant::now();
-            for _bi in 0..bench_iters {
+            let mut start_time = Instant::now();
+            for _bi in 0..=bench_iters {
+                if _bi == 1 { start_time = Instant::now(); }
             rc = core.wma(
                 startIdx, endIdx,
                 &inReal,
@@ -14706,8 +15041,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let start_time_ung = Instant::now();
-            for _biu in 0..bench_iters {
+            let mut start_time_ung = Instant::now();
+            for _biu in 0..=bench_iters {
+                if _biu == 1 { start_time_ung = Instant::now(); }
             rc = core.wma_unguarded(
                 startIdx, endIdx,
                 &inReal,

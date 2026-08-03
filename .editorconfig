@@ -12,3 +12,19 @@ trim_trailing_whitespace = true
 [*.py]
 editor.formatOnPaste = false
 editor.formatOnSave = true
+
+# Generated C# (ta_codegen/output/csharp/**). Every .cs file here is emitted by
+# ta_codegen and must round-trip byte-for-byte, or the nightly regen-check fails.
+# .NET tooling defaults to 4-space Allman and would reformat all 170 of them on
+# save; the 3-space K&R below is what the generator emits, matching the C and
+# Java backends it was ported from (only Rust deviates, because rustfmt forces
+# it). Do not "fix" this to .NET convention without changing backends/csharp.rs.
+[*.cs]
+indent_style = space
+indent_size = 3
+csharp_new_line_before_open_brace = none
+csharp_new_line_before_else = false
+csharp_new_line_before_catch = false
+csharp_new_line_before_finally = false
+insert_final_newline = true
+trim_trailing_whitespace = true

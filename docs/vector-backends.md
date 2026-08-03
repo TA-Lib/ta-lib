@@ -169,7 +169,7 @@ falls to scalar, with no user flag and no platform knowledge in the generator.
 
 ### 3.7 What stays inert
 
-- **Other backends unchanged.** `rust`/`java`/`dotnet` emitters never read `vector_op`, so their
+- **Other backends unchanged.** `rust`/`java`/`csharp` emitters never read `vector_op`, so their
   output is byte-identical. (Adding an `Option<…>` field to the IR + one `#[serde(default)]` YAML
   field is transparent to them.)
 - **Regeneration oracle stays green.** The annotation + wrap logic + template copy are fully

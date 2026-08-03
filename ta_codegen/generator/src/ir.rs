@@ -317,7 +317,7 @@ pub struct EnumDef {
 pub struct EnumVariant {
     /// C constant name, e.g. `TA_MAType_SMA`
     pub c_name: String,
-    /// `PascalCase` name used in Java/.NET, e.g. `Sma`
+    /// `PascalCase` name used in Java/C#, e.g. `Sma`
     pub pascal_name: String,
     /// `UPPER_CASE` short name used in source labels, e.g. `SMA`
     pub short_name: String,
@@ -348,7 +348,7 @@ pub enum CircBufLayout {
 
 /// A circular FIFO buffer operation (the `CIRCBUF_*` macros from `ta_memory.h`).
 /// Lowered per-backend: C stack-first hybrid (static array + heap fallback),
-/// Rust `Vec`, Java `new[]`, .NET no-op (P/Invoke has no body).
+/// Rust `Vec`, Java `new[]`, C# `new[]`.
 #[derive(Debug, Clone)]
 pub enum CircBuf {
     /// `CIRCBUF_PROLOG(Id,Type,N)` / `_PROLOG_CLASS`. Declares storage, `<id>_Idx`, `maxIdx_<id>`.
@@ -388,7 +388,7 @@ pub enum Statement {
     /// the input C source and carried through so the C backend can re-emit the
     /// macro (`ta_utility.h` expands it to a GCC/Clang unroll pragma, and to
     /// nothing on every other compiler). Advisory only: no backend may let it
-    /// change what is computed, and Rust/Java/.NET drop it entirely.
+    /// change what is computed, and Rust/Java/C# drop it entirely.
     UnrollHint {
         count: u32,
     },
