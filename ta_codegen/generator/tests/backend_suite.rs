@@ -7520,3 +7520,51 @@ TA_RetCode max( int    startIdx,
         assert!(cs.contains(needle), "C# output missing `{needle}`:\n{cs}");
     }
 }
+
+// ---------------------------------------------------------------------------
+// Issue #160: a C `(int)` cast of a possibly-negative double must land in a
+// SIGNED Rust local (the default f64→usize cast saturates negatives to 0).
+// MAVP's period clamp is the shipped case; synth2 in input_synth/ is the
+// end-to-end gate. This pins the rendering so a classifier regression is a
+// test failure, not a silent semantic drift.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn rust_negative_capable_cast_gets_signed_local() {
+    let (func, enums) = load_indicator("mavp");
+    let out = generate_all(&func, &enums);
+    for needle in [
+        "let mut tempInt: i32",                    // cast-fed local is signed
+        "tempInt = (inPeriods[startIdx + i]) as i32;", // true negative preserved
+        "if tempInt < optInMinPeriod {",           // clamps stay signed compares
+    ] {
+        assert!(out.rust.contains(needle), "MAVP Rust missing `{needle}`:\n{}", out.rust);
+    }
+    // sqrt-fed locals stay usize (provably non-negative allowlist): HMA's
+    // sqrtPeriod = (int)(sqrt(...)) is the shipped case.
+    let (hma, enums2) = load_indicator("hma");
+    let hma_out = generate_all(&hma, &enums2);
+    assert!(
+        hma_out.rust.contains("let mut sqrtPeriod: usize"),
+        "HMA sqrtPeriod must stay usize (allowlist regression):\n{}",
+        hma_out.rust
+    );
+}
+
+// Index-domain values must never narrow to i32: every runtime gate feeds
+// <= 100k bars, so an i32-narrowed endIdx misbehaves only at >= 2^31 inputs —
+// structurally invisible to value comparison. Pin it textually instead (the
+// exact regression the #160 review caught in MAVP's dual-role temp).
+#[test]
+fn rust_index_domain_never_narrows_to_i32() {
+    for name in discover_indicators() {
+        let (func, enums) = load_indicator(&name);
+        let out = generate_all(&func, &enums);
+        for needle in ["(endIdx) as i32", "(startIdx) as i32", "endIdx as i32", "startIdx as i32"] {
+            assert!(
+                !out.rust.contains(needle),
+                "{name}: generated Rust narrows an index-domain value (`{needle}`)"
+            );
+        }
+    }
+}

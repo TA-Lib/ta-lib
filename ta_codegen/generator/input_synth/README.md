@@ -43,7 +43,9 @@ Two mechanics worth knowing before touching the script:
 Rules of thumb for staying language-neutral (the gate compares bitwise):
 no transcendentals (Java/.NET libm differs — those calls drop to 1e-9
 tolerance), no negative shift operands, keep accumulator state non-negative,
-and GUARD every double→int cast to `[0, huge)`: the fuzz corpus includes
+keep every `(int)` cast of a double as the WHOLE right-hand side of an
+assignment (the generator rejects nested forms loudly — it cannot see runtime
+guards, #160), and GUARD every double→int cast to `[0, huge)`: the fuzz corpus includes
 1e9-magnitude and signed bars, and out-of-range or NEGATIVE `(int)` conversion
 is defined differently in C (UB / truncate), Rust (saturates — negatives
 become 0), Java (clamps) and C# — fold negative/non-finite/extreme bars to

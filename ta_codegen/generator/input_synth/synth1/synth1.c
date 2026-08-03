@@ -67,7 +67,11 @@ TA_RetCode synth1(int    startIdx,
       tempReal = inReal[i];
       if( !(tempReal >= 0.0) || !(tempReal < 1000000.0) )
          tempReal = 0.0;
-      v = ((int)(tempReal * 8.0)) & 1023;
+      /* The cast must be the WHOLE right-hand side: the generator rejects
+       * nested (int)-of-double forms loudly (#160), because it cannot see
+       * that the guard above keeps this non-negative. */
+      v = (int)(tempReal * 8.0);
+      v &= 1023;
       acc ^= v;
       i++;
    }
@@ -78,7 +82,8 @@ TA_RetCode synth1(int    startIdx,
       tempReal = inReal[i];
       if( !(tempReal >= 0.0) || !(tempReal < 1000000.0) )
          tempReal = 0.0;
-      v = ((int)(tempReal * 8.0)) & 1023;
+      v = (int)(tempReal * 8.0);
+      v &= 1023;
 
       /* 10-bit rotate, then mix: <<, >>, |, ^, &, and the compound forms. */
       acc = ((acc << 3) | (acc >> 7)) & 1023;

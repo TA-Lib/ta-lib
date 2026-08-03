@@ -15,6 +15,7 @@
  *                bound each ma() pass at its period's last use.
  *  072726 MF,CC  #145. Index the bucket table relative to the smallest period
  *                used, and bound it so an off-contract period cannot overflow.
+ *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
  */
 
 int mavp_lookback(int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType)
@@ -31,7 +32,7 @@ TA_RetCode mavp(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
-   int i, lookbackTotal, outputSize, tempInt, curPeriod;
+   int i, lookbackTotal, outputSize, firstOut, tempInt, curPeriod;
    int firstOccurrence, lastOccurrence, bucketStart, bucketEnd;
    int minUsed, maxUsed;
    int *localPeriodArray;
@@ -75,19 +76,21 @@ TA_RetCode mavp(int startIdx, int endIdx,
       return TA_SUCCESS;
    }
 
-   /* Calculate exact output size */
+   /* Calculate exact output size. A dedicated temp: tempInt is the cast-fed
+    * period below, which the Rust backend types SIGNED (#160) — reusing it
+    * here would drag this index arithmetic into i32. */
    if( lookbackTotal > startIdx )
-      tempInt = lookbackTotal;
+      firstOut = lookbackTotal;
    else
-      tempInt = startIdx;
-   if( tempInt > endIdx )
+      firstOut = startIdx;
+   if( firstOut > endIdx )
    {
       /* No output */
       *outBegIdx = 0;
       *outNBElement = 0;
       return TA_SUCCESS;
    }
-   outputSize = endIdx - tempInt + 1;
+   outputSize = endIdx - firstOut + 1;
 
    /* Allocate intermediate local buffer. */
    double *localOutputArray = malloc((outputSize) * sizeof(double));

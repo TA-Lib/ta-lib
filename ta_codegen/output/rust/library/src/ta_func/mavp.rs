@@ -56,6 +56,7 @@
  *                bound each ma() pass at its period's last use.
  *  072726 MF,CC  #145. Index the bucket table relative to the smallest period
  *                used, and bound it so an off-contract period cannot overflow.
+ *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
  */
 
 // Import types from parent module
@@ -196,7 +197,8 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut outputSize: usize = 0_usize;
-        let mut tempInt: usize = 0_usize;
+        let mut firstOut: usize = 0_usize;
+        let mut tempInt: i32 = 0_i32;
         let mut curPeriod: usize = 0_usize;
         let mut firstOccurrence: usize = 0_usize;
         let mut lastOccurrence: usize = 0_usize;
@@ -236,19 +238,21 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        // Calculate exact output size
+        // Calculate exact output size. A dedicated temp: tempInt is the cast-fed
+        // period below, which the Rust backend types SIGNED (#160) — reusing it
+        // here would drag this index arithmetic into i32.
         if lookbackTotal > startIdx {
-            tempInt = lookbackTotal;
+            firstOut = lookbackTotal;
         } else {
-            tempInt = startIdx;
+            firstOut = startIdx;
         }
-        if tempInt > endIdx {
+        if firstOut > endIdx {
             // No output
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        outputSize = endIdx - tempInt + 1;
+        outputSize = endIdx - firstOut + 1;
         // Allocate intermediate local buffer.
         localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
@@ -282,21 +286,21 @@ impl Core {
         // for( i = 0; i < outputSize; i += 1 )
         i = 0;
         while i < outputSize {
-            tempInt = (inPeriods[startIdx + i] as usize) as usize;
-            if tempInt < (optInMinPeriod) as usize {
-                tempInt = (optInMinPeriod) as usize;
-            } else if tempInt > (optInMaxPeriod) as usize {
-                tempInt = (optInMaxPeriod) as usize;
+            tempInt = (inPeriods[startIdx + i]) as i32;
+            if tempInt < optInMinPeriod {
+                tempInt = optInMinPeriod;
+            } else if tempInt > optInMaxPeriod {
+                tempInt = optInMaxPeriod;
             }
             if tempInt < 1 {
                 tempInt = 1;
             }
             localPeriodArray[i] = (tempInt) as i32;
-            if tempInt < minUsed {
-                minUsed = tempInt;
+            if tempInt < (minUsed) as i32 {
+                minUsed = (tempInt) as usize;
             }
-            if tempInt > maxUsed {
-                maxUsed = tempInt;
+            if tempInt > (maxUsed) as i32 {
+                maxUsed = (tempInt) as usize;
             }
             i += 1;
         }
@@ -349,8 +353,8 @@ impl Core {
                 // coerces an int-array read to the index type when it is a DIRECT
                 // operand, so bucketOfs[localPeriodArray[i]+1-minUsed] would mix
                 // i32 with usize and fail to compile.
-                tempInt = (localPeriodArray[i]) as usize;
-                bucketOfs[tempInt + 1 - minUsed] = (bucketOfs[tempInt + 1 - minUsed] + 1) as i32;
+                tempInt = localPeriodArray[i];
+                bucketOfs[(tempInt + 1 - (minUsed) as i32) as usize] = (bucketOfs[(tempInt + 1 - (minUsed) as i32) as usize] + 1) as i32;
                 i += 1;
             }
             for curPeriod in (minUsed as usize)..(maxUsed as usize) + 1 {
@@ -360,9 +364,9 @@ impl Core {
             // for( i = 0; i < outputSize; i += 1 )
             i = 0;
             while i < outputSize {
-                tempInt = (localPeriodArray[i]) as usize;
-                sortedIdx[(bucketOfs[tempInt - minUsed]) as usize] = (i) as i32;
-                bucketOfs[tempInt - minUsed] = (bucketOfs[tempInt - minUsed] + 1) as i32;
+                tempInt = localPeriodArray[i];
+                sortedIdx[(bucketOfs[(tempInt - (minUsed) as i32) as usize]) as usize] = (i) as i32;
+                bucketOfs[(tempInt - (minUsed) as i32) as usize] = (bucketOfs[(tempInt - (minUsed) as i32) as usize] + 1) as i32;
                 i += 1;
             }
             // One MA pass per period actually requested, ending at the last output
@@ -403,8 +407,8 @@ impl Core {
                         // for( i = bucketStart; i < bucketEnd; i += 1 )
                         i = bucketStart;
                         while i < bucketEnd {
-                            tempInt = (sortedIdx[i]) as usize;
-                            localFinalArray[tempInt] = localOutputArray[tempInt];
+                            tempInt = sortedIdx[i];
+                            localFinalArray[(tempInt) as usize] = localOutputArray[(tempInt) as usize];
                             i += 1;
                         }
                     }
@@ -454,7 +458,8 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut outputSize: usize = 0_usize;
-        let mut tempInt: usize = 0_usize;
+        let mut firstOut: usize = 0_usize;
+        let mut tempInt: i32 = 0_i32;
         let mut curPeriod: usize = 0_usize;
         let mut firstOccurrence: usize = 0_usize;
         let mut lastOccurrence: usize = 0_usize;
@@ -491,16 +496,16 @@ impl Core {
             return RetCode::Success;
         }
         if lookbackTotal > startIdx {
-            tempInt = lookbackTotal;
+            firstOut = lookbackTotal;
         } else {
-            tempInt = startIdx;
+            firstOut = startIdx;
         }
-        if tempInt > endIdx {
+        if firstOut > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        outputSize = endIdx - tempInt + 1;
+        outputSize = endIdx - firstOut + 1;
         localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
         sortedIdx = vec![0_i32; (outputSize * 1) as usize];
@@ -519,21 +524,21 @@ impl Core {
         // for( i = 0; i < outputSize; i += 1 )
         i = 0;
         while i < outputSize {
-            tempInt = (inPeriods[startIdx + i] as usize) as usize;
-            if tempInt < (optInMinPeriod) as usize {
-                tempInt = (optInMinPeriod) as usize;
-            } else if tempInt > (optInMaxPeriod) as usize {
-                tempInt = (optInMaxPeriod) as usize;
+            tempInt = (inPeriods[startIdx + i]) as i32;
+            if tempInt < optInMinPeriod {
+                tempInt = optInMinPeriod;
+            } else if tempInt > optInMaxPeriod {
+                tempInt = optInMaxPeriod;
             }
             if tempInt < 1 {
                 tempInt = 1;
             }
             localPeriodArray[i] = (tempInt) as i32;
-            if tempInt < minUsed {
-                minUsed = tempInt;
+            if tempInt < (minUsed) as i32 {
+                minUsed = (tempInt) as usize;
             }
-            if tempInt > maxUsed {
-                maxUsed = tempInt;
+            if tempInt > (maxUsed) as i32 {
+                maxUsed = (tempInt) as usize;
             }
             i += 1;
         }
@@ -562,8 +567,8 @@ impl Core {
             // for( i = 0; i < outputSize; i += 1 )
             i = 0;
             while i < outputSize {
-                tempInt = (localPeriodArray[i]) as usize;
-                bucketOfs[tempInt + 1 - minUsed] = (bucketOfs[tempInt + 1 - minUsed] + 1) as i32;
+                tempInt = localPeriodArray[i];
+                bucketOfs[(tempInt + 1 - (minUsed) as i32) as usize] = (bucketOfs[(tempInt + 1 - (minUsed) as i32) as usize] + 1) as i32;
                 i += 1;
             }
             for curPeriod in (minUsed as usize)..(maxUsed as usize) + 1 {
@@ -573,9 +578,9 @@ impl Core {
             // for( i = 0; i < outputSize; i += 1 )
             i = 0;
             while i < outputSize {
-                tempInt = (localPeriodArray[i]) as usize;
-                sortedIdx[(bucketOfs[tempInt - minUsed]) as usize] = (i) as i32;
-                bucketOfs[tempInt - minUsed] = (bucketOfs[tempInt - minUsed] + 1) as i32;
+                tempInt = localPeriodArray[i];
+                sortedIdx[(bucketOfs[(tempInt - (minUsed) as i32) as usize]) as usize] = (i) as i32;
+                bucketOfs[(tempInt - (minUsed) as i32) as usize] = (bucketOfs[(tempInt - (minUsed) as i32) as usize] + 1) as i32;
                 i += 1;
             }
             bucketStart = 0;
@@ -603,8 +608,8 @@ impl Core {
                         // for( i = bucketStart; i < bucketEnd; i += 1 )
                         i = bucketStart;
                         while i < bucketEnd {
-                            tempInt = (sortedIdx[i]) as usize;
-                            localFinalArray[tempInt] = localOutputArray[tempInt];
+                            tempInt = sortedIdx[i];
+                            localFinalArray[(tempInt) as usize] = localOutputArray[(tempInt) as usize];
                             i += 1;
                         }
                     }

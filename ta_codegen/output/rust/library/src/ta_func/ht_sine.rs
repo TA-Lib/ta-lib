@@ -247,7 +247,7 @@ impl Core {
         let mut smoothPrice_Idx: usize = 0;
         let mut maxIdx_smoothPrice: usize = 49;
         let mut idx: usize = 0_usize;
-        let mut DCPeriodInt: usize = 0_usize;
+        let mut DCPeriodInt: i32 = 0_i32;
         let mut DCPhase: f64 = 0.0_f64;
         let mut DCPeriod: f64 = 0.0_f64;
         let mut imagPart: f64 = 0.0_f64;
@@ -526,15 +526,15 @@ impl Core {
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             // Compute Dominant Cycle Phase
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod as usize) as usize;
+            DCPeriodInt = (DCPeriod) as i32;
             realPart = 0.0;
             imagPart = 0.0;
             // idx is used to iterate for up to 50 of the last
             // value of smoothPrice.
             idx = smoothPrice_Idx;
-            // for( i = 0; i < DCPeriodInt; i += 1 )
+            // for( i = 0; ((i) as i32) < DCPeriodInt; i += 1 )
             i = 0;
-            while i < DCPeriodInt {
+            while ((i) as i32) < DCPeriodInt {
                 tempReal = (i as f64) * constDeg2RadBy360 / (DCPeriodInt as f64);
                 tempReal2 = smoothPrice[idx];
                 realPart += (tempReal).sin() * tempReal2;
@@ -689,7 +689,7 @@ impl Core {
         let mut smoothPrice_Idx: usize = 0;
         let mut maxIdx_smoothPrice: usize = 49;
         let mut idx: usize = 0_usize;
-        let mut DCPeriodInt: usize = 0_usize;
+        let mut DCPeriodInt: i32 = 0_i32;
         let mut DCPhase: f64 = 0.0_f64;
         let mut DCPeriod: f64 = 0.0_f64;
         let mut imagPart: f64 = 0.0_f64;
@@ -923,13 +923,13 @@ impl Core {
             period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod as usize) as usize;
+            DCPeriodInt = (DCPeriod) as i32;
             realPart = 0.0;
             imagPart = 0.0;
             idx = smoothPrice_Idx;
-            // for( i = 0; i < DCPeriodInt; i += 1 )
+            // for( i = 0; ((i) as i32) < DCPeriodInt; i += 1 )
             i = 0;
-            while i < DCPeriodInt {
+            while ((i) as i32) < DCPeriodInt {
                 tempReal = (i as f64) * constDeg2RadBy360 / (DCPeriodInt as f64);
                 tempReal2 = smoothPrice[idx];
                 realPart += (tempReal).sin() * tempReal2;
@@ -1043,7 +1043,7 @@ struct HtSineStreamState {
     constDeg2RadBy360: f64,
     smoothPeriod: f64,
     idx: usize,
-    DCPeriodInt: usize,
+    DCPeriodInt: i32,
     DCPhase: f64,
     DCPeriod: f64,
     imagPart: f64,
@@ -1206,15 +1206,15 @@ impl Core {
         sp.smoothPeriod = (0.67 as f64).mul_add(sp.smoothPeriod, 0.33 * sp.period);
         // Compute Dominant Cycle Phase
         sp.DCPeriod = sp.smoothPeriod + 0.5;
-        sp.DCPeriodInt = (sp.DCPeriod as usize) as usize;
+        sp.DCPeriodInt = (sp.DCPeriod) as i32;
         sp.realPart = 0.0;
         sp.imagPart = 0.0;
         // idx is used to iterate for up to 50 of the last
         // value of smoothPrice.
         sp.idx = sp.smoothPrice_Idx;
-        // for( sp.i = 0; sp.i < sp.DCPeriodInt; sp.i += 1 )
+        // for( sp.i = 0; ((sp.i) as i32) < sp.DCPeriodInt; sp.i += 1 )
         sp.i = 0;
-        while sp.i < sp.DCPeriodInt {
+        while ((sp.i) as i32) < sp.DCPeriodInt {
             sp.tempReal = (sp.i as f64) * sp.constDeg2RadBy360 / (sp.DCPeriodInt as f64);
             sp.tempReal2 = sp.cb_smoothPrice[sp.idx];
             sp.realPart += (sp.tempReal).sin() * sp.tempReal2;
@@ -1341,7 +1341,7 @@ impl Core {
         let mut smoothPrice_Idx: usize = 0;
         let mut maxIdx_smoothPrice: usize = 49;
         let mut idx: usize = 0_usize;
-        let mut DCPeriodInt: usize = 0_usize;
+        let mut DCPeriodInt: i32 = 0_i32;
         let mut DCPhase: f64 = 0.0_f64;
         let mut DCPeriod: f64 = 0.0_f64;
         let mut imagPart: f64 = 0.0_f64;
@@ -1620,15 +1620,15 @@ impl Core {
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             // Compute Dominant Cycle Phase
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod as usize) as usize;
+            DCPeriodInt = (DCPeriod) as i32;
             realPart = 0.0;
             imagPart = 0.0;
             // idx is used to iterate for up to 50 of the last
             // value of smoothPrice.
             idx = smoothPrice_Idx;
-            // for( i = 0; i < DCPeriodInt; i += 1 )
+            // for( i = 0; ((i) as i32) < DCPeriodInt; i += 1 )
             i = 0;
-            while i < DCPeriodInt {
+            while ((i) as i32) < DCPeriodInt {
                 tempReal = (i as f64) * constDeg2RadBy360 / (DCPeriodInt as f64);
                 tempReal2 = smoothPrice[idx];
                 realPart += (tempReal).sin() * tempReal2;
@@ -1865,7 +1865,7 @@ impl Core {
         let mut smoothPrice_Idx: usize = 0;
         let mut maxIdx_smoothPrice: usize = 49;
         let mut idx: usize = 0_usize;
-        let mut DCPeriodInt: usize = 0_usize;
+        let mut DCPeriodInt: i32 = 0_i32;
         let mut DCPhase: f64 = 0.0_f64;
         let mut DCPeriod: f64 = 0.0_f64;
         let mut imagPart: f64 = 0.0_f64;
@@ -2144,15 +2144,15 @@ impl Core {
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             // Compute Dominant Cycle Phase
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod as usize) as usize;
+            DCPeriodInt = (DCPeriod) as i32;
             realPart = 0.0;
             imagPart = 0.0;
             // idx is used to iterate for up to 50 of the last
             // value of smoothPrice.
             idx = smoothPrice_Idx;
-            // for( i = 0; i < DCPeriodInt; i += 1 )
+            // for( i = 0; ((i) as i32) < DCPeriodInt; i += 1 )
             i = 0;
-            while i < DCPeriodInt {
+            while ((i) as i32) < DCPeriodInt {
                 tempReal = (i as f64) * constDeg2RadBy360 / (DCPeriodInt as f64);
                 tempReal2 = smoothPrice[idx];
                 realPart += (tempReal).sin() * tempReal2;

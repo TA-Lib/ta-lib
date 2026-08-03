@@ -208,7 +208,7 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
     index_vars.insert("historyLen".to_string());
     let mut sentinel_vars = HashSet::new();
     collect_sentinel_vars(body, &mut sentinel_vars);
-    collect_signed_int_vars(body, &index_vars, &mut sentinel_vars);
+    collect_signed_int_vars(body, &index_vars, &real_vars, &mut sentinel_vars);
     for sv in &sentinel_vars {
         index_vars.remove(sv);
     }

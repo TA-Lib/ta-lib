@@ -243,7 +243,7 @@ impl Core {
         let mut rad2Deg: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         let mut smoothPeriod: f64 = 0.0_f64;
-        let mut DCPeriodInt: usize = 0_usize;
+        let mut DCPeriodInt: i32 = 0_i32;
         let mut DCPeriod: f64 = 0.0_f64;
         a = 0.0962;
         b = 0.5769;
@@ -506,7 +506,7 @@ impl Core {
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             // Compute Trendline
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod as usize) as usize;
+            DCPeriodInt = (DCPeriod) as i32;
             // Average the RAW price over the dominant cycle period
             // (Ehlers, "Rocket Science for Traders": the Instantaneous
             // Trendline sums Price — not SmoothPrice, which only feeds
@@ -521,7 +521,7 @@ impl Core {
             // for( i = 0; i < 50; i += 1 )
             i = 0;
             while i < 50 {
-                if i < DCPeriodInt {
+                if ((i) as i32) < DCPeriodInt {
                     tempReal += inReal[today - i];
                 }
                 i += 1;
@@ -648,7 +648,7 @@ impl Core {
         let mut rad2Deg: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         let mut smoothPeriod: f64 = 0.0_f64;
-        let mut DCPeriodInt: usize = 0_usize;
+        let mut DCPeriodInt: i32 = 0_i32;
         let mut DCPeriod: f64 = 0.0_f64;
         assert!(endIdx < inReal.len());
         let _assertLb = self.ht_trendline_lookback();
@@ -869,12 +869,12 @@ impl Core {
             period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod as usize) as usize;
+            DCPeriodInt = (DCPeriod) as i32;
             tempReal = 0.0;
             // for( i = 0; i < 50; i += 1 )
             i = 0;
             while i < 50 {
-                if i < DCPeriodInt {
+                if ((i) as i32) < DCPeriodInt {
                     tempReal += inReal[today - i];
                 }
                 i += 1;
@@ -967,7 +967,7 @@ struct HtTrendlineStreamState {
     I1ForEvenPrev3: f64,
     rad2Deg: f64,
     smoothPeriod: f64,
-    DCPeriodInt: usize,
+    DCPeriodInt: i32,
     DCPeriod: f64,
     streamParity: usize,
     ringPos_trailingWMAIdx: usize,
@@ -1124,7 +1124,7 @@ impl Core {
         sp.smoothPeriod = (0.67 as f64).mul_add(sp.smoothPeriod, 0.33 * sp.period);
         // Compute Trendline
         sp.DCPeriod = sp.smoothPeriod + 0.5;
-        sp.DCPeriodInt = (sp.DCPeriod as usize) as usize;
+        sp.DCPeriodInt = (sp.DCPeriod) as i32;
         // Average the RAW price over the dominant cycle period
         // (Ehlers, "Rocket Science for Traders": the Instantaneous
         // Trendline sums Price — not SmoothPrice, which only feeds
@@ -1139,7 +1139,7 @@ impl Core {
         // for( sp.i = 0; sp.i < 50; sp.i += 1 )
         sp.i = 0;
         while sp.i < 50 {
-            if sp.i < sp.DCPeriodInt {
+            if ((sp.i) as i32) < sp.DCPeriodInt {
                 sp.tempReal += sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - sp.i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - sp.i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - sp.i })) as usize];
             }
             sp.i += 1;
@@ -1242,7 +1242,7 @@ impl Core {
         let mut rad2Deg: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         let mut smoothPeriod: f64 = 0.0_f64;
-        let mut DCPeriodInt: usize = 0_usize;
+        let mut DCPeriodInt: i32 = 0_i32;
         let mut DCPeriod: f64 = 0.0_f64;
         a = 0.0962;
         b = 0.5769;
@@ -1505,7 +1505,7 @@ impl Core {
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             // Compute Trendline
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod as usize) as usize;
+            DCPeriodInt = (DCPeriod) as i32;
             // Average the RAW price over the dominant cycle period
             // (Ehlers, "Rocket Science for Traders": the Instantaneous
             // Trendline sums Price — not SmoothPrice, which only feeds
@@ -1520,7 +1520,7 @@ impl Core {
             // for( i = 0; i < 50; i += 1 )
             i = 0;
             while i < 50 {
-                if i < DCPeriodInt {
+                if ((i) as i32) < DCPeriodInt {
                     tempReal += inReal[today - i];
                 }
                 i += 1;
@@ -1726,7 +1726,7 @@ impl Core {
         let mut rad2Deg: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         let mut smoothPeriod: f64 = 0.0_f64;
-        let mut DCPeriodInt: usize = 0_usize;
+        let mut DCPeriodInt: i32 = 0_i32;
         let mut DCPeriod: f64 = 0.0_f64;
         a = 0.0962;
         b = 0.5769;
@@ -1989,7 +1989,7 @@ impl Core {
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             // Compute Trendline
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod as usize) as usize;
+            DCPeriodInt = (DCPeriod) as i32;
             // Average the RAW price over the dominant cycle period
             // (Ehlers, "Rocket Science for Traders": the Instantaneous
             // Trendline sums Price — not SmoothPrice, which only feeds
@@ -2004,7 +2004,7 @@ impl Core {
             // for( i = 0; i < 50; i += 1 )
             i = 0;
             while i < 50 {
-                if i < DCPeriodInt {
+                if ((i) as i32) < DCPeriodInt {
                     tempReal += inReal[today - i];
                 }
                 i += 1;

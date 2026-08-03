@@ -99,7 +99,7 @@ pub fn build_fma_var_sets(
     }
     let mut sentinel_vars = HashSet::new();
     collect_sentinel_vars(body, &mut sentinel_vars);
-    collect_signed_int_vars(body, &index_vars, &mut sentinel_vars);
+    collect_signed_int_vars(body, &index_vars, &real_vars, &mut sentinel_vars);
     for sv in &sentinel_vars {
         index_vars.remove(sv);
     }

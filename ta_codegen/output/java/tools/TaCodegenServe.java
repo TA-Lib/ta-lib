@@ -128936,6 +128936,7 @@ class Core {
      *                calls no longer corrupt the input the ma() passes re-read.
      *  072626 MF,CC  #143. Group outputs by clamped period (counting sort) and
      *                bound each ma() pass at its period's last use.
+     *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
      *  072726 MF,CC  #145. Index the bucket table relative to the smallest period
      *                used, and bound it so an off-contract period cannot overflow.
      */
@@ -128985,6 +128986,7 @@ class Core {
           int i = 0;
           int lookbackTotal = 0;
           int outputSize = 0;
+          int firstOut = 0;
           int tempInt = 0;
           int curPeriod = 0;
           int firstOccurrence = 0;
@@ -129044,19 +129046,22 @@ class Core {
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          /* Calculate exact output size */
+          /* Calculate exact output size. A dedicated temp: tempInt is the cast-fed
+           * period below, which the Rust backend types SIGNED (#160) — reusing it
+           * here would drag this index arithmetic into i32.
+           */
           if( lookbackTotal > startIdx ) {
-             tempInt = lookbackTotal;
+             firstOut = lookbackTotal;
           } else {
-             tempInt = startIdx;
+             firstOut = startIdx;
           }
-          if( tempInt > endIdx ) {
+          if( firstOut > endIdx ) {
              /* No output */
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          outputSize = endIdx - tempInt + 1;
+          outputSize = endIdx - firstOut + 1;
           /* Allocate intermediate local buffer. */
           localOutputArray = new double[(int)(outputSize * 1)];
           localPeriodArray = new int[(int)(outputSize * 1)];
@@ -129237,6 +129242,7 @@ class Core {
           int i = 0;
           int lookbackTotal = 0;
           int outputSize = 0;
+          int firstOut = 0;
           int tempInt = 0;
           int curPeriod = 0;
           int firstOccurrence = 0;
@@ -129269,16 +129275,16 @@ class Core {
              return RetCode.Success ;
           }
           if( lookbackTotal > startIdx ) {
-             tempInt = lookbackTotal;
+             firstOut = lookbackTotal;
           } else {
-             tempInt = startIdx;
+             firstOut = startIdx;
           }
-          if( tempInt > endIdx ) {
+          if( firstOut > endIdx ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          outputSize = endIdx - tempInt + 1;
+          outputSize = endIdx - firstOut + 1;
           localOutputArray = new double[(int)(outputSize * 1)];
           localPeriodArray = new int[(int)(outputSize * 1)];
           sortedIdx = new int[(int)(outputSize * 1)];
@@ -129394,6 +129400,7 @@ class Core {
           int i = 0;
           int lookbackTotal = 0;
           int outputSize = 0;
+          int firstOut = 0;
           int tempInt = 0;
           int curPeriod = 0;
           int firstOccurrence = 0;
@@ -129442,16 +129449,16 @@ class Core {
              return RetCode.Success ;
           }
           if( lookbackTotal > startIdx ) {
-             tempInt = lookbackTotal;
+             firstOut = lookbackTotal;
           } else {
-             tempInt = startIdx;
+             firstOut = startIdx;
           }
-          if( tempInt > endIdx ) {
+          if( firstOut > endIdx ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          outputSize = endIdx - tempInt + 1;
+          outputSize = endIdx - firstOut + 1;
           localOutputArray = new double[(int)(outputSize * 1)];
           localPeriodArray = new int[(int)(outputSize * 1)];
           sortedIdx = new int[(int)(outputSize * 1)];
@@ -129567,6 +129574,7 @@ class Core {
           int i = 0;
           int lookbackTotal = 0;
           int outputSize = 0;
+          int firstOut = 0;
           int tempInt = 0;
           int curPeriod = 0;
           int firstOccurrence = 0;
@@ -129599,16 +129607,16 @@ class Core {
              return RetCode.Success ;
           }
           if( lookbackTotal > startIdx ) {
-             tempInt = lookbackTotal;
+             firstOut = lookbackTotal;
           } else {
-             tempInt = startIdx;
+             firstOut = startIdx;
           }
-          if( tempInt > endIdx ) {
+          if( firstOut > endIdx ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.Success ;
           }
-          outputSize = endIdx - tempInt + 1;
+          outputSize = endIdx - firstOut + 1;
           localOutputArray = new double[(int)(outputSize * 1)];
           localPeriodArray = new int[(int)(outputSize * 1)];
           sortedIdx = new int[(int)(outputSize * 1)];
