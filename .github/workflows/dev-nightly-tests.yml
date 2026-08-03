@@ -241,6 +241,52 @@ jobs:
           # Benchmarks are skipped: CI timing is noise.
           python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen-only
 
+  # Synthetic-function gate. The cross-language job above verifies the SHIPPED
+  # functions; this one verifies generator surface no shipped function uses
+  # (bitwise operators, integer truthiness, do-while, switch-on-expression, ...).
+  # scripts/synth_gate.py copies the committed template functions from
+  # ta_codegen/generator/input_synth/ into ta_codegen/input/ inside a throwaway git
+  # worktree, regenerates ALL backends there, and runs the usual gates scoped
+  # to the SYNTH family: --codegen-only (stream_verify / OpenAndFill,
+  # batch-vs-stream bitwise in all four servers) and --xlang-hash (batch
+  # parity, Rust/Java/C# vs the in-process C golden, bitwise). The script
+  # asserts the SYNTH functions were actually swept in every leg, so a
+  # refactor that silently stops enumerating them fails instead of passing an
+  # empty run. Nothing synthetic ever lands in the shipped tree.
+  synth-gate:
+    name: "synth-gate: unshipped generator surface, all langs"
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+          fetch-depth: 0 # ta_ref_serve builds from the pinned reference tag
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install JDK
+        shell: bash
+        run: |
+          sudo apt update
+          sudo apt install -y openjdk-21-jdk
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Run the synthetic cross-language gate
+        shell: bash
+        run: |
+          # Rust toolchain and cmake are preinstalled on ubuntu-latest.
+          python3 scripts/synth_gate.py
+
   # Debug-profile Rust codegen gate. The release cross-language job above wraps a
   # usize overflow silently (the wrapped value is dead), so it cannot see the
   # IMI/APO/PPO-class arithmetic-overflow bugs: those only manifest as a debug

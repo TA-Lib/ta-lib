@@ -129,6 +129,10 @@ the nightly).
 `scripts/build.py check-source-lists` verifies the two lists agree (also run
 by the dev nightly regen-check job).
 
+`scripts/synth_gate.py` (nightly `synth-gate` job; same script locally) tests
+generator constructs no shipped indicator uses, via throwaway-worktree synthetic
+functions — see `ta_codegen/generator/input_synth/README.md`.
+
 ### `--function=CSV` Filter
 
 The `--function` flag accepts a comma-separated list of names, substring-matched
