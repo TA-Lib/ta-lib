@@ -59,6 +59,7 @@ public partial class Core
     *                bound each ma() pass at its period's last use.
     *  072726 MF,CC  #145. Index the bucket table relative to the smallest period
     *                used, and bound it so an off-contract period cannot overflow.
+    *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
     */
    /// <summary>
    /// Number of leading input bars <c>MovingAverageVariablePeriod</c> consumes
@@ -107,6 +108,7 @@ public partial class Core
       int i = 0;
       int lookbackTotal = 0;
       int outputSize = 0;
+      int firstOut = 0;
       int tempInt = 0;
       int curPeriod = 0;
       int firstOccurrence = 0;
@@ -166,19 +168,22 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      /* Calculate exact output size */
+      /* Calculate exact output size. A dedicated temp: tempInt is the cast-fed
+       * period below, which the Rust backend types SIGNED (#160) — reusing it
+       * here would drag this index arithmetic into i32.
+       */
       if( lookbackTotal > startIdx ) {
-         tempInt = lookbackTotal;
+         firstOut = lookbackTotal;
       } else {
-         tempInt = startIdx;
+         firstOut = startIdx;
       }
-      if( tempInt > endIdx ) {
+      if( firstOut > endIdx ) {
          /* No output */
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.Success ;
       }
-      outputSize = endIdx - tempInt + 1;
+      outputSize = endIdx - firstOut + 1;
       /* Allocate intermediate local buffer. */
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
@@ -361,6 +366,7 @@ public partial class Core
       int i = 0;
       int lookbackTotal = 0;
       int outputSize = 0;
+      int firstOut = 0;
       int tempInt = 0;
       int curPeriod = 0;
       int firstOccurrence = 0;
@@ -393,16 +399,16 @@ public partial class Core
          return RetCode.Success ;
       }
       if( lookbackTotal > startIdx ) {
-         tempInt = lookbackTotal;
+         firstOut = lookbackTotal;
       } else {
-         tempInt = startIdx;
+         firstOut = startIdx;
       }
-      if( tempInt > endIdx ) {
+      if( firstOut > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.Success ;
       }
-      outputSize = endIdx - tempInt + 1;
+      outputSize = endIdx - firstOut + 1;
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
       sortedIdx = new int[(int)(outputSize * 1)];
@@ -520,6 +526,7 @@ public partial class Core
       int i = 0;
       int lookbackTotal = 0;
       int outputSize = 0;
+      int firstOut = 0;
       int tempInt = 0;
       int curPeriod = 0;
       int firstOccurrence = 0;
@@ -568,16 +575,16 @@ public partial class Core
          return RetCode.Success ;
       }
       if( lookbackTotal > startIdx ) {
-         tempInt = lookbackTotal;
+         firstOut = lookbackTotal;
       } else {
-         tempInt = startIdx;
+         firstOut = startIdx;
       }
-      if( tempInt > endIdx ) {
+      if( firstOut > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.Success ;
       }
-      outputSize = endIdx - tempInt + 1;
+      outputSize = endIdx - firstOut + 1;
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
       sortedIdx = new int[(int)(outputSize * 1)];
@@ -690,6 +697,7 @@ public partial class Core
       int i = 0;
       int lookbackTotal = 0;
       int outputSize = 0;
+      int firstOut = 0;
       int tempInt = 0;
       int curPeriod = 0;
       int firstOccurrence = 0;
@@ -722,16 +730,16 @@ public partial class Core
          return RetCode.Success ;
       }
       if( lookbackTotal > startIdx ) {
-         tempInt = lookbackTotal;
+         firstOut = lookbackTotal;
       } else {
-         tempInt = startIdx;
+         firstOut = startIdx;
       }
-      if( tempInt > endIdx ) {
+      if( firstOut > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.Success ;
       }
-      outputSize = endIdx - tempInt + 1;
+      outputSize = endIdx - firstOut + 1;
       localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
       sortedIdx = new int[(int)(outputSize * 1)];

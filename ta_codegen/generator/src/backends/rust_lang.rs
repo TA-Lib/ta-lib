@@ -334,8 +334,14 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     // Pre-scan for sentinel variables (assigned -1) — these must be i32, not usize
     let mut sentinel_vars = std::collections::HashSet::new();
     collect_sentinel_vars(&body_func.body, &mut sentinel_vars);
-    // Also detect integer variables that participate in signed arithmetic (< 0, 0 - N)
-    collect_signed_int_vars(&body_func.body, &index_vars, &mut sentinel_vars);
+    // Also detect integer variables that participate in signed arithmetic
+    // (< 0, 0 - N, negative-capable casts — issue #160). Deliberately NOT
+    // transitive through var-to-var copies: propagating the extremum family's
+    // -1 sentinels into their loop indices churned 14 hot files for no
+    // behavior change. A local needing signedness must be assigned a signed
+    // EXPRESSION (cast, negative literal, 0-N) directly.
+    collect_signed_int_vars(&body_func.body, &index_vars, &real_vars, &mut sentinel_vars);
+    reject_unsupported_negative_casts(&body_func.body, &real_vars, &func.name);
     // Remove sentinel/signed vars from index_vars — they're i32, not usize
     for sv in &sentinel_vars {
         index_vars.remove(sv);
@@ -527,7 +533,7 @@ fn gen_guarded_func(
         g_index_vars.insert("endIdx".to_string());
         let mut g_sentinel_vars = std::collections::HashSet::new();
         collect_sentinel_vars(&func.body, &mut g_sentinel_vars);
-        collect_signed_int_vars(&func.body, &g_index_vars, &mut g_sentinel_vars);
+        collect_signed_int_vars(&func.body, &g_index_vars, &g_real_vars, &mut g_sentinel_vars);
         for sv in &g_sentinel_vars {
             g_index_vars.remove(sv);
         }
@@ -620,7 +626,7 @@ fn gen_guarded_func(
         g_index_vars.insert("outNBElement".to_string());
         let mut g_sentinel_vars = std::collections::HashSet::new();
         collect_sentinel_vars(&func.body, &mut g_sentinel_vars);
-        collect_signed_int_vars(&func.body, &g_index_vars, &mut g_sentinel_vars);
+        collect_signed_int_vars(&func.body, &g_index_vars, &g_real_vars, &mut g_sentinel_vars);
         for sv in &g_sentinel_vars {
             g_index_vars.remove(sv);
         }
@@ -752,7 +758,11 @@ fn gen_guarded_func(
                     &g_output_names, &g_opt_real_params, enums, registry,
                     helpers, &g_inline_counter,
                 ));
-                let rendered_init = render_expr(&new_init, &g_ctx, &g_opt_real_params, registry, helpers);
+                let rendered_init = if g_ctx.sentinel_vars.contains(name) {
+                    render_signed_dest_value(&new_init, &g_ctx, &g_opt_real_params, registry, helpers)
+                } else {
+                    render_expr(&new_init, &g_ctx, &g_opt_real_params, registry, helpers)
+                };
                 let wrapped_init = if (g_ctx.real_vars.contains(name) || *vt == VarType::Real) && expr_is_untyped_integer(&new_init) {
                     format!("(({rendered_init}) as f64)")
                 } else {
@@ -1038,7 +1048,11 @@ fn gen_unguarded_or_private_func(
                 &output_names, &opt_real_params, enums, registry,
                 helpers, &inline_counter,
             ));
-            let rendered_init = render_expr(&new_init, ctx, &opt_real_params, registry, helpers);
+            let rendered_init = if ctx.sentinel_vars.contains(name) {
+                render_signed_dest_value(&new_init, ctx, &opt_real_params, registry, helpers)
+            } else {
+                render_expr(&new_init, ctx, &opt_real_params, registry, helpers)
+            };
             let wrapped_init = if (ctx.real_vars.contains(name) || *vt == VarType::Real) && expr_is_untyped_integer(&new_init) {
                 format!("(({rendered_init}) as f64)")
             } else {
@@ -1279,23 +1293,145 @@ fn is_negative_one(expr: &Expr) -> bool {
     )
 }
 
+/// Issue #160: fail generation LOUDLY when a negative-capable `(int)(float)`
+/// cast appears anywhere the Rust backend cannot yet render sign-faithfully.
+/// Supported positions: the whole right-hand side of a plain assignment to a
+/// signed local or an i32 array slot, or a VarDecl initializer of a signed
+/// local. Everything else (nested in arithmetic, compound assigns, conditions,
+/// call arguments) would silently saturate negatives to 0 — reject instead.
+pub(crate) fn reject_unsupported_negative_casts(
+    body: &[Statement],
+    real_vars: &std::collections::HashSet<String>,
+    func_name: &str,
+) {
+    fn check_expr(e: &Expr, rv: &std::collections::HashSet<String>, f: &str) {
+        crate::streaming::walk_expr(e, &mut |x| {
+            if let Expr::Cast(VarType::Integer | VarType::Index, inner) = x {
+                assert!(
+                    !cast_inner_negative_capable(inner, rv),
+                    "{f}: a (int) cast of a possibly-negative double is only \
+                     supported as the whole right-hand side of a plain \
+                     assignment (issue #160); found it nested at {x:?}. \
+                     Stage it through its own int local first."
+                );
+            }
+        });
+    }
+    // Allowed root: the cast itself — but its INNER must still be clean.
+    fn check_value(v: &Expr, rv: &std::collections::HashSet<String>, f: &str) {
+        if let Expr::Cast(VarType::Integer | VarType::Index, inner) = v {
+            check_expr(inner, rv, f);
+        } else {
+            check_expr(v, rv, f);
+        }
+    }
+    for stmt in body {
+        match stmt {
+            Statement::VarDecl { init: Some(init), .. } => check_value(init, real_vars, func_name),
+            Statement::Assign { value, compound, .. } => {
+                if *compound {
+                    // Desugared form embeds the target: check only the true RHS.
+                    if let Expr::BinOp(_, _, rhs) = value {
+                        check_expr(rhs, real_vars, func_name);
+                    } else {
+                        check_expr(value, real_vars, func_name);
+                    }
+                } else {
+                    check_value(value, real_vars, func_name);
+                }
+            }
+            Statement::If { condition, then_body, else_body, .. } => {
+                check_expr(condition, real_vars, func_name);
+                reject_unsupported_negative_casts(then_body, real_vars, func_name);
+                reject_unsupported_negative_casts(else_body, real_vars, func_name);
+            }
+            Statement::While { condition, body: b } | Statement::DoWhile { condition, body: b } => {
+                check_expr(condition, real_vars, func_name);
+                reject_unsupported_negative_casts(b, real_vars, func_name);
+            }
+            Statement::For { count, body: b, .. } => {
+                check_expr(count, real_vars, func_name);
+                reject_unsupported_negative_casts(b, real_vars, func_name);
+            }
+            Statement::ForC { init, condition, update, body: b } => {
+                reject_unsupported_negative_casts(std::slice::from_ref(init), real_vars, func_name);
+                check_expr(condition, real_vars, func_name);
+                reject_unsupported_negative_casts(std::slice::from_ref(update), real_vars, func_name);
+                reject_unsupported_negative_casts(b, real_vars, func_name);
+            }
+            Statement::Block { body: b } => reject_unsupported_negative_casts(b, real_vars, func_name),
+            Statement::Switch { expr, cases, default, .. } => {
+                check_expr(expr, real_vars, func_name);
+                for (_, cb) in cases {
+                    reject_unsupported_negative_casts(cb, real_vars, func_name);
+                }
+                reject_unsupported_negative_casts(default, real_vars, func_name);
+            }
+            #[allow(clippy::match_same_arms)] // Return/Expr coincide today; distinct concepts
+            Statement::Return { value: Some(e) } => check_expr(e, real_vars, func_name),
+            Statement::Expr(e) => check_expr(e, real_vars, func_name),
+            _ => {}
+        }
+    }
+}
+
+/// Issue #160: render a value destined for a SIGNED (i32) local or an i32
+/// array slot. A whole-RHS `(int)(float)` cast renders `as i32` — the default
+/// f64→usize cast saturates negatives to 0 before any later conversion could
+/// recover them. Non-cast values render normally.
+fn render_signed_dest_value(
+    value: &Expr,
+    ctx: &RustRenderCtx,
+    opt_real_params: &[String],
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
+    if let Expr::Cast(VarType::Integer | VarType::Index, inner) = value {
+        if expr_is_float_typed_ctx(inner, Some(ctx)) {
+            let inner_str = render_expr(inner, ctx, opt_real_params, registry, helpers);
+            return format!("({inner_str}) as i32");
+        }
+    }
+    render_expr(value, ctx, opt_real_params, registry, helpers)
+}
+
+/// True when `inner` is a float-typed cast operand that could be negative —
+/// the issue #160 class. `real_vars` recognizes plain double LOCALS (the
+/// name-heuristic float classifier alone misses e.g. `double basis; (int)basis`).
+/// sqrt/fabs/abs inners are provably non-negative (HMA's sqrtPeriod stays usize).
+fn cast_inner_negative_capable(inner: &Expr, real_vars: &std::collections::HashSet<String>) -> bool {
+    let is_float = fma::expr_is_float_typed(inner, None)
+        || matches!(inner, Expr::Var(v) if real_vars.contains(v));
+    is_float
+        && !matches!(inner,
+                     Expr::FuncCall(name, _) if name == "sqrt" || name == "fabs" || name == "abs")
+}
+
 /// Check if an expression can produce a negative integer value.
-/// Catches: `0 - N`, `-N` literal, `X * (... ? 1 : (0-N))`, ternary with negative branch.
-fn expr_can_be_negative(expr: &Expr) -> bool {
+/// Catches: `0 - N`, `-N` literal, negative-capable `(int)` casts (#160),
+/// arithmetic/ternary combinations of the above.
+fn expr_can_be_negative(expr: &Expr, real_vars: &std::collections::HashSet<String>) -> bool {
     match expr {
-        // 0 - N is negative
-        Expr::BinOp(left, BinOp::Sub, _right) => {
+        // 0 - N is negative; any subtraction of/by a negative-capable operand
+        // can be negative too.
+        Expr::BinOp(left, BinOp::Sub, right) => {
             matches!(left.as_ref(), Expr::IntLiteral(0))
+                || expr_can_be_negative(left, real_vars)
+                || expr_can_be_negative(right, real_vars)
         }
         // ~x is negative for every x >= 0 (two's complement)
         Expr::BitwiseNot(_) => true,
-        // Multiplication or addition where either side can be negative
-        Expr::BinOp(left, BinOp::Mul | BinOp::Add, right) => {
-            expr_can_be_negative(left) || expr_can_be_negative(right)
+        // (int)(<float expr>) truncates: negative doubles yield negative ints (#160)
+        Expr::Cast(VarType::Integer | VarType::Index, inner) => {
+            cast_inner_negative_capable(inner, real_vars)
+        }
+        // Arithmetic where either side can be negative
+        Expr::BinOp(left, BinOp::Mul | BinOp::Add | BinOp::Div | BinOp::Mod, right) => {
+            expr_can_be_negative(left, real_vars) || expr_can_be_negative(right, real_vars)
         }
         // Ternary: if either branch can be negative
         Expr::Ternary(_, then_e, else_e) => {
-            expr_can_be_negative(then_e) || expr_can_be_negative(else_e)
+            expr_can_be_negative(then_e, real_vars) || expr_can_be_negative(else_e, real_vars)
         }
         // Negative integer literal
         Expr::IntLiteral(n) if *n < 0 => true,
@@ -1339,6 +1475,7 @@ fn condition_implies_signed(
 pub(crate) fn collect_signed_int_vars(
     body: &[Statement],
     int_vars: &std::collections::HashSet<String>,
+    real_vars: &std::collections::HashSet<String>,
     signed_vars: &mut std::collections::HashSet<String>,
 ) {
     for stmt in body {
@@ -1348,42 +1485,42 @@ pub(crate) fn collect_signed_int_vars(
                 var_type: VarType::Integer | VarType::Index,
                 name,
                 init: Some(init),
-            } if expr_can_be_negative(init) => {
+            } if expr_can_be_negative(init, real_vars) => {
                 signed_vars.insert(name.clone());
             }
             // Integer variable assigned a negative expression
             Statement::Assign { target: Expr::Var(name), value, .. }
-                if int_vars.contains(name) && expr_can_be_negative(value) =>
+                if int_vars.contains(name) && expr_can_be_negative(value, real_vars) =>
             {
                 signed_vars.insert(name.clone());
             }
             // Condition checking `var < 0` (only on integer vars)
             Statement::If { condition, then_body, else_body, .. } => {
                 condition_implies_signed(condition, int_vars, signed_vars);
-                collect_signed_int_vars(then_body, int_vars, signed_vars);
-                collect_signed_int_vars(else_body, int_vars, signed_vars);
+                collect_signed_int_vars(then_body, int_vars, real_vars, signed_vars);
+                collect_signed_int_vars(else_body, int_vars, real_vars, signed_vars);
             }
             Statement::While { condition, body: inner, .. }
             | Statement::DoWhile { condition, body: inner, .. } => {
                 condition_implies_signed(condition, int_vars, signed_vars);
-                collect_signed_int_vars(inner, int_vars, signed_vars);
+                collect_signed_int_vars(inner, int_vars, real_vars, signed_vars);
             }
             Statement::For { body: inner, .. } => {
-                collect_signed_int_vars(inner, int_vars, signed_vars);
+                collect_signed_int_vars(inner, int_vars, real_vars, signed_vars);
             }
             Statement::ForC { init, condition, body: inner, .. } => {
                 condition_implies_signed(condition, int_vars, signed_vars);
-                collect_signed_int_vars(&[init.as_ref().clone()], int_vars, signed_vars);
-                collect_signed_int_vars(inner, int_vars, signed_vars);
+                collect_signed_int_vars(&[init.as_ref().clone()], int_vars, real_vars, signed_vars);
+                collect_signed_int_vars(inner, int_vars, real_vars, signed_vars);
             }
             Statement::Block { body: block_body } => {
-                collect_signed_int_vars(block_body, int_vars, signed_vars);
+                collect_signed_int_vars(block_body, int_vars, real_vars, signed_vars);
             }
             Statement::Switch { cases, default, .. } => {
                 for (_, case_body) in cases {
-                    collect_signed_int_vars(case_body, int_vars, signed_vars);
+                    collect_signed_int_vars(case_body, int_vars, real_vars, signed_vars);
                 }
-                collect_signed_int_vars(default, int_vars, signed_vars);
+                collect_signed_int_vars(default, int_vars, real_vars, signed_vars);
             }
             _ => {}
         }
@@ -2090,6 +2227,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
                             // Check if the target is T-typed (Real variable)
                             let target_is_real = self.ctx.real_vars.contains(tname)
                                 || (!self.ctx.index_vars.contains(tname)
+                                    && !self.ctx.sentinel_vars.contains(tname)
                                     && !is_likely_index_var(tname)
                                     && !is_i32_opt_in_param(tname)
                                     && !tname.ends_with("_avgPeriod")
@@ -2106,9 +2244,10 @@ impl StatementEmitter for RustStmt<'_, '_> {
                             } else if !target_is_real
                                 && (self.ctx.index_vars.contains(tname) || is_likely_index_var(tname))
                                 && !self.ctx.sentinel_vars.contains(tname)
-                                && expr_is_i32_typed(right)
+                                && expr_is_i32_typed_ctx(right, self.ctx)
                             {
-                                // usize target, i32 RHS: cast to usize
+                                // usize target, i32-typed RHS (incl. sentinel
+                                // locals, runtime-non-negative here): as usize
                                 format!("({rhs_str}) as usize")
                             } else {
                                 rhs_str
@@ -2123,7 +2262,21 @@ impl StatementEmitter for RustStmt<'_, '_> {
             }
         }
         let target_str = render_assign_target(target, self.ctx, self.opt_real_params, self.registry, self.helpers);
-        let value_str = render_expr(&new_value, self.ctx, self.opt_real_params, self.registry, self.helpers);
+        // Issue #160: signed destinations render a whole-RHS (int)(float) cast
+        // as `as i32` (see render_signed_dest_value). Applies to sentinel
+        // locals and to i32 array slots (outInteger[i] = (int)(x)).
+        let signed_dest = match target {
+            Expr::Var(tname) => self.ctx.sentinel_vars.contains(tname),
+            Expr::ArrayAccess(aname, _) => {
+                self.ctx.int_output_names.contains(aname) || is_int_array_or_vec(aname, self.ctx)
+            }
+            _ => false,
+        };
+        let value_str = if signed_dest {
+            render_signed_dest_value(&new_value, self.ctx, self.opt_real_params, self.registry, self.helpers)
+        } else {
+            render_expr(&new_value, self.ctx, self.opt_real_params, self.registry, self.helpers)
+        };
         let needs_f64_cast = if let Expr::ArrayAccess(name, _) = target {
             self.output_names.contains(name)
                 && !self.ctx.int_output_names.contains(name)
@@ -2995,15 +3148,13 @@ impl ExprEmitter for RustExpr<'_> {
         // `as` binds tighter than every binary operator, so a binary-op inner
         // must be wrapped; atomic/unary inners do not, and a ternary already
         // self-parenthesizes as `(if ... else ...)`.
-        // KNOWN DIVERGENCE (synth-gate finding): for a NEGATIVE double, this
-        // f64→usize cast saturates to 0 where C truncates to a negative int.
-        // Rendering `as i32 as usize` instead is bit-faithful but breaks the
-        // SIGNED comparisons downstream (MAVP clamps its casted period; a
-        // sign-extended usize takes the wrong clamp branch on negative data —
-        // caught by the abstract inputNegData gate). The real fix is signedness
-        // classification of cast-fed locals, tracked separately; until then,
-        // input C must not cast possibly-negative doubles to int when the low
-        // bits matter (see ta_codegen/generator/input_synth/README.md).
+        // Negative-capable (int)(float) casts do NOT reach this hook in the
+        // saturating form: issue #160 classifies their destinations signed
+        // (render_signed_dest_value emits `as i32`), and any position the
+        // backend cannot render sign-faithfully fails generation loudly in
+        // reject_unsupported_negative_casts. This default `as usize` therefore
+        // serves int-typed inners and provably non-negative float inners
+        // (sqrt/fabs), where saturation is unreachable.
         let s = self.walk(inner);
         if matches!(inner, Expr::BinOp(..)) {
             format!("({s}) as {rust_type}")
@@ -3137,7 +3288,13 @@ fn render_binop(
             right_str = format!("({right_str}) as i32");
         }
         if right_is_sentinel && !left_is_sentinel && !expr_is_i32_typed(left) && !expr_is_float_typed_ctx(left, Some(ctx)) && !matches!(left, Expr::IntLiteral(_)) {
-            left_str = format!("({left_str}) as i32");
+            // `x as i32 < y` parses `<` as generic args; only those operators
+            // need the outer parens (churn-free for the existing `>` sites).
+            left_str = if matches!(op, BinOp::Less | BinOp::Shl) {
+                format!("(({left_str}) as i32)")
+            } else {
+                format!("({left_str}) as i32")
+            };
         }
         let left_is_i32 = expr_is_i32_typed(left) || left_is_sentinel;
         let right_is_i32 = expr_is_i32_typed(right) || right_is_sentinel;
@@ -3223,7 +3380,13 @@ fn render_binop(
             right_str = format!("({right_str}) as i32");
         }
         if cmp_right_sentinel && !cmp_left_sentinel && !expr_is_i32_typed(left) && !expr_is_float_typed_ctx(left, Some(ctx)) && !matches!(left, Expr::IntLiteral(_)) {
-            left_str = format!("({left_str}) as i32");
+            // `x as i32 < y` parses `<` as generic args; only those operators
+            // need the outer parens (churn-free for the existing `>` sites).
+            left_str = if matches!(op, BinOp::Less | BinOp::Shl) {
+                format!("(({left_str}) as i32)")
+            } else {
+                format!("({left_str}) as i32")
+            };
         }
         let left_is_i32 = expr_is_i32_typed(left) || cmp_left_sentinel;
         let right_is_i32 = expr_is_i32_typed(right) || cmp_right_sentinel;

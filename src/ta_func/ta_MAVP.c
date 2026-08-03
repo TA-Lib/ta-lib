@@ -59,6 +59,7 @@
  *                bound each ma() pass at its period's last use.
  *  072726 MF,CC  #145. Index the bucket table relative to the smallest period
  *                used, and bound it so an off-contract period cannot overflow.
+ *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
  */
 
 TA_LIB_API int TA_MAVP_Lookback( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType )
@@ -90,6 +91,7 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
    int i;
    int lookbackTotal;
    int outputSize;
+   int firstOut;
    int tempInt;
    int curPeriod;
    int firstOccurrence;
@@ -159,22 +161,25 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   /* Calculate exact output size */
+   /* Calculate exact output size. A dedicated temp: tempInt is the cast-fed
+    * period below, which the Rust backend types SIGNED (#160) — reusing it
+    * here would drag this index arithmetic into i32.
+    */
    if( lookbackTotal > startIdx )
    {
-      tempInt = lookbackTotal;
+      firstOut = lookbackTotal;
    } else 
    {
-      tempInt = startIdx;
+      firstOut = startIdx;
    }
-   if( tempInt > endIdx )
+   if( firstOut > endIdx )
    {
       /* No output */
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   outputSize = endIdx - tempInt + 1;
+   outputSize = endIdx - firstOut + 1;
    /* Allocate intermediate local buffer. */
    localOutputArray = malloc(outputSize * sizeof(double));
    localPeriodArray = malloc(outputSize * sizeof(int));
@@ -434,6 +439,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Unguarded( int    startIdx,
    int i;
    int lookbackTotal;
    int outputSize;
+   int firstOut;
    int tempInt;
    int curPeriod;
    int firstOccurrence;
@@ -471,18 +477,18 @@ TA_LIB_API TA_RetCode TA_MAVP_Unguarded( int    startIdx,
    }
    if( lookbackTotal > startIdx )
    {
-      tempInt = lookbackTotal;
+      firstOut = lookbackTotal;
    } else 
    {
-      tempInt = startIdx;
+      firstOut = startIdx;
    }
-   if( tempInt > endIdx )
+   if( firstOut > endIdx )
    {
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   outputSize = endIdx - tempInt + 1;
+   outputSize = endIdx - firstOut + 1;
    localOutputArray = malloc(outputSize * sizeof(double));
    localPeriodArray = malloc(outputSize * sizeof(int));
    sortedIdx = malloc(outputSize * sizeof(int));
@@ -677,6 +683,7 @@ TA_RetCode TA_S_MAVP( int    startIdx,
    int i;
    int lookbackTotal;
    int outputSize;
+   int firstOut;
    int tempInt;
    int curPeriod;
    int firstOccurrence;
@@ -736,18 +743,18 @@ TA_RetCode TA_S_MAVP( int    startIdx,
    }
    if( lookbackTotal > startIdx )
    {
-      tempInt = lookbackTotal;
+      firstOut = lookbackTotal;
    } else 
    {
-      tempInt = startIdx;
+      firstOut = startIdx;
    }
-   if( tempInt > endIdx )
+   if( firstOut > endIdx )
    {
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   outputSize = endIdx - tempInt + 1;
+   outputSize = endIdx - firstOut + 1;
    localOutputArray = malloc(outputSize * sizeof(double));
    localPeriodArray = malloc(outputSize * sizeof(int));
    sortedIdx = malloc(outputSize * sizeof(int));
@@ -942,6 +949,7 @@ TA_RetCode TA_S_MAVP_Unguarded( int    startIdx,
    int i;
    int lookbackTotal;
    int outputSize;
+   int firstOut;
    int tempInt;
    int curPeriod;
    int firstOccurrence;
@@ -979,18 +987,18 @@ TA_RetCode TA_S_MAVP_Unguarded( int    startIdx,
    }
    if( lookbackTotal > startIdx )
    {
-      tempInt = lookbackTotal;
+      firstOut = lookbackTotal;
    } else 
    {
-      tempInt = startIdx;
+      firstOut = startIdx;
    }
-   if( tempInt > endIdx )
+   if( firstOut > endIdx )
    {
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   outputSize = endIdx - tempInt + 1;
+   outputSize = endIdx - firstOut + 1;
    localOutputArray = malloc(outputSize * sizeof(double));
    localPeriodArray = malloc(outputSize * sizeof(int));
    sortedIdx = malloc(outputSize * sizeof(int));
