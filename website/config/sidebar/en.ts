@@ -31,6 +31,7 @@ export const enSidebar = sidebar({
         "faq/",
       ],
     },
+    "contribute/",
     "about/",
   ],
 });

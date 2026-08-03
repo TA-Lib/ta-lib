@@ -179,7 +179,7 @@ is the shipped `ta-lib` crate, `tools/` holds the JSON-RPC server/bench.
 5. **Verify other languages' output is unchanged** when fixing one backend
    (`git diff` the generated files)
 
-The `/convert-indicator` skill automates picking up and resuming this work.
+The `/new-ta-func` skill automates picking up and resuming this work.
 
 ## Build Configuration
 

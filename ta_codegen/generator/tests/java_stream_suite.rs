@@ -236,8 +236,11 @@ fn test_java_adxr_sub_lag_ring() {
 // ---------------------------------------------------------------------------
 
 /// Every YAML stream-flagged function emits a Java stream section — the
-/// terminal count is pinned so a silently-skipped tier can never read as
-/// green (the server set-parity gate is the runtime twin of this pin).
+/// terminal count is floored (the Rust suite's discovery-floor pattern) so a
+/// silently-skipped tier, or a parser regression dropping `stream` flags, can
+/// never read as green (the server set-parity gate is the runtime twin). A
+/// floor rather than an exact pin: adding a stream function must not fail
+/// this suite.
 #[test]
 fn test_java_stream_emit_ratchet() {
     let registry = Registry::from_dir(&input_dir());
@@ -270,8 +273,8 @@ fn test_java_stream_emit_ratchet() {
         }
     }
     assert_eq!(emitted, total);
-    assert_eq!(
-        emitted, 168,
-        "Java stream emit count moved — update this ratchet deliberately"
+    assert!(
+        emitted >= 168,
+        "Java stream emit count fell below the 168 floor — a tier or `stream` flag was silently dropped (raise the floor deliberately as the family grows)"
     );
 }
