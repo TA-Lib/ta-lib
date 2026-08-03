@@ -1167,10 +1167,10 @@ fn build_servers(backend_filter: Option<&str>) {
                     }
                 }
                 // The shipped library itself (the artifact users get) — the
-                // server build above proves nothing about its csproj, its
-                // net8.0 leg (the server is net10.0 only), or its doc-comment
-                // gate (CS1591 via TreatWarningsAsErrors), so build it too,
-                // like Java's library step.
+                // server build above proves nothing about its csproj or its
+                // doc-comment gate (CS1591 via TreatWarningsAsErrors), so build
+                // it too, like Java's library step — and it is what runs the
+                // hand-written C# suites.
                 if !build_csharp_library(&root) {
                     failures += 1;
                 }
@@ -1408,9 +1408,9 @@ fn collect_java_sources(
 ///
 /// The JSON-RPC server compiles the same `.cs` sources into its own assembly,
 /// so this step exists for what the server build cannot prove: the shipped
-/// csproj itself (multi-targeting net8.0 + net10.0) and its doc-comment gate —
-/// `GenerateDocumentationFile` + `TreatWarningsAsErrors` makes CS1591 an
-/// error, the C# analog of the Java `-Xdoclint` step. Returns `true` on
+/// csproj itself and its doc-comment gate — `GenerateDocumentationFile` +
+/// `TreatWarningsAsErrors` makes CS1591 an error, the C# analog of the Java
+/// `-Xdoclint` step. Then runs the hand-written suites. Returns `true` on
 /// success.
 fn build_csharp_library(root: &Path) -> bool {
     let lib_dir = root.join("ta_codegen/output/csharp/library");
@@ -1439,18 +1439,18 @@ fn build_csharp_library(root: &Path) -> bool {
 
 /// Run the hand-written C# suites, once per target framework.
 ///
-/// The per-TFM loop is the point, not incidental: `TALib.csproj` declares
-/// `net8.0;net10.0`, and before these suites existed every gate (the ta_regtest
-/// codegen sweep, the bitwise xlang gate, the JSON-RPC server) exercised the
-/// net10.0 build alone — the net8.0 leg was compiled and never executed. A TFM
-/// that is claimed but never run is a promise nobody checked.
+/// The TFM list is read from the test csproj rather than hardcoded, and the
+/// loop runs every entry. Today that is just `net10.0`, so the loop looks like
+/// overhead — it is not. The library briefly declared `net8.0;net10.0` while
+/// every gate exercised net10.0 alone, which is precisely the failure this
+/// shape prevents: a TFM that is claimed but never run is a promise nobody
+/// checked. Add a TFM to both csprojs and it is executed here automatically.
 ///
 /// A missing RUNTIME for a declared TFM is reported as SKIPPED rather than
 /// failing the build: `dotnet build` only needs the reference assemblies, which
-/// restore from NuGet, so a dev box with just the .NET 10 runtime can compile
-/// net8.0 but not launch it. It is printed loudly so the gap is visible in the
-/// log instead of reading as coverage — the same rule the compatibility skips
-/// in server_verify follow.
+/// restore from NuGet, so a box can compile a TFM it cannot launch. It is
+/// printed loudly so the gap is visible in the log instead of reading as
+/// coverage — the same rule the compatibility skips in server_verify follow.
 fn run_csharp_tests(lib_dir: &Path) -> bool {
     let test_dir = lib_dir.join("test");
     if !test_dir.exists() {
