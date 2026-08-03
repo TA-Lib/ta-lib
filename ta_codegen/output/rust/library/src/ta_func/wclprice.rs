@@ -144,6 +144,38 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, wclprice_fma, wclprice_impl, (startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.wclprice_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn wclprice_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        self.wclprice_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
+    }
+    #[inline(always)]
+    fn wclprice_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
@@ -169,6 +201,38 @@ impl Core {
     /// [`Core::wclprice`].
     #[inline]
     pub fn wclprice_unguarded(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, wclprice_unguarded_fma, wclprice_unguarded_impl, (startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.wclprice_unguarded_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn wclprice_unguarded_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        self.wclprice_unguarded_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
+    }
+    #[inline(always)]
+    fn wclprice_unguarded_impl(
         &self,
         mut startIdx: usize,
         endIdx: usize,

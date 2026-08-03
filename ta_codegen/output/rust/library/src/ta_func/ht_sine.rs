@@ -146,6 +146,36 @@ impl Core {
         outSine: &mut [f64],
         outLeadSine: &mut [f64],
     ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, ht_sine_fma, ht_sine_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.ht_sine_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn ht_sine_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outSine: &mut [f64],
+        outLeadSine: &mut [f64],
+    ) -> RetCode {
+        self.ht_sine_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine)
+    }
+    #[inline(always)]
+    fn ht_sine_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outSine: &mut [f64],
+        outLeadSine: &mut [f64],
+    ) -> RetCode {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
@@ -556,6 +586,36 @@ impl Core {
     /// [`Core::ht_sine`].
     #[inline]
     pub fn ht_sine_unguarded(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outSine: &mut [f64],
+        outLeadSine: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, ht_sine_unguarded_fma, ht_sine_unguarded_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.ht_sine_unguarded_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn ht_sine_unguarded_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outSine: &mut [f64],
+        outLeadSine: &mut [f64],
+    ) -> RetCode {
+        self.ht_sine_unguarded_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine)
+    }
+    #[inline(always)]
+    fn ht_sine_unguarded_impl(
         &self,
         mut startIdx: usize,
         endIdx: usize,

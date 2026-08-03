@@ -219,6 +219,52 @@ impl Core {
         endIdx: usize,
         inHigh: &[f64],
         inLow: &[f64],
+        optInStartValue: f64,
+        optInOffsetOnReverse: f64,
+        optInAccelerationInitLong: f64,
+        optInAccelerationLong: f64,
+        optInAccelerationMaxLong: f64,
+        optInAccelerationInitShort: f64,
+        optInAccelerationShort: f64,
+        optInAccelerationMaxShort: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, sarext_fma, sarext_impl, (startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.sarext_impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn sarext_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        optInStartValue: f64,
+        optInOffsetOnReverse: f64,
+        optInAccelerationInitLong: f64,
+        optInAccelerationLong: f64,
+        optInAccelerationMaxLong: f64,
+        optInAccelerationInitShort: f64,
+        optInAccelerationShort: f64,
+        optInAccelerationMaxShort: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        self.sarext_impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal)
+    }
+    #[inline(always)]
+    fn sarext_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
         mut optInStartValue: f64,
         mut optInOffsetOnReverse: f64,
         mut optInAccelerationInitLong: f64,
@@ -563,6 +609,52 @@ impl Core {
     /// [`Core::sarext`].
     #[inline]
     pub fn sarext_unguarded(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        optInStartValue: f64,
+        optInOffsetOnReverse: f64,
+        optInAccelerationInitLong: f64,
+        optInAccelerationLong: f64,
+        optInAccelerationMaxLong: f64,
+        optInAccelerationInitShort: f64,
+        optInAccelerationShort: f64,
+        optInAccelerationMaxShort: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, sarext_unguarded_fma, sarext_unguarded_impl, (startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.sarext_unguarded_impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn sarext_unguarded_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        optInStartValue: f64,
+        optInOffsetOnReverse: f64,
+        optInAccelerationInitLong: f64,
+        optInAccelerationLong: f64,
+        optInAccelerationMaxLong: f64,
+        optInAccelerationInitShort: f64,
+        optInAccelerationShort: f64,
+        optInAccelerationMaxShort: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        self.sarext_unguarded_impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal)
+    }
+    #[inline(always)]
+    fn sarext_unguarded_impl(
         &self,
         mut startIdx: usize,
         endIdx: usize,

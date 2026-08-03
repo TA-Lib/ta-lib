@@ -162,6 +162,40 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, cdlthrusting_fma, cdlthrusting_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.cdlthrusting_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn cdlthrusting_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInteger: &mut [i32],
+    ) -> RetCode {
+        self.cdlthrusting_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
+    }
+    #[inline(always)]
+    fn cdlthrusting_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInteger: &mut [i32],
+    ) -> RetCode {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
@@ -353,6 +387,40 @@ impl Core {
     /// [`Core::cdlthrusting`].
     #[inline]
     pub fn cdlthrusting_unguarded(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInteger: &mut [i32],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, cdlthrusting_unguarded_fma, cdlthrusting_unguarded_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.cdlthrusting_unguarded_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn cdlthrusting_unguarded_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInteger: &mut [i32],
+    ) -> RetCode {
+        self.cdlthrusting_unguarded_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
+    }
+    #[inline(always)]
+    fn cdlthrusting_unguarded_impl(
         &self,
         mut startIdx: usize,
         endIdx: usize,

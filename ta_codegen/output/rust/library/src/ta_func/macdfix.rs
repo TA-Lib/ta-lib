@@ -165,6 +165,40 @@ impl Core {
         startIdx: usize,
         endIdx: usize,
         inReal: &[f64],
+        optInSignalPeriod: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outMACD: &mut [f64],
+        outMACDSignal: &mut [f64],
+        outMACDHist: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, macdfix_fma, macdfix_impl, (startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.macdfix_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn macdfix_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInSignalPeriod: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outMACD: &mut [f64],
+        outMACDSignal: &mut [f64],
+        outMACDHist: &mut [f64],
+    ) -> RetCode {
+        self.macdfix_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
+    }
+    #[inline(always)]
+    fn macdfix_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
         mut optInSignalPeriod: i32,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
@@ -343,6 +377,40 @@ impl Core {
     /// [`Core::macdfix`].
     #[inline]
     pub fn macdfix_unguarded(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInSignalPeriod: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outMACD: &mut [f64],
+        outMACDSignal: &mut [f64],
+        outMACDHist: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, macdfix_unguarded_fma, macdfix_unguarded_impl, (startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.macdfix_unguarded_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn macdfix_unguarded_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInSignalPeriod: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outMACD: &mut [f64],
+        outMACDSignal: &mut [f64],
+        outMACDHist: &mut [f64],
+    ) -> RetCode {
+        self.macdfix_unguarded_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
+    }
+    #[inline(always)]
+    fn macdfix_unguarded_impl(
         &self,
         mut startIdx: usize,
         endIdx: usize,

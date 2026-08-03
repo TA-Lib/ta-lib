@@ -1,0 +1,12 @@
+[package]
+name = "ta-lib-dispatch"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.86"
+description = "Runtime CPU-feature dispatch macro for the ta-lib crate (internal support crate)."
+license = "BSD-3-Clause"
+repository = "https://github.com/TA-Lib/ta-lib"
+
+[lib]
+name = "ta_lib_dispatch"
+path = "src/lib.rs"

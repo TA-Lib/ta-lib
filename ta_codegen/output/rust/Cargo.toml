@@ -1,5 +1,5 @@
 [workspace]
-members = ["library", "tools"]
+members = ["dispatch", "library", "tools"]
 resolver = "2"
 
 [profile.release]

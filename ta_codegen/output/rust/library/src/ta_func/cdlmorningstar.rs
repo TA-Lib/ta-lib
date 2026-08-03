@@ -176,6 +176,42 @@ impl Core {
         inHigh: &[f64],
         inLow: &[f64],
         inClose: &[f64],
+        optInPenetration: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInteger: &mut [i32],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, cdlmorningstar_fma, cdlmorningstar_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.cdlmorningstar_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn cdlmorningstar_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        optInPenetration: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInteger: &mut [i32],
+    ) -> RetCode {
+        self.cdlmorningstar_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
+    }
+    #[inline(always)]
+    fn cdlmorningstar_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
         mut optInPenetration: f64,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
@@ -429,6 +465,42 @@ impl Core {
     /// behavior). Prefer [`Core::cdlmorningstar`].
     #[inline]
     pub fn cdlmorningstar_unguarded(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        optInPenetration: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInteger: &mut [i32],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, cdlmorningstar_unguarded_fma, cdlmorningstar_unguarded_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.cdlmorningstar_unguarded_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn cdlmorningstar_unguarded_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        optInPenetration: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInteger: &mut [i32],
+    ) -> RetCode {
+        self.cdlmorningstar_unguarded_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
+    }
+    #[inline(always)]
+    fn cdlmorningstar_unguarded_impl(
         &self,
         mut startIdx: usize,
         endIdx: usize,

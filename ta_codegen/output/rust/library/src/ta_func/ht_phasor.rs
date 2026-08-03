@@ -145,6 +145,36 @@ impl Core {
         outInPhase: &mut [f64],
         outQuadrature: &mut [f64],
     ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, ht_phasor_fma, ht_phasor_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.ht_phasor_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn ht_phasor_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInPhase: &mut [f64],
+        outQuadrature: &mut [f64],
+    ) -> RetCode {
+        self.ht_phasor_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+    }
+    #[inline(always)]
+    fn ht_phasor_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInPhase: &mut [f64],
+        outQuadrature: &mut [f64],
+    ) -> RetCode {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
@@ -484,6 +514,36 @@ impl Core {
     /// [`Core::ht_phasor`].
     #[inline]
     pub fn ht_phasor_unguarded(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInPhase: &mut [f64],
+        outQuadrature: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, ht_phasor_unguarded_fma, ht_phasor_unguarded_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.ht_phasor_unguarded_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn ht_phasor_unguarded_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInPhase: &mut [f64],
+        outQuadrature: &mut [f64],
+    ) -> RetCode {
+        self.ht_phasor_unguarded_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+    }
+    #[inline(always)]
+    fn ht_phasor_unguarded_impl(
         &self,
         mut startIdx: usize,
         endIdx: usize,

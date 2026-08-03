@@ -225,6 +225,46 @@ impl Core {
         startIdx: usize,
         endIdx: usize,
         inReal: &[f64],
+        optInTimePeriod: i32,
+        optInNbDevUp: f64,
+        optInNbDevDn: f64,
+        optInMAType: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outRealUpperBand: &mut [f64],
+        outRealMiddleBand: &mut [f64],
+        outRealLowerBand: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, bbands_fma, bbands_impl, (startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.bbands_impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn bbands_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInTimePeriod: i32,
+        optInNbDevUp: f64,
+        optInNbDevDn: f64,
+        optInMAType: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outRealUpperBand: &mut [f64],
+        outRealMiddleBand: &mut [f64],
+        outRealLowerBand: &mut [f64],
+    ) -> RetCode {
+        self.bbands_impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
+    }
+    #[inline(always)]
+    fn bbands_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
         mut optInTimePeriod: i32,
         mut optInNbDevUp: f64,
         mut optInNbDevDn: f64,
@@ -475,6 +515,46 @@ impl Core {
     /// [`Core::bbands`].
     #[inline]
     pub fn bbands_unguarded(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInTimePeriod: i32,
+        optInNbDevUp: f64,
+        optInNbDevDn: f64,
+        optInMAType: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outRealUpperBand: &mut [f64],
+        outRealMiddleBand: &mut [f64],
+        outRealLowerBand: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, bbands_unguarded_fma, bbands_unguarded_impl, (startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.bbands_unguarded_impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn bbands_unguarded_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInTimePeriod: i32,
+        optInNbDevUp: f64,
+        optInNbDevDn: f64,
+        optInMAType: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outRealUpperBand: &mut [f64],
+        outRealMiddleBand: &mut [f64],
+        outRealLowerBand: &mut [f64],
+    ) -> RetCode {
+        self.bbands_unguarded_impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
+    }
+    #[inline(always)]
+    fn bbands_unguarded_impl(
         &self,
         mut startIdx: usize,
         endIdx: usize,
