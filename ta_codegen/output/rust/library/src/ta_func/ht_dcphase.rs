@@ -139,6 +139,34 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, ht_dcphase_fma, ht_dcphase_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.ht_dcphase_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn ht_dcphase_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        self.ht_dcphase_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
+    }
+    #[inline(always)]
+    fn ht_dcphase_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
@@ -543,6 +571,34 @@ impl Core {
     /// [`Core::ht_dcphase`].
     #[inline]
     pub fn ht_dcphase_unguarded(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, ht_dcphase_unguarded_fma, ht_dcphase_unguarded_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.ht_dcphase_unguarded_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn ht_dcphase_unguarded_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        self.ht_dcphase_unguarded_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
+    }
+    #[inline(always)]
+    fn ht_dcphase_unguarded_impl(
         &self,
         mut startIdx: usize,
         endIdx: usize,

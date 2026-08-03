@@ -7322,3 +7322,71 @@ fn csharp_resolve_call_agrees_with_pascal_method_naming() {
         );
     }
 }
+
+/// Issue #156: the runtime FMA dispatch trio (public dispatcher +
+/// `#[target_feature(enable = "fma")]` clone + `#[inline(always)]` `_impl`)
+/// must be emitted for exactly the functions whose rendered body fuses — the
+/// same 26-function inventory `fma_suite.rs` pins — and never elsewhere.
+/// Guards both directions: the dispatch silently going dark, and accidental
+/// dispatch of unfused functions.
+#[test]
+fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
+    const FUSING: &[&str] = &[
+        "adosc", "bbands", "cdlabandonedbaby", "cdlmorningdojistar", "cdlmorningstar",
+        "cdlpiercing", "cdlthrusting", "dema", "ht_dcperiod", "ht_dcphase", "ht_phasor",
+        "ht_sine", "ht_trendline", "ht_trendmode", "kama", "linearreg", "macd", "macdfix",
+        "mama", "sar", "sarext", "t3", "tema", "trix", "tsf", "wclprice",
+    ];
+    let registry = make_registry();
+    let helpers = make_helpers();
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    let mut dispatched: Vec<String> = Vec::new();
+    let mut checked = 0usize;
+    for entry in std::fs::read_dir(&base).expect("input dir") {
+        let entry = entry.expect("dir entry");
+        if !entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+            continue;
+        }
+        let name = entry.file_name().to_string_lossy().to_string();
+        let dir = entry.path();
+        if !dir.join(format!("{name}.c")).is_file() || !dir.join(format!("{name}.yaml")).is_file() {
+            continue;
+        }
+        let (func, enums) = load_indicator(&name);
+        let out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        checked += 1;
+        if out.contains("ta_lib_dispatch::dispatch_fma!") {
+            // Every dispatcher must come with exactly one clone: the
+            // dispatch-call count and target_feature-attribute count match.
+            let calls = out.matches("ta_lib_dispatch::dispatch_fma!").count();
+            let clones = out.matches("#[target_feature(enable = \"fma\")]").count();
+            assert_eq!(calls, clones, "{name}: dispatcher/clone count mismatch");
+            // BOTH batch variants must carry their clone — a one-variant
+            // partial no-op keeps calls==clones balanced, so pin each by
+            // name. (A future private-delegating fused function would trip
+            // this on purpose: a human must decide where dispatch goes.)
+            assert!(
+                out.contains(&format!("fn {name}_fma(")),
+                "{name}: guarded variant lost its FMA clone"
+            );
+            assert!(
+                out.contains(&format!("fn {name}_unguarded_fma(")),
+                "{name}: unguarded variant lost its FMA clone"
+            );
+            // The fused sites live on in the renamed portable impl.
+            assert!(
+                out.contains("_impl(") && out.contains(".mul_add("),
+                "{name}: dispatch emitted but trio structure incomplete"
+            );
+            dispatched.push(name);
+        } else {
+            assert!(
+                !out.contains(".mul_add("),
+                "{name}: fused body without a dispatch trio"
+            );
+        }
+    }
+    dispatched.sort();
+    assert_eq!(dispatched, FUSING, "FMA dispatch inventory drifted");
+    assert!(checked >= 150, "expected ~168 functions, checked {checked}");
+}

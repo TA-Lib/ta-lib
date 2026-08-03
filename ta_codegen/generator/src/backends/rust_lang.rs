@@ -194,6 +194,95 @@ fn gen_imports() -> String {
         .to_string()
 }
 
+/// Runtime FMA dispatch (issue #156). When a rendered batch variant contains
+/// fused multiply-adds, restructure it into the Rust analogue of the C
+/// backend's `TA_FMA_MULTIVERSION` (`target_clones("default","fma")`): the
+/// body moves verbatim to a private `{name}_impl` (`#[inline(always)]`, so it
+/// compiles once per clone), `{name}_fma` is a `#[target_feature(enable =
+/// "fma")]` clone whose codegen turns every `mul_add` into a hardware
+/// `vfmadd`, and the public name becomes a dispatcher through
+/// `ta_lib_dispatch::dispatch_fma!` (one cached CPU check per call; both
+/// paths are correctly rounded, so which clone runs never changes bits).
+/// Lookback and the stream tier stay undispatched, mirroring the C decision.
+fn fma_dispatch_wrap(text: String, fn_name: &str) -> String {
+    if !fma::EMIT_FMA || !text.contains(".mul_add(") {
+        return text;
+    }
+    // From here the variant fuses, so a signature-pattern mismatch must fail
+    // LOUD: a silent passthrough would ship the exact #156 regression while
+    // every value gate stays green (both paths are bit-identical).
+    let sig_open = format!("    pub fn {fn_name}(\n");
+    let sig_close = "    ) -> RetCode {\n";
+    let Some(sig_pos) = text.find(&sig_open) else {
+        panic!("{fn_name}: fused body but the signature no longer matches `{sig_open:?}` — FMA dispatch would silently vanish");
+    };
+    let params_start = sig_pos + sig_open.len();
+    let Some(close_rel) = text[params_start..].find(sig_close) else {
+        panic!("{fn_name}: fused body but the signature terminator no longer matches `{sig_close:?}` — FMA dispatch would silently vanish");
+    };
+    let params_end = params_start + close_rel;
+    let body_start = params_end + sig_close.len();
+    // Only the *body* decides (site selection lives in fma::fuse_operands;
+    // `.mul_add(` in the rendered body is its footprint) — a mention in the
+    // doc comment alone must not dispatch.
+    if !text[body_start..].contains(".mul_add(") {
+        return text;
+    }
+
+    let header = &text[..sig_pos]; // docs + attributes (#[inline], #[doc(alias)], ...)
+    let raw_params = &text[params_start..params_end]; // one `name: type,` per line, `&self,` first
+    let body = &text[body_start..]; // through the fn's closing brace
+
+    // Forwarding names, plus a `mut`-free signature for the dispatcher and
+    // clone (only `_impl` keeps the original `mut` bindings).
+    let mut clean_sig = String::new();
+    let mut names: Vec<&str> = Vec::new();
+    for line in raw_params.lines() {
+        let t = line.trim();
+        if t == "&self," {
+            clean_sig.push_str("        &self,\n");
+            continue;
+        }
+        let decl = t.strip_suffix(',').unwrap_or(t);
+        let (name_part, ty) = decl
+            .split_once(": ")
+            .unwrap_or_else(|| panic!("unparsable param line in {fn_name}: {line}"));
+        let name = name_part.strip_prefix("mut ").unwrap_or(name_part);
+        clean_sig.push_str(&format!("        {name}: {ty},\n"));
+        names.push(name);
+    }
+    let args = names.join(", ");
+
+    let mut out = String::new();
+    // 1. Public dispatcher: original name, original docs and attributes.
+    out.push_str(header);
+    out.push_str(&sig_open);
+    out.push_str(&clean_sig);
+    out.push_str(sig_close);
+    out.push_str("        #[cfg(target_arch = \"x86_64\")]\n");
+    out.push_str(&format!(
+        "        return ta_lib_dispatch::dispatch_fma!(self, {fn_name}_fma, {fn_name}_impl, ({args}));\n"
+    ));
+    out.push_str("        #[cfg(not(target_arch = \"x86_64\"))]\n");
+    out.push_str(&format!("        self.{fn_name}_impl({args})\n"));
+    out.push_str("    }\n");
+    // 2. The FMA clone: same body via forced inlining, codegen'd with fma on.
+    out.push_str("    #[cfg(target_arch = \"x86_64\")]\n");
+    out.push_str("    #[target_feature(enable = \"fma\")]\n");
+    out.push_str(&format!("    fn {fn_name}_fma(\n"));
+    out.push_str(&clean_sig);
+    out.push_str(sig_close);
+    out.push_str(&format!("        self.{fn_name}_impl({args})\n"));
+    out.push_str("    }\n");
+    // 3. The portable implementation: the original function, renamed.
+    out.push_str("    #[inline(always)]\n");
+    out.push_str(&format!("    fn {fn_name}_impl(\n"));
+    out.push_str(raw_params);
+    out.push_str(sig_close);
+    out.push_str(body);
+    out
+}
+
 fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &Registry, helpers: &HelperRegistry) -> String {
     let mut out = String::new();
     let snake = func.name.to_lowercase();
@@ -220,7 +309,10 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     out.push_str(&gen_lookback(func, &snake, enums, registry, helpers));
 
     // Guarded: validates params, delegates to unguarded
-    out.push_str(&gen_guarded_func(func, &snake, enums, registry, helpers));
+    out.push_str(&fma_dispatch_wrap(
+        gen_guarded_func(func, &snake, enums, registry, helpers),
+        &snake,
+    ));
 
     // Build a temporary FuncDef with private_body for the unguarded/private variants
     let mut body_func = func.clone();
@@ -278,21 +370,24 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         // `_private` holds the algorithm (Rust has no single-precision variant) —
         // keep its comments. The thin `_unguarded` delegate duplicates the guarded
         // body, so strip its comments.
-        out.push_str(&gen_private_func(
-            &body_func, &snake, &ctx, enums, registry, helpers,
+        out.push_str(&fma_dispatch_wrap(
+            gen_private_func(&body_func, &snake, &ctx, enums, registry, helpers),
+            &format!("{snake}_private"),
         ));
         let mut unguarded = func.clone();
         unguarded.body = super::stmt_walk::strip_comments(&func.body);
-        out.push_str(&gen_unguarded_func(
-            &unguarded, &snake, &ctx, enums, registry, helpers,
+        out.push_str(&fma_dispatch_wrap(
+            gen_unguarded_func(&unguarded, &snake, &ctx, enums, registry, helpers),
+            &format!("{snake}_unguarded"),
         ));
     } else {
         // `_unguarded` duplicates the guarded body — strip its comments so they
         // appear only in the guarded variant.
         let mut unguarded = body_func.clone();
         unguarded.body = super::stmt_walk::strip_comments(&body_func.body);
-        out.push_str(&gen_unguarded_func(
-            &unguarded, &snake, &ctx, enums, registry, helpers,
+        out.push_str(&fma_dispatch_wrap(
+            gen_unguarded_func(&unguarded, &snake, &ctx, enums, registry, helpers),
+            &format!("{snake}_unguarded"),
         ));
     }
 

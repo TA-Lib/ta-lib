@@ -1795,13 +1795,65 @@ fn generate_rust_crate_scaffolding(out_base: &Path, funcs: &[ir::FuncDef], templ
     std::fs::create_dir_all(&bin_dir).unwrap();
 
     // --- workspace Cargo.toml (virtual manifest — profiles apply at the root) ---
-    let workspace_toml = "[workspace]\nmembers = [\"library\", \"tools\"]\nresolver = \"2\"\n\n\
+    let workspace_toml = "[workspace]\nmembers = [\"dispatch\", \"library\", \"tools\"]\nresolver = \"2\"\n\n\
         [profile.release]\nlto = \"thin\"\ncodegen-units = 1\n";
     std::fs::write(rust_dir.join("Cargo.toml"), workspace_toml).unwrap();
 
-    // --- library/Cargo.toml (the published `ta-lib` crate — no bin, no deps) ---
+    // --- dispatch/ (issue #156): the runtime FMA-dispatch macro crate ---
+    // The one `unsafe` in the Rust workspace lives here, next to the CPU-feature
+    // check that justifies it, so the library crate keeps #![forbid(unsafe_code)]
+    // (unsafe expanded from an external macro is exempt from the caller's lint).
+    // The vendoring unit is therefore this workspace directory, not library/ alone.
+    let dispatch_dir = rust_dir.join("dispatch");
+    let dispatch_src = dispatch_dir.join("src");
+    std::fs::create_dir_all(&dispatch_src).unwrap();
+    let dispatch_toml = "[package]\nname = \"ta-lib-dispatch\"\nversion = \"0.1.0\"\nedition = \"2021\"\nrust-version = \"1.86\"\n\
+        description = \"Runtime CPU-feature dispatch macro for the ta-lib crate (internal support crate).\"\n\
+        license = \"BSD-3-Clause\"\nrepository = \"https://github.com/TA-Lib/ta-lib\"\n\n\
+        [lib]\nname = \"ta_lib_dispatch\"\npath = \"src/lib.rs\"\n";
+    std::fs::write(dispatch_dir.join("Cargo.toml"), dispatch_toml).unwrap();
+    let dispatch_lib = r#"//! Runtime CPU-feature dispatch for the `ta-lib` crate (issue #156).
+//!
+//! Support crate: it exists so the library crate can stay `#![forbid(unsafe_code)]`
+//! while selecting hardware-FMA clones at runtime — the single `unsafe` in the
+//! ta-lib workspace lives here, adjacent to the CPU-feature check that justifies
+//! it. This is the Rust analogue of the C library's
+//! `__attribute__((target_clones("default","fma")))` ifunc dispatch.
+//! Internal contract; no semver promises outside the ta-lib workspace.
+
+/// Dispatch one indicator call to its hardware-FMA clone when the CPU supports
+/// FMA, else to the portable implementation.
+///
+/// Both paths compute IEEE-754 correctly-rounded fused multiply-adds (`vfmadd`
+/// vs libm `fma()`), so which one runs can change speed, never bits.
+///
+/// # Contract (enforced by ta_codegen, not checkable by a macro)
+///
+/// `$fma` must name a method whose only `#[target_feature]` requirement is
+/// `fma`; the generator emits the clone and this dispatch call as a pair.
+#[macro_export]
+macro_rules! dispatch_fma {
+    ($core:expr, $fma:ident, $plain:ident, ( $($arg:expr),* $(,)? )) => {
+        if std::arch::is_x86_feature_detected!("fma") {
+            // SAFETY: $fma's only target_feature requirement is "fma", proven
+            // present on this CPU by the guard above.
+            unsafe { $core.$fma($($arg),*) }
+        } else {
+            $core.$plain($($arg),*)
+        }
+    };
+}
+"#;
+    std::fs::write(dispatch_src.join("lib.rs"), dispatch_lib).unwrap();
+    println!("  Scaffolding -> {}", dispatch_dir.join("Cargo.toml").display());
+
+    // --- library/Cargo.toml (the published `ta-lib` crate — no bin; one
+    //     internal dep: the dispatch macro crate, exact-pinned) ---
+    // rust-version: safe #[target_feature] (the FMA dispatch clones)
+    // stabilized in 1.86 — declare the floor so pre-1.86 toolchains get a
+    // clear MSRV message instead of an opaque E0658.
     let lib_toml_head = format!(
-        "[package]\nname = \"ta-lib\"\nversion = \"{crate_version}\"\nedition = \"2021\""
+        "[package]\nname = \"ta-lib\"\nversion = \"{crate_version}\"\nedition = \"2021\"\nrust-version = \"1.86\""
     );
     let lib_toml_tail = r#"
 description = "Technical analysis library: 161 indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns) — the official Rust port of TA-Lib, verified against the C reference."
@@ -1816,6 +1868,13 @@ categories = ["finance", "mathematics", "algorithms"]
 [lib]
 name = "ta_lib"
 path = "src/lib.rs"
+
+[dependencies]
+# Exact pin (companion-crate pattern, like serde_derive): the macro is an
+# internal contract, so a published ta-lib must never float onto a newer
+# dispatch release. Publish order when releasing to crates.io: dispatch
+# first, then ta-lib (cargo strips `path` and resolves by version).
+ta-lib-dispatch = { path = "../dispatch", version = "=0.1.0" }
 "#;
     let lib_cargo_path = lib_dir.join("Cargo.toml");
     std::fs::write(&lib_cargo_path, format!("{lib_toml_head}{lib_toml_tail}")).unwrap();
@@ -1908,7 +1967,11 @@ path = "src/lib.rs"
 //! Every indicator also has an `*_unguarded` variant that skips parameter
 //! validation for internal cross-indicator calls — prefer the checked methods.
 //! The crate is `#![forbid(unsafe_code)]`: misuse of an `*_unguarded` variant
-//! panics, it never triggers undefined behavior.
+//! panics, it never triggers undefined behavior. On x86-64, the batch entry
+//! points of indicators built on fused multiply-adds are compiled twice and the
+//! hardware-FMA clone is selected at runtime (the same dispatch the C library
+//! performs via `target_clones`); both paths are correctly rounded, so results
+//! are bit-identical either way. The streaming tier stays single-path.
 //!
 //! The full function reference, grouped by category, is at
 //! [ta-lib.org/functions](https://ta-lib.org/functions/).

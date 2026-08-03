@@ -88,6 +88,13 @@ dependencies = [
 [[package]]
 name = "ta-lib"
 version = "0.8.1"
+dependencies = [
+ "ta-lib-dispatch",
+]
+
+[[package]]
+name = "ta-lib-dispatch"
+version = "0.1.0"
 
 [[package]]
 name = "ta-lib-tools"

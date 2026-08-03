@@ -188,6 +188,40 @@ impl Core {
         startIdx: usize,
         endIdx: usize,
         inReal: &[f64],
+        optInFastLimit: f64,
+        optInSlowLimit: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outMAMA: &mut [f64],
+        outFAMA: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, mama_fma, mama_impl, (startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.mama_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn mama_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInFastLimit: f64,
+        optInSlowLimit: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outMAMA: &mut [f64],
+        outFAMA: &mut [f64],
+    ) -> RetCode {
+        self.mama_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
+    }
+    #[inline(always)]
+    fn mama_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
         mut optInFastLimit: f64,
         mut optInSlowLimit: f64,
         outBegIdx: &mut usize,
@@ -578,6 +612,40 @@ impl Core {
     /// [`Core::mama`].
     #[inline]
     pub fn mama_unguarded(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInFastLimit: f64,
+        optInSlowLimit: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outMAMA: &mut [f64],
+        outFAMA: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, mama_unguarded_fma, mama_unguarded_impl, (startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.mama_unguarded_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn mama_unguarded_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInFastLimit: f64,
+        optInSlowLimit: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outMAMA: &mut [f64],
+        outFAMA: &mut [f64],
+    ) -> RetCode {
+        self.mama_unguarded_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
+    }
+    #[inline(always)]
+    fn mama_unguarded_impl(
         &self,
         mut startIdx: usize,
         endIdx: usize,

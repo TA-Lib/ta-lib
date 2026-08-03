@@ -147,6 +147,34 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, ht_trendmode_fma, ht_trendmode_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.ht_trendmode_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn ht_trendmode_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInteger: &mut [i32],
+    ) -> RetCode {
+        self.ht_trendmode_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
+    }
+    #[inline(always)]
+    fn ht_trendmode_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInteger: &mut [i32],
+    ) -> RetCode {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
@@ -631,6 +659,34 @@ impl Core {
     /// [`Core::ht_trendmode`].
     #[inline]
     pub fn ht_trendmode_unguarded(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInteger: &mut [i32],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, ht_trendmode_unguarded_fma, ht_trendmode_unguarded_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.ht_trendmode_unguarded_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn ht_trendmode_unguarded_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outInteger: &mut [i32],
+    ) -> RetCode {
+        self.ht_trendmode_unguarded_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
+    }
+    #[inline(always)]
+    fn ht_trendmode_unguarded_impl(
         &self,
         mut startIdx: usize,
         endIdx: usize,
