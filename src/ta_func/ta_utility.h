@@ -20,8 +20,9 @@
  * clone at load — no -mfma, no SIGILL on pre-2013 CPUs. glibc-only: target_clones
  * needs GNU ifunc, which musl has in NO version (Alpine gcc hard-errors), so
  * musl/macOS/MSVC fall through to plain software fma(). Do NOT relax to __linux__
- * (breaks the musllinux build; see scripts/verify-musl-fma.sh). -ffp-contract=off
- * keeps the clones bit-exact with each other and the Rust/Java backends. */
+ * (breaks the musllinux build; guarded by the nightly `musl-build` job).
+ * -ffp-contract=off keeps the clones bit-exact with each other and the
+ * Rust/Java backends. */
 #if defined( __x86_64__ ) && defined( __GLIBC__ ) && defined( __GNUC__ ) && !defined( __clang__ )
    #define TA_FMA_MULTIVERSION __attribute__((target_clones("default","fma")))
 #else
