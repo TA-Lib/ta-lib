@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Shipped TA-Lib C# library. Hand-written and committed; ta_codegen never
+       opens this file. Generated sources (the enums and the per-indicator
+       `partial class Core` files) live under src/; the hand-written
+       scaffolding (Core.cs, RetCode.cs, OutRange.cs, ...) sits at this level.
+
+       net10.0 (LTS, supported to Nov 2028) is the single target. Not
+       netstandard: the generated indicators call Math.FusedMultiplyAdd (the
+       cross-language FMA bit-parity contract, PR #96), which no netstandard
+       version has, and a software FMA substitute would break bit-parity —
+       the one thing this port must not do.
+
+       net8.0 was dropped rather than multi-targeted. The date that matters is
+       PUBLICATION, not today: landing on main is not a release (Java and Rust
+       sit on main unpublished too), and by the time this is on NuGet .NET 8
+       will be roughly a year past its 10 Nov 2026 end of support. Nothing here
+       needs an API newer than .NET Core 3.0, so an older TFM would have bought
+       reach and nothing else — and a TFM no gate executes is a promise nobody
+       checked. Re-adding one is a one-line change if a real consumer asks.
+
+       TreatWarningsAsErrors + GenerateDocumentationFile makes CS1591 (missing
+       XML doc on a public member) an error — the C# analog of the Java
+       -Xdoclint gate. -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>TALib</RootNamespace>
+    <AssemblyName>TALib</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- NuGet packaging (PackageId, Version, license, readme) arrives with the
+         release milestone; until then `dotnet pack` must not produce a
+         placeholder package. -->
+    <IsPackable>false</IsPackable>
+    <!-- test/ is a SIBLING project (test/TALib.Test.csproj) that compiles these
+         same library sources itself. Without this exclusion the SDK's default
+         **/*.cs glob pulls the suites — and their obj/ AssemblyInfo — into the
+         shipped library, which then fails with CS0579 duplicate-attribute and
+         would ship test code inside TALib.dll. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);test/**</DefaultItemExcludes>
+  </PropertyGroup>
+
+</Project>

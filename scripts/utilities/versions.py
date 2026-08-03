@@ -613,6 +613,9 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
         "ta_func_api.xml",
         "ta_func_list.txt",
         "ta_codegen/output/java/library/src/**/*.java",
+        "ta_codegen/output/csharp/library/*.cs",
+        "ta_codegen/output/csharp/library/*.csproj",
+        "ta_codegen/output/csharp/library/src/**/*.cs",
         "LICENSE",
         "VERSION",
     ]

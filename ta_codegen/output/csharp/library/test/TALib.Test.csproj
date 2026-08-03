@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Hand-written test project; ta_codegen never opens this file.
+
+       Targets exactly what the shipped library targets, and the runner in
+       main.rs loops over whatever is declared here. Keeping the two in step is
+       the rule worth holding: the library briefly claimed net8.0;net10.0 while
+       every gate ran net10.0 alone, so one TFM was compiled and never once
+       executed. If a TFM is ever added back, add it in both files and the
+       runner picks it up with no further change.
+
+       Compiles the library sources directly rather than referencing the built
+       assembly, matching how the JSON-RPC server's csproj does it: same files,
+       same bytes, and `internal` members stay reachable if a test ever needs
+       the RetCode tier under the public OutRange wrappers.
+
+       Framework-free (no xunit/nunit): the shipped library takes no test
+       dependency, the suites are plain Main() entry points, and the whole
+       harness is `dotnet run`. Matches the Java suites, which build.py already
+       drives the same way. -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>TALib.Test</RootNamespace>
+    <AssemblyName>TALib.Test</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IsPackable>false</IsPackable>
+    <!-- Each suite has its own Main; the runner picks one per invocation. -->
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <StartupObject>TALib.Test.AllTests</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../*.cs" />
+    <Compile Include="../src/**/*.cs" />
+  </ItemGroup>
+
+</Project>

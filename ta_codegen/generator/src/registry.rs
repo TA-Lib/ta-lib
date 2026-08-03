@@ -7,7 +7,7 @@ pub enum Lang {
     C,
     Rust,
     Java,
-    DotNet,
+    CSharp,
 }
 
 /// Registry of discovered indicators, used for cross-function call resolution.
@@ -103,6 +103,14 @@ impl Registry {
             .unwrap_or_else(|| to_camel_case(key))
     }
 
+    /// The C# PascalCase base method name for an indicator dir-name: the same
+    /// `camel_case` the Java name comes from, with the first letter raised. It
+    /// must not be derived from the dir-name directly — that yields `Willr`
+    /// where the API surface is `WillR`.
+    pub(crate) fn csharp_base(&self, key: &str) -> String {
+        capitalize(&self.java_base(key))
+    }
+
     /// Check if an indicator exists in the registry.
     pub fn contains(&self, name: &str) -> bool {
         self.indicators.iter().any(|n| n == name)
@@ -126,10 +134,7 @@ impl Registry {
                     Lang::Rust => format!("{base}_private"),
                     Lang::C => format!("TA_{}_Private", base.to_uppercase()),
                     Lang::Java => format!("{}Private", self.java_base(base)),
-                    Lang::DotNet => {
-                        let pascal = capitalize(base);
-                        format!("{pascal}Private")
-                    }
+                    Lang::CSharp => format!("{}Private", self.csharp_base(base)),
                 };
             }
         }
@@ -145,10 +150,10 @@ impl Registry {
                 Lang::Rust => format!("{func_name}_unguarded"),
                 Lang::C => format!("TA_{}_Unguarded", func_name.to_uppercase()),
                 Lang::Java => format!("{}UnguardedInternal", self.java_base(func_name)),
-                Lang::DotNet => {
-                    let pascal = capitalize(func_name);
-                    format!("{pascal}Logic")
-                }
+                // Managed C# shape. Unlike Java there is no `…UnguardedInternal`
+                // split: partial classes let the core be `internal` in the same
+                // type, so cross-indicator calls target `…Unguarded` directly.
+                Lang::CSharp => format!("{}Unguarded", self.csharp_base(func_name)),
             };
         }
 
@@ -160,7 +165,7 @@ impl Registry {
             Lang::Rust => func_name.to_string(),
             Lang::C => to_c_name(&indicator, &suffix),
             Lang::Java => format!("{}{}", self.java_base(&indicator), capitalize(&suffix)),
-            Lang::DotNet => to_pascal_case(func_name),
+            Lang::CSharp => format!("{}{}", self.csharp_base(&indicator), capitalize(&suffix)),
         }
     }
 
@@ -217,11 +222,6 @@ fn to_camel_case(name: &str) -> String {
         }
     }
     result
-}
-
-/// Convert `snake_case` to `PascalCase`: `sma_lookback` -> `SmaLookback`
-fn to_pascal_case(name: &str) -> String {
-    name.split('_').map(capitalize).collect()
 }
 
 /// Capitalize the first letter of a string.
@@ -293,13 +293,13 @@ mod tests {
             "movingAverageLookback"
         );
 
-        // .NET backend (bare names resolve to Logic)
+        // C# backend: PascalCase, bare names resolve to the Unguarded variant.
         assert_eq!(
-            registry.resolve_call("sma_lookback", Lang::DotNet),
+            registry.resolve_call("sma_lookback", Lang::CSharp),
             "SmaLookback"
         );
-        assert_eq!(registry.resolve_call("sma", Lang::DotNet), "SmaLogic");
-        assert_eq!(registry.resolve_call("ema_private", Lang::DotNet), "EmaPrivate");
+        assert_eq!(registry.resolve_call("sma", Lang::CSharp), "SmaUnguarded");
+        assert_eq!(registry.resolve_call("ema_private", Lang::CSharp), "EmaPrivate");
     }
 
     #[test]

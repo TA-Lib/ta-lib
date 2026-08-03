@@ -76,7 +76,7 @@ ta_regtest
         ├── ta_codegen_serve_c
         ├── ta_codegen_serve_rust   (Rust)
         ├── TaCodegenServe.class    (Java)
-        └── TaCodegenServe          (.NET)
+        └── TaCodegenServe          (C#)
 ```
 
 ### Current State
@@ -338,7 +338,7 @@ hard failure.
 
 Build + run everything with `scripts/build.py xlang-hash`. Both CI nightlies
 (dev + main) run it as a gate (`xlang-hash` job). Needs cmake + gcc + cargo, plus
-the **JDK** for the Java server — **not** the .NET SDK (.NET P/Invokes C == C).
+the **JDK** for the Java server and the **.NET SDK** for the managed C# server.
 
 Architecture (see `fuzz_data.h`, the Rust port in
 `ta_codegen/generator/templates/rust/fuzz.rs`, and `xlang_hash` in
@@ -347,8 +347,11 @@ Architecture (see `fuzz_data.h`, the Rust port in
   `ta_regtest`, so there is no JSON-RPC boundary on the C side — it is called
   directly (`TA_CallFunc`) and its raw output hashed (`fuzz_hash_local`), exactly
   as `--fuzz-064` treats the current library. Each language server crosses the
-  boundary and is diffed against it: **Rust** and **Java** today; **.NET**
-  P/Invokes the C library (== C by construction) and is not a distinct check.
+  boundary and is diffed against it: **Rust**, **Java** and the managed **C#**.
+  C# rides the Java-style hex transport (no `fuzz_gen` port) but its tolerance
+  lane is a separate per-server flag it does NOT take — every C# call,
+  transcendentals included, is bitwise (`xlang_java_illcond`'s constant-shape
+  skip is tolerance-lane-only, so C# gates HT_DCPHASE/HT_SINE there like Rust).
 - **Two transports (per-server `usesSeed` flag).**
   - **Seed (Rust).** A request with `"gen_present":1` + `(gen_shape,gen_seed,gen_n)`
     makes the server generate the OHLCV inputs from its own bit-exact `fuzz_gen`
@@ -436,13 +439,15 @@ expected", so the old `SV_EPSILON` was deleted.
   **per-function** handler (`TA_<name>`, not `abstract_call`) returns
   `out_hash` — a full-precision FNV-1a of the raw GUARDED output bytes — which the
   shared `codegen_hash_compare` diffs against the C golden's `codegen_output_hash`.
-  Java/.NET gained this hasher; the C per-function handler is `#ifndef
+  Java/C# gained this hasher; the C per-function handler is `#ifndef
   TA_REF_SERVE`-guarded (its `fuzz_hash_*` live in `fuzz_data.h`, absent from the
   frozen `ta_ref_serve`, which `server_verify` never drives).
-- **Tolerance rule.** Zero tolerance (bitwise) for **C ⇄ Rust** and **C ⇄ .NET**
-  (Rust uses the system libm; .NET P/Invokes the C lib — this also guards against
-  C-server / .NET-lib build-flag drift vs the in-process library, cf. the
-  `-ffp-contract=off` server fix). **Java** is bitwise for pure-arith + IEEE ops
+- **Tolerance rule.** Zero tolerance (bitwise) for **C ⇄ Rust** and **C ⇄ C#**
+  (Rust uses the system libm; .NET's `Math.*` delegates to the platform libm on
+  Linux/macOS and `Math.FusedMultiplyAdd` is correctly rounded, and the managed
+  C# library holds bitwise in practice — measured green across the full
+  hand-written suite, transcendentals included). **Java** is bitwise for
+  pure-arith + IEEE ops
   (incl. SQRT/CEIL/FLOOR) but gets a narrow `CODEGEN_JAVA_TRANSCENDENTAL_TOL`
   (1e-9, measured drift ~1e-13..1e-11) on the transcendental-using functions only
   — Java's fdlibm ≠ the C libm by ~1 ULP. The transcendental set is decided **per

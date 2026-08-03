@@ -4,8 +4,8 @@
 
 All indicator code is **generated** by a single generator, **`ta_codegen`**
 (`ta_codegen/generator/`, Rust): it parses `ta_codegen/input/` → IR → renders
-per-backend (C, Java, .NET, Rust). The C backend is generated **in place** into
-`src/ta_func` / `src/ta_abstract` (the shipped library); the Rust/Java/.NET bindings
+per-backend (C, Java, C#, Rust). The C backend is generated **in place** into
+`src/ta_func` / `src/ta_abstract` (the shipped library); the Rust/Java/C# bindings
 live under `ta_codegen/output/`. It also generates the JSON-RPC test servers, the bench
 binary, `include/ta_func_unguarded.h`, the `include/ta_defs.h` FuncUnstId enum, the
 shipped Java (`ta_codegen/output/java/library/.../Core.java`, `FuncUnstId.java`, `MAType.java`), and owns the
@@ -103,7 +103,7 @@ ta_regtest (C)
     ├── ta_codegen_serve_c      (C server)
     ├── ta_codegen_serve_rust   (Rust server)
     ├── TaCodegenServe.class    (Java server)
-    └── TaCodegenServe          (.NET server)
+    └── TaCodegenServe          (C# server)
 ```
 
 Each server exposes its language's generated indicator code, reports available
@@ -365,7 +365,7 @@ ta-lib/
 │   ├── c/tools/              # C server + bench (the C library ships from src/ — the backcompat exception)
 │   ├── rust/{library,tools}/ # library/ = ta-lib crate; tools/ = server/bench (a Cargo workspace)
 │   ├── java/{library,tools}/ # library/ = shipped io.github.talib package + generated metadata registry; tools/ = JSON-RPC server
-│   └── dotnet/tools/         # .NET P/Invoke server (tools-only; no managed library)
+│   └── csharp/{library,tools}/ # library/ = shipped TALib package (src/ generated, scaffolding hand-written); tools/ = managed JSON-RPC server
 ├── ta_codegen/generator/         # The Rust code generator (see its CLAUDE.md)
 ├── src/
 │   ├── ta_func/              # The shipped C library, generated in place by ta_codegen

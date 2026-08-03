@@ -23,110 +23,15 @@ use super::stmt_walk::StatementEmitter;
 /// unconditionally before the `if`.
 pub(crate) const JAVA_CANDLE_FNS: &[&str] = &["ta_candlerange", "ta_candleaverage"];
 
-// ---------------------------------------------------------------------------
-// Compatibility fold (Java pins the mode to Default)
-// ---------------------------------------------------------------------------
-//
-// Metastock compatibility is retired project-wide and Java's `Core` carries no
-// compatibility field at all, so every `TA_GetCompatibility()` test in the shared
-// input sources is a compile-time constant on this backend. Fold it at render
-// time: `== DEFAULT` is true, `== METASTOCK` is false, the surviving `if` arm is
-// spliced in place of the branch. C (which still ships the setting) renders the
-// same IR untouched, so its output is unaffected.
-//
-// The fold hangs off [`StatementEmitter::if_stmt`], which every Java render path
-// funnels through — batch bodies, `LookbackExpr::Code` (CMO/RSI test the mode
-// inside their lookback), and the streaming warm-up opens. Anything that reaches
+// The compatibility fold (Java pins the mode to Default) lives in the shared
+// [`compat_fold`](super::compat_fold) module — C# folds the identical way. It
+// hangs off [`StatementEmitter::if_stmt`], which every Java render path funnels
+// through — batch bodies, `LookbackExpr::Code` (CMO/RSI test the mode inside
+// their lookback), and the streaming warm-up opens. Anything that reaches
 // [`ExprEmitter::var`] or the `Compatibility` builtin afterwards is a construct
-// this fold does not understand, and panics rather than emitting a reference to
+// the fold does not understand, and panics rather than emitting a reference to
 // a field that no longer exists.
-
-/// Result of folding a condition against Java's pinned-to-Default compatibility.
-enum CompatFold {
-    /// The condition is a compile-time constant on this backend.
-    Known(bool),
-    /// Not compatibility-dependent, or only partly folded. `changed` is false when
-    /// nothing folded, so the caller can take the untouched rendering path.
-    Open { expr: Expr, changed: bool },
-}
-
-impl CompatFold {
-    /// An operand that folded away nothing.
-    fn unchanged(expr: &Expr) -> Self {
-        CompatFold::Open { expr: expr.clone(), changed: false }
-    }
-}
-
-/// Is this expression the `COMPATIBILITY()` builtin (or its bare-`Var` spelling)?
-fn is_compat_read(expr: &Expr) -> bool {
-    match expr {
-        Expr::Var(n) => n == "COMPATIBILITY",
-        Expr::FuncCall(n, args) => n == "COMPATIBILITY" && args.is_empty(),
-        _ => false,
-    }
-}
-
-/// The truth value of `COMPATIBILITY() == <name>` under the Default pin.
-fn compat_variant_matches(expr: &Expr) -> Option<bool> {
-    match expr {
-        Expr::Var(n) if n == "DEFAULT" => Some(true),
-        Expr::Var(n) if n == "METASTOCK" => Some(false),
-        _ => None,
-    }
-}
-
-/// Fold a condition against the Default pin. Handles both operand orders and
-/// propagates through `&&` / `||` / `!` so a compound test such as
-/// `unstablePeriod == 0 && COMPATIBILITY() == METASTOCK` collapses whole.
-fn fold_compat_cond(expr: &Expr) -> CompatFold {
-    match expr {
-        Expr::BinOp(lhs, op @ (BinOp::Eq | BinOp::NotEq), rhs) => {
-            let matched = if is_compat_read(lhs) {
-                compat_variant_matches(rhs)
-            } else if is_compat_read(rhs) {
-                compat_variant_matches(lhs)
-            } else {
-                None
-            };
-            match matched {
-                Some(eq) => CompatFold::Known(if matches!(op, BinOp::Eq) { eq } else { !eq }),
-                None => CompatFold::unchanged(expr),
-            }
-        }
-        Expr::BinOp(lhs, op @ (BinOp::And | BinOp::Or), rhs) => {
-            let is_and = matches!(op, BinOp::And);
-            // Short-circuiting is preserved: the operands here are pure reads
-            // (the compat test has no side effects), so dropping one is safe.
-            let (l, r) = (fold_compat_cond(lhs), fold_compat_cond(rhs));
-            match (l, r) {
-                // `x && false` / `x || true` — the absorbing element wins.
-                (CompatFold::Known(k), _) | (_, CompatFold::Known(k)) if k != is_and => {
-                    CompatFold::Known(k)
-                }
-                (CompatFold::Known(_), CompatFold::Known(_)) => CompatFold::Known(is_and),
-                // `x && true` / `x || false` — the identity element drops out.
-                (CompatFold::Known(_), CompatFold::Open { expr, .. })
-                | (CompatFold::Open { expr, .. }, CompatFold::Known(_)) => {
-                    CompatFold::Open { expr, changed: true }
-                }
-                (
-                    CompatFold::Open { expr: le, changed: lc },
-                    CompatFold::Open { expr: re, changed: rc },
-                ) => CompatFold::Open {
-                    expr: Expr::BinOp(Box::new(le), op.clone(), Box::new(re)),
-                    changed: lc || rc,
-                },
-            }
-        }
-        Expr::Not(inner) => match fold_compat_cond(inner) {
-            CompatFold::Known(k) => CompatFold::Known(!k),
-            CompatFold::Open { expr, changed } => {
-                CompatFold::Open { expr: Expr::Not(Box::new(expr)), changed }
-            }
-        },
-        _ => CompatFold::unchanged(expr),
-    }
-}
+use super::compat_fold::{fold_compat_cond, CondFold};
 
 /// Per-render state for the Java backend, mirroring `RustRenderCtx`/`CRenderCtx`.
 /// Bundles the loose per-render state (precision flag, address-of variable sets,
@@ -212,8 +117,8 @@ fn is_int_literal(expr: &Expr, value: i64) -> bool {
     matches!(expr, Expr::IntLiteral(v) if *v == value)
 }
 
-/// How the Java renderer collapses a boolean-shaped ternary.
-enum BoolTernaryCollapse {
+/// How the managed renderers (Java, C#) collapse a boolean-shaped ternary.
+pub(crate) enum BoolTernaryCollapse {
     /// `cond ? 1 : 0` renders as the bare condition.
     Cond,
     /// `cond ? 0 : 1` renders as `!(condition)`.
@@ -225,7 +130,10 @@ enum BoolTernaryCollapse {
 /// perform the collapse) and `is_boolean_expr` (to know the collapsed result is
 /// boolean-typed), so the two can never disagree about the rule. Returns `None`
 /// when the ternary keeps its normal `c ? t : e` form.
-fn bool_ternary_collapse(then_expr: &Expr, else_expr: &Expr) -> Option<BoolTernaryCollapse> {
+pub(crate) fn bool_ternary_collapse(
+    then_expr: &Expr,
+    else_expr: &Expr,
+) -> Option<BoolTernaryCollapse> {
     if is_int_literal(then_expr, 1) && is_int_literal(else_expr, 0) {
         Some(BoolTernaryCollapse::Cond)
     } else if is_int_literal(then_expr, 0) && is_int_literal(else_expr, 1) {
@@ -522,8 +430,16 @@ pub(crate) fn java_type_str(var_type: &VarType) -> &'static str {
 /// TA_REAL_DEFAULT sentinels to the documented default value, then reject
 /// out-of-range values. One source of truth for both variants: guarded
 /// functions fail with `RetCode.BadParam`, lookback functions fail with `-1`
-/// (the classic lookback bad-param contract). Enum params (e.g. MAType) need
-/// no validation in Java — the type system already constrains them.
+/// (the classic lookback bad-param contract).
+///
+/// Enum params (e.g. MAType) get no range check, and here the type system
+/// genuinely is the reason: a Java enum reference cannot hold an arbitrary int,
+/// so there is no out-of-range value to reject. That is NOT the same as saying
+/// they need no handling — the `TA_INTEGER_DEFAULT` sentinel substitution C
+/// emits (`if( (int)optInMAType == (int)0x80000000 ) optInMAType = 0;`) has no
+/// Java counterpart either, so "use the documented default" is simply
+/// inexpressible for an enum param. Backend-wide gap, tracked in
+/// ta_codegen/generator/CLAUDE.md under "Known Code Quality Issues".
 // Integer optional-param defaults/ranges are `f64` in the IR; the integer-valued
 // casts to `i32` for literal emission are exact, not truncating.
 #[allow(clippy::cast_possible_truncation)]
@@ -1241,12 +1157,23 @@ impl JavaStmt<'_> {
             let is_else_if = else_body.len() - code_start == 1
                 && matches!(else_body.get(code_start), Some(Statement::If { .. }));
             if is_else_if {
-                for c in &else_body[..code_start] {
-                    out.push_str(&self.walk_stmt(c, indent));
+                // The `} else if` collapse pastes the walked inner `if`
+                // unbraced after `else` — but the compat fold can dissolve
+                // that inner `if` into bare statements or nothing, and
+                // `} else <bare>` either lets statements escape the else or
+                // dangles onto the next sibling. Collapse only when the walk
+                // still starts with an `if(`; otherwise fall through to the
+                // braced form. (Latent today — every compat site is a
+                // top-level if — but the C# float fold proved the mechanism.)
+                let inner = self.walk_stmt(&else_body[code_start], indent);
+                if inner.trim_start().starts_with("if(") {
+                    for c in &else_body[..code_start] {
+                        out.push_str(&self.walk_stmt(c, indent));
+                    }
+                    out.push_str(&format!("{pad}}} else "));
+                    out.push_str(inner.trim_start());
+                    return out;
                 }
-                out.push_str(&format!("{pad}}} else "));
-                out.push_str(self.walk_stmt(&else_body[code_start], indent).trim_start());
-                return out;
             }
             out.push_str(&format!("{pad}}} else {{\n"));
             for s in else_body {
@@ -1508,11 +1435,11 @@ impl StatementEmitter for JavaStmt<'_> {
         // arm's statements are the only thing removed — the survivor renders at
         // this `if`'s own indent, since its block is dissolved.
         match fold_compat_cond(condition) {
-            CompatFold::Known(taken) => {
+            CondFold::Known(taken) => {
                 let kept = if taken { then_body } else { else_body };
                 return kept.iter().map(|s| self.walk_stmt(s, indent)).collect();
             }
-            CompatFold::Open { expr, changed: true } => {
+            CondFold::Open { expr, changed: true } => {
                 // A compound condition that lost a compatibility operand (e.g.
                 // `unstablePeriod == 0 && COMPATIBILITY() == METASTOCK`) re-renders
                 // through the normal path with the survivor alone. The per-operand
@@ -1526,7 +1453,7 @@ impl StatementEmitter for JavaStmt<'_> {
                 };
                 return self.walk_stmt(&rebuilt, indent);
             }
-            CompatFold::Open { changed: false, .. } => {}
+            CondFold::Open { changed: false, .. } => {}
         }
         // Split `if(A && B)` into nested `if(A) { if(B)` when both sides
         // contain a candle helper call (ta_candlerange/ta_candleaverage).
@@ -2037,6 +1964,27 @@ pub(crate) fn java_predicate_expr(which: SpecialBuiltin, args: &[String]) -> Str
     }
 }
 
+/// The `FuncUnstId` Pascal variant name for an `UNSTABLE_PERIOD(<name>)`
+/// argument (with or without its `FUNC_UNST_` prefix). The irregular spellings
+/// match the enum emitted from enums.yaml. Shared by the Java and C# emitters.
+pub(crate) fn unst_pascal_name(func_name: &str) -> String {
+    let base = func_name.strip_prefix("FUNC_UNST_").unwrap_or(func_name);
+    match base {
+        "HT_DCPERIOD" => "HtDcPeriod".to_string(),
+        "HT_DCPHASE" => "HtDcPhase".to_string(),
+        "HT_PHASOR" => "HtPhasor".to_string(),
+        "HT_SINE" => "HtSine".to_string(),
+        "HT_TRENDLINE" => "HtTrendline".to_string(),
+        "HT_TRENDMODE" => "HtTrendMode".to_string(),
+        "MINUS_DI" => "MinusDI".to_string(),
+        "MINUS_DM" => "MinusDM".to_string(),
+        "PLUS_DI" => "PlusDI".to_string(),
+        "PLUS_DM" => "PlusDM".to_string(),
+        "STOCH_RSI" => "StochRsi".to_string(),
+        _ => to_pascal_case(base),
+    }
+}
+
 /// Convert a function identifier to `PascalCase`.
 /// e.g., "RSI" -> "Rsi", "ADX" -> "Adx", "HT_DCPERIOD" -> "HtDcperiod"
 fn to_pascal_case(s: &str) -> String {
@@ -2181,23 +2129,7 @@ fn render_func_call(
                 // UNSTABLE_PERIOD(RSI) -> this.unstablePeriod[FuncUnstId.Rsi.ordinal()]
                 // UNSTABLE_PERIOD(FUNC_UNST_ATR) -> strip FUNC_UNST_ prefix first
                 if let Some(Expr::Var(func_name)) = args.first() {
-                    let base = func_name
-                        .strip_prefix("FUNC_UNST_")
-                        .unwrap_or(func_name);
-                    let pascal = match base {
-                        "HT_DCPERIOD" => "HtDcPeriod".to_string(),
-                        "HT_DCPHASE" => "HtDcPhase".to_string(),
-                        "HT_PHASOR" => "HtPhasor".to_string(),
-                        "HT_SINE" => "HtSine".to_string(),
-                        "HT_TRENDLINE" => "HtTrendline".to_string(),
-                        "HT_TRENDMODE" => "HtTrendMode".to_string(),
-                        "MINUS_DI" => "MinusDI".to_string(),
-                        "MINUS_DM" => "MinusDM".to_string(),
-                        "PLUS_DI" => "PlusDI".to_string(),
-                        "PLUS_DM" => "PlusDM".to_string(),
-                        "STOCH_RSI" => "StochRsi".to_string(),
-                        _ => to_pascal_case(base),
-                    };
+                    let pascal = unst_pascal_name(func_name);
                     return format!("this.unstablePeriod[FuncUnstId.{pascal}.ordinal()]");
                 }
                 "this.unstablePeriod[0]".to_string()

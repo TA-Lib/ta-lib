@@ -158,12 +158,13 @@ jobs:
 
   # Cross-language BITWISE parity gate (issue #113): the generated language
   # servers must be BIT-IDENTICAL to the shipped in-process C library (no
-  # tolerance). Rust crosses the JSON boundary with a seed; Java with lossless hex
-  # inputs (#114), its transcendental-using calls relaxed to a tolerance (fdlibm
-  # != the C libm). cmake+gcc+cargo are preinstalled on ubuntu-latest; the Java
-  # server needs the JDK (no .NET — it P/Invokes C == C).
+  # tolerance). Rust crosses the JSON boundary with a seed; Java and C# with
+  # lossless hex inputs (#114). Only Java relaxes its transcendental-using calls
+  # to a tolerance (fdlibm != the C libm); the managed C# is bitwise everywhere.
+  # cmake+gcc+cargo are preinstalled on ubuntu-latest; the Java server needs the
+  # JDK and the managed C# server needs the .NET SDK (both set up below).
   xlang-hash:
-    name: Bitwise parity (C vs Rust + Java, seed/hex+hash)
+    name: Bitwise parity (C vs Rust + Java + C#, seed/hex+hash)
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
@@ -184,6 +185,11 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y openjdk-21-jdk
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
 
       - name: Bitwise-diff each language server vs the in-process C library
         shell: bash

@@ -136,6 +136,56 @@ PREREQS_BUILD_BASIC = [PREREQS_CMAKE]
 PREREQS_BUILD_CODEGEN = [PREREQS_CMAKE, PREREQS_CARGO]
 PREREQS_BUILD_SERVERS = [PREREQS_CMAKE, PREREQS_CARGO, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA, PREREQS_DOTNET]
 
+# Tools each --language= backend needs, on top of the base set below. Unknown
+# tokens (ta_bench also accepts "cref") contribute nothing, so a typo can only
+# widen the check, never shrink it below the base.
+#
+# Shared by scripts/regtest.py and scripts/build.py so the two cannot drift:
+# a machine that can reach `--language=c,rust` in one must reach it in the other.
+LANG_PREREQS = {
+    "c":      [PREREQS_GCC],
+    "rust":   [],                            # cargo is already in the base set
+    "java":   [PREREQS_JAVAC, PREREQS_JAVA],
+    "csharp": [PREREQS_DOTNET],
+}
+
+# The ta_codegen `--backend=` tokens, which are 1:1 with the --language= ones
+# (backends::all_names() == ["c", "rust", "java", "csharp"]).
+CODEGEN_BACKENDS = ("c", "rust", "java", "csharp")
+
+
+def prereqs_for_languages(lang_filter):
+    """Prerequisites this run actually needs (issue #150).
+
+    Without --language every backend is generated and built, so the full set
+    applies. With one, only that backend's toolchain is required — a JDK/.NET-less
+    machine could not reach `--codegen-only --language=c,rust` at all before.
+    cmake and cargo stay unconditional: the generator itself is the Rust binary
+    driving generate/generate-servers/build, so even --language=c runs cargo."""
+    if not lang_filter:
+        return PREREQS_BUILD_SERVERS
+    prereqs = [PREREQS_CMAKE, PREREQS_CARGO]
+    for lang in lang_filter.split(","):
+        for tool in LANG_PREREQS.get(lang.strip().lower(), []):
+            if tool not in prereqs:
+                prereqs.append(tool)
+    return prereqs
+
+
+def backends_for_languages(lang_filter):
+    """The ta_codegen `--backend=` value for a --language= filter, or None for all.
+
+    Only tokens that name a real backend are forwarded; anything else (notably
+    ta_bench's "cref", a frozen prebuilt binary that is never built here) is
+    dropped. If nothing survives, returns None so the caller builds everything —
+    a filter we cannot interpret must never silently under-build, because a
+    missing server binary makes ta_regtest reuse a stale one and read green."""
+    if not lang_filter:
+        return None
+    picked = [t for t in (s.strip().lower() for s in lang_filter.split(","))
+              if t in CODEGEN_BACKENDS]
+    return ",".join(dict.fromkeys(picked)) if picked else None
+
 def is_wix_installed() -> bool:
     # For installation, see https://cmake.org/cmake/help/latest/cpack_gen/wix.html#wix-net-tools
     try:
@@ -265,6 +315,9 @@ def get_all_generated_files() -> list:
     """
     return [
         'ta_codegen/output/java/library/src/**',
+        # C# library: the enums are generated; TALib.csproj is hand-written and
+        # is deliberately not listed.
+        'ta_codegen/output/csharp/library/src/**',
     ]  + get_src_generated_files()
 
 def expand_globs(root_dir: str, file_list: list) -> list:
