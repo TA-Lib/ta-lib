@@ -4429,6 +4429,9 @@ typedef struct {
     char        *reqBuf;
     char        *respBuf;
     long long    comparisons;        /* golden cases evaluated                 */
+    long long    funcsSwept;         /* functions past the --function filter — printed
+                                      * in the PASS line so a caller can assert the
+                                      * sweep was not vacuous (synth_gate.py does)   */
     long long    nonEmpty;           /* cases with a non-empty successful output
                                       * (non-vacuity: an empty output hashes the
                                       * same on both sides, so a healthy fraction
@@ -5028,6 +5031,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     if( ctx->error != TA_TEST_PASS ) return;
     if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) ) return;
+    ctx->funcsSwept++;
 
     /* See fuzz_one_function: a silent skip would remove this function from the
      * cross-language bitwise gate with no trace. Fail loudly instead. */
@@ -5547,10 +5551,10 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     }
     if( totalMism == 0 && inFails == 0 && ctx.error == TA_TEST_PASS )
     {
-        printf("PASS — every server matches the in-process C library: BIT-IDENTICAL "
-               "(zero tolerance), Java+C# transcendentals within %g "
-               "(current-vs-current, all shapes, period>=2).\n",
-               CODEGEN_TRANSCENDENTAL_TOL);
+        printf("PASS — %lld function(s) swept: every server matches the in-process C "
+               "library: BIT-IDENTICAL (zero tolerance), Java+C# transcendentals "
+               "within %g (current-vs-current, all shapes, period>=2).\n",
+               ctx.funcsSwept, CODEGEN_TRANSCENDENTAL_TOL);
         return TA_TEST_PASS;
     }
     printf("FAIL — %lld output mismatch(es) + %d input-port mismatch(es) across %d function(s).\n",
