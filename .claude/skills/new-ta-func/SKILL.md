@@ -1,41 +1,43 @@
 ---
-name: convert-indicator
-description: Use when adding a new TA-Lib indicator to ta_codegen, modifying an existing indicator's logic or metadata, or extending the generator (parser/IR/backends) for a new C construct. Triggers on "convert indicator", "add indicator", "modify indicator", "next function", or any TA-Lib function name (SMA, RSI, EMA, MA, BBANDS, etc).
+name: new-ta-func
+description: Use when adding a new TA-Lib indicator to ta_codegen, modifying an existing indicator's logic or metadata, or extending the generator (parser/IR/backends) for a new C construct. Triggers on "new ta func", "add indicator", "modify indicator", "next function", or any TA-Lib function name (SMA, RSI, EMA, MA, BBANDS, etc).
 ---
 
-# Convert / Modify an Indicator via ta_codegen
+# Add / Modify a TA Function via ta_codegen
 
 `ta_codegen` (Rust, in `ta_codegen/generator/`) is the single code generator. Each
-indicator is defined by two files in `ta_codegen/input/<name>/`:
+function is defined by three files in `ta_codegen/input/<name>/`:
 
 - `<name>.yaml` — metadata (inputs, optional params, outputs, group, flags)
 - `<name>.c` — the algorithm, written as plain C (see `docs/ta_codegen_input_code.md`)
+- `<name>.md` — documentation prose (see `docs/ta_codegen_input_doc.md`)
 
 From these it generates all **four** backends: **C** (in place under `src/ta_func` /
-`src/ta_abstract`), **Rust**, **Java**, **C#** (under `ta_codegen/output/`).
+`src/ta_abstract`), **Rust**, **Java**, **C#** (under `ta_codegen/output/`) — plus the
+website function page and the Rust rustdoc from `<name>.md`.
 
-> All ~161 indicators are already converted. Use this skill to **add a brand-new**
-> indicator, **modify** an existing one, or **extend the generator** to support a new
-> C construct. The correctness baseline is the frozen pre-cutover reference (the
-> `reference-pre-cutover` tag, served as `ta_ref_serve`) plus ta_regtest's hardcoded
-> expected values.
+> Use this skill to **add a brand-new** function, **modify** an existing one, or
+> **extend the generator** to support a new C construct. The correctness baseline is
+> the frozen pre-cutover reference (the `reference-pre-cutover` tag, served as
+> `ta_ref_serve`) plus ta_regtest's hardcoded expected values. The contributor-facing
+> workflow (spec approval, golden values, PR) is `website/src/contribute/README.md`.
 
 ## Usage
 
-- `/convert-indicator BBANDS` — work on a specific indicator
-- `/convert-indicator` — resume in-progress work
+- `/new-ta-func BBANDS` — work on a specific function
+- `/new-ta-func` — resume in-progress work
 
 ## Workflow
 
 ```dot
-digraph convert {
-    "Pick / scope indicator" -> "Write name.yaml + name.c";
-    "Write name.yaml + name.c" -> "cargo run -- generate";
-    "cargo run -- generate" -> "Parse error?" [shape=diamond];
+digraph new_ta_func {
+    "Pick / scope indicator" -> "Write name.yaml + name.c + name.md";
+    "Write name.yaml + name.c + name.md" -> "cargo run -- generate";
+    "cargo run -- generate" -> "Parse error?";
     "Parse error?" -> "Extend parser (c_source.rs)" [label="yes"];
     "Extend parser (c_source.rs)" -> "cargo run -- generate";
     "Parse error?" -> "Review generated output" [label="no"];
-    "Review generated output" -> "New IR node needed?" [shape=diamond];
+    "Review generated output" -> "New IR node needed?";
     "New IR node needed?" -> "Extend IR + all 4 backends" [label="yes"];
     "Extend IR + all 4 backends" -> "cargo run -- generate";
     "New IR node needed?" -> "Output correct?" [label="no"];
@@ -101,7 +103,14 @@ Full syntax and the `ta_defs.h` vocabulary (`TA_IS_ZERO`,
 - Cross-indicator calls use the **bare lowercase name** (`sma(...)`,
   `ema_lookback(...)`); the generator routes them to the unguarded variant per language
 
-### 4. Generate and iterate
+### 4. Write / adjust the documentation — `ta_codegen/input/<name>/<name>.md`
+
+The canonical prose source: summary, the formula in its **original algebraic form**
+(never implementation artifacts — no zero-guards, epsilons or `period == 1` cases),
+inputs/outputs, references. Rendered into the website function page and the Rust
+rustdoc. Schema and gated sections in `docs/ta_codegen_input_doc.md`.
+
+### 5. Generate and iterate
 
 ```bash
 cd ta_codegen/generator
@@ -122,12 +131,18 @@ If the parser panics or output is wrong, extend:
 **When extending the IR you MUST update ALL 4 backends** (C, Rust, Java, C#) or Rust
 exhaustiveness errors will point you to each.
 
-### 5. Verify across languages and commit
+### 6. Verify across languages and commit
 
 ```bash
 scripts/build.py servers
 cd bin && ./ta_regtest --codegen --function=<NAME>     # all langs vs the C reference
 ```
+
+`--codegen` needs `bin/ta_ref_serve`; on a fresh clone build it via `scripts/regtest.py`.
+A brand-new function is *skipped* by the generic sweep (absent from the frozen
+reference) — it is verified by a hand-written golden-value test instead
+(`src/tools/ta_regtest/ta_test_func/test_composite.c` pattern), whose calls the
+harness also checks bitwise against every language server.
 
 `git diff` the other backends' generated output to confirm an unrelated language
 didn't change. SMA/MULT have byte-identical reference comparisons — if those break,
@@ -139,6 +154,7 @@ the change is wrong.
 |------|---------|
 | `ta_codegen/input/<name>/<name>.yaml` | Metadata: inputs, outputs, params, flags |
 | `ta_codegen/input/<name>/<name>.c` | Algorithm (plain C) |
+| `ta_codegen/input/<name>/<name>.md` | Documentation (canonical prose source) |
 | `ta_codegen/generator/src/ir.rs` | IR types (FuncDef, Statement, Expr, ParamType) |
 | `ta_codegen/generator/src/parser/c_source.rs` | C-source → IR parser |
 | `ta_codegen/generator/src/parser/yaml.rs` | YAML metadata parser |
@@ -147,6 +163,7 @@ the change is wrong.
 | `ta_codegen/generator/tests/validate.sh` | Dev validation harness |
 | `docs/ta_codegen_input_yaml.md` | YAML schema reference |
 | `docs/ta_codegen_input_code.md` | `.c` logic / `ta_defs.h` macro reference |
+| `docs/ta_codegen_input_doc.md` | `.md` documentation reference |
 
 ## Backend rendering
 
@@ -158,10 +175,10 @@ Each backend has the same structure:
 
 **Cross-call dispatch per language** (a bare `sma(...)` in the `.c` file):
 
-| Call in `<name>.c` | C | Rust | Java |
-|---|---|---|---|
-| `sma(...)` | `TA_SMA_Unguarded(...)` | `self.sma_unguarded(...)` | `smaUnguarded(...)` |
-| `sma_lookback(...)` | `TA_SMA_Lookback(...)` | `self.sma_lookback(...)` | `smaLookback(...)` |
+| Call in `<name>.c` | C | Rust | Java | C# |
+|---|---|---|---|---|
+| `sma(...)` | `TA_SMA_Unguarded(...)` | `self.sma_unguarded(...)` | `smaUnguarded(...)` | `SmaUnguarded(...)` |
+| `sma_lookback(...)` | `TA_SMA_Lookback(...)` | `self.sma_lookback(...)` | `smaLookback(...)` | `SmaLookback(...)` |
 
 (C also emits single-precision `TA_S_*` variants automatically; there is no Rust `_s`
 variant — Rust is concrete `f64`.)

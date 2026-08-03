@@ -109,4 +109,4 @@ Community members whose bug reports and requests led to a committed change — w
 
 ---
 
-Want to help? See [How to get support](/faq/) or open an issue on [GitHub](https://github.com/TA-Lib/ta-lib/issues).
+Want to help? See [How to contribute a new TA function](/contribute/), [How to get support](/faq/) or open an issue on [GitHub](https://github.com/TA-Lib/ta-lib/issues).

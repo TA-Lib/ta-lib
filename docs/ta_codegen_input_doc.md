@@ -23,7 +23,7 @@ alongside `<name>.yaml` (metadata) and `<name>.c` (logic). It is the **single ca
 source** for a function's human documentation. The generator fans it out — deterministically,
 like every other backend — into each ecosystem's native format:
 
-- the **ta-lib.org** per-function page (mkdocs-material),
+- the **ta-lib.org** per-function page (VuePress, `website/src/functions/`),
 - **embedded rustdoc** in the generated Rust crate (docs.rs / IDE hover / offline `cargo doc`),
 - later, **Javadoc / .NET XML-doc / TSDoc** and the `ta_func_api.xml` description.
 
@@ -85,9 +85,11 @@ formula, a name→meaning list, or a link/name table. There is **no frontmatter*
 
 ## The Implementation section
 
-`## Implementation` is emitted by the renderer from the function's paths: a **TA-Lib
-Definition:** line naming the source of truth, then a **Native** table of the generated
-backends, then a pointer to the language wrappers.
+`## Implementation` is **authored in the file** following a fixed pattern (copy it from a
+shipped `<name>.md` and substitute your paths); the renderer validates the paths and
+rewrites them per target. The pattern: a **TA-Lib Definition:** line naming the source of
+truth, then a **Native** table of the generated backends, then a pointer to the language
+wrappers.
 
 ```
 TA-Lib Definition: <name>.c · <name>.yaml
@@ -122,7 +124,7 @@ empty). On top of that:
 1. **`docs-lint`** — required sections present and ordered; every param/output named in prose
    exists in the YAML; no prose number contradicts the YAML; `see_also` and intra-doc links
    resolve; the Implementation paths exist.
-2. **`mkdocs build --strict`** — broken nav / cross-references fail the docs PR.
+2. **`pnpm docs:build`** (VuePress, from `website/`) — broken nav / cross-references fail the docs PR.
 
 `ta_codegen format` gains a deterministic `.md` canonicaliser (fixed section order,
 trailing-whitespace strip, blank-line collapse) with the same whitespace-only safety guard
@@ -136,7 +138,7 @@ as the C reindenter, so the file is stable under the format gate.
 
 Documentation is **AI-authored by default**, drafted from the function's `<name>.c` (the
 implementation — the source of truth) and `<name>.yaml`, then **adversarially verified against
-that same code**. A `/document-indicator` skill (mirroring `/convert-indicator`) can drive it.
+that same code**. A `/document-indicator` skill (mirroring `/new-ta-func`) can drive it.
 
 - **Review gate:** every `<name>.md` is a `CODEOWNERS`-reviewed PR. Formulas, quirks, and
   citations are exactly where an AI can hallucinate, so maintainer sign-off is

@@ -13,7 +13,7 @@ its own reference:
 |------|-------|-----------|
 | `<name>.yaml` | Metadata — **data only, no logic** | **this document** |
 | `<name>.c` | The algorithm, in cross-language C | [ta_codegen_input_code.md](ta_codegen_input_code.md) |
-| `<name>.md` | Function documentation (prose) — _proposed_ | [ta_codegen_input_doc.md](ta_codegen_input_doc.md) |
+| `<name>.md` | Function documentation (prose) | [ta_codegen_input_doc.md](ta_codegen_input_doc.md) |
 
 The `ta_codegen` tool reads these definitions and generates output for all target
 languages (C, Rust, Java, .NET). This document specifies the **`<name>.yaml` metadata
