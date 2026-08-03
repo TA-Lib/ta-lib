@@ -27,6 +27,12 @@
          release milestone; until then `dotnet pack` must not produce a
          placeholder package. -->
     <IsPackable>false</IsPackable>
+    <!-- test/ is a SIBLING project (test/TALib.Test.csproj) that compiles these
+         same library sources itself. Without this exclusion the SDK's default
+         **/*.cs glob pulls the suites — and their obj/ AssemblyInfo — into the
+         shipped library, which then fails with CS0579 duplicate-attribute and
+         would ship test code inside TALib.dll. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);test/**</DefaultItemExcludes>
   </PropertyGroup>
 
 </Project>

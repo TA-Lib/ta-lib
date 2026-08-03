@@ -210,8 +210,26 @@ pub fn generate(
 /// `TA_REAL_DEFAULT` sentinels to the documented default value, then reject
 /// out-of-range values. One source of truth for both variants: guarded
 /// functions fail with `RetCode.BadParam`, lookback functions fail with `-1`.
-/// Enum params (e.g. MAType) need no validation — the type system constrains
-/// them.
+///
+/// Enum params (e.g. `MAType`) are deliberately NOT handled here, and the C#
+/// type system is not the reason. A C# enum is an `int` with names: `(MAType)
+/// int.MinValue` is a legal value, and the generated JSON-RPC server produces
+/// exactly that — `(MAType)GetInt(p, "optInMAType", 0)`. What is missing is the
+/// sentinel substitution C emits for every `enum:MAType` optional input:
+///
+/// ```c
+/// if( (int)optInMAType == (int)0x80000000 )   /* ta_MA.c, ta_BBANDS.c, ... */
+///    optInMAType = 0;
+/// ```
+///
+/// Without it `MovingAverage(.., (MAType)int.MinValue, ..)` falls through the
+/// switch to `default: BadParam` where C returns a 30-bar SMA, and the matching
+/// lookback returns 0 rather than 29.
+///
+/// This is a pre-existing, backend-wide gap shared with Rust and Java, tracked
+/// in `ta_codegen/generator/CLAUDE.md` under "Known Code Quality Issues"; the
+/// sentinel sweep in `test_codegen.c` excludes `IntegerList` for the same
+/// reason. Fixing it is a cross-backend change, not a C#-local one.
 // Integer optional-param defaults/ranges are `f64` in the IR; the integer-valued
 // casts to `i32` for literal emission are exact, not truncating.
 #[allow(clippy::cast_possible_truncation)]

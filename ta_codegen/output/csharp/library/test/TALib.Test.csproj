@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Hand-written test project; ta_codegen never opens this file.
+
+       Multi-targets BOTH TFMs the shipped library declares. That is the whole
+       point: TALib.csproj claims net8.0;net10.0, but until this project existed
+       every gate (the ta_regtest codegen sweep, the bitwise xlang gate, the
+       JSON-RPC server) ran the net10.0 build only, so the net8.0 leg was
+       compiled and never once executed. Running this project with
+       `-f net8.0` is the first thing that actually executes it.
+
+       Compiles the library sources directly rather than referencing the built
+       assembly, matching how the JSON-RPC server's csproj does it: same files,
+       same bytes, and `internal` members stay reachable if a test ever needs
+       the RetCode tier under the public OutRange wrappers.
+
+       Framework-free (no xunit/nunit): the shipped library takes no test
+       dependency, the suites are plain Main() entry points, and the whole
+       harness is `dotnet run`. Matches the Java suites, which build.py already
+       drives the same way. -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>TALib.Test</RootNamespace>
+    <AssemblyName>TALib.Test</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IsPackable>false</IsPackable>
+    <!-- Each suite has its own Main; the runner picks one per invocation. -->
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <StartupObject>TALib.Test.AllTests</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../*.cs" />
+    <Compile Include="../src/**/*.cs" />
+  </ItemGroup>
+
+</Project>

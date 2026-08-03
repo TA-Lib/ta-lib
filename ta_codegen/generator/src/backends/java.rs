@@ -430,8 +430,16 @@ pub(crate) fn java_type_str(var_type: &VarType) -> &'static str {
 /// TA_REAL_DEFAULT sentinels to the documented default value, then reject
 /// out-of-range values. One source of truth for both variants: guarded
 /// functions fail with `RetCode.BadParam`, lookback functions fail with `-1`
-/// (the classic lookback bad-param contract). Enum params (e.g. MAType) need
-/// no validation in Java — the type system already constrains them.
+/// (the classic lookback bad-param contract).
+///
+/// Enum params (e.g. MAType) get no range check, and here the type system
+/// genuinely is the reason: a Java enum reference cannot hold an arbitrary int,
+/// so there is no out-of-range value to reject. That is NOT the same as saying
+/// they need no handling — the `TA_INTEGER_DEFAULT` sentinel substitution C
+/// emits (`if( (int)optInMAType == (int)0x80000000 ) optInMAType = 0;`) has no
+/// Java counterpart either, so "use the documented default" is simply
+/// inexpressible for an enum param. Backend-wide gap, tracked in
+/// ta_codegen/generator/CLAUDE.md under "Known Code Quality Issues".
 // Integer optional-param defaults/ranges are `f64` in the IR; the integer-valued
 // casts to `i32` for literal emission are exact, not truncating.
 #[allow(clippy::cast_possible_truncation)]
