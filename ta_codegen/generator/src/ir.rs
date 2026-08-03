@@ -481,6 +481,8 @@ pub enum Expr {
     BinOp(Box<Expr>, BinOp, Box<Expr>),
     Cast(VarType, Box<Expr>),
     Not(Box<Expr>),
+    /// Bitwise complement: `~x` (integer-valued, unlike the boolean [`Expr::Not`])
+    BitwiseNot(Box<Expr>),
     /// Function/builtin call: `UNSTABLE_PERIOD(RSI)`, `IS_ZERO(x)`, `ARRAY_COPY`(...),
     /// `RSI_Lookback(params`...), etc.
     FuncCall(String, Vec<Expr>),
@@ -517,7 +519,9 @@ pub enum BinOp {
     Shr, // >> right shift
     Shl, // << left shift
     Or,
-    BitwiseOr, // | bitwise OR
+    BitwiseOr,  // | bitwise OR
+    BitwiseXor, // ^ bitwise XOR
+    BitwiseAnd, // & bitwise AND
 }
 
 /// A helper function definition (parsed from ta_codegen/input/helpers/*.c).

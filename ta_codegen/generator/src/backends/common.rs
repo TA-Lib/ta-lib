@@ -63,6 +63,7 @@ pub fn expr_directly_contains_candle_call(expr: &Expr) -> bool {
         }
         Expr::Cast(_, inner)
         | Expr::Not(inner)
+        | Expr::BitwiseNot(inner)
         | Expr::AddressOf(inner)
         | Expr::PostIncrement(inner)
         | Expr::PostDecrement(inner)

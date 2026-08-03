@@ -11,7 +11,7 @@ use crate::parser::enums::lookup_variant;
 use crate::registry::Registry;
 use super::common::{contains_alloc_err_return, expr_directly_contains_candle_call, find_sizeof_type};
 use super::builtins::{MathFn, SpecialBuiltin, StdlibFn};
-use super::expr_walk::ExprEmitter;
+use super::expr_walk::{is_int_bitwise, ExprEmitter};
 use super::fma::{self, is_i32_opt_in_param, is_integer_returning_helper, FmaCtx};
 use super::stmt_walk::StatementEmitter;
 
@@ -1287,6 +1287,8 @@ fn expr_can_be_negative(expr: &Expr) -> bool {
         Expr::BinOp(left, BinOp::Sub, _right) => {
             matches!(left.as_ref(), Expr::IntLiteral(0))
         }
+        // ~x is negative for every x >= 0 (two's complement)
+        Expr::BitwiseNot(_) => true,
         // Multiplication or addition where either side can be negative
         Expr::BinOp(left, BinOp::Mul | BinOp::Add, right) => {
             expr_can_be_negative(left) || expr_can_be_negative(right)
@@ -1469,7 +1471,7 @@ fn count_increments_in_expr(name: &str, expr: &Expr) -> usize {
         }
         Expr::ArrayAccess(_, idx) => count_increments_in_expr(name, idx),
         Expr::FuncCall(_, args) => args.iter().map(|a| count_increments_in_expr(name, a)).sum(),
-        Expr::Not(inner) | Expr::Cast(_, inner) => {
+        Expr::Not(inner) | Expr::BitwiseNot(inner) | Expr::Cast(_, inner) => {
             count_increments_in_expr(name, inner)
         }
         Expr::Ternary(cond, then_expr, else_expr) => {
@@ -2066,6 +2068,11 @@ impl StatementEmitter for RustStmt<'_, '_> {
                             BinOp::Sub => "-=",
                             BinOp::Mul => "*=",
                             BinOp::Div => "/=",
+                            BinOp::BitwiseAnd => "&=",
+                            BinOp::BitwiseOr => "|=",
+                            BinOp::BitwiseXor => "^=",
+                            BinOp::Shl => "<<=",
+                            BinOp::Shr => ">>=",
                             BinOp::Mod
                             | BinOp::LessEq
                             | BinOp::Less
@@ -2074,10 +2081,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
                             | BinOp::Eq
                             | BinOp::NotEq
                             | BinOp::And
-                            | BinOp::Or
-                            | BinOp::BitwiseOr
-                            | BinOp::Shr
-                            | BinOp::Shl => "",
+                            | BinOp::Or => "",
                         };
                         if !op_str.is_empty() {
                             let target_str =
@@ -2332,7 +2336,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
         let mut out = format!(
             "{}while {} {{\n",
             pad,
-            render_expr(condition, self.ctx, self.opt_real_params, self.registry, self.helpers)
+            render_condition(condition, self.ctx, self.opt_real_params, self.registry, self.helpers)
         );
         for s in while_body {
             out.push_str(&self.walk_stmt(s, indent + 4));
@@ -2350,7 +2354,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
         out.push_str(&format!(
             "{}    if !({}) {{ break; }}\n",
             pad,
-            render_expr(condition, self.ctx, self.opt_real_params, self.registry, self.helpers)
+            render_condition(condition, self.ctx, self.opt_real_params, self.registry, self.helpers)
         ));
         out.push_str(&format!("{pad}}}\n"));
         out
@@ -2681,7 +2685,7 @@ fn expr_has_uncast_array_access(expr: &Expr) -> bool {
         Expr::BinOp(left, _, right) => {
             expr_has_uncast_array_access(left) || expr_has_uncast_array_access(right)
         }
-        Expr::Not(inner) => expr_has_uncast_array_access(inner),
+        Expr::Not(inner) | Expr::BitwiseNot(inner) => expr_has_uncast_array_access(inner),
         Expr::FuncCall(_, args) => args.iter().any(expr_has_uncast_array_access),
         Expr::Ternary(cond, then_expr, else_expr) => {
             expr_has_uncast_array_access(cond)
@@ -2712,6 +2716,7 @@ fn render_assign_target(
         | Expr::BinOp(_, _, _)
         | Expr::Cast(_, _)
         | Expr::Not(_)
+        | Expr::BitwiseNot(_)
         | Expr::FuncCall(_, _)
         | Expr::PointerDeref(_)
         | Expr::AddressOf(_)
@@ -2723,15 +2728,24 @@ fn render_assign_target(
     }
 }
 
+/// RUST operator precedence (not C's) — this table decides parenthesization of
+/// the emitted Rust, so it must follow the Rust grammar. The visible difference
+/// from C: bitwise `&`/`^`/`|` bind TIGHTER than comparisons in Rust, the
+/// reverse of C. The IR tree already carries C's grouping (the input parser is
+/// a C parser), so rendering with Rust's table inserts exactly the parens Rust
+/// needs to preserve that grouping.
 fn op_precedence(op: &BinOp) -> u8 {
     match op {
         BinOp::Or => 1,
         BinOp::And => 2,
-        BinOp::BitwiseOr => 3,
-        BinOp::Eq | BinOp::NotEq => 4,
-        BinOp::Less | BinOp::LessEq | BinOp::Greater | BinOp::GreaterEq => 5,
-        BinOp::Add | BinOp::Sub | BinOp::Shr | BinOp::Shl => 6,
-        BinOp::Mul | BinOp::Div | BinOp::Mod => 7,
+        BinOp::Eq | BinOp::NotEq => 3,
+        BinOp::Less | BinOp::LessEq | BinOp::Greater | BinOp::GreaterEq => 4,
+        BinOp::BitwiseOr => 5,
+        BinOp::BitwiseXor => 6,
+        BinOp::BitwiseAnd => 7,
+        BinOp::Shl | BinOp::Shr => 8,
+        BinOp::Add | BinOp::Sub => 9,
+        BinOp::Mul | BinOp::Div | BinOp::Mod => 10,
     }
 }
 
@@ -2744,12 +2758,35 @@ fn render_binop_operand(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    let is_cmp = |op: &BinOp| {
+        matches!(
+            op,
+            BinOp::Eq | BinOp::NotEq | BinOp::Less | BinOp::LessEq | BinOp::Greater | BinOp::GreaterEq
+        )
+    };
     match expr {
         Expr::Cast(_, _) => format!("({})", render_expr(expr, ctx, opt_real_params, registry, helpers)),
+        // Integer-bitwise operand of a logical operator: C truthiness needs an
+        // explicit comparison in Rust ( `(x & 1) && p` → `(x & 1) != 0 && p` ).
+        e if is_int_bitwise(e) && matches!(parent_op, BinOp::And | BinOp::Or) => {
+            let rendered = render_expr(expr, ctx, opt_real_params, registry, helpers);
+            format!("({rendered}) != 0")
+        }
+        // `!(x & 1)` as a logical operand: invert to == 0 (Rust `!` on an
+        // integer is bitwise complement, not logical not).
+        Expr::Not(inner) if is_int_bitwise(inner) && matches!(parent_op, BinOp::And | BinOp::Or) => {
+            let rendered = render_expr(inner, ctx, opt_real_params, registry, helpers);
+            format!("({rendered}) == 0")
+        }
         Expr::BinOp(_, child_op, _) => {
             let parent_prec = op_precedence(parent_op);
             let child_prec = op_precedence(child_op);
-            if child_prec < parent_prec || (!is_left && child_prec == parent_prec) {
+            // Rust comparisons are one non-associative tier: a comparison
+            // nested in a comparison must be parenthesized to parse at all.
+            if is_cmp(parent_op) && is_cmp(child_op)
+                || child_prec < parent_prec
+                || (!is_left && child_prec == parent_prec)
+            {
                 format!("({})", render_expr(expr, ctx, opt_real_params, registry, helpers))
             } else {
                 render_expr(expr, ctx, opt_real_params, registry, helpers)
@@ -2777,6 +2814,7 @@ fn render_binop_operand(
         | Expr::Var(_)
         | Expr::ArrayAccess(_, _)
         | Expr::Not(_)
+        | Expr::BitwiseNot(_)
         | Expr::FuncCall(_, _)
         | Expr::PointerDeref(_)
         | Expr::AddressOf(_)
@@ -2838,6 +2876,18 @@ fn render_condition(
             }
         }
     }
+    // Integer-valued bitwise expression as condition (C truthiness): Rust
+    // needs an explicit comparison. `!(x & k)` inverts to == 0.
+    if is_int_bitwise(expr) {
+        let rendered = render_expr(expr, ctx, opt_real_params, registry, helpers);
+        return format!("({rendered}) != 0");
+    }
+    if let Expr::Not(inner) = expr {
+        if is_int_bitwise(inner) {
+            let rendered = render_expr(inner, ctx, opt_real_params, registry, helpers);
+            return format!("({rendered}) == 0");
+        }
+    }
     // Ternary producing integer used as condition: needs != 0
     if let Expr::Ternary(_, then_expr, _) = expr {
         if expr_is_untyped_integer(then_expr) || matches!(then_expr.as_ref(), Expr::IntLiteral(_)) {
@@ -2872,6 +2922,24 @@ struct RustExpr<'a> {
 }
 
 impl ExprEmitter for RustExpr<'_> {
+    // C's bitwise complement `~x` is spelled `!x` in Rust (on integers).
+    fn bitwise_not(&self, inner: &Expr) -> String {
+        format!("!({})", self.walk(inner))
+    }
+
+    // C's logical `!` over an integer-bitwise value yields int 0/1. Rust's `!`
+    // on an integer is bitwise complement, so spell out the comparison. All
+    // condition contexts intercept this shape earlier (render_condition /
+    // render_binop_operand); this covers value position, where usize is the
+    // backend's default integer — a signed target fails to compile rather than
+    // silently wrapping.
+    fn not(&self, inner: &Expr) -> String {
+        if is_int_bitwise(inner) {
+            return format!("usize::from(({}) == 0)", self.walk(inner));
+        }
+        format!("!({})", self.walk(inner))
+    }
+
     fn var(&self, name: &str) -> String {
         match name {
             "COMPATIBILITY" => "(self.compatibility)".to_string(),
@@ -2927,6 +2995,15 @@ impl ExprEmitter for RustExpr<'_> {
         // `as` binds tighter than every binary operator, so a binary-op inner
         // must be wrapped; atomic/unary inners do not, and a ternary already
         // self-parenthesizes as `(if ... else ...)`.
+        // KNOWN DIVERGENCE (synth-gate finding): for a NEGATIVE double, this
+        // f64→usize cast saturates to 0 where C truncates to a negative int.
+        // Rendering `as i32 as usize` instead is bit-faithful but breaks the
+        // SIGNED comparisons downstream (MAVP clamps its casted period; a
+        // sign-extended usize takes the wrong clamp branch on negative data —
+        // caught by the abstract inputNegData gate). The real fix is signedness
+        // classification of cast-fed locals, tracked separately; until then,
+        // input C must not cast possibly-negative doubles to int when the low
+        // bits matter (see ta_codegen/generator/input_synth/README.md).
         let s = self.walk(inner);
         if matches!(inner, Expr::BinOp(..)) {
             format!("({s}) as {rust_type}")
@@ -3032,10 +3109,24 @@ fn render_binop(
         BinOp::And => " && ",
         BinOp::Or => " || ",
         BinOp::BitwiseOr => " | ",
+        BinOp::BitwiseXor => " ^ ",
+        BinOp::BitwiseAnd => " & ",
         BinOp::Shr => " >> ",
         BinOp::Shl => " << ",
     };
-    let is_arithmetic = matches!(op, BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div | BinOp::Mod | BinOp::Shr | BinOp::Shl);
+    let is_arithmetic = matches!(
+        op,
+        BinOp::Add
+            | BinOp::Sub
+            | BinOp::Mul
+            | BinOp::Div
+            | BinOp::Mod
+            | BinOp::Shr
+            | BinOp::Shl
+            | BinOp::BitwiseAnd
+            | BinOp::BitwiseOr
+            | BinOp::BitwiseXor
+    );
     let mut left_str = render_binop_operand(left, op, true, ctx, opt_real_params, registry, helpers);
     let mut right_str = render_binop_operand(right, op, false, ctx, opt_real_params, registry, helpers);
     if is_arithmetic {
@@ -3205,6 +3296,8 @@ fn render_ternary(
     // Use render_condition for the ternary condition when it's a non-boolean
     // expression (integer variable, ternary producing integer, etc.)
     let cond_needs_bool = match cond {
+        e if is_int_bitwise(e) => true,
+        Expr::Not(inner) if is_int_bitwise(inner) => true,
         Expr::Ternary(_, t, _) => expr_is_untyped_integer(t) || matches!(t.as_ref(), Expr::IntLiteral(_)),
         Expr::Var(name) => ctx.index_vars.contains(name) || is_likely_index_var(name) || is_i32_opt_in_param(name),
         Expr::Not(inner) => matches!(inner.as_ref(), Expr::Var(name) if ctx.index_vars.contains(name) || is_likely_index_var(name)),
@@ -3307,10 +3400,24 @@ fn expr_is_i32_typed(expr: &Expr) -> bool {
             }
             false
         }
-        Expr::BinOp(left, BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div | BinOp::Shr | BinOp::Shl | BinOp::Mod, right) => {
+        Expr::BinOp(
+            left,
+            BinOp::Add
+            | BinOp::Sub
+            | BinOp::Mul
+            | BinOp::Div
+            | BinOp::Shr
+            | BinOp::Shl
+            | BinOp::Mod
+            | BinOp::BitwiseAnd
+            | BinOp::BitwiseOr
+            | BinOp::BitwiseXor,
+            right,
+        ) => {
             expr_is_i32_typed(left) && (expr_is_i32_typed(right) || matches!(right.as_ref(), Expr::IntLiteral(_)))
                 || expr_is_i32_typed(right) && matches!(left.as_ref(), Expr::IntLiteral(_))
         }
+        Expr::BitwiseNot(inner) => expr_is_i32_typed(inner),
         Expr::Cast(VarType::Integer, _inner) => {
             true
         }
@@ -4847,6 +4954,7 @@ fn walk_rename(expr: &Expr, elections: &ElectionMap, hit: &mut bool) -> Expr {
             Expr::Cast(t.clone(), Box::new(walk_rename(inner, elections, hit)))
         }
         Expr::Not(inner) => Expr::Not(Box::new(walk_rename(inner, elections, hit))),
+        Expr::BitwiseNot(inner) => Expr::BitwiseNot(Box::new(walk_rename(inner, elections, hit))),
         Expr::FuncCall(name, args) => Expr::FuncCall(
             name.clone(),
             args.iter().map(|a| walk_rename(a, elections, hit)).collect(),

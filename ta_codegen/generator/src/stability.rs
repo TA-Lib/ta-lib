@@ -217,6 +217,7 @@ fn collect_vars(expr: &Expr, out: &mut BTreeSet<String>) {
         }
         Expr::Cast(_, e)
         | Expr::Not(e)
+        | Expr::BitwiseNot(e)
         | Expr::AddressOf(e)
         | Expr::PostIncrement(e)
         | Expr::PostDecrement(e)
@@ -318,6 +319,7 @@ fn walk_expr(expr: &Expr, out: &mut BTreeSet<String>) {
         Expr::ArrayAccess(_, i) => walk_expr(i, out),
         Expr::Cast(_, e)
         | Expr::Not(e)
+        | Expr::BitwiseNot(e)
         | Expr::AddressOf(e)
         | Expr::PostIncrement(e)
         | Expr::PostDecrement(e)

@@ -12,7 +12,7 @@ use crate::parser::enums::lookup_variant;
 use crate::registry::{Lang, Registry};
 use super::common::{contains_alloc_err_return, expr_directly_contains_candle_call, find_sizeof_type};
 use super::builtins::{MathFn, SpecialBuiltin, StdlibFn};
-use super::expr_walk::{binop_prec, expr_prec, wrap_child, wrap_inlined, ExprEmitter};
+use super::expr_walk::{binop_prec, expr_prec, is_int_bitwise, wrap_child, wrap_inlined, ExprEmitter};
 use super::fma::{self, FmaVarSets};
 use super::stmt_walk::StatementEmitter;
 
@@ -263,6 +263,7 @@ fn scan_expr_for_address_of(expr: &Expr, vars: &mut HashSet<String>) {
             scan_expr_for_address_of(r, vars);
         }
         Expr::Not(inner)
+        | Expr::BitwiseNot(inner)
         | Expr::Cast(_, inner)
         | Expr::PostIncrement(inner)
         | Expr::PostDecrement(inner)
@@ -1308,6 +1309,11 @@ impl StatementEmitter for JavaStmt<'_> {
                             BinOp::Sub => "-=",
                             BinOp::Mul => "*=",
                             BinOp::Div => "/=",
+                            BinOp::BitwiseAnd => "&=",
+                            BinOp::BitwiseOr => "|=",
+                            BinOp::BitwiseXor => "^=",
+                            BinOp::Shl => "<<=",
+                            BinOp::Shr => ">>=",
                             BinOp::Mod
                             | BinOp::LessEq
                             | BinOp::Less
@@ -1316,10 +1322,7 @@ impl StatementEmitter for JavaStmt<'_> {
                             | BinOp::Eq
                             | BinOp::NotEq
                             | BinOp::And
-                            | BinOp::Or
-                            | BinOp::BitwiseOr
-                            | BinOp::Shr
-                            | BinOp::Shl => "",
+                            | BinOp::Or => "",
                         };
                         if !op_str.is_empty() {
                             let target_str = render_assign_target(target, self.ctx, self.registry, self.helpers);
@@ -1684,6 +1687,7 @@ fn render_assign_target(
         | Expr::BinOp(_, _, _)
         | Expr::Cast(_, _)
         | Expr::Not(_)
+        | Expr::BitwiseNot(_)
         | Expr::FuncCall(_, _)
         | Expr::PointerDeref(_)
         | Expr::AddressOf(_)
@@ -1814,14 +1818,27 @@ impl ExprEmitter for JavaExpr<'_> {
             BinOp::And => "&&",
             BinOp::Or => "||",
             BinOp::BitwiseOr => "|",
+            BinOp::BitwiseXor => "^",
+            BinOp::BitwiseAnd => "&",
             BinOp::Shr => ">>",
             BinOp::Shl => "<<",
         };
         // Minimal parenthesization: only wrap an operand that binds looser than
         // this operator (Java shares C's operator precedence).
         let pp = binop_prec(op);
-        let l = wrap_child(self.walk(left), left, pp, false);
-        let r = wrap_child(self.walk(right), right, pp, true);
+        // Integer-bitwise operand of a logical operator carries C truthiness:
+        // it needs an explicit != 0 here.
+        let logical = matches!(op, BinOp::And | BinOp::Or);
+        let l = if logical && is_int_bitwise(left) {
+            format!("({}) != 0", self.walk(left))
+        } else {
+            wrap_child(self.walk(left), left, pp, false)
+        };
+        let r = if logical && is_int_bitwise(right) {
+            format!("({}) != 0", self.walk(right))
+        } else {
+            wrap_child(self.walk(right), right, pp, true)
+        };
         format!("{l} {op_str} {r}")
     }
 
@@ -1850,11 +1867,25 @@ impl ExprEmitter for JavaExpr<'_> {
     }
 
     fn not(&self, inner: &Expr) -> String {
+        // C's logical `!` over an integer-bitwise value: `!` needs a boolean
+        // operand here, so spell out the comparison.
+        if is_int_bitwise(inner) {
+            return format!("(({}) == 0)", self.walk(inner));
+        }
         let s = self.walk(inner);
         if expr_prec(inner) < 12 {
             format!("!({s})")
         } else {
             format!("!{s}")
+        }
+    }
+
+    fn bitwise_not(&self, inner: &Expr) -> String {
+        let s = self.walk(inner);
+        if expr_prec(inner) < 12 {
+            format!("~({s})")
+        } else {
+            format!("~{s}")
         }
     }
 
@@ -1911,16 +1942,22 @@ impl ExprEmitter for JavaExpr<'_> {
         // Collapse `cond ? 1 : 0` / `cond ? 0 : 1` to a bare boolean expression.
         // is_boolean_expr consults the same bool_ternary_collapse rule so it
         // agrees the collapsed result is boolean-typed.
-        match bool_ternary_collapse(then_expr, else_expr) {
-            Some(BoolTernaryCollapse::Cond) => return self.walk(cond),
-            Some(BoolTernaryCollapse::Negated) => return format!("!({})", self.walk(cond)),
-            None => {}
+        // A bitwise condition is integer-typed: collapsing would substitute the
+        // mask value for C's 0/1, and `!` cannot apply. Wrap with != 0 instead.
+        if !is_int_bitwise(cond) {
+            match bool_ternary_collapse(then_expr, else_expr) {
+                Some(BoolTernaryCollapse::Cond) => return self.walk(cond),
+                Some(BoolTernaryCollapse::Negated) => return format!("!({})", self.walk(cond)),
+                None => {}
+            }
         }
         // Default: render as Java ternary
         let c = self.walk(cond);
         let t = self.walk(then_expr);
         let e = self.walk(else_expr);
-        let c = if matches!(cond, Expr::BinOp(..) | Expr::Ternary(..)) {
+        let c = if is_int_bitwise(cond) {
+            format!("(({c}) != 0)")
+        } else if matches!(cond, Expr::BinOp(..) | Expr::Ternary(..)) {
             format!("({c})")
         } else {
             c

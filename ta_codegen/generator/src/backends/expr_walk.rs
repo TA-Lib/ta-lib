@@ -29,12 +29,30 @@ pub fn binop_prec(op: &BinOp) -> u8 {
         BinOp::Or => 2,
         BinOp::And => 3,
         BinOp::BitwiseOr => 4,
+        BinOp::BitwiseXor => 5,
+        BinOp::BitwiseAnd => 6,
         BinOp::Eq | BinOp::NotEq => 7,
         BinOp::Less | BinOp::LessEq | BinOp::Greater | BinOp::GreaterEq => 8,
         BinOp::Shl | BinOp::Shr => 9,
         BinOp::Add | BinOp::Sub => 10,
         BinOp::Mul | BinOp::Div | BinOp::Mod => 11,
     }
+}
+
+/// True for expressions whose value is integer-typed by construction — the
+/// bitwise binaries, shifts, and `~`. In C these carry truthiness in condition
+/// position; Java/C#/Rust require an explicit `!= 0` there, and Rust's `!` on
+/// them is bitwise (not logical), so backends special-case exactly this set.
+#[must_use]
+pub fn is_int_bitwise(e: &Expr) -> bool {
+    matches!(
+        e,
+        Expr::BinOp(
+            _,
+            BinOp::BitwiseAnd | BinOp::BitwiseOr | BinOp::BitwiseXor | BinOp::Shl | BinOp::Shr,
+            _
+        ) | Expr::BitwiseNot(_)
+    )
 }
 
 /// Binding strength of an expression's top-level operator (higher binds
@@ -47,6 +65,7 @@ pub fn expr_prec(e: &Expr) -> u8 {
         Expr::Ternary(..) => 1,
         Expr::BinOp(_, op, _) => binop_prec(op),
         Expr::Not(_)
+        | Expr::BitwiseNot(_)
         | Expr::Cast(..)
         | Expr::AddressOf(_)
         | Expr::PreIncrement(_)
@@ -166,6 +185,12 @@ pub trait ExprEmitter {
         format!("!({})", self.walk(inner))
     }
 
+    /// Render an `Expr::BitwiseNot` (`~(inner)`). Identical across the
+    /// C-family backends (C, Java, C# all spell bitwise complement `~`).
+    fn bitwise_not(&self, inner: &Expr) -> String {
+        format!("~({})", self.walk(inner))
+    }
+
     /// The owned recursion: match `expr`'s variant and dispatch to the
     /// corresponding leaf hook. This is the single copy of the `Expr` tree-walk
     /// that every backend shares; the match is intentionally exhaustive (no
@@ -179,6 +204,7 @@ pub trait ExprEmitter {
             Expr::BinOp(left, op, right) => self.binop(left, op, right),
             Expr::Cast(ty, inner) => self.cast(ty, inner),
             Expr::Not(inner) => self.not(inner),
+            Expr::BitwiseNot(inner) => self.bitwise_not(inner),
             Expr::FuncCall(name, args) => self.func_call(name, args),
             Expr::PointerDeref(name) => self.pointer_deref(name),
             Expr::AddressOf(inner) => self.address_of(inner),

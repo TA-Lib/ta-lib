@@ -804,6 +804,7 @@ pub fn walk_expr(e: &Expr, f: &mut dyn FnMut(&Expr)) {
         Expr::ArrayAccess(_, i)
         | Expr::Cast(_, i)
         | Expr::Not(i)
+        | Expr::BitwiseNot(i)
         | Expr::AddressOf(i)
         | Expr::PostIncrement(i)
         | Expr::PostDecrement(i)
@@ -2436,7 +2437,9 @@ fn exprs_equal(a: &Expr, b: &Expr) -> bool {
                 && exprs_equal(r1, r2)
         }
         (Expr::Cast(t1, e1), Expr::Cast(t2, e2)) => t1 == t2 && exprs_equal(e1, e2),
-        (Expr::Not(e1), Expr::Not(e2)) | (Expr::AddressOf(e1), Expr::AddressOf(e2)) => {
+        (Expr::Not(e1), Expr::Not(e2))
+        | (Expr::BitwiseNot(e1), Expr::BitwiseNot(e2))
+        | (Expr::AddressOf(e1), Expr::AddressOf(e2)) => {
             exprs_equal(e1, e2)
         }
         (Expr::FuncCall(n1, a1), Expr::FuncCall(n2, a2)) => {
@@ -5286,6 +5289,7 @@ fn expr_is_pure(e: &Expr) -> bool {
         Expr::ArrayAccess(_, i)
         | Expr::Cast(_, i)
         | Expr::Not(i)
+        | Expr::BitwiseNot(i)
         | Expr::AddressOf(i) => expr_is_pure(i),
         Expr::BinOp(l, _, r) => expr_is_pure(l) && expr_is_pure(r),
         Expr::Ternary(c, a, b) => expr_is_pure(c) && expr_is_pure(a) && expr_is_pure(b),
@@ -5773,6 +5777,7 @@ pub fn rewrite_expr(e: &Expr, f: &dyn Fn(Expr) -> Expr) -> Expr {
         ),
         Expr::Cast(t, i) => Expr::Cast(t.clone(), Box::new(rewrite_expr(i, f))),
         Expr::Not(i) => Expr::Not(Box::new(rewrite_expr(i, f))),
+        Expr::BitwiseNot(i) => Expr::BitwiseNot(Box::new(rewrite_expr(i, f))),
         Expr::AddressOf(i) => Expr::AddressOf(Box::new(rewrite_expr(i, f))),
         Expr::PostIncrement(i) => Expr::PostIncrement(Box::new(rewrite_expr(i, f))),
         Expr::PostDecrement(i) => Expr::PostDecrement(Box::new(rewrite_expr(i, f))),

@@ -1014,6 +1014,11 @@ impl StatementEmitter for CStmt<'_> {
                             BinOp::Sub => "-=",
                             BinOp::Mul => "*=",
                             BinOp::Div => "/=",
+                            BinOp::BitwiseAnd => "&=",
+                            BinOp::BitwiseOr => "|=",
+                            BinOp::BitwiseXor => "^=",
+                            BinOp::Shl => "<<=",
+                            BinOp::Shr => ">>=",
                             BinOp::Mod
                             | BinOp::LessEq
                             | BinOp::Less
@@ -1022,10 +1027,7 @@ impl StatementEmitter for CStmt<'_> {
                             | BinOp::Eq
                             | BinOp::NotEq
                             | BinOp::And
-                            | BinOp::Or
-                            | BinOp::BitwiseOr
-                            | BinOp::Shr
-                            | BinOp::Shl => "",
+                            | BinOp::Or => "",
                         };
                         if !op_str.is_empty() {
                             let target_str =
@@ -1455,6 +1457,7 @@ fn render_assign_target(
         | Expr::BinOp(_, _, _)
         | Expr::Cast(_, _)
         | Expr::Not(_)
+        | Expr::BitwiseNot(_)
         | Expr::FuncCall(_, _)
         | Expr::PointerDeref(_)
         | Expr::AddressOf(_)
@@ -1559,6 +1562,8 @@ impl ExprEmitter for CExpr<'_> {
             BinOp::And => "&&",
             BinOp::Or => "||",
             BinOp::BitwiseOr => "|",
+            BinOp::BitwiseXor => "^",
+            BinOp::BitwiseAnd => "&",
             BinOp::Shr => ">>",
             BinOp::Shl => "<<",
         };
@@ -1618,6 +1623,15 @@ impl ExprEmitter for CExpr<'_> {
             format!("!({s})")
         } else {
             format!("!{s}")
+        }
+    }
+
+    fn bitwise_not(&self, inner: &Expr) -> String {
+        let s = self.walk(inner);
+        if expr_prec(inner) < 12 {
+            format!("~({s})")
+        } else {
+            format!("~{s}")
         }
     }
 

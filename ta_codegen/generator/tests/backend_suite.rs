@@ -7390,3 +7390,133 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
     assert_eq!(dispatched, FUSING, "FMA dispatch inventory drifted");
     assert!(checked >= 150, "expected ~168 functions, checked {checked}");
 }
+
+// ---------------------------------------------------------------------------
+// Bitwise operators (issue #157): every C bitwise form renders correctly in
+// all four backends. C/Java/C# spell `~` as `~`; Rust spells it `!` and needs
+// explicit `!= 0` for C's int-truthiness conditions. C's grouping must survive
+// Rust's different precedence (`&`/`^`/`|` bind tighter than `==` in Rust).
+// ---------------------------------------------------------------------------
+
+#[test]
+fn bitwise_operators_render_in_all_backends() {
+    let source = r#"
+int max_lookback( int optInTimePeriod )
+{
+   return (optInTimePeriod-1);
+}
+
+TA_RetCode max( int    startIdx,
+                int    endIdx,
+                const double inReal[],
+                int    optInTimePeriod,
+                int   *outBegIdx,
+                int   *outNBElement,
+                double outReal[] )
+{
+   int outIdx, i, mask, neg;
+
+   mask = (optInTimePeriod ^ 3) & ~1;
+   mask |= 2;
+   mask &= 15;
+   mask ^= 1;
+   mask <<= 1;
+   mask >>= 1;
+   mask = ((mask | 4) << 1) >> 1;
+   mask = (mask << 2) + 1;
+   neg = ~optInTimePeriod;
+   if( (mask & 1) == 9999 )
+      return TA_INTERNAL_ERROR;
+   if( mask & 16 )
+      return TA_INTERNAL_ERROR;
+   if( (mask & 1) && (neg < 0) )
+      outIdx = 0;
+   if( !(mask & 1) )
+      return TA_INTERNAL_ERROR;
+   while( mask & 1024 )
+      mask = mask & ~1024;
+   i = (mask & 2) ? 1 : 0;
+   if( i == 9999 )
+      return TA_INTERNAL_ERROR;
+   outIdx = 0;
+   for( i=startIdx; i <= endIdx; i++ )
+      outReal[outIdx++] = inReal[i];
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("max", source);
+    let out = generate_all(&func, &enums);
+
+    for needle in [
+        "mask = (optInTimePeriod ^ 3) & ~1;",
+        "mask |= 2;",
+        "mask &= 15;",
+        "mask ^= 1;",
+        "mask <<= 1;",
+        "mask >>= 1;",
+        "mask = (mask | 4) << 1 >> 1;",
+        "mask = (mask << 2) + 1;",
+        "neg = ~optInTimePeriod;",
+        "if( (mask & 1) == 9999 )",
+        "if( mask & 16 )",
+        "if( mask & 1 && neg < 0 )",
+        "if( !(mask & 1) )",
+        "while( mask & 1024 )",
+        "i = (mask & 2) ? 1 : 0;",
+    ] {
+        assert!(out.c.contains(needle), "C output missing `{needle}`:\n{}", out.c);
+    }
+
+    for needle in [
+        "mask = (optInTimePeriod ^ 3) & ~1;",
+        "mask |= 2;",
+        "mask &= 15;",
+        "mask ^= 1;",
+        "mask <<= 1;",
+        "mask >>= 1;",
+        "(mask & 1) == 9999",
+        "(mask & 16) != 0",
+        "(mask & 1) != 0 && neg < 0",
+        "((mask & 1) == 0)",
+        "while( (mask & 1024) != 0 )",
+        "((mask & 2) != 0) ? 1 : 0",
+    ] {
+        assert!(out.java.contains(needle), "Java output missing `{needle}`:\n{}", out.java);
+    }
+
+    for needle in [
+        "& !(1)",
+        "mask |= 2;",
+        "mask &= 15;",
+        "mask ^= 1;",
+        "mask <<= 1;",
+        "mask >>= 1;",
+        "mask & 1 == 9999",
+        "(mask & 16) != 0",
+        "(mask << 2) + 1",           // Rust shifts bind looser than + : parens required
+        "let mut neg: i32",          // ~x can be negative: var must be signed
+        "(mask & 1) != 0 && neg < 0",
+        "(mask & 1) == 0",
+        "while (mask & 1024) != 0 {",
+        "if (mask & 2) != 0 {",
+    ] {
+        assert!(out.rust.contains(needle), "Rust output missing `{needle}`:\n{}", out.rust);
+    }
+
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let cs = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    for needle in [
+        "& ~1;",
+        "(mask & 1) == 9999",
+        "(mask & 16) != 0",
+        "(mask & 1) != 0 && neg < 0",
+        "((mask & 1) == 0)",
+        "while( (mask & 1024) != 0 )",
+        "((mask & 2) != 0) ? 1 : 0",
+    ] {
+        assert!(cs.contains(needle), "C# output missing `{needle}`:\n{cs}");
+    }
+}
