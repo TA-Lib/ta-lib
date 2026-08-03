@@ -1424,19 +1424,123 @@ fn build_csharp_library(root: &Path) -> bool {
         .current_dir(&lib_dir)
         .status()
     {
-        Ok(s) if s.success() => {
-            println!("OK");
-            true
-        }
+        Ok(s) if s.success() => println!("OK"),
         Ok(s) => {
             println!("FAILED (exit {})", s.code().unwrap_or(-1));
-            false
+            return false;
         }
         Err(e) => {
             println!("FAILED (dotnet not found: {})", e);
-            false
+            return false;
         }
     }
+    run_csharp_tests(&lib_dir)
+}
+
+/// Run the hand-written C# suites, once per target framework.
+///
+/// The per-TFM loop is the point, not incidental: `TALib.csproj` declares
+/// `net8.0;net10.0`, and before these suites existed every gate (the ta_regtest
+/// codegen sweep, the bitwise xlang gate, the JSON-RPC server) exercised the
+/// net10.0 build alone — the net8.0 leg was compiled and never executed. A TFM
+/// that is claimed but never run is a promise nobody checked.
+///
+/// A missing RUNTIME for a declared TFM is reported as SKIPPED rather than
+/// failing the build: `dotnet build` only needs the reference assemblies, which
+/// restore from NuGet, so a dev box with just the .NET 10 runtime can compile
+/// net8.0 but not launch it. It is printed loudly so the gap is visible in the
+/// log instead of reading as coverage — the same rule the compatibility skips
+/// in server_verify follow.
+fn run_csharp_tests(lib_dir: &Path) -> bool {
+    let test_dir = lib_dir.join("test");
+    if !test_dir.exists() {
+        println!("  Running C# tests... SKIPPED (no {})", test_dir.display());
+        return true;
+    }
+
+    // Parsed from the test csproj so this cannot drift from what is built.
+    let tfms = csharp_test_tfms(&test_dir);
+    if tfms.is_empty() {
+        println!("  Running C# tests... FAILED (no TargetFrameworks in the test csproj)");
+        return false;
+    }
+
+    print!("  Building C# tests... ");
+    match std::process::Command::new("dotnet")
+        .args(["build", "-c", "Release", "--nologo", "-v", "quiet"])
+        .current_dir(&test_dir)
+        .status()
+    {
+        Ok(s) if s.success() => println!("OK"),
+        Ok(s) => {
+            println!("FAILED (exit {})", s.code().unwrap_or(-1));
+            return false;
+        }
+        Err(e) => {
+            println!("FAILED (dotnet not found: {})", e);
+            return false;
+        }
+    }
+
+    for tfm in &tfms {
+        print!("  Running C# tests ({tfm})... ");
+        let out = std::process::Command::new("dotnet")
+            .args(["run", "-c", "Release", "--no-build", "-f", tfm])
+            .current_dir(&test_dir)
+            .output();
+        match out {
+            Ok(o) if o.status.success() => {
+                print!("{}", String::from_utf8_lossy(&o.stdout));
+            }
+            Ok(o) => {
+                let combined = format!(
+                    "{}{}",
+                    String::from_utf8_lossy(&o.stdout),
+                    String::from_utf8_lossy(&o.stderr)
+                );
+                // "You must install or update .NET" — the TFM compiles but its
+                // runtime is absent. Not a test failure; a coverage gap.
+                if combined.contains("You must install or update .NET")
+                    || combined.contains("not found and no additional frameworks")
+                {
+                    println!("SKIPPED (no {tfm} runtime installed — this TFM went UNTESTED)");
+                } else {
+                    println!("FAILED (exit {})", o.status.code().unwrap_or(-1));
+                    print!("{combined}");
+                    return false;
+                }
+            }
+            Err(e) => {
+                println!("FAILED (dotnet not found: {e})");
+                return false;
+            }
+        }
+    }
+    true
+}
+
+/// The `<TargetFrameworks>` (or singular `<TargetFramework>`) of the C# test
+/// project, in declaration order.
+fn csharp_test_tfms(test_dir: &Path) -> Vec<String> {
+    let Ok(text) = std::fs::read_to_string(test_dir.join("TALib.Test.csproj")) else {
+        return Vec::new();
+    };
+    for (open, close) in [
+        ("<TargetFrameworks>", "</TargetFrameworks>"),
+        ("<TargetFramework>", "</TargetFramework>"),
+    ] {
+        if let Some(start) = text.find(open) {
+            let rest = &text[start + open.len()..];
+            if let Some(end) = rest.find(close) {
+                return rest[..end]
+                    .split(';')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+            }
+        }
+    }
+    Vec::new()
 }
 
 fn extract(func_filter: Option<&str>) {
