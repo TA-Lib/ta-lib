@@ -3296,6 +3296,24 @@ impl ExprEmitter for RustExpr<'_> {
     }
 }
 
+/// Parenthesize a whole `as` cast an operand is being wrapped in, e.g.
+/// `dqI[hd]` → `((dqI[hd]) as usize)`.
+///
+/// The outer parens are not cosmetic. Rust refuses to *parse* a cast followed by
+/// `<` or `<<` — it reads `usize <` as the start of generic arguments — so a bare
+/// `(x) as usize` is unparseable both as the left operand of `a < b` and, via an
+/// enclosing comparison, as the tail of a higher-precedence arithmetic operand
+/// (`t + (x) as usize < u`; [`render_binop_operand`] leaves that child unwrapped
+/// because its precedence is higher). Wrapping unconditionally at every site
+/// keeps that out of the emitter's reasoning entirely.
+///
+/// Every cast [`render_binop`] emits goes through here — including the `as f64`
+/// ones, which already wrapped and so are unchanged — so the invariant is one
+/// function rather than a rule each site has to re-derive. Issue #159.
+fn wrap_cast(operand: &str, ty: &str) -> String {
+    format!("(({operand}) as {ty})")
+}
+
 /// Render an `Expr::BinOp` to Rust, including the FMA fusion (via the shared
 /// [`fma::fuse_operands`] detector, gated by [`fma::EMIT_FMA`]), pointer-identity
 /// buffer comparisons, and the operand int/usize/f64 cast inference. Delegated to
@@ -3384,16 +3402,10 @@ fn render_binop(
         let left_is_sentinel = expr_is_i32_typed_ctx(left, ctx) && !expr_is_i32_typed(left);
         let right_is_sentinel = expr_is_i32_typed_ctx(right, ctx) && !expr_is_i32_typed(right);
         if left_is_sentinel && !right_is_sentinel && !expr_is_i32_typed(right) && !expr_is_float_typed_ctx(right, Some(ctx)) && !matches!(right, Expr::IntLiteral(_)) {
-            right_str = format!("({right_str}) as i32");
+            right_str = wrap_cast(&right_str, "i32");
         }
         if right_is_sentinel && !left_is_sentinel && !expr_is_i32_typed(left) && !expr_is_float_typed_ctx(left, Some(ctx)) && !matches!(left, Expr::IntLiteral(_)) {
-            // `x as i32 < y` parses `<` as generic args; only those operators
-            // need the outer parens (churn-free for the existing `>` sites).
-            left_str = if matches!(op, BinOp::Less | BinOp::Shl) {
-                format!("(({left_str}) as i32)")
-            } else {
-                format!("({left_str}) as i32")
-            };
+            left_str = wrap_cast(&left_str, "i32");
         }
         let left_is_i32 = expr_is_i32_typed(left) || left_is_sentinel;
         let right_is_i32 = expr_is_i32_typed(right) || right_is_sentinel;
@@ -3416,18 +3428,18 @@ fn render_binop(
                 }
             }
             if left_is_i32 && right_is_float && !left_is_int_lit && !left_is_float {
-                left_str = format!("(({left_str}) as f64)");
+                left_str = wrap_cast(&left_str, "f64");
             }
             if right_is_i32 && left_is_float && !right_is_int_lit && !right_is_float {
-                right_str = format!("(({right_str}) as f64)");
+                right_str = wrap_cast(&right_str, "f64");
             }
             let left_is_untyped_int = expr_is_untyped_integer(left);
             let right_is_untyped_int = expr_is_untyped_integer(right);
             if left_is_untyped_int && !left_is_int_lit && right_is_float {
-                left_str = format!("(({left_str}) as f64)");
+                left_str = wrap_cast(&left_str, "f64");
             }
             if right_is_untyped_int && !right_is_int_lit && left_is_float {
-                right_str = format!("(({right_str}) as f64)");
+                right_str = wrap_cast(&right_str, "f64");
             }
             let left_is_known_usize = expr_is_known_usize_ctx(left, ctx);
             let right_is_known_usize = expr_is_known_usize_ctx(right, ctx);
@@ -3436,10 +3448,10 @@ fn render_binop(
             let right_eff_usize = right_is_known_usize
                 || expr_binop_renders_as_usize(right, ctx);
             if left_eff_usize && right_is_float && !left_is_i32 {
-                left_str = format!("(({left_str}) as f64)");
+                left_str = wrap_cast(&left_str, "f64");
             }
             if right_eff_usize && left_is_float && !right_is_i32 {
-                right_str = format!("(({right_str}) as f64)");
+                right_str = wrap_cast(&right_str, "f64");
             }
         }
         // Cast i32 operands to usize when mixed with usize-typed operands (not float)
@@ -3451,10 +3463,10 @@ fn render_binop(
         let left_is_usize = !left_is_i32_eff && !left_is_float && !left_is_int_lit;
         let right_is_usize = !right_is_i32_eff && !right_is_float && !right_is_int_lit;
         if left_is_i32_eff && right_is_usize && !left_is_sentinel {
-            left_str = format!("({left_str}) as usize");
+            left_str = wrap_cast(&left_str, "usize");
         }
         if right_is_i32_eff && left_is_usize && !right_is_sentinel {
-            right_str = format!("({right_str}) as usize");
+            right_str = wrap_cast(&right_str, "usize");
         }
         // When both sides appear i32-typed but one actually renders as usize
         // (e.g., Cast(Integer, usize_expr) drops the cast), fix the mismatch.
@@ -3462,10 +3474,10 @@ fn render_binop(
             let left_renders_usize = expr_renders_as_usize_despite_i32(left, ctx);
             let right_renders_usize = expr_renders_as_usize_despite_i32(right, ctx);
             if left_renders_usize && !right_renders_usize {
-                right_str = format!("({right_str}) as usize");
+                right_str = wrap_cast(&right_str, "usize");
             }
             if right_renders_usize && !left_renders_usize {
-                left_str = format!("({left_str}) as usize");
+                left_str = wrap_cast(&left_str, "usize");
             }
         }
     }
@@ -3476,16 +3488,10 @@ fn render_binop(
         let cmp_left_sentinel = expr_is_i32_typed_ctx(left, ctx) && !expr_is_i32_typed(left);
         let cmp_right_sentinel = expr_is_i32_typed_ctx(right, ctx) && !expr_is_i32_typed(right);
         if cmp_left_sentinel && !cmp_right_sentinel && !expr_is_i32_typed(right) && !expr_is_float_typed_ctx(right, Some(ctx)) && !matches!(right, Expr::IntLiteral(_)) {
-            right_str = format!("({right_str}) as i32");
+            right_str = wrap_cast(&right_str, "i32");
         }
         if cmp_right_sentinel && !cmp_left_sentinel && !expr_is_i32_typed(left) && !expr_is_float_typed_ctx(left, Some(ctx)) && !matches!(left, Expr::IntLiteral(_)) {
-            // `x as i32 < y` parses `<` as generic args; only those operators
-            // need the outer parens (churn-free for the existing `>` sites).
-            left_str = if matches!(op, BinOp::Less | BinOp::Shl) {
-                format!("(({left_str}) as i32)")
-            } else {
-                format!("({left_str}) as i32")
-            };
+            left_str = wrap_cast(&left_str, "i32");
         }
         let left_is_i32 = expr_is_i32_typed(left) || cmp_left_sentinel;
         let right_is_i32 = expr_is_i32_typed(right) || cmp_right_sentinel;
@@ -3509,24 +3515,24 @@ fn render_binop(
                 }
             }
             if left_is_i32 && right_is_float && !left_is_int_lit && !left_is_float {
-                left_str = format!("(({left_str}) as f64)");
+                left_str = wrap_cast(&left_str, "f64");
             }
             if right_is_i32 && left_is_float && !right_is_int_lit && !right_is_float {
-                right_str = format!("(({right_str}) as f64)");
+                right_str = wrap_cast(&right_str, "f64");
             }
             if left_is_untyped_int && !left_is_int_lit && right_is_float {
-                left_str = format!("(({left_str}) as f64)");
+                left_str = wrap_cast(&left_str, "f64");
             }
             if right_is_untyped_int && !right_is_int_lit && left_is_float {
-                right_str = format!("(({right_str}) as f64)");
+                right_str = wrap_cast(&right_str, "f64");
             }
             let cmp_left_is_known_usize = expr_is_known_usize_ctx(left, ctx);
             let cmp_right_is_known_usize = expr_is_known_usize_ctx(right, ctx);
             if cmp_left_is_known_usize && right_is_float && !cmp_right_is_known_usize && !left_is_i32 && !left_is_int_lit {
-                left_str = format!("(({left_str}) as f64)");
+                left_str = wrap_cast(&left_str, "f64");
             }
             if cmp_right_is_known_usize && left_is_float && !cmp_left_is_known_usize && !right_is_i32 && !right_is_int_lit {
-                right_str = format!("(({right_str}) as f64)");
+                right_str = wrap_cast(&right_str, "f64");
             }
         }
         // Also detect i32 array accesses (IntArray/IntPointer) using context
@@ -3535,10 +3541,10 @@ fn render_binop(
         let left_is_i32_eff = left_is_i32 || left_is_i32_arr;
         let right_is_i32_eff = right_is_i32 || right_is_i32_arr;
         if left_is_i32_eff && !right_is_i32_eff && !right_is_float && !right_is_int_lit && !cmp_left_sentinel {
-            left_str = format!("({left_str}) as usize");
+            left_str = wrap_cast(&left_str, "usize");
         }
         if right_is_i32_eff && !left_is_i32_eff && !left_is_float && !left_is_int_lit && !cmp_right_sentinel {
-            right_str = format!("({right_str}) as usize");
+            right_str = wrap_cast(&right_str, "usize");
         }
     }
     format!("{left_str}{op_str}{right_str}")

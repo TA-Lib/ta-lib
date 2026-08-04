@@ -230,17 +230,17 @@ impl Core {
         ShadowVeryShortPeriodTotal[2] = 0.0;
         ShadowVeryShortPeriodTotal[1] = 0.0;
         ShadowVeryShortPeriodTotal[0] = 0.0;
-        ShadowVeryShortTrailingIdx = startIdx - (ShadowVeryShort_avgPeriod) as usize;
+        ShadowVeryShortTrailingIdx = startIdx - ((ShadowVeryShort_avgPeriod) as usize);
         NearPeriodTotal[2] = 0.0;
         NearPeriodTotal[1] = 0.0;
         NearPeriodTotal[0] = 0.0;
-        NearTrailingIdx = startIdx - (Near_avgPeriod) as usize;
+        NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
         FarPeriodTotal[2] = 0.0;
         FarPeriodTotal[1] = 0.0;
         FarPeriodTotal[0] = 0.0;
-        FarTrailingIdx = startIdx - (Far_avgPeriod) as usize;
+        FarTrailingIdx = startIdx - ((Far_avgPeriod) as usize);
         BodyShortPeriodTotal = 0.0;
-        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
         i = ShadowVeryShortTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -646,17 +646,17 @@ impl Core {
         ShadowVeryShortPeriodTotal[2] = 0.0;
         ShadowVeryShortPeriodTotal[1] = 0.0;
         ShadowVeryShortPeriodTotal[0] = 0.0;
-        ShadowVeryShortTrailingIdx = startIdx - (ShadowVeryShort_avgPeriod) as usize;
+        ShadowVeryShortTrailingIdx = startIdx - ((ShadowVeryShort_avgPeriod) as usize);
         NearPeriodTotal[2] = 0.0;
         NearPeriodTotal[1] = 0.0;
         NearPeriodTotal[0] = 0.0;
-        NearTrailingIdx = startIdx - (Near_avgPeriod) as usize;
+        NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
         FarPeriodTotal[2] = 0.0;
         FarPeriodTotal[1] = 0.0;
         FarPeriodTotal[0] = 0.0;
-        FarTrailingIdx = startIdx - (Far_avgPeriod) as usize;
+        FarTrailingIdx = startIdx - ((Far_avgPeriod) as usize);
         BodyShortPeriodTotal = 0.0;
-        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
         i = ShadowVeryShortTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -1352,17 +1352,17 @@ impl Core {
         ShadowVeryShortPeriodTotal[2] = 0.0;
         ShadowVeryShortPeriodTotal[1] = 0.0;
         ShadowVeryShortPeriodTotal[0] = 0.0;
-        ShadowVeryShortTrailingIdx = startIdx - (ShadowVeryShort_avgPeriod) as usize;
+        ShadowVeryShortTrailingIdx = startIdx - ((ShadowVeryShort_avgPeriod) as usize);
         NearPeriodTotal[2] = 0.0;
         NearPeriodTotal[1] = 0.0;
         NearPeriodTotal[0] = 0.0;
-        NearTrailingIdx = startIdx - (Near_avgPeriod) as usize;
+        NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
         FarPeriodTotal[2] = 0.0;
         FarPeriodTotal[1] = 0.0;
         FarPeriodTotal[0] = 0.0;
-        FarTrailingIdx = startIdx - (Far_avgPeriod) as usize;
+        FarTrailingIdx = startIdx - ((Far_avgPeriod) as usize);
         BodyShortPeriodTotal = 0.0;
-        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
         i = ShadowVeryShortTrailingIdx;
         while i < startIdx {
             let mut _candlerange_8: f64;
@@ -1989,17 +1989,17 @@ impl Core {
         ShadowVeryShortPeriodTotal[2] = 0.0;
         ShadowVeryShortPeriodTotal[1] = 0.0;
         ShadowVeryShortPeriodTotal[0] = 0.0;
-        ShadowVeryShortTrailingIdx = startIdx - (ShadowVeryShort_avgPeriod) as usize;
+        ShadowVeryShortTrailingIdx = startIdx - ((ShadowVeryShort_avgPeriod) as usize);
         NearPeriodTotal[2] = 0.0;
         NearPeriodTotal[1] = 0.0;
         NearPeriodTotal[0] = 0.0;
-        NearTrailingIdx = startIdx - (Near_avgPeriod) as usize;
+        NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
         FarPeriodTotal[2] = 0.0;
         FarPeriodTotal[1] = 0.0;
         FarPeriodTotal[0] = 0.0;
-        FarTrailingIdx = startIdx - (Far_avgPeriod) as usize;
+        FarTrailingIdx = startIdx - ((Far_avgPeriod) as usize);
         BodyShortPeriodTotal = 0.0;
-        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
         i = ShadowVeryShortTrailingIdx;
         while i < startIdx {
             let mut _candlerange_24: f64;

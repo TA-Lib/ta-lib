@@ -180,16 +180,16 @@ impl Core {
             let mut todayDev: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
             todaySum = 0.0;
-            // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+            // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < (optInTimePeriod) as usize {
+            while i < ((optInTimePeriod) as usize) {
                 todaySum += inReal[today - i];
                 i += 1;
             }
             todayDev = 0.0;
-            // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+            // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < (optInTimePeriod) as usize {
+            while i < ((optInTimePeriod) as usize) {
                 todayDev += (inReal[today - i] - todaySum / ((optInTimePeriod) as f64)).abs();
                 i += 1;
             }
@@ -241,16 +241,16 @@ impl Core {
             let mut todayDev: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
             todaySum = 0.0;
-            // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+            // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < (optInTimePeriod) as usize {
+            while i < ((optInTimePeriod) as usize) {
                 todaySum += inReal[today - i];
                 i += 1;
             }
             todayDev = 0.0;
-            // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+            // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < (optInTimePeriod) as usize {
+            while i < ((optInTimePeriod) as usize) {
                 todayDev += (inReal[today - i] - todaySum / ((optInTimePeriod) as f64)).abs();
                 i += 1;
             }
@@ -297,16 +297,16 @@ impl Core {
         let mut i: usize = 0_usize;
         sp.win_i_inReal[sp.winPos_i] = inReal;
         todaySum = 0.0;
-        // for( i = 0; i < (sp.optInTimePeriod) as usize; i += 1 )
+        // for( i = 0; i < ((sp.optInTimePeriod) as usize); i += 1 )
         i = 0;
-        while i < (sp.optInTimePeriod) as usize {
+        while i < ((sp.optInTimePeriod) as usize) {
             todaySum += sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
             i += 1;
         }
         todayDev = 0.0;
-        // for( i = 0; i < (sp.optInTimePeriod) as usize; i += 1 )
+        // for( i = 0; i < ((sp.optInTimePeriod) as usize); i += 1 )
         i = 0;
-        while i < (sp.optInTimePeriod) as usize {
+        while i < ((sp.optInTimePeriod) as usize) {
             todayDev += (sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] - todaySum / ((sp.optInTimePeriod) as f64)).abs();
             i += 1;
         }
@@ -360,16 +360,16 @@ impl Core {
             let mut todayDev: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
             todaySum = 0.0;
-            // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+            // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < (optInTimePeriod) as usize {
+            while i < ((optInTimePeriod) as usize) {
                 todaySum += inReal[today - i];
                 i += 1;
             }
             todayDev = 0.0;
-            // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+            // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < (optInTimePeriod) as usize {
+            while i < ((optInTimePeriod) as usize) {
                 todayDev += (inReal[today - i] - todaySum / ((optInTimePeriod) as f64)).abs();
                 i += 1;
             }
@@ -463,16 +463,16 @@ impl Core {
             let mut todayDev: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
             todaySum = 0.0;
-            // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+            // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < (optInTimePeriod) as usize {
+            while i < ((optInTimePeriod) as usize) {
                 todaySum += inReal[today - i];
                 i += 1;
             }
             todayDev = 0.0;
-            // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+            // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
             i = 0;
-            while i < (optInTimePeriod) as usize {
+            while i < ((optInTimePeriod) as usize) {
                 todayDev += (inReal[today - i] - todaySum / ((optInTimePeriod) as f64)).abs();
                 i += 1;
             }

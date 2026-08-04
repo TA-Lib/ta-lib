@@ -233,9 +233,9 @@ impl Core {
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
         offset = fastNb - (*outNBElement);
         // Calculate (fast MA)-(slow MA) in the output.
-        // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+        // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
-        while i < (((*outNBElement) as usize)) as usize {
+        while i < ((((*outNBElement) as usize)) as usize) {
             outReal[i] = ((tempBuffer[i + offset] - outReal[i]) as f64);
             i += 1;
         }
@@ -286,9 +286,9 @@ impl Core {
             return retCode;
         }
         offset = fastNb - (*outNBElement);
-        // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+        // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
-        while i < (((*outNBElement) as usize)) as usize {
+        while i < ((((*outNBElement) as usize)) as usize) {
             outReal[i] = ((tempBuffer[i + offset] - outReal[i]) as f64);
             i += 1;
         }
@@ -409,9 +409,9 @@ impl Core {
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
         offset = fastNb - (*outNBElement);
         // Calculate (fast MA)-(slow MA) in the output.
-        // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+        // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
-        while i < (((*outNBElement) as usize)) as usize {
+        while i < ((((*outNBElement) as usize)) as usize) {
             sc_outReal[i] = tempBuffer[i + offset] - sc_outReal[i];
             i += 1;
         }
@@ -523,9 +523,9 @@ impl Core {
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
         offset = fastNb - (*outNBElement);
         // Calculate (fast MA)-(slow MA) in the output.
-        // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+        // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
-        while i < (((*outNBElement) as usize)) as usize {
+        while i < ((((*outNBElement) as usize)) as usize) {
             sc_outReal[i] = tempBuffer[i + offset] - sc_outReal[i];
             i += 1;
         }

@@ -183,7 +183,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyLongPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - 2 - (BodyLong_avgPeriod) as usize;
+        BodyLongTrailingIdx = startIdx - 2 - ((BodyLong_avgPeriod) as usize);
         i = BodyLongTrailingIdx;
         while i < startIdx - 2 {
             let mut _candlerange_0: f64;
@@ -217,15 +217,15 @@ impl Core {
         // does not consider the trend
         outIdx = 0;
         loop {
-            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 &&      // 1st: white
+            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 &&        // 1st: white
                (inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
-               ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && // 2nd: black
+               (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd: black
                ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && // gapping up
-               ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && // 3rd: black
+               (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3rd: black
                inOpen[i] < inOpen[i - 1] &&
-               inOpen[i] > inClose[i - 1] &&                                          // opening within 2nd rb
+               inOpen[i] > inClose[i - 1] &&                                            // opening within 2nd rb
                inClose[i] > inOpen[i - 2] &&
-               inClose[i] < inClose[i - 2]                                            // closing within 1st rb
+               inClose[i] < inClose[i - 2]                                              // closing within 1st rb
             {
                 outInteger[outIdx] = (0 - 100) as i32;
                 outIdx += 1;
@@ -322,7 +322,7 @@ impl Core {
             return RetCode::Success;
         }
         BodyLongPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - 2 - (BodyLong_avgPeriod) as usize;
+        BodyLongTrailingIdx = startIdx - 2 - ((BodyLong_avgPeriod) as usize);
         i = BodyLongTrailingIdx;
         while i < startIdx - 2 {
             let mut _candlerange_0: f64;
@@ -346,7 +346,7 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         loop {
-            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && (inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && inOpen[i] < inOpen[i - 1] && inOpen[i] > inClose[i - 1] && inClose[i] > inOpen[i - 2] && inClose[i] < inClose[i - 2] {
+            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && (inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && inOpen[i] < inOpen[i - 1] && inOpen[i] > inClose[i - 1] && inClose[i] > inOpen[i - 2] && inClose[i] < inClose[i - 2] {
                 outInteger[outIdx] = (0 - 100) as i32;
                 outIdx += 1;
             } else {
@@ -448,9 +448,9 @@ impl Core {
         }
         if (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && // 1st: white
            (sp.lag2_inClose - sp.lag2_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (sp.lag2_inClose - sp.lag2_inOpen).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), _ => (sp.lag2_inHigh) - (sp.lag2_inLow) - ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
-           ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32 == 0 - 1 && // 2nd: black
+           (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd: black
            ((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) && // gapping up
-           ((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32 == 0 - 1 &&    // 3rd: black
+           (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&  // 3rd: black
            inOpen < sp.lag1_inOpen &&
            inOpen > sp.lag1_inClose &&                                         // opening within 2nd rb
            inClose > sp.lag2_inOpen &&
@@ -555,7 +555,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyLongPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - 2 - (BodyLong_avgPeriod) as usize;
+        BodyLongTrailingIdx = startIdx - 2 - ((BodyLong_avgPeriod) as usize);
         i = BodyLongTrailingIdx;
         while i < startIdx - 2 {
             let mut _candlerange_2: f64;
@@ -589,15 +589,15 @@ impl Core {
         // does not consider the trend
         outIdx = 0;
         loop {
-            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 &&      // 1st: white
+            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 &&        // 1st: white
                (inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
-               ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && // 2nd: black
+               (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd: black
                ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && // gapping up
-               ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && // 3rd: black
+               (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3rd: black
                inOpen[i] < inOpen[i - 1] &&
-               inOpen[i] > inClose[i - 1] &&                                          // opening within 2nd rb
+               inOpen[i] > inClose[i - 1] &&                                            // opening within 2nd rb
                inClose[i] > inOpen[i - 2] &&
-               inClose[i] < inClose[i - 2]                                            // closing within 1st rb
+               inClose[i] < inClose[i - 2]                                              // closing within 1st rb
             {
                 lastValue_outInteger = (0 - 100) as i32;
             } else {
@@ -758,7 +758,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyLongPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - 2 - (BodyLong_avgPeriod) as usize;
+        BodyLongTrailingIdx = startIdx - 2 - ((BodyLong_avgPeriod) as usize);
         i = BodyLongTrailingIdx;
         while i < startIdx - 2 {
             let mut _candlerange_5: f64;
@@ -792,15 +792,15 @@ impl Core {
         // does not consider the trend
         outIdx = 0;
         loop {
-            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 &&      // 1st: white
+            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 &&        // 1st: white
                (inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
-               ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && // 2nd: black
+               (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd: black
                ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && // gapping up
-               ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && // 3rd: black
+               (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3rd: black
                inOpen[i] < inOpen[i - 1] &&
-               inOpen[i] > inClose[i - 1] &&                                          // opening within 2nd rb
+               inOpen[i] > inClose[i - 1] &&                                            // opening within 2nd rb
                inClose[i] > inOpen[i - 2] &&
-               inClose[i] < inClose[i - 2]                                            // closing within 1st rb
+               inClose[i] < inClose[i - 2]                                              // closing within 1st rb
             {
                 outInteger[outIdx] = (0 - 100) as i32;
                 outIdx += 1;

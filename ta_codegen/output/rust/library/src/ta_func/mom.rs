@@ -193,7 +193,7 @@ impl Core {
         // always positive values.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < (optInTimePeriod) as usize {
+        if startIdx < ((optInTimePeriod) as usize) {
             startIdx = (optInTimePeriod) as usize;
         }
         // Make sure there is still something to evaluate.
@@ -207,7 +207,7 @@ impl Core {
         //    current value.
         outIdx = 0;
         inIdx = startIdx;
-        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        trailingIdx = startIdx - ((optInTimePeriod) as usize);
         while inIdx <= endIdx {
             outReal[outIdx] = ((inReal[{ let _v = inIdx; inIdx += 1; _v }] - inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }]) as f64);
             outIdx += 1;
@@ -241,7 +241,7 @@ impl Core {
         let _assertLb = self.mom_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        if startIdx < (optInTimePeriod) as usize {
+        if startIdx < ((optInTimePeriod) as usize) {
             startIdx = (optInTimePeriod) as usize;
         }
         if startIdx > endIdx {
@@ -251,7 +251,7 @@ impl Core {
         }
         outIdx = 0;
         inIdx = startIdx;
-        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        trailingIdx = startIdx - ((optInTimePeriod) as usize);
         while inIdx <= endIdx {
             outReal[outIdx] = ((inReal[{ let _v = inIdx; inIdx += 1; _v }] - inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }]) as f64);
             outIdx += 1;
@@ -358,7 +358,7 @@ impl Core {
         // always positive values.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < (optInTimePeriod) as usize {
+        if startIdx < ((optInTimePeriod) as usize) {
             startIdx = (optInTimePeriod) as usize;
         }
         // Make sure there is still something to evaluate.
@@ -372,7 +372,7 @@ impl Core {
         //    current value.
         outIdx = 0;
         inIdx = startIdx;
-        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        trailingIdx = startIdx - ((optInTimePeriod) as usize);
         while inIdx <= endIdx {
             lastValue_outReal = inReal[{ let _v = inIdx; inIdx += 1; _v }] - inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
         }
@@ -479,7 +479,7 @@ impl Core {
         // always positive values.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < (optInTimePeriod) as usize {
+        if startIdx < ((optInTimePeriod) as usize) {
             startIdx = (optInTimePeriod) as usize;
         }
         // Make sure there is still something to evaluate.
@@ -493,7 +493,7 @@ impl Core {
         //    current value.
         outIdx = 0;
         inIdx = startIdx;
-        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        trailingIdx = startIdx - ((optInTimePeriod) as usize);
         while inIdx <= endIdx {
             outReal[outIdx] = ((inReal[{ let _v = inIdx; inIdx += 1; _v }] - inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }]) as f64);
             outIdx += 1;

@@ -199,7 +199,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         NearPeriodTotal = 0.0;
-        NearTrailingIdx = startIdx - 3 - (Near_avgPeriod) as usize;
+        NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
         i = NearTrailingIdx;
         while i < startIdx - 3 {
             let mut _candlerange_0: f64;
@@ -312,7 +312,7 @@ impl Core {
             } else if patternCount > 0 &&
                (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) // search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd
             {
-                outInteger[outIdx] = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+                outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
                 outIdx += 1;
                 patternCount = 0;
             } else {
@@ -413,7 +413,7 @@ impl Core {
             return RetCode::Success;
         }
         NearPeriodTotal = 0.0;
-        NearTrailingIdx = startIdx - 3 - (Near_avgPeriod) as usize;
+        NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
         i = NearTrailingIdx;
         while i < startIdx - 3 {
             let mut _candlerange_0: f64;
@@ -496,7 +496,7 @@ impl Core {
                 outInteger[outIdx] = (patternResult) as i32;
                 outIdx += 1;
             } else if patternCount > 0 && (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) {
-                outInteger[outIdx] = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+                outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
                 outIdx += 1;
                 patternCount = 0;
             } else {
@@ -618,7 +618,7 @@ impl Core {
         } else if sp.patternCount > 0 &&
            (sp.patternResult > 0 && inClose > sp.patternHigh || sp.patternResult < 0 && inClose < sp.patternLow) // search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd
         {
-            (*outInteger) = (sp.patternResult + (100 * (if sp.patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+            (*outInteger) = (sp.patternResult + ((100 * (if sp.patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
             sp.patternCount = 0;
         } else {
             (*outInteger) = 0;
@@ -728,7 +728,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         NearPeriodTotal = 0.0;
-        NearTrailingIdx = startIdx - 3 - (Near_avgPeriod) as usize;
+        NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
         i = NearTrailingIdx;
         while i < startIdx - 3 {
             let mut _candlerange_2: f64;
@@ -840,7 +840,7 @@ impl Core {
             } else if patternCount > 0 &&
                (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) // search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd
             {
-                lastValue_outInteger = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+                lastValue_outInteger = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
                 patternCount = 0;
             } else {
                 lastValue_outInteger = 0;
@@ -1036,7 +1036,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         NearPeriodTotal = 0.0;
-        NearTrailingIdx = startIdx - 3 - (Near_avgPeriod) as usize;
+        NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
         i = NearTrailingIdx;
         while i < startIdx - 3 {
             let mut _candlerange_7: f64;
@@ -1149,7 +1149,7 @@ impl Core {
             } else if patternCount > 0 &&
                (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) // search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd
             {
-                outInteger[outIdx] = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+                outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
                 outIdx += 1;
                 patternCount = 0;
             } else {

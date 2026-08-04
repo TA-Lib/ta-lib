@@ -191,7 +191,7 @@ impl Core {
                inOpen[i] > (inClose[i - 1]).min(inOpen[i - 1]) &&
                inClose[i] < (inClose[i - 2]).max(inOpen[i - 2]) && // 3rd closes within 1st rb
                inClose[i] > (inClose[i - 2]).min(inOpen[i - 2]) &&
-               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) // when 1st is white upside gap when 1st is black downside gap
+               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || (((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) // when 1st is white upside gap when 1st is black downside gap
             {
                 outInteger[outIdx] = ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) * 100) as i32;
                 outIdx += 1;
@@ -250,7 +250,7 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         loop {
-            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) && (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 0 - (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) && inOpen[i] < (inClose[i - 1]).max(inOpen[i - 1]) && inOpen[i] > (inClose[i - 1]).min(inOpen[i - 1]) && inClose[i] < (inClose[i - 2]).max(inOpen[i - 2]) && inClose[i] > (inClose[i - 2]).min(inOpen[i - 2]) && ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) {
+            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) && (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 0 - (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) && inOpen[i] < (inClose[i - 1]).max(inOpen[i - 1]) && inOpen[i] > (inClose[i - 1]).min(inOpen[i - 1]) && inClose[i] < (inClose[i - 2]).max(inOpen[i - 2]) && inClose[i] > (inClose[i - 2]).min(inOpen[i - 2]) && ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || (((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) {
                 outInteger[outIdx] = ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) * 100) as i32;
                 outIdx += 1;
             } else {
@@ -301,7 +301,7 @@ impl Core {
            inOpen > (sp.lag1_inClose).min(sp.lag1_inOpen) &&
            inClose < (sp.lag2_inClose).max(sp.lag2_inOpen) && // 3rd closes within 1st rb
            inClose > (sp.lag2_inClose).min(sp.lag2_inOpen) &&
-           ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && ((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) || ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0)) // when 1st is white upside gap when 1st is black downside gap
+           ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && ((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) || (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0)) // when 1st is white upside gap when 1st is black downside gap
         {
             (*outInteger) = ((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
         } else {
@@ -368,7 +368,7 @@ impl Core {
                inOpen[i] > (inClose[i - 1]).min(inOpen[i - 1]) &&
                inClose[i] < (inClose[i - 2]).max(inOpen[i - 2]) && // 3rd closes within 1st rb
                inClose[i] > (inClose[i - 2]).min(inOpen[i - 2]) &&
-               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) // when 1st is white upside gap when 1st is black downside gap
+               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || (((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) // when 1st is white upside gap when 1st is black downside gap
             {
                 lastValue_outInteger = ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) * 100) as i32;
             } else {
@@ -478,7 +478,7 @@ impl Core {
                inOpen[i] > (inClose[i - 1]).min(inOpen[i - 1]) &&
                inClose[i] < (inClose[i - 2]).max(inOpen[i - 2]) && // 3rd closes within 1st rb
                inClose[i] > (inClose[i - 2]).min(inOpen[i - 2]) &&
-               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) // when 1st is white upside gap when 1st is black downside gap
+               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == 1 && ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || (((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) // when 1st is white upside gap when 1st is black downside gap
             {
                 outInteger[outIdx] = ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) * 100) as i32;
                 outIdx += 1;

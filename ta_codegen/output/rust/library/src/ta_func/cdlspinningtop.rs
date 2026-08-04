@@ -186,7 +186,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyPeriodTotal = 0.0;
-        BodyTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        BodyTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
         i = BodyTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -312,7 +312,7 @@ impl Core {
             return RetCode::Success;
         }
         BodyPeriodTotal = 0.0;
-        BodyTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        BodyTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
         i = BodyTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -519,7 +519,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyPeriodTotal = 0.0;
-        BodyTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        BodyTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
         i = BodyTrailingIdx;
         while i < startIdx {
             let mut _candlerange_2: f64;
@@ -701,7 +701,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyPeriodTotal = 0.0;
-        BodyTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        BodyTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
         i = BodyTrailingIdx;
         while i < startIdx {
             let mut _candlerange_5: f64;

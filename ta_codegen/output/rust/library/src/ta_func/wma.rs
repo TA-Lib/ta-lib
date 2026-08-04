@@ -199,9 +199,9 @@ impl Core {
             // float array, so a double-sized byte copy would reinterpret and
             // over-read it (#137). Forward order keeps the in-place case correct (#94).
             inIdx = startIdx;
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 outReal[i] = ((inReal[{ let _v = inIdx; inIdx += 1; _v }]) as f64);
                 i += 1;
             }
@@ -318,9 +318,9 @@ impl Core {
             (*outBegIdx) = startIdx;
             (*outNBElement) = endIdx - startIdx + 1;
             inIdx = startIdx;
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 outReal[i] = ((inReal[{ let _v = inIdx; inIdx += 1; _v }]) as f64);
                 i += 1;
             }

@@ -486,7 +486,7 @@ impl Core {
         sp.barsSinceReseed -= 1;
         if sp.variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 {
             sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-            sp.windowStart = sp.i - (sp.nbInitialElementNeeded) as i32;
+            sp.windowStart = sp.i - ((sp.nbInitialElementNeeded) as i32);
             tempReal = 0.0;
             // for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 )
             sp.j = sp.windowStart;

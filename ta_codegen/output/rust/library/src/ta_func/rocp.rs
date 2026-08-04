@@ -197,7 +197,7 @@ impl Core {
         // always positive values.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < (optInTimePeriod) as usize {
+        if startIdx < ((optInTimePeriod) as usize) {
             startIdx = (optInTimePeriod) as usize;
         }
         // Make sure there is still something to evaluate.
@@ -209,7 +209,7 @@ impl Core {
         // Calculate Rate of change Ratio: (price / prevPrice)
         outIdx = 0;
         inIdx = startIdx;
-        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        trailingIdx = startIdx - ((optInTimePeriod) as usize);
         while inIdx <= endIdx {
             tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
             if tempReal != 0.0 {
@@ -251,7 +251,7 @@ impl Core {
         let _assertLb = self.rocp_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        if startIdx < (optInTimePeriod) as usize {
+        if startIdx < ((optInTimePeriod) as usize) {
             startIdx = (optInTimePeriod) as usize;
         }
         if startIdx > endIdx {
@@ -261,7 +261,7 @@ impl Core {
         }
         outIdx = 0;
         inIdx = startIdx;
-        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        trailingIdx = startIdx - ((optInTimePeriod) as usize);
         while inIdx <= endIdx {
             tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
             if tempReal != 0.0 {
@@ -382,7 +382,7 @@ impl Core {
         // always positive values.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < (optInTimePeriod) as usize {
+        if startIdx < ((optInTimePeriod) as usize) {
             startIdx = (optInTimePeriod) as usize;
         }
         // Make sure there is still something to evaluate.
@@ -394,7 +394,7 @@ impl Core {
         // Calculate Rate of change Ratio: (price / prevPrice)
         outIdx = 0;
         inIdx = startIdx;
-        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        trailingIdx = startIdx - ((optInTimePeriod) as usize);
         while inIdx <= endIdx {
             tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
             if tempReal != 0.0 {
@@ -508,7 +508,7 @@ impl Core {
         // always positive values.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < (optInTimePeriod) as usize {
+        if startIdx < ((optInTimePeriod) as usize) {
             startIdx = (optInTimePeriod) as usize;
         }
         // Make sure there is still something to evaluate.
@@ -520,7 +520,7 @@ impl Core {
         // Calculate Rate of change Ratio: (price / prevPrice)
         outIdx = 0;
         inIdx = startIdx;
-        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        trailingIdx = startIdx - ((optInTimePeriod) as usize);
         while inIdx <= endIdx {
             tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
             if tempReal != 0.0 {

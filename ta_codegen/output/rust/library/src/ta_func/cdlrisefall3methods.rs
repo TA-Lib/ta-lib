@@ -210,8 +210,8 @@ impl Core {
         BodyPeriodTotal[2] = 0.0;
         BodyPeriodTotal[1] = 0.0;
         BodyPeriodTotal[0] = 0.0;
-        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
-        BodyLongTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
+        BodyLongTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
         i = BodyShortTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -509,8 +509,8 @@ impl Core {
         BodyPeriodTotal[2] = 0.0;
         BodyPeriodTotal[1] = 0.0;
         BodyPeriodTotal[0] = 0.0;
-        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
-        BodyLongTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
+        BodyLongTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
         i = BodyShortTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -1025,8 +1025,8 @@ impl Core {
         BodyPeriodTotal[2] = 0.0;
         BodyPeriodTotal[1] = 0.0;
         BodyPeriodTotal[0] = 0.0;
-        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
-        BodyLongTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
+        BodyLongTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
         i = BodyShortTrailingIdx;
         while i < startIdx {
             let mut _candlerange_6: f64;
@@ -1482,8 +1482,8 @@ impl Core {
         BodyPeriodTotal[2] = 0.0;
         BodyPeriodTotal[1] = 0.0;
         BodyPeriodTotal[0] = 0.0;
-        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
-        BodyLongTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
+        BodyLongTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
         i = BodyShortTrailingIdx;
         while i < startIdx {
             let mut _candlerange_17: f64;

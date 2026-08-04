@@ -324,7 +324,7 @@ impl Core {
         while today <= endIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -343,7 +343,7 @@ impl Core {
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < (trailingIdx) as i32 {
+            if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
@@ -391,7 +391,7 @@ impl Core {
         // memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
         // reused as scratch, so source and destination overlap (issue #94).
         {
-            let _n = ((((*outNBElement) as usize)) as usize * 1) as usize;
+            let _n = (((((*outNBElement) as usize)) as usize) * 1) as usize;
             let _di = (0) as usize;
             let _si = (lookbackFastD) as usize;
             outFastK[_di.._di + _n].copy_from_slice(&tempBuffer[_si.._si + _n]);
@@ -483,7 +483,7 @@ impl Core {
         }
         while today <= endIdx {
             tmp = inLow[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -501,7 +501,7 @@ impl Core {
                 diff = (highest - lowest) / 100.0;
             }
             tmp = inHigh[today];
-            if highestIdx < (trailingIdx) as i32 {
+            if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
@@ -537,7 +537,7 @@ impl Core {
             return retCode;
         }
         {
-            let _n = ((((*outNBElement) as usize)) as usize * 1) as usize;
+            let _n = (((((*outNBElement) as usize)) as usize) * 1) as usize;
             let _di = (0) as usize;
             let _si = (lookbackFastD) as usize;
             outFastK[_di.._di + _n].copy_from_slice(&tempBuffer[_si.._si + _n]);
@@ -615,7 +615,7 @@ impl Core {
             sp.lowestIdx = sp.trailingIdx;
             sp.lowest = sp.x_inLow[(sp.lowestIdx % sp.xCap) as usize];
             sp.i = sp.lowestIdx;
-            while ({ sp.i += 1; sp.i }) as i32 <= sp.today {
+            while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
                 tmp = sp.x_inLow[(sp.i % sp.xCap) as usize];
                 if tmp < sp.lowest {
                     sp.lowestIdx = sp.i;
@@ -634,7 +634,7 @@ impl Core {
             sp.highestIdx = sp.trailingIdx;
             sp.highest = sp.x_inHigh[(sp.highestIdx % sp.xCap) as usize];
             sp.i = sp.highestIdx;
-            while ({ sp.i += 1; sp.i }) as i32 <= sp.today {
+            while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
                 tmp = sp.x_inHigh[(sp.i % sp.xCap) as usize];
                 if tmp > sp.highest {
                     sp.highestIdx = sp.i;
@@ -802,7 +802,7 @@ impl Core {
         while today <= endIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -821,7 +821,7 @@ impl Core {
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < (trailingIdx) as i32 {
+            if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
@@ -872,7 +872,7 @@ impl Core {
         // memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
         // reused as scratch, so source and destination overlap (issue #94).
         {
-            let _n = ((((*outNBElement) as usize)) as usize * 1) as usize;
+            let _n = (((((*outNBElement) as usize)) as usize) * 1) as usize;
             let _di = (0) as usize;
             let _si = (lookbackFastD) as usize;
             sc_outFastK[_di.._di + _n].copy_from_slice(&tempBuffer[_si.._si + _n]);
@@ -1097,7 +1097,7 @@ impl Core {
         while today <= endIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -1116,7 +1116,7 @@ impl Core {
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < (trailingIdx) as i32 {
+            if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
@@ -1167,7 +1167,7 @@ impl Core {
         // memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
         // reused as scratch, so source and destination overlap (issue #94).
         {
-            let _n = ((((*outNBElement) as usize)) as usize * 1) as usize;
+            let _n = (((((*outNBElement) as usize)) as usize) * 1) as usize;
             let _di = (0) as usize;
             let _si = (lookbackFastD) as usize;
             sc_outFastK[_di.._di + _n].copy_from_slice(&tempBuffer[_si.._si + _n]);

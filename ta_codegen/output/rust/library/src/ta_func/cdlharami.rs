@@ -203,8 +203,8 @@ impl Core {
         // Add-up the initial period, except for the last value.
         BodyLongPeriodTotal = 0.0;
         BodyShortPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - 1 - (BodyLong_avgPeriod) as usize;
-        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        BodyLongTrailingIdx = startIdx - 1 - ((BodyLong_avgPeriod) as usize);
+        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
         i = BodyLongTrailingIdx;
         while i < startIdx - 1 {
             let mut _candlerange_0: f64;
@@ -415,8 +415,8 @@ impl Core {
         }
         BodyLongPeriodTotal = 0.0;
         BodyShortPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - 1 - (BodyLong_avgPeriod) as usize;
-        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        BodyLongTrailingIdx = startIdx - 1 - ((BodyLong_avgPeriod) as usize);
+        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
         i = BodyLongTrailingIdx;
         while i < startIdx - 1 {
             let mut _candlerange_0: f64;
@@ -780,8 +780,8 @@ impl Core {
         // Add-up the initial period, except for the last value.
         BodyLongPeriodTotal = 0.0;
         BodyShortPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - 1 - (BodyLong_avgPeriod) as usize;
-        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        BodyLongTrailingIdx = startIdx - 1 - ((BodyLong_avgPeriod) as usize);
+        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
         i = BodyLongTrailingIdx;
         while i < startIdx - 1 {
             let mut _candlerange_4: f64;
@@ -1073,8 +1073,8 @@ impl Core {
         // Add-up the initial period, except for the last value.
         BodyLongPeriodTotal = 0.0;
         BodyShortPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - 1 - (BodyLong_avgPeriod) as usize;
-        BodyShortTrailingIdx = startIdx - (BodyShort_avgPeriod) as usize;
+        BodyLongTrailingIdx = startIdx - 1 - ((BodyLong_avgPeriod) as usize);
+        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
         i = BodyLongTrailingIdx;
         while i < startIdx - 1 {
             let mut _candlerange_10: f64;

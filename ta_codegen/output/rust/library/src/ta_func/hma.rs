@@ -266,7 +266,7 @@ impl Core {
         // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
         periodSubFull = 0.0;
         periodSumFull = 0.0;
-        trailingIdxFull = wmaStartIdx - ((optInTimePeriod - 1)) as usize;
+        trailingIdxFull = wmaStartIdx - (((optInTimePeriod - 1)) as usize);
         i = trailingIdxFull;
         w = 1;
         while i < wmaStartIdx {
@@ -460,7 +460,7 @@ impl Core {
         dividerFull = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
         periodSubFull = 0.0;
         periodSumFull = 0.0;
-        trailingIdxFull = wmaStartIdx - ((optInTimePeriod - 1)) as usize;
+        trailingIdxFull = wmaStartIdx - (((optInTimePeriod - 1)) as usize);
         i = trailingIdxFull;
         w = 1;
         while i < wmaStartIdx {
@@ -778,7 +778,7 @@ impl Core {
             // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            trailingIdxFull = wmaStartIdx - ((optInTimePeriod - 1)) as usize;
+            trailingIdxFull = wmaStartIdx - (((optInTimePeriod - 1)) as usize);
             i = trailingIdxFull;
             w = 1;
             while i < wmaStartIdx {
@@ -925,7 +925,7 @@ impl Core {
             // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            trailingIdxFull = wmaStartIdx - ((optInTimePeriod - 1)) as usize;
+            trailingIdxFull = wmaStartIdx - (((optInTimePeriod - 1)) as usize);
             i = trailingIdxFull;
             w = 1;
             while i < wmaStartIdx {
@@ -1201,7 +1201,7 @@ impl Core {
             // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            trailingIdxFull = wmaStartIdx - ((optInTimePeriod - 1)) as usize;
+            trailingIdxFull = wmaStartIdx - (((optInTimePeriod - 1)) as usize);
             i = trailingIdxFull;
             w = 1;
             while i < wmaStartIdx {
@@ -1349,7 +1349,7 @@ impl Core {
             // wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            trailingIdxFull = wmaStartIdx - ((optInTimePeriod - 1)) as usize;
+            trailingIdxFull = wmaStartIdx - (((optInTimePeriod - 1)) as usize);
             i = trailingIdxFull;
             w = 1;
             while i < wmaStartIdx {

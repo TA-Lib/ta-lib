@@ -230,6 +230,33 @@ fn check_c_int_alias(c: &str, upper: &str, name: &str) {
     );
 }
 
+/// Rust refuses to *parse* an `as` cast immediately followed by `<` or `<<` — it
+/// reads `usize <` as the start of generic arguments. Any emitted cast that lands
+/// on the left of one of those operators must therefore be wrapped in its own
+/// parens (`((x) as usize) < y`, never `(x) as usize < y`). Issue #159.
+///
+/// A correctly-wrapped cast puts `)` between the type and the operator, so the
+/// bare `as <ty> <` spelling is exactly and only the unparseable form.
+fn check_rust_cast_parens(r: &str, name: &str) {
+    for (lineno, line) in r.lines().enumerate() {
+        // Rustdoc and comments carry prose, not code the compiler parses.
+        if line.trim_start().starts_with("//") {
+            continue;
+        }
+        for ty in ["usize", "i32", "f64", "i64", "u32"] {
+            assert!(
+                !line.contains(&format!("as {ty} <")),
+                "{}: unparenthesized `as {}` cast before `<` (rustc reads it as \
+                 generic args, not a comparison) at line {}:\n{}",
+                name,
+                ty,
+                lineno + 1,
+                line.trim()
+            );
+        }
+    }
+}
+
 /// Try to load an indicator, returning None if parsing fails (not yet supported).
 fn try_load_indicator(name: &str) -> Option<(ir::FuncDef, HashMap<String, ir::EnumDef>)> {
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| load_indicator(name)));
@@ -298,6 +325,7 @@ fn test_all_indicators_all_backends() {
             check_rust_generic_variants(&out.rust, &snake, &snake);
             check_java_variants(&out.java, &camel, &snake);
             check_c_int_alias(&out.c, &upper, &snake);
+            check_rust_cast_parens(&out.rust, &snake);
         }));
 
         if let Err(e) = result {
@@ -8291,4 +8319,105 @@ fn abstract_rows_price_bundle_is_one_parameter() {
     assert_eq!(sma.inputs.len(), 1);
     assert_eq!(sma.inputs[0].kind, InputKind::Real);
     assert_eq!(sma.inputs[0].flags, 0);
+}
+
+/// Issue #159: an `int`-array subscript compared against a `usize`-typed variable
+/// must render with the whole cast parenthesized. rustc cannot *parse* a cast
+/// followed by `<` — it reads `usize <` as the start of generic arguments — so
+/// `(dqI[hd]) as usize < trailingIdx` is a hard error while `generate` exits 0.
+///
+/// No shipped indicator has this shape (the monotonic-deque rolling-extremum
+/// candidates in #147 are what surfaced it), so a regenerate is byte-identical
+/// here and proves nothing; this fixture is the coverage.
+///
+/// Both operand positions are exercised. The right-hand one is not merely
+/// defensive: `render_binop_operand` leaves a higher-precedence arithmetic child
+/// unparenthesized on the left of a comparison, so `trailingIdx + dqI[hd] < today`
+/// puts a *right*-operand cast directly before a `<` too.
+#[test]
+fn int_array_vs_usize_comparison_parenthesizes_the_cast() {
+    let source = r#"
+int max_lookback( int optInTimePeriod )
+{
+   return (optInTimePeriod-1);
+}
+
+TA_RetCode max( int    startIdx,
+                int    endIdx,
+                const double inReal[],
+                int    optInTimePeriod,
+                int   *outBegIdx,
+                int   *outNBElement,
+                double outReal[] )
+{
+   int outIdx, trailingIdx, today, highestIdx;
+   int dqI[4];
+   int hd;
+
+   hd = 0;
+   dqI[hd] = startIdx;
+   outIdx = 0;
+   today = startIdx;
+   trailingIdx = startIdx;
+   highestIdx = -1;
+
+   while( today <= endIdx )
+   {
+      /* left operand carries the cast, directly before `<` */
+      if( dqI[hd] < trailingIdx )
+         hd = 0;
+
+      /* right operand carries the cast, and the enclosing `<` still follows it */
+      if( trailingIdx + dqI[hd] < today )
+         hd = 0;
+
+      /* mirror: the cast lands on the right operand of the comparison itself */
+      if( trailingIdx < dqI[hd] )
+         hd = 0;
+
+      /* the i32 sentinel path (the shape WILLR/MIN/MAX already emit) */
+      if( highestIdx < trailingIdx )
+         highestIdx = trailingIdx;
+
+      outReal[outIdx++] = inReal[today];
+      trailingIdx++;
+      today++;
+   }
+
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("max", source);
+    let out = generate_all(&func, &enums);
+
+    // The whole cast is wrapped, in every position.
+    for needle in [
+        "((dqI[hd]) as usize) < trailingIdx",
+        "trailingIdx + ((dqI[hd]) as usize) < today",
+        "trailingIdx < ((dqI[hd]) as usize)",
+        "highestIdx < ((trailingIdx) as i32)",
+    ] {
+        assert!(
+            out.rust.contains(needle),
+            "Rust output missing `{needle}`:\n{}",
+            out.rust
+        );
+    }
+
+    // And nowhere does a bare cast sit directly before `<`, which would not parse.
+    check_rust_cast_parens(&out.rust, "max/#159");
+
+    // C and Java are unaffected — they have no cast to place at all.
+    assert!(
+        out.c.contains("if( dqI[hd] < trailingIdx )"),
+        "C output should compare directly:\n{}",
+        out.c
+    );
+    assert!(
+        out.java.contains("if( dqI[hd] < trailingIdx )"),
+        "Java output should compare directly:\n{}",
+        out.java
+    );
 }

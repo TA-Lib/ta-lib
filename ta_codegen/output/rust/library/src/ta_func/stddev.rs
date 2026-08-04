@@ -197,9 +197,9 @@ impl Core {
         //
         // Multiply also by the ratio specified.
         if optInNbDev != 1.0 {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal = outReal[i];
                 if !((tempReal) < 1e-14) {
                     outReal[i] = (tempReal).sqrt() * optInNbDev;
@@ -209,9 +209,9 @@ impl Core {
                 i += 1;
             }
         } else {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal = outReal[i];
                 if !((tempReal) < 1e-14) {
                     outReal[i] = (tempReal).sqrt();
@@ -253,9 +253,9 @@ impl Core {
             return retCode;
         }
         if optInNbDev != 1.0 {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal = outReal[i];
                 if !((tempReal) < 1e-14) {
                     outReal[i] = (tempReal).sqrt() * optInNbDev;
@@ -265,9 +265,9 @@ impl Core {
                 i += 1;
             }
         } else {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal = outReal[i];
                 if !((tempReal) < 1e-14) {
                     outReal[i] = (tempReal).sqrt();
@@ -380,9 +380,9 @@ impl Core {
         //
         // Multiply also by the ratio specified.
         if optInNbDev != 1.0 {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal = sc_outReal[i];
                 if !((tempReal) < 1e-14) {
                     sc_outReal[i] = (tempReal).sqrt() * optInNbDev;
@@ -392,9 +392,9 @@ impl Core {
                 i += 1;
             }
         } else {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal = sc_outReal[i];
                 if !((tempReal) < 1e-14) {
                     sc_outReal[i] = (tempReal).sqrt();
@@ -485,9 +485,9 @@ impl Core {
         //
         // Multiply also by the ratio specified.
         if optInNbDev != 1.0 {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal = sc_outReal[i];
                 if !((tempReal) < 1e-14) {
                     sc_outReal[i] = (tempReal).sqrt() * optInNbDev;
@@ -497,9 +497,9 @@ impl Core {
                 i += 1;
             }
         } else {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal = sc_outReal[i];
                 if !((tempReal) < 1e-14) {
                     sc_outReal[i] = (tempReal).sqrt();

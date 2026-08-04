@@ -211,7 +211,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyLongPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        BodyLongTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
         i = BodyLongTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -245,11 +245,11 @@ impl Core {
         // this function does not consider it
         outIdx = 0;
         loop {
-            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&      // 1st: white
+            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&        // 1st: white
                (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
-               ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && // 2nd: black
-               inOpen[i] > inHigh[i - 1] &&                                           // open above prior high
-               inClose[i] > inOpen[i - 1] &&                                          // close within prior body
+               (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd: black
+               inOpen[i] > inHigh[i - 1] &&                                             // open above prior high
+               inClose[i] > inOpen[i - 1] &&                                            // close within prior body
                inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration
             {
                 outInteger[outIdx] = (0 - 100) as i32;
@@ -348,7 +348,7 @@ impl Core {
             return RetCode::Success;
         }
         BodyLongPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        BodyLongTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
         i = BodyLongTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -372,7 +372,7 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         loop {
-            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && inOpen[i] > inHigh[i - 1] && inClose[i] > inOpen[i - 1] && inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration {
+            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && inOpen[i] > inHigh[i - 1] && inClose[i] > inOpen[i - 1] && inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration {
                 outInteger[outIdx] = (0 - 100) as i32;
                 outIdx += 1;
             } else {
@@ -470,7 +470,7 @@ impl Core {
         sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx] = inClose;
         if (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && // 1st: white
            (sp.lag1_inClose - sp.lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (sp.lag1_inClose - sp.lag1_inOpen).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), _ => (sp.lag1_inHigh) - (sp.lag1_inLow) - ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
-           ((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32 == 0 - 1 &&    // 2nd: black
+           (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&  // 2nd: black
            inOpen > sp.lag1_inHigh &&                                          // open above prior high
            inClose > sp.lag1_inOpen &&                                         // close within prior body
            inClose < sp.lag1_inClose - (sp.lag1_inClose - sp.lag1_inOpen).abs() * sp.optInPenetration
@@ -575,7 +575,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyLongPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        BodyLongTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
         i = BodyLongTrailingIdx;
         while i < startIdx {
             let mut _candlerange_2: f64;
@@ -609,11 +609,11 @@ impl Core {
         // this function does not consider it
         outIdx = 0;
         loop {
-            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&      // 1st: white
+            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&        // 1st: white
                (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
-               ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && // 2nd: black
-               inOpen[i] > inHigh[i - 1] &&                                           // open above prior high
-               inClose[i] > inOpen[i - 1] &&                                          // close within prior body
+               (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd: black
+               inOpen[i] > inHigh[i - 1] &&                                             // open above prior high
+               inClose[i] > inOpen[i - 1] &&                                            // close within prior body
                inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration
             {
                 lastValue_outInteger = (0 - 100) as i32;
@@ -799,7 +799,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyLongPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        BodyLongTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
         i = BodyLongTrailingIdx;
         while i < startIdx {
             let mut _candlerange_5: f64;
@@ -833,11 +833,11 @@ impl Core {
         // this function does not consider it
         outIdx = 0;
         loop {
-            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&      // 1st: white
+            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 &&        // 1st: white
                (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
-               ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32 == 0 - 1 && // 2nd: black
-               inOpen[i] > inHigh[i - 1] &&                                           // open above prior high
-               inClose[i] > inOpen[i - 1] &&                                          // close within prior body
+               (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd: black
+               inOpen[i] > inHigh[i - 1] &&                                             // open above prior high
+               inClose[i] > inOpen[i - 1] &&                                            // close within prior body
                inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration
             {
                 outInteger[outIdx] = (0 - 100) as i32;

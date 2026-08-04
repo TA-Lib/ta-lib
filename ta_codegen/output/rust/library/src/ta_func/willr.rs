@@ -213,7 +213,7 @@ impl Core {
         while today <= endIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -232,7 +232,7 @@ impl Core {
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < (trailingIdx) as i32 {
+            if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
@@ -321,7 +321,7 @@ impl Core {
         diff = highest;
         while today <= endIdx {
             tmp = inLow[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -339,7 +339,7 @@ impl Core {
                 diff = (highest - lowest) / (0_f64 - 100.0);
             }
             tmp = inHigh[today];
-            if highestIdx < (trailingIdx) as i32 {
+            if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
@@ -428,7 +428,7 @@ impl Core {
             sp.lowestIdx = sp.trailingIdx;
             sp.lowest = sp.x_inLow[(sp.lowestIdx % sp.xCap) as usize];
             sp.i = sp.lowestIdx;
-            while ({ sp.i += 1; sp.i }) as i32 <= sp.today {
+            while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
                 tmp = sp.x_inLow[(sp.i % sp.xCap) as usize];
                 if tmp < sp.lowest {
                     sp.lowestIdx = sp.i;
@@ -447,7 +447,7 @@ impl Core {
             sp.highestIdx = sp.trailingIdx;
             sp.highest = sp.x_inHigh[(sp.highestIdx % sp.xCap) as usize];
             sp.i = sp.highestIdx;
-            while ({ sp.i += 1; sp.i }) as i32 <= sp.today {
+            while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
                 tmp = sp.x_inHigh[(sp.i % sp.xCap) as usize];
                 if tmp > sp.highest {
                     sp.highestIdx = sp.i;
@@ -532,7 +532,7 @@ impl Core {
         while today <= endIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -551,7 +551,7 @@ impl Core {
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < (trailingIdx) as i32 {
+            if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
@@ -708,7 +708,7 @@ impl Core {
         while today <= endIdx {
             // Set the lowest low
             tmp = inLow[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -727,7 +727,7 @@ impl Core {
             }
             // Set the highest high
             tmp = inHigh[today];
-            if highestIdx < (trailingIdx) as i32 {
+            if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
