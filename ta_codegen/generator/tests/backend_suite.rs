@@ -235,24 +235,54 @@ fn check_c_int_alias(c: &str, upper: &str, name: &str) {
 /// on the left of one of those operators must therefore be wrapped in its own
 /// parens (`((x) as usize) < y`, never `(x) as usize < y`). Issue #159.
 ///
-/// A correctly-wrapped cast puts `)` between the type and the operator, so the
-/// bare `as <ty> <` spelling is exactly and only the unparseable form.
+/// A correctly-wrapped cast puts `)` between the type and the operator, so a bare
+/// `as <ty>` followed by one of those two operators is the unparseable form.
+///
+/// `<` and `<<` only — measured against rustc, not assumed. `as usize <= y` and
+/// `as usize <<= 2` both parse, so matching a bare `as <ty> <` prefix would fail
+/// on legal output: 22 shipped sites spell `<=` after a cast.
 fn check_rust_cast_parens(r: &str, name: &str) {
+    // Ambiguous iff the cast is followed by `<` or `<<` that is not part of
+    // `<=` / `<<=`.
+    let ambiguous_at = |rest: &str| {
+        let t = rest.trim_start();
+        let mut it = t.chars();
+        match (it.next(), it.next(), it.next()) {
+            (Some('<'), Some('='), _) => None,             // <=   parses
+            (Some('<'), Some('<'), Some('=')) => None,     // <<=  parses
+            (Some('<'), Some('<'), _) => Some("<<"),
+            (Some('<'), _, _) => Some("<"),
+            _ => None,
+        }
+    };
     for (lineno, line) in r.lines().enumerate() {
         // Rustdoc and comments carry prose, not code the compiler parses.
         if line.trim_start().starts_with("//") {
             continue;
         }
-        for ty in ["usize", "i32", "f64", "i64", "u32"] {
-            assert!(
-                !line.contains(&format!("as {ty} <")),
-                "{}: unparenthesized `as {}` cast before `<` (rustc reads it as \
-                 generic args, not a comparison) at line {}:\n{}",
-                name,
-                ty,
-                lineno + 1,
-                line.trim()
-            );
+        for ty in ["usize", "isize", "i32", "u32", "i64", "u64", "i16", "u16", "i8", "u8", "f32", "f64"] {
+            let needle = format!("as {ty}");
+            let mut from = 0;
+            while let Some(hit) = line[from..].find(&needle) {
+                let at = from + hit;
+                let rest = &line[at + needle.len()..];
+                // `as i32` must not be a prefix of a longer type name (`as i320`).
+                let boundary = !rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
+                if boundary {
+                    if let Some(op) = ambiguous_at(rest) {
+                        panic!(
+                            "{}: unparenthesized `as {}` cast before `{}` (rustc reads it as \
+                             generic args, not a comparison) at line {}:\n{}",
+                            name,
+                            ty,
+                            op,
+                            lineno + 1,
+                            line.trim()
+                        );
+                    }
+                }
+                from = at + needle.len();
+            }
         }
     }
 }
@@ -349,7 +379,18 @@ fn test_all_indicators_all_backends() {
         failures.len()
     );
 
-    // Ensure we tested at least the 6 known-good indicators
+    // Coverage is the gate here, not just the failure count: every check driven
+    // from this loop (check_rust_cast_parens among them) is worth exactly the
+    // number of indicators that reached it. `skipped` swallows a load/generate
+    // panic, so a parser regression could quietly empty the corpus while the
+    // suite stayed green — the floor of 6 this replaces would have allowed 162
+    // of 168 to vanish silently.
+    assert_eq!(
+        skipped, 0,
+        "{skipped} indicator(s) failed to load or generate and were silently \
+         skipped, so no per-indicator check ran on them; {tested} were tested. \
+         Fix the regression, or make the skip explicit if it is intended."
+    );
     assert!(
         tested >= 6,
         "Expected at least 6 indicators to pass, but only {} did",
@@ -8471,6 +8512,18 @@ TA_RetCode max( int    startIdx,
          hd = 0;
       if( dqI[hd] << 1 < today )       /* was E0308 */
          hd = 0;
+      if( dqI[hd] / 2 < today )        /* was E0308 */
+         hd = 0;
+      if( dqI[hd] % 3 < today )        /* was E0308 */
+         hd = 0;
+      if( (dqI[hd] & 3) < today )      /* was E0308 */
+         hd = 0;
+      if( dqI[hd] + optInTimePeriod < today )  /* was E0308: i32 opt param, not a literal */
+         hd = 0;
+      if( today < dqI[hd] + 1 )        /* mirror: the compound is the RIGHT operand */
+         hd = 0;
+      if( dqI[hd] + 1 <= today )       /* <= is legal after a bare cast; still must be typed */
+         hd = 0;
       if( hd + 1 < today )             /* control: plain int local, already usize */
          hd = 0;
       if( trailingIdx + dqI[hd] < today )  /* control: usize operand present */
@@ -8497,6 +8550,17 @@ TA_RetCode max( int    startIdx,
         "((dqI[hd] - 1) as usize) < today",
         "((dqI[hd] * 2) as usize) < today",
         "((dqI[hd] << 1) as usize) < today",
+        "((dqI[hd] / 2) as usize) < today",
+        "((dqI[hd] % 3) as usize) < today",
+        "((dqI[hd] & 3) as usize) < today",
+        // An i32 opt-in param is not an IntLiteral; the first cut of stays_i32
+        // rejected it and this shape still failed to compile.
+        "((dqI[hd] + optInTimePeriod) as usize) < today",
+        // Mirror: the compound as the RIGHT operand of the comparison.
+        "today < ((dqI[hd] + 1) as usize)",
+        // `<=` parses after a bare cast, so this one proves the TYPING fired,
+        // independently of #159's parenthesization.
+        "((dqI[hd] + 1) as usize) <= today",
     ] {
         assert!(
             out.rust.contains(needle),
@@ -8519,4 +8583,39 @@ TA_RetCode max( int    startIdx,
     // C and Java compare directly; neither has a cast to place.
     assert!(out.c.contains("if( dqI[hd] + 1 < today )"), "C changed:\n{}", out.c);
     assert!(out.java.contains("if( dqI[hd] + 1 < today )"), "Java changed:\n{}", out.java);
+}
+
+/// The cast-parens gate must key on the operators rustc actually cannot parse.
+/// `<` and `<<` after a bare cast are errors; `<=` and `<<=` are legal, and 22
+/// shipped sites spell `<=` after a cast — matching them would fail the suite on
+/// correct output. Verified against rustc, not assumed.
+#[test]
+fn cast_parens_gate_flags_only_the_ambiguous_operators() {
+    let must_flag = [
+        "        if (dqI[hd]) as usize < trailingIdx {",
+        "        x = (dqI[hd]) as i32 << 2;",
+        "        if a + (dqI[hd]) as usize < today {",
+    ];
+    for line in must_flag {
+        assert!(
+            std::panic::catch_unwind(|| check_rust_cast_parens(line, "fixture")).is_err(),
+            "gate failed to flag an unparseable cast: {line}"
+        );
+    }
+
+    let must_pass = [
+        "        if ((dqI[hd]) as usize) < trailingIdx {",   // correctly wrapped
+        "        if (dqI[hd]) as usize <= trailingIdx {",    // `<=` parses
+        "        x = (dqI[hd]) as i32 <<= 2;",               // `<<=` parses
+        "        if (dqI[hd]) as usize > trailingIdx {",     // `>` parses
+        "        let n = (x) as usize;",                     // terminal position
+        "        v[(i) as usize] = 0.0;",                    // index position
+        "        // prose mentioning as usize < in a comment",
+    ];
+    for line in must_pass {
+        assert!(
+            std::panic::catch_unwind(|| check_rust_cast_parens(line, "fixture")).is_ok(),
+            "gate false-positived on legal output: {line}"
+        );
+    }
 }

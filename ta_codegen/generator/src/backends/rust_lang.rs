@@ -204,10 +204,22 @@ fn expr_is_int_array_typed(expr: &Expr, ctx: &RustRenderCtx) -> bool {
             | BinOp::BitwiseXor,
             right,
         ) => {
-            let stays_i32 =
-                |e: &Expr| expr_is_int_array_typed(e, ctx) || matches!(e, Expr::IntLiteral(_));
+            // The result stays i32 only if the other operand cannot widen it:
+            // another int-array element, an already-i32-typed expression (an
+            // opt-in param, UNSTABLE_PERIOD, an explicit `(int)` cast), or an
+            // untyped integer literal. `optInTimePeriod` is the one that matters
+            // in practice — evicting a deque index that has left a period-sized
+            // window is spelled `dqI[hd] + optInTimePeriod < today`.
+            //
+            // expr_is_i32_typed, not the _ctx form: sentinels must stay out, for
+            // the reason in this function's doc comment.
+            let stays_i32 = |e: &Expr| {
+                expr_is_int_array_typed(e, ctx)
+                    || expr_is_i32_typed(e)
+                    || matches!(e, Expr::IntLiteral(_))
+            };
             expr_is_int_array_typed(left, ctx) && stays_i32(right)
-                || expr_is_int_array_typed(right, ctx) && matches!(left.as_ref(), Expr::IntLiteral(_))
+                || expr_is_int_array_typed(right, ctx) && stays_i32(left)
         }
         _ => false,
     }
@@ -3347,9 +3359,12 @@ impl ExprEmitter for RustExpr<'_> {
 /// because its precedence is higher). Wrapping unconditionally at every site
 /// keeps that out of the emitter's reasoning entirely.
 ///
-/// Every cast [`render_binop`] emits goes through here — including the `as f64`
-/// ones, which already wrapped and so are unchanged — so the invariant is one
-/// function rather than a rule each site has to re-derive. Issue #159.
+/// Every cast [`render_binop`] emits from an *operand* goes through here —
+/// including the `as f64` ones, which already wrapped and so are unchanged — so
+/// the invariant is one function rather than a rule each site has to re-derive.
+/// The one cast it does not cover is the FMA fusion's `({a} as f64).mul_add(..)`,
+/// which returns immediately and whose cast is followed by `)` by construction.
+/// Issue #159.
 fn wrap_cast(operand: &str, ty: &str) -> String {
     format!("(({operand}) as {ty})")
 }
