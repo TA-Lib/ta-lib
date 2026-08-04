@@ -96,7 +96,7 @@
 #define V_MAX_INPUT    6   /* widest is OHLCV + one spare */
 #define V_MAX_OUTPUT   3   /* BBANDS/MACD/MINMAXINDEX are the widest */
 #define V_MAX_OPT      8   /* SAREXT */
-#define V_MAX_CAND     6   /* candidate values probed per optional parameter */
+#define V_MAX_CAND     7   /* candidate values probed per optional parameter */
 
 /* Written past the end of every output buffer and re-checked after each call:
  * a variant that writes more elements than it reports is a defect the value
@@ -474,8 +474,13 @@ static void build_regime( VariantCtx *ctx, int regime, const TA_History *history
 /* Candidate values to probe for one optional parameter, others held at their
  * default. Returns how many were written to `out` (always >= 1: the default).
  *
- * The bounds come straight from the YAML metadata, already resolved to
- * concrete numbers by the generator — never a sentinel.
+ * The bounds come straight from the YAML metadata, already resolved to concrete
+ * numbers by the generator. The DEFAULT SENTINEL is probed too, appended after
+ * the clamp so the range cannot drop it: both variants must substitute the
+ * documented default and therefore agree. That leg is not decorative — it is the
+ * only place in the suite where a sentinel meets the TA_S_ path, and it fails
+ * today on TA_S_EMA, which computes its k factor from the raw sentinel before
+ * the prologue substitutes it.
  *
  * For integer parameters the minimum matters most: it is where optInTimePeriod
  * == 1 lives, the passthrough branch that carried the TA_S_WMA defect. Values
@@ -523,6 +528,13 @@ static int build_candidates( const TA_VOptSpec *spec, double *out )
       if( !dup )
          out[j++] = v;
    }
+
+   /* The default sentinel, appended AFTER the clamp: it is out of range by
+    * construction, and the guarded prologue is what turns it into the declared
+    * default. Both variants carry that prologue, so both must land on the same
+    * value and produce the same output. TA_INTEGER_DEFAULT is INT_MIN, exactly
+    * representable in double, so the frame's (int) cast round-trips it. */
+   out[j++] = spec->isReal ? (double)TA_REAL_DEFAULT : (double)TA_INTEGER_DEFAULT;
    return j;
 }
 
