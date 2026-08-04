@@ -881,12 +881,14 @@ fn gen_func_inner(
         }
     }
 
-    // For S_ variants with _private: emit private_param_init as local VarDecls
-    // Both guarded and logic S_ variants need this (both use private_body).
-    if single_precision && func.has_explicit_private && name_override.is_none() {
-        for (param_name, init_expr) in &func.private_param_init {
-            let init_java = render_init_expr(init_expr);
-            out.push_str(&format!("      double {param_name} = {init_java};\n"));
+    // For S_ variants with _private: the extra params (e.g. EMA's k factor) the
+    // inlined private body needs. DECLARED here, ASSIGNED after the validation
+    // prologue — the initialiser reads an optional parameter, and the prologue is
+    // what substitutes a sentinel for the declared default.
+    let sp_private_init = single_precision && func.has_explicit_private && name_override.is_none();
+    if sp_private_init {
+        for (param_name, _) in &func.private_param_init {
+            out.push_str(&format!("      double {param_name} = 0.0;\n"));
         }
     }
 
@@ -922,6 +924,14 @@ fn gen_func_inner(
             out.push_str(&format!("      if( {} ) {{\n", pairs.join(" || ")));
             out.push_str("         return RetCode.BadParam ;\n");
             out.push_str("      }\n");
+        }
+    }
+
+    // Any sentinel is substituted by now — derive the private extra params.
+    if sp_private_init {
+        for (param_name, init_expr) in &func.private_param_init {
+            let init_java = render_init_expr(init_expr);
+            out.push_str(&format!("      {param_name} = {init_java};\n"));
         }
     }
 

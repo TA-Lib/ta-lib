@@ -510,18 +510,22 @@ fn gen_func_inner(
         nullable_outputs: &nullable_outputs,
     };
 
-    // For S_ variants with explicit _private: emit private_param_init as local VarDecls.
-    // These provide the extra params (e.g., k factor) that the inlined private body needs.
-    // Both guarded and logic S_ variants need this (both use private_body).
-    if single_precision && func.has_explicit_private && name_override.is_none() {
-        for (param_name, init_expr) in &func.private_param_init {
+    // For S_ variants with explicit _private: the extra params (e.g. EMA's k
+    // factor) the inlined private body needs. DECLARED here, ASSIGNED after the
+    // validation prologue — the initialiser reads an optional parameter, and the
+    // prologue is what substitutes a TA_INTEGER_DEFAULT sentinel for the declared
+    // default. Initialising here derives the value from INT_MIN and returns a
+    // wrong result with TA_SUCCESS. The double variant is unaffected: it
+    // delegates to TA_<N>_Private, called after the guarded body has validated.
+    let sp_private_init = single_precision && func.has_explicit_private && name_override.is_none();
+    if sp_private_init {
+        for (param_name, _) in &func.private_param_init {
             let c_type = func
                 .private_extra_params
                 .iter()
                 .find(|(n, _)| n == param_name)
                 .map_or("double", |(_, t)| t.as_str());
-            let init_c = render_expr(init_expr, ctx, registry, helpers);
-            out.push_str(&format!("   {c_type} {param_name} = {init_c};\n"));
+            out.push_str(&format!("   {c_type} {param_name};\n"));
             declared_vars.push(param_name.clone());
         }
     }
@@ -585,6 +589,15 @@ fn gen_func_inner(
             }
             out.push_str(&format!("   if( {} )\n", pairs.join(" || ")));
             out.push_str("      return TA_BAD_PARAM;\n");
+        }
+        out.push('\n');
+    }
+
+    // Now that any sentinel has been substituted, derive the private extra params.
+    if sp_private_init {
+        for (param_name, init_expr) in &func.private_param_init {
+            let init_c = render_expr(init_expr, ctx, registry, helpers);
+            out.push_str(&format!("   {param_name} = {init_c};\n"));
         }
         out.push('\n');
     }

@@ -75767,7 +75767,7 @@ public class Core {
       int today = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      double optInK_1 = (2.0/(double)((optInTimePeriod+1)));
+      double optInK_1 = 0.0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -75779,6 +75779,7 @@ public class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      optInK_1 = (2.0/(double)((optInTimePeriod+1)));
       lookbackTotal = emaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;

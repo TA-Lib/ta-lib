@@ -207,7 +207,7 @@ TA_RetCode TA_S_EMA( int    startIdx,
    int today;
    int outIdx;
    int lookbackTotal;
-   double optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   double optInK_1;
 
    if( startIdx < 0 )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -222,6 +222,8 @@ TA_RetCode TA_S_EMA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+
+   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
 
    lookbackTotal = TA_EMA_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )
