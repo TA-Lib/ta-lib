@@ -17,9 +17,9 @@
 //!   callees return RetCode that callers *inspect* (MA, BBANDS, MAVP, STOCHRSI,
 //!   SAR). Throwing cores would make those inspection sites dead code the
 //!   renderer has to delete. Keeping RetCode internally means zero body changes.
-//!   Unlike Java there is no `…UnguardedInternal` naming split: C#'s `internal`
-//!   accessibility plus overloading (the cores carry the two `out int` params
-//!   the public wrappers do not) lets the cores share the public names.
+//!   C#'s `internal` accessibility plus overloading (the cores carry the two
+//!   `out int` params the public wrappers do not) lets the cores share the
+//!   public names, so no separate core naming scheme is needed.
 //!
 //! - **Scratch buffers are `new double[n]`, not `ArrayPool`, in v1.** ArrayPool
 //!   has no lifetime story in the current IR lowering: Java renders
@@ -388,10 +388,9 @@ fn render_init_expr(expr: &Expr) -> String {
 
 /// Emit the public, `OutRange`-returning wrapper over one internal core.
 ///
-/// Guarded wrappers translate the core's `RetCode` into the documented exception
-/// mapping; unguarded wrappers check nothing and never throw. Both are thin: the
-/// numerics live entirely in the core (which is an overload of the same name
-/// carrying the two `out int` params).
+/// The wrapper translates the core's `RetCode` into the documented exception
+/// mapping. It is thin: the numerics live entirely in the core (an overload of
+/// the same name carrying the two `out int` params).
 ///
 /// **A short range is not an error.** A valid range shorter than the lookback
 /// returns `Success` with `outNBElement == 0`, which becomes an `OutRange` whose
@@ -570,9 +569,7 @@ fn gen_func_inner(
     };
 
     // Carry source comments only in the double-precision guarded implementation
-    // (or the double Private for explicit-private functions). Before #166 this
-    // also had to exclude the double unguarded duplicate; precision is now the
-    // only axis.
+    // (or the double Private for explicit-private functions).
     let keep_comments = !single_precision;
     let body_stripped;
     let body: &[Statement] = if keep_comments {
@@ -660,8 +657,7 @@ fn gen_func_inner(
     }
 
     // Validation prologue. Omitted for the `Private` variant, whose callers are the
-    // guarded cores that have already validated (#166: this used to also be where
-    // the `…Unguarded` core skipped it).
+    // guarded cores that have already validated.
     if name_override.is_none() {
         out.push_str("      if( startIdx < 0 ) {\n");
         out.push_str("         return RetCode.OutOfRangeStartIndex ;\n");
@@ -693,7 +689,7 @@ fn gen_func_inner(
     let inline_counter = Cell::new(0);
     // FMA fusion sites for this body — same detector C/Rust/Java use, so the
     // four backends fuse identical sites.
-    let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::UNGUARDED_INDEX_SEEDS);
+    let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::INDEX_PARAM_SEEDS);
     let ctx = CsRenderCtx {
         single_precision,
         double_address_of_vars: &double_address_of_vars,
@@ -2052,7 +2048,7 @@ mod tests {
 
         // The internal core with the out-int pair and the CS0177 seeding prologue.
         assert!(output.contains("   internal RetCode Sma( "), "missing guarded core");
-        assert!(!output.contains("Unguarded"), "the unguarded tier must be gone (#166)");
+        assert!(!output.contains("Unguarded"), "no unguarded tier may exist");
         assert!(output.contains("out int outBegIdx"), "missing out param");
         assert!(
             output.contains("      outBegIdx = 0;\n      outNBElement = 0;\n"),

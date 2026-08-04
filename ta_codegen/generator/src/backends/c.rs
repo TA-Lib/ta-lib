@@ -89,7 +89,7 @@ pub fn generate(
     // C compiler knows the signature when the guarded body calls it. Only the
     // double-precision Private is emitted: the single-precision guarded body
     // inlines `private_body` directly (it cannot call the double-only Private),
-    // so a TA_S_<N>_Private would have no caller anywhere (#166).
+    // so a TA_S_<N>_Private would have no caller anywhere.
     if func.has_explicit_private {
         out.push_str(&gen_private(func, false, enums, registry, helpers));
     }
@@ -216,7 +216,7 @@ fn gen_header() -> String {
     // `TA_*_OpenInternal` in separate-compilation (library) builds — otherwise
     // each src/ta_func/*.c hits -Wimplicit-function-declaration. Pure
     // declarations behind an include guard, so it is a no-op in the single-TU
-    // server/bench builds. (#166 replaced the installed ta_func_unguarded.h.)
+    // server/bench builds.
     out.push_str(
         "#include <string.h>\n\
          #include <math.h>\n\
@@ -340,8 +340,7 @@ fn gen_lookback(
 ///
 /// Double-precision only. The single-precision guarded body inlines `private_body`
 /// rather than calling a Private (it cannot call the double-only one), so a
-/// `TA_S_{NAME}_Private` would have no caller in the tree — it was exported dead
-/// code until #166 removed it.
+/// `TA_S_{NAME}_Private` would have no caller in the tree.
 fn gen_private(
     func: &FuncDef,
     single_precision: bool,
@@ -369,9 +368,7 @@ fn gen_func(
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity, clippy::cast_possible_truncation)]
 /// `name_override` distinguishes the two things this emits: `Some(..)` is the
 /// `_Private` variant (no validation prologue, extra private params), `None` is the
-/// guarded public entry point. Before #166 a separate `logic` flag also selected the
-/// `_Unguarded` variant; with that gone the flag was exactly `name_override.is_some()`,
-/// so it was removed rather than left as a second name for the same condition.
+/// guarded public entry point.
 fn gen_func_inner(
     func: &FuncDef,
     single_precision: bool,
@@ -392,9 +389,8 @@ fn gen_func_inner(
 
     // The `_Private` variant is file-local: its only callers are the guarded
     // bodies in the same generated .c, and the definition precedes them. `static`
-    // is what actually un-exports it — dropping TA_LIB_API alone is a no-op on
-    // ELF, which is how a private symbol reached the installed header (#166).
-    // It also survives the single-TU server/bench builds.
+    // is what un-exports it (dropping TA_LIB_API alone is a no-op on ELF), and it
+    // survives the single-TU server/bench builds.
     let ret_type = if name_override.is_some() {
         "static TA_RetCode"
     } else if single_precision {
@@ -478,8 +474,7 @@ fn gen_func_inner(
     // Carry source comments only in the double-precision implementation: the
     // guarded `TA_*` and (for explicit-private functions) the `TA_*_Private`
     // that holds the algorithm. Strip them from the single-precision (`TA_S_*`)
-    // copy so they appear once. Before #166 this also had to exclude the double
-    // `*_Unguarded` duplicate; with that body gone, precision is the only axis.
+    // copy so they appear once.
     let keep_comments = !single_precision;
     let body_stripped;
     let body: &[Statement] = if keep_comments {
@@ -498,9 +493,9 @@ fn gen_func_inner(
     let inline_counter = Cell::new(0);
     // FMA fusion sites for this body (same detector Rust/Java use → identical
     // sites → cross-language bit-parity). The index-param seeds don't affect any
-    // fusion decision (never float operands), so the unguarded seed set is used
-    // uniformly across variants.
-    let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::UNGUARDED_INDEX_SEEDS);
+    // fusion decision (never float operands), so one seed set is used uniformly
+    // across variants.
+    let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::INDEX_PARAM_SEEDS);
     let nullable_outputs: Vec<String> = func
         .outputs
         .iter()
@@ -540,8 +535,7 @@ fn gen_func_inner(
     out.push('\n');
 
     // Validation prologue. Omitted for the `_Private` variant, whose callers are
-    // the guarded bodies that have already validated (#166: this used to also be
-    // where the `_Unguarded` variant skipped it).
+    // the guarded bodies that have already validated.
     if name_override.is_none() {
         out.push_str("   if( startIdx < 0 )\n");
         out.push_str("      return TA_OUT_OF_RANGE_START_INDEX;\n");
@@ -2252,19 +2246,18 @@ mod tests {
         assert!(output.contains("TA_S_SMA("), "Missing single-precision");
         // TA_INT_* macros are no longer generated
         assert!(!output.contains("TA_INT_SMA"), "Should not have TA_INT_ alias");
-        // #166: the two _Unguarded variants are gone. SMA has no explicit
-        // _private either, so `TA_<N>` and `TA_S_<N>` are the whole surface.
+        // SMA has no explicit _private, so `TA_<N>` and `TA_S_<N>` are the whole
+        // surface.
         assert!(
             !output.contains("_Unguarded"),
-            "the unguarded variants must not be emitted"
+            "no unguarded variant may be emitted"
         );
     }
 
     #[test]
     fn test_c_private_omits_range_checks() {
-        // Exactly one tier validates. Before #166 that was guarded-vs-unguarded;
-        // the surviving analogue is guarded-vs-`_Private`, so this uses EMA (the
-        // one definition in ta_codegen/input/ with an explicit _private).
+        // Exactly one tier validates: the guarded entry point, not `_Private`.
+        // EMA is the one definition in ta_codegen/input/ with an explicit _private.
         let (func, enums) = load_func("ema");
         let registry = make_registry();
         let output = generate(&func, &enums, &registry, &HelperRegistry::empty());
@@ -2302,7 +2295,7 @@ mod tests {
             !private_section.contains("TA_OUT_OF_RANGE_END_INDEX"),
             "_Private should not have end index check"
         );
-        // ...and it is file-local, which is what actually un-exports it (#166).
+        // ...and it is file-local, which is what un-exports it.
         assert!(
             !private_section.contains("TA_LIB_API"),
             "_Private must be static, not exported"
@@ -2343,11 +2336,10 @@ mod tests {
             "ema_lookback should resolve to TA_EMA_Lookback"
         );
 
-        // Bare sma/ema calls resolve to the guarded entry point (#166 step 1:
-        // cross-indicator composition is guarded-safe by construction).
-        // Anchored on the first argument so the assertion cannot be satisfied by
-        // a declaration or by the `TA_S_` single-precision sibling, and paired
-        // with the negative so it stays non-vacuous.
+        // Bare sma/ema calls resolve to the guarded entry point. Anchored on the
+        // first argument so the assertion cannot be satisfied by a declaration or
+        // by the `TA_S_` single-precision sibling, and paired with the negative so
+        // it stays non-vacuous.
         assert!(
             output.contains("TA_SMA(startIdx"),
             "sma should resolve to a guarded TA_SMA call"
@@ -2356,12 +2348,9 @@ mod tests {
             output.contains("TA_EMA(startIdx"),
             "ema should resolve to a guarded TA_EMA call"
         );
-        // `ma` defines TA_MA_Unguarded but never TA_SMA/TA_EMA, so any occurrence
-        // of these two is necessarily a call — the negative cannot go vacuous
-        // while step 1 still emits the unguarded definitions.
         assert!(
-            !output.contains("TA_SMA_Unguarded(") && !output.contains("TA_EMA_Unguarded("),
-            "no cross-indicator call may target an unguarded variant"
+            !output.contains("_Unguarded("),
+            "no unguarded variant may be emitted or called"
         );
     }
 }

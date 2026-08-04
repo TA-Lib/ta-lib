@@ -208,8 +208,7 @@ fn default_sentinel_sentence(func: &FuncDef) -> Option<&'static str> {
     }
 }
 
-/// Rustdoc block for the `_private` variant. (#166 removed the `_unguarded` tier
-/// this used to also serve.)
+/// Rustdoc block for the `_private` variant.
 pub fn private_docs(func: &FuncDef, snake: &str) -> String {
     let mut d = DocWriter::new("    ");
     let params: Vec<String> = func
@@ -220,9 +219,15 @@ pub fn private_docs(func: &FuncDef, snake: &str) -> String {
     d.paragraph(&format!(
         "Internal variant of [`Core::{snake}`] taking the precomputed parameter{} {}. \
          Skips the validation prologue: its only callers are the guarded bodies, which \
-         have already validated. Same contract as [`Core::{snake}`] otherwise.",
+         have already validated.",
         if params.len() == 1 { "" } else { "s" },
         params.join(", ")
+    ));
+    d.blank();
+    d.paragraph(&format!(
+        "Unlike [`Core::{snake}`] the bounds assertions here are unconditional: an \
+         `endIdx` beyond the input slice panics even when the lookback clamp means \
+         no element would be read."
     ));
     d.finish()
 }

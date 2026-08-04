@@ -137,10 +137,7 @@ retCode = sma( startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElemen
 ```
 
 maps to `TA_SMA(...)` in C, `self.sma(...)` in Rust, `smaInternal(...)` in Java and
-`Sma(...)` in C#. Cross-indicator calls target the **guarded** entry point: issue
-#166 removed the unguarded tier after interposition over 22.6M internal calls
-showed every internal call site already satisfied the guarded contract, and no
-toolchain measured the validation as a cost.
+`Sma(...)` in C#. Cross-indicator calls target the **guarded** entry point.
 `sma_lookback(...)` similarly maps to `TA_SMA_Lookback(...)` / `self.sma_lookback(...)`.
 
 ## What the generator adds (do NOT write these)

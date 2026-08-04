@@ -57,10 +57,9 @@ import java.util.Map;
  * }
  * }</pre>
  *
- * <p>Scope is the guarded, double-precision batch API — the same surface C's
+ * <p>Scope is the double-precision batch API — the same surface C's
  * {@code ta_abstract} and Rust's {@code abstract_api} describe. Streaming
- * handles, {@code Unguarded} variants and {@code float[]} overloads are not
- * catalogued.
+ * handles and {@code float[]} overloads are not catalogued.
  */
 public final class Functions {
 

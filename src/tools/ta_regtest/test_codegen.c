@@ -1663,16 +1663,10 @@ static int sweep_set_compat(CodegenPipe *pipe, int mode, char *respBuf)
 static TA_Real    sweepGuardedReal[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
 static TA_Integer sweepGuardedInt[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
 
-/* Compare the in-process GUARDED call against the ta_ref_serve baseline for
- * one sweep variant.
- *
- * This leg was added because the language servers used to reply with their
- * UNGUARDED result (the server re-ran TA_X_Unguarded over the same buffers), so
- * the guarded path was only ever verified at the hand-written pins. #166 removed
- * the unguarded tier, so server-vs-reference is now itself a guarded comparison
- * — but this leg is kept: it is IN-PROCESS, so it is the one sweep check that
- * does not cross the JSON-RPC boundary and cannot be blurred by %.15g. C only —
- * the in-process library IS the C backend. */
+/* Compare the in-process GUARDED call against the ta_ref_serve baseline for one
+ * sweep variant. This is the one sweep check that does not cross the JSON-RPC
+ * boundary, so it cannot be blurred by %.15g. C only — the in-process library IS
+ * the C backend. */
 static void sweep_compare_guarded(CodegenRangeTestParam *p)
 {
     unsigned int i;
@@ -4988,10 +4982,8 @@ static void xlang_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
 }
 
 /* Issue ONE hash-mode call for `optVals` against `sv` and parse the reply
- * (retCode / outBegIdx / outNBElement / out_hash). Hash mode is what makes the
- * server return right after the GUARDED call, so this is also the only safe way
- * to send a parameter the unguarded rerun could not accept. Returns 0 on a pipe
- * failure or a reply with no out_hash (the caller reports and fails). */
+ * (retCode / outBegIdx / outNBElement / out_hash). Returns 0 on a pipe failure
+ * or a reply with no out_hash (the caller reports and fails). */
 static int xlang_hash_call(XlangCtx *ctx, XlangServer *sv, const TA_FuncInfo *fi,
                            const TA_History *hist, int n, int s, int e,
                            int shape, int seed, const double *optVals,
@@ -5220,9 +5212,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                      * default" is a property of one implementation, so assert it
                      * inside each server: sentinel vs explicit default, bit-for-bit,
                      * no tolerance needed. vec[0] already ties the default's result
-                     * back to the C golden, so the chain closes. Both calls are hash
-                     * mode, which stops before the unguarded rerun (same precondition
-                     * as the reject path below). */
+                     * back to the C golden, so the chain closes. */
                     if( kind[k] == FUZZ_VEC_SENTINEL )
                     {
                         XHashParsed sent, dflt;
@@ -5282,12 +5272,10 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     else
                     {
                         /* A rejected vector stays on the hash path even on a
-                         * transcendental: want_hash returns right after the
-                         * GUARDED call, where the tolerance path continues into
-                         * the server's unguarded rerun. "Every optional parameter
-                         * resolved and in-range" is an unguarded PRECONDITION (see
-                         * the VARIANT gate section of CLAUDE.md) — sending one down
-                         * that path killed the Java server. */
+                         * transcendental: want_hash returns right after the call,
+                         * whereas the tolerance path serialises the outputs, and
+                         * sending a rejected vector down that path killed the Java
+                         * server. */
                         tolPath = sv->tolTranscendental &&
                                   kind[k] != FUZZ_VEC_REJECT &&
                                   codegen_call_is_transcendental(funcInfo->handle, vec[k],

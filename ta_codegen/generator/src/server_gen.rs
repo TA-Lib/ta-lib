@@ -225,12 +225,7 @@ pub fn inline_java_core_methods(template: &str, java_dir: &Path, funcs: &[FuncDe
 /// generated `ta_*.c` files need from each other.
 ///
 /// This is a PRIVATE header: it is not installed and is not part of the public
-/// contract. It replaced `include/ta_func_unguarded.h` in #166, which was an
-/// installed public header whose 706 lines were 336 unguarded declarations (gone
-/// with the variants), 336 stream/`OpenInternal` declarations (internal plumbing
-/// that never belonged in a public header), the `TA_EMA_Private` pair (now
-/// `static`), and one `stddev_using_precalc_ma` extern that was declared here and
-/// defined nowhere in `src/` — a dangling declaration no consumer could ever link.
+/// contract.
 ///
 /// The public stream surface is already complete in `ta_func.h`: the
 /// `typedef struct TA_<N>_Stream TA_<N>_Stream;` plus `_Open` / `_Update` / `_Peek`

@@ -320,7 +320,7 @@ ErrorNumber test_func_mavp( TA_History *history )
                                    2, 30, TA_MAType_SMA );
    if( errNb != TA_TEST_PASS ) return errNb;
 
-   /* The widest bucket table the API can ask for is sized sanely (#145/#166). */
+   /* The widest bucket table the API can ask for is sized sanely (#145). */
    errNb = mvWidestExpressibleBand();
    if( errNb != TA_TEST_PASS ) return errNb;
 
@@ -389,23 +389,13 @@ static ErrorNumber mvLoadTypes( void )
    return TA_TEST_PASS;
 }
 
-/* Issue #145 / #166: the bucket table must be sized by the SPREAD of periods
- * actually used, not by the largest one.
+/* Issue #145: the bucket table must be sized by the SPREAD of periods actually
+ * used, not by the largest one. The pre-#145 `malloc((maxUsed+2) * sizeof(int))`
+ * asked for ~400KB to describe a two-wide band clustered near 100000.
  *
- * The original test drove this through TA_MAVP_Unguarded with
- * optInMaxPeriod = 2147483646, because that was the only way to reach the
- * `maxUsed - minUsed > 100000` bound at ta_MAVP.c and the pre-#145
- * `malloc((maxUsed+2) * sizeof(int))` that evaluated 2147483646+2 in signed int
- * (UBSan: "signed integer overflow ... cannot be represented in type 'int'").
- * #166 removed the unguarded entry points, so that argument is no longer
- * expressible from any language and the bound is now unreachable — it is kept
- * as documented defensive code, see the comment at ta_codegen/input/mavp/mavp.c.
- *
- * What IS still expressible is the widest band the guarded API allows:
- * optInMinPeriod = 1, optInMaxPeriod = 100000, with the period series hitting
- * both ends. Relative indexing makes that a 100001-int table (~400KB); the
- * absolute indexing it replaced would have asked for the same, but a series
- * clustered near 100000 would have asked for 400KB to describe a two-wide band.
+ * The widest band the API can express is optInMinPeriod = 1,
+ * optInMaxPeriod = 100000 with the period series hitting both ends — a
+ * 100001-int table. The narrow band at the top of the range is a two-int table.
  * Both shapes are checked here.
  */
 static ErrorNumber mvWidestExpressibleBand( void )

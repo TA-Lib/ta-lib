@@ -210,9 +210,8 @@ public class BatchApiTest {
     }
 
     /**
-     * Issue #166 removed the unguarded tier. This pins the removal on the shipped
-     * public surface rather than on the generator: reflection over Core cannot be
-     * satisfied by a stale comment or a re-anchored string assertion.
+     * The public surface exposes no unguarded tier. Pinned by reflection over the
+     * shipped Core rather than by a string assertion on generator output.
      */
     static void noUnguardedTierOnThePublicSurface() {
         int leaked = 0;

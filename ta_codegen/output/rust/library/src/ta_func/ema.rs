@@ -177,7 +177,9 @@ impl Core {
     }
     /// Internal variant of [`Core::ema`] taking the precomputed parameter `optInK_1`. Skips the
     /// validation prologue: its only callers are the guarded bodies, which have already validated.
-    /// Same contract as [`Core::ema`] otherwise.
+    ///
+    /// Unlike [`Core::ema`] the bounds assertions here are unconditional: an `endIdx` beyond the
+    /// input slice panics even when the lookback clamp means no element would be read.
     #[inline]
     pub fn ema_private(
         &self,

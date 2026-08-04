@@ -66,7 +66,7 @@ namespace TALib.Metadata;
 /// cannot drift from them. Immutable and safe to use from any thread.</para>
 /// <para>Scope is the guarded, double-precision batch API — the same surface C's
 /// <c>ta_abstract</c> and Rust's <c>abstract_api</c> describe. Streaming handles,
-/// <c>Unguarded</c> variants and <c>float[]</c> overloads are not catalogued.</para>
+/// <c>float[]</c> overloads are not catalogued.</para>
 /// </remarks>
 public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
 {

@@ -232,14 +232,9 @@ is concrete-`f64` only.
 | `fn xxx(...)` | Guarded public API: validates params, pre-computes optimization values, delegates |
 | `fn xxx_private(...)` | Only where the definition declares one (EMA). Extra pre-computed params (EMA's `k`), no validation prologue — its only caller is the guarded body above it |
 
-Cross-indicator calls target the **guarded** entry point. The `_unguarded` tier
-was removed in issue #166: it cost 15.5% of `.text` and measured no faster on
-any toolchain, and interposition over 22.6M internal calls showed every internal
-call site already satisfied the guarded contract. The guarded body now carries the
-bounds-assert preamble that used to live only on `_unguarded`, so external
-callers get the fast tier too; on the public entry point the preamble takes an
-empty-range escape so a call that computes nothing cannot newly panic. There are **no** `_unguarded`,
-`_unchecked` or `_unguarded_unchecked` variants.
+Cross-indicator calls target the **guarded** entry point, which carries the
+bounds-assert preamble; that preamble takes an empty-range escape so a call
+computing nothing cannot panic.
 
 ### Documentation (rustdoc)
 

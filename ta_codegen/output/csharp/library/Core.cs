@@ -49,8 +49,7 @@ namespace TALib;
 /// number of leading bars (its <em>lookback</em>) before producing output —
 /// query it with the matching <c>*Lookback</c> method. Integer parameters
 /// accept <c>int.MinValue</c>, and real parameters <c>-4e37</c>, to select
-/// their documented default. Every indicator also has an <c>*Unguarded</c>
-/// variant that skips parameter validation — prefer the checked methods.
+/// their documented default.
 /// <para>Per-instance settings (unstable periods, candlestick thresholds)
 /// currently take their documented defaults; a configuration builder arrives
 /// with a later milestone. A <c>Core</c> whose settings are never mutated is

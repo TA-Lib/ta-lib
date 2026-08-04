@@ -30,11 +30,11 @@ use super::rust_lang::{collect_sentinel_vars, collect_signed_int_vars, collect_v
 /// see every fusion site, then revert).
 pub const EMIT_FMA: bool = true;
 
-/// Index-param seeds for the unguarded / `_private` variant (mirrors the Rust
+/// Index-param seeds for the `_private` variant (mirrors the Rust
 /// `RustRenderCtx` construction). These range/count indices are never float
 /// multiply operands, so the exact seed set does not change any fusion decision;
 /// the seeds are kept faithful only so the derived name-sets match Rust's.
-pub const UNGUARDED_INDEX_SEEDS: [&str; 4] = ["startIdx", "endIdx", "outBegIdx", "outNBElement"];
+pub const INDEX_PARAM_SEEDS: [&str; 4] = ["startIdx", "endIdx", "outBegIdx", "outNBElement"];
 /// Index-param seeds for the guarded variant.
 pub const GUARDED_INDEX_SEEDS: [&str; 2] = ["startIdx", "endIdx"];
 

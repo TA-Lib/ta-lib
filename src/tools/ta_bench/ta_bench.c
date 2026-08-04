@@ -284,8 +284,6 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
     long long ref_ns = 0;
     long long timings[16] = {0};
     long long t_max[16] = {0};
-    /* #166 replaced the "ung" column with a per-language spread. See the
-     * header comment below for why the instrument is kept in this shape. */
     int has_timing[16] = {0};
 
 
@@ -336,12 +334,8 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( !LANGUAGES[li].active ) continue;
         int is_cref = (strcmp(LANGUAGES[li].name, "cref") == 0);
-        /* The header prints a value + "spr%" column pair for every active
-         * non-cref language, so each row must emit both cells to stay
-         * aligned — even when the server returned no timing at all. */
         if( !has_timing[li] ) {
             printf(" %10s", "ERR");
-            if( !is_cref ) printf(" %10s", "ERR");
         } else if( is_cref ) {
             printf(" %10lld", timings[li]);
         } else {
@@ -349,26 +343,6 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
             const char *clr = (ratio > 1.10) ? "\033[31m" : (ratio < 0.90) ? "\033[32m" : "";
             const char *rst = (*clr) ? "\033[0m" : "";
             printf(" %s%10lld%s", clr, timings[li], rst);
-            /* Spread column (always emitted — see header alignment note).
-             *
-             * #166 removed the unguarded variant and with it the old "ung"
-             * cell, whose value as an instrument was that both numbers came
-             * from the SAME run of the SAME binary on the SAME input: a large
-             * gap between them was necessarily binary layout, not thermal
-             * drift (precedent: MIDPRICE unguarded once read ~35% slower — a
-             * layout artifact caught by eyeballing the pair). This column
-             * keeps that property with one variant: it is this row's own
-             * (max-min)/min across the passes, so a row that swings while its
-             * neighbours are steady is the same signal, and a whole run that
-             * swings is visible without reading the footer. */
-            if( t_max[li] > 0 && timings[li] > 0 ) {
-                double spread = (double)(t_max[li] - timings[li]) / (double)timings[li];
-                const char *clr_s = (spread > 0.25) ? "\033[31m" : "";
-                const char *rst_s = (*clr_s) ? "\033[0m" : "";
-                printf(" %s%9.0f%%%s", clr_s, spread * 100.0, rst_s);
-            } else {
-                printf(" %10s", "--");
-            }
         }
     }
     printf("\n");
@@ -494,16 +468,12 @@ int main(int argc, char *argv[]) {
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( !LANGUAGES[li].active ) continue;
         printf(" %10s", LANGUAGES[li].display);
-        if( strcmp(LANGUAGES[li].name, "cref") != 0 )
-            printf(" %10s", "spr%");
     }
     printf("\n");
     printf("%-20s", "--------");
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( !LANGUAGES[li].active ) continue;
         printf(" %10s", "------");
-        if( strcmp(LANGUAGES[li].name, "cref") != 0 )
-            printf(" %10s", "------");
     }
     printf("\n");
 

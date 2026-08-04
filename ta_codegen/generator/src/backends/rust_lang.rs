@@ -476,7 +476,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     // `_private` holds the algorithm for the functions that declare one (Rust has
     // no single-precision variant), and the guarded body above delegates to it.
     // Functions without an explicit `_private` render the algorithm inline in the
-    // guarded body. The `_unguarded` tier was removed in #166.
+    // guarded body.
     if func.has_explicit_private {
         out.push_str(&fma_dispatch_wrap(
             gen_private_func(&body_func, &snake, &ctx, enums, registry, helpers),
@@ -551,9 +551,9 @@ fn gen_lookback(
     out
 }
 
-/// Generate the guarded public function — the only batch entry point since #166.
-/// Validates params, then renders the algorithm inline (or delegates to
-/// `{snake}_private` when the function declares one).
+/// Generate the guarded public function — the batch entry point. Validates params,
+/// then renders the algorithm inline (or delegates to `{snake}_private` when the
+/// function declares one).
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 fn gen_guarded_func(
     func: &FuncDef,
@@ -608,11 +608,9 @@ fn gen_guarded_func(
         out.push_str("        }\n");
     }
 
-    // #166: the bounds-assert preamble moves onto the surviving guarded body. It
-    // is the LLVM proof that elides per-access bounds checks in a
-    // `#![forbid(unsafe_code)]` crate, and it used to live only on the
-    // `_unguarded` tier — so external callers never got it. `guard_empty_range`
-    // keeps a call that computes nothing from newly panicking.
+    // The bounds-assert preamble: the LLVM proof that elides per-access bounds
+    // checks in a `#![forbid(unsafe_code)]` crate. `guard_empty_range` keeps a
+    // call that computes nothing from panicking.
     out.push_str(&emit_bounds_asserts(func, snake, true));
 
     if func.has_explicit_private {
@@ -913,13 +911,12 @@ fn gen_private_func(
 /// When the adjusted start exceeds `endIdx` the function writes nothing and any
 /// length is fine.
 ///
-/// `guard_empty_range` (#166) makes the INPUT assertion take that same escape. It
-/// is set on the public guarded entry point and only there. Without it, a call
-/// whose lookback clamp pushes the start past `endIdx` — which returns `Success`
-/// with zero elements today, touching neither array — would start panicking
-/// instead. That is a public-API behaviour change, and the assertion buys nothing
-/// on a call that reads nothing. On every call that *does* compute, the escape is
-/// false and the proof handed to LLVM is identical.
+/// `guard_empty_range` makes the INPUT assertion take that same escape, and is set
+/// on the public guarded entry point only. A call whose lookback clamp pushes the
+/// start past `endIdx` returns `Success` with zero elements and touches neither
+/// array, so asserting on it would panic where the contract says success. On every
+/// call that *does* compute, the escape is false and the proof handed to LLVM is
+/// identical.
 fn emit_bounds_asserts(func: &FuncDef, snake: &str, guard_empty_range: bool) -> String {
     let mut out = String::new();
     let needs_start = guard_empty_range || !func.outputs.is_empty();
@@ -935,7 +932,18 @@ fn emit_bounds_asserts(func: &FuncDef, snake: &str, guard_empty_range: bool) -> 
         );
     }
     let escape = if guard_empty_range { "_assertStart > endIdx || " } else { "" };
+    // Only assert on inputs the body actually reads. Four CDL patterns take an
+    // OHLC leg they never index (e.g. cdl3outside's inHigh/inLow), and asserting
+    // on those would reject a caller who legitimately passed a short or empty
+    // slice for a leg the algorithm ignores — while proving nothing to LLVM,
+    // which is the only reason the assert is here. Detected on the
+    // comment-stripped IR so a name mentioned only in prose cannot count.
+    let body_no_comments = super::stmt_walk::strip_comments(&func.body);
+    let body_repr = format!("{body_no_comments:?}");
     for input in &func.inputs {
+        if !body_repr.contains(&format!("\"{}\"", input.name)) {
+            continue;
+        }
         out.push_str(&format!(
             "        assert!({escape}endIdx < {}.len());\n", input.name
         ));
@@ -949,9 +957,8 @@ fn emit_bounds_asserts(func: &FuncDef, snake: &str, guard_empty_range: bool) -> 
     out
 }
 
-/// Render the `_private` body. Until #166 this also rendered the `_unguarded`
-/// tier, selected by an `is_private` flag; with that tier gone the flag had one
-/// value and was removed.
+/// Render the `_private` body: the algorithm with the extra pre-computed params
+/// and no validation prologue.
 #[allow(clippy::too_many_lines)]
 fn gen_private_func_inner(
     func: &FuncDef,
