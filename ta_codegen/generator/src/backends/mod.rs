@@ -1,3 +1,4 @@
+pub mod abstract_rows;
 pub mod builtins;
 pub mod c;
 pub mod c_stream;
@@ -7,6 +8,7 @@ pub mod compat_fold;
 pub mod csharp;
 pub mod csharp_doc;
 pub mod csharp_enums;
+pub mod csharp_metadata;
 pub mod doc_meta;
 pub mod docs_patch;
 pub mod docs_site;

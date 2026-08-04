@@ -1,19 +1,21 @@
 //! Flag-map synchronization gate.
 //!
 //! The YAML flag vocabulary (function flags like `stream`, opt-input flags
-//! like `percent`, output flags like `nullable`) surfaces in FIVE generated
-//! places that historically drift apart when a flag is added:
+//! like `percent`, output flags like `nullable`) surfaces in FOUR places that
+//! historically drift apart when a flag is added:
 //!
 //! 1. `backends/ta_abstract_c.rs` — C constant names (`TA_FUNC_FLG_STREAM`)
-//! 2. `backends/rust_abstract.rs` — numeric bits for the Rust abstract table
-//!    (also reused by `backends/java_abstract.rs` for the Java server table)
+//! 2. `backends/abstract_rows.rs` — the numeric bits every registry-shaped
+//!    backend renders (Rust's `abstract_api`, the Java server table, the shipped
+//!    Java and C# registries all read them from there)
 //! 3. `backends/func_api_xml.rs` — XML display labels
 //! 4. `include/ta_abstract.h` — the C ABI's authoritative `#define`s
 //!
 //! (`backends/java_shipped.rs` used to be a fifth, numeric surface feeding the
 //! `CoreAnnotated` annotations. Both are gone with the idiomatic-signature
-//! break: Java's abstract table takes its bits from `rust_abstract`'s helpers,
-//! so Java stays covered here through surface 2 rather than a fourth copy.)
+//! break. Java, Rust and C# stay covered here through surface 2 rather than
+//! three copies — which is exactly why surface 2 is a shared module and not one
+//! backend's private helper.)
 //!
 //! The tests below make `include/ta_abstract.h` the single authority: every
 //! `TA_FUNC_FLG_*` / `TA_OPTIN_*` / `TA_OUT_*` constant must be known — with
@@ -40,21 +42,21 @@ mod tests {
             let c = crate::backends::ta_abstract_c::func_flag_to_c(key)
                 .unwrap_or_else(|| panic!("ta_abstract_c does not know func flag `{key}`"));
             assert!(func.contains_key(c), "stale func flag `{key}` -> `{c}` not in header");
-            assert_ne!(crate::backends::rust_abstract::func_flag_bits(&one(key)), 0, "stale `{key}` in rust_abstract");
+            assert_ne!(crate::backends::abstract_rows::func_flag_bits(&one(key)), 0, "stale `{key}` in abstract_rows");
         }
         let opt = header_flags("TA_OPTIN_");
         for (key, _) in crate::backends::func_api_xml::OPT_INPUT_FLAGS {
             let c = crate::backends::ta_abstract_c::opt_flag_to_c(key)
                 .unwrap_or_else(|| panic!("ta_abstract_c does not know opt flag `{key}`"));
             assert!(opt.contains_key(c), "stale opt flag `{key}` -> `{c}` not in header");
-            assert_ne!(crate::backends::rust_abstract::opt_flag_bits(&one(key)), 0, "stale `{key}` in rust_abstract");
+            assert_ne!(crate::backends::abstract_rows::opt_flag_bits(&one(key)), 0, "stale `{key}` in abstract_rows");
         }
         let out = header_flags("TA_OUT_");
         for (key, _) in crate::backends::func_api_xml::OUTPUT_FLAGS {
             let c = crate::backends::ta_abstract_c::output_flag_to_c(key)
                 .unwrap_or_else(|| panic!("ta_abstract_c does not know output flag `{key}`"));
             assert!(out.contains_key(c), "stale output flag `{key}` -> `{c}` not in header");
-            assert_ne!(crate::backends::rust_abstract::output_flag_bits(&one(key)), 0, "stale `{key}` in rust_abstract");
+            assert_ne!(crate::backends::abstract_rows::output_flag_bits(&one(key)), 0, "stale `{key}` in abstract_rows");
         }
     }
 
@@ -145,7 +147,7 @@ mod tests {
                 panic!(
                     "new function flag `{c_name}` in include/ta_abstract.h: add its YAML \
                      key to flag_sync::yaml_key AND to ALL surfaces (ta_abstract_c::\
-                     func_flag_to_c, rust_abstract::func_flag_bits, \
+                     func_flag_to_c, abstract_rows::func_flag_bits, \
                      func_api_xml::FUNC_FLAGS)"
                 )
             });
@@ -155,9 +157,9 @@ mod tests {
                 "ta_abstract_c::func_flag_to_c out of sync for `{key}`"
             );
             assert_eq!(
-                crate::backends::rust_abstract::func_flag_bits(&one(key)),
+                crate::backends::abstract_rows::func_flag_bits(&one(key)),
                 bits,
-                "rust_abstract::func_flag_bits out of sync for `{key}` (also feeds java_abstract)"
+                "abstract_rows::func_flag_bits out of sync for `{key}` (also feeds java_abstract)"
             );
             assert!(
                 crate::backends::func_api_xml::FUNC_FLAGS.iter().any(|(k, _)| *k == key),
@@ -173,7 +175,7 @@ mod tests {
                 panic!(
                     "new opt-input flag `{c_name}` in include/ta_abstract.h: add its YAML \
                      key to flag_sync::yaml_key AND to ALL surfaces (ta_abstract_c::\
-                     opt_flag_to_c, rust_abstract::opt_flag_bits, \
+                     opt_flag_to_c, abstract_rows::opt_flag_bits, \
                      func_api_xml::OPT_INPUT_FLAGS)"
                 )
             });
@@ -183,9 +185,9 @@ mod tests {
                 "ta_abstract_c::opt_flag_to_c out of sync for `{key}`"
             );
             assert_eq!(
-                crate::backends::rust_abstract::opt_flag_bits(&one(key)),
+                crate::backends::abstract_rows::opt_flag_bits(&one(key)),
                 bits,
-                "rust_abstract::opt_flag_bits out of sync for `{key}` (also feeds java_abstract)"
+                "abstract_rows::opt_flag_bits out of sync for `{key}` (also feeds java_abstract)"
             );
             assert!(
                 crate::backends::func_api_xml::OPT_INPUT_FLAGS.iter().any(|(k, _)| *k == key),
@@ -201,7 +203,7 @@ mod tests {
                 panic!(
                     "new output flag `{c_name}` in include/ta_abstract.h: add its YAML \
                      key to flag_sync::yaml_key AND to ALL surfaces (ta_abstract_c::\
-                     output_flag_to_c, rust_abstract::output_flag_bits, \
+                     output_flag_to_c, abstract_rows::output_flag_bits, \
                      func_api_xml::OUTPUT_FLAGS)"
                 )
             });
@@ -211,9 +213,9 @@ mod tests {
                 "ta_abstract_c::output_flag_to_c out of sync for `{key}`"
             );
             assert_eq!(
-                crate::backends::rust_abstract::output_flag_bits(&one(key)),
+                crate::backends::abstract_rows::output_flag_bits(&one(key)),
                 bits,
-                "rust_abstract::output_flag_bits out of sync for `{key}` (also feeds java_abstract)"
+                "abstract_rows::output_flag_bits out of sync for `{key}` (also feeds java_abstract)"
             );
             assert!(
                 crate::backends::func_api_xml::OUTPUT_FLAGS.iter().any(|(k, _)| *k == key),

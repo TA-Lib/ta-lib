@@ -8,24 +8,24 @@
 //! type-safe `OptDomain` enum, `FuncId` is a fieldless enum that doubles as the
 //! dense index, enumeration is an iterator, and name lookup is a generated `match`.
 //!
-//! Reads only the IR (the same `FuncDef`/`EnumDef` `func_api_xml.rs` consumes), so
-//! it is purely "another render target" over data already parsed.
+//! Renders [`abstract_rows`](super::abstract_rows) — the backend-neutral row model
+//! Java and C# render too — so the three registries agree by construction rather
+//! than by three parallel derivations.
 #![allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 
-use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType};
-use super::price_bundle;
+use super::abstract_rows::{rows, FuncRow, InputRow, OptDomain, OptRow, OutputRow};
+use crate::ir::{EnumDef, FuncDef};
 use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::path::Path;
 
 /// Generate `ta_codegen/output/rust/src/abstract_.rs` from the function defs.
 ///
-/// Sorts alphabetically by name (so `FuncId` discriminants and the name `match`
-/// are deterministic), then emits the registry, and writes only if changed.
+/// [`rows`] sorts alphabetically by name (so `FuncId` discriminants and the name
+/// `match` are deterministic); this emits the registry and writes only if changed.
 #[allow(clippy::implicit_hasher)]
 pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &Path) {
-    let mut sorted: Vec<&FuncDef> = funcs.iter().collect();
-    sorted.sort_by(|a, b| a.name.cmp(&b.name));
+    let sorted = rows(funcs, enums);
     let n = sorted.len();
 
     let mut o = String::new();
@@ -55,7 +55,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &
     let _ = writeln!(o, "/// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.");
     let _ = writeln!(o, "pub static FUNCS: [FuncInfo; {n}] = [");
     for f in &sorted {
-        emit_func(&mut o, f, enums);
+        emit_func(&mut o, f);
     }
     o.push_str("];\n\n");
 
@@ -79,24 +79,24 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &
     super::write_if_changed(&out_path, &o, "abstract_api.rs", n);
 }
 
-fn emit_func(o: &mut String, f: &FuncDef, enums: &HashMap<String, EnumDef>) {
+fn emit_func(o: &mut String, f: &FuncRow) {
     o.push_str("    FuncInfo {\n");
     let _ = writeln!(o, "        id: FuncId::{},", pascal_ident(&f.name));
     let _ = writeln!(o, "        name: {:?},", f.name);
-    let camel = f.camel_case.as_deref().unwrap_or(&f.name);
-    let _ = writeln!(o, "        camel_case_name: {camel:?},");
-    let _ = writeln!(o, "        group: Group::{},", group_variant(&f.group));
-    let hint = f.hint.as_deref().unwrap_or("");
-    let _ = writeln!(o, "        hint: {hint:?},");
-    let _ = writeln!(o, "        flags: FuncFlags({:#010x}),", func_flag_bits(&f.flags));
+    let _ = writeln!(o, "        camel_case_name: {:?},", f.camel_case_name());
+    let _ = writeln!(o, "        group: Group::{},", f.group.ident());
+    let _ = writeln!(o, "        hint: {:?},", f.hint);
+    let _ = writeln!(o, "        flags: FuncFlags({:#010x}),", f.flags);
 
-    o.push_str("        inputs: ");
-    emit_inputs(o, &f.inputs);
-    o.push_str(",\n");
+    o.push_str("        inputs: &[");
+    for inp in &f.inputs {
+        emit_input(o, inp);
+    }
+    o.push_str("],\n");
 
     o.push_str("        opt_inputs: &[");
-    for opt in &f.optional_inputs {
-        emit_opt(o, opt, enums);
+    for opt in &f.opt_inputs {
+        emit_opt(o, opt);
     }
     o.push_str("],\n");
 
@@ -106,139 +106,106 @@ fn emit_func(o: &mut String, f: &FuncDef, enums: &HashMap<String, EnumDef>) {
     }
     o.push_str("],\n");
 
-    match unst_variant(&f.name) {
-        Some(v) => {
-            let _ = writeln!(o, "        unst_id: Some(FuncUnstId::{v}),");
+    match &f.unst {
+        Some(u) => {
+            let _ = writeln!(o, "        unst_id: Some(FuncUnstId::{}),", u.pascal_name);
         }
         None => o.push_str("        unst_id: None,\n"),
     }
     o.push_str("    },\n");
 }
 
-/// Emit the `inputs:` slice. The YAML parser expands a price bundle into individual
-/// `inHigh`/`inLow`/`inClose`/... arguments; [`price_bundle::group`] folds them back into
-/// a single `InputType::Price` carrying the OHLCV flag bitmask and the canonical
-/// `inPriceXXX` name, matching C's `ta_abstract` — the same fold, from the same
-/// declaration, as the C and Java backends.
-fn emit_inputs(o: &mut String, inputs: &[Input]) {
-    o.push('&');
-    o.push('[');
-    for grouped in price_bundle::group(inputs) {
-        match grouped {
-            price_bundle::Grouped::Price(bundle) => {
-                let components = price_bundle::components(&bundle);
-                let name = price_bundle::canonical_name(&components);
-                let bits = price_bundle::flags(&components);
-                let _ = write!(
-                    o,
-                    "InputInfo {{ param_name: {name:?}, kind: InputType::Price, flags: InputFlags({bits:#010x}) }}, "
-                );
-            }
-            price_bundle::Grouped::Single(inp) => match &inp.param_type {
-                ParamType::Real => {
-                    let _ = write!(
-                        o,
-                        "InputInfo {{ param_name: {:?}, kind: InputType::Real, flags: InputFlags(0) }}, ",
-                        inp.name
-                    );
-                }
-                ParamType::Integer => {
-                    let _ = write!(
-                        o,
-                        "InputInfo {{ param_name: {:?}, kind: InputType::Integer, flags: InputFlags(0) }}, ",
-                        inp.name
-                    );
-                }
-                ParamType::Price(_) | ParamType::Enum(_) => {}
-            },
-        }
-    }
-    o.push(']');
-}
-
-// The canonical `inPriceXXX` name and its OHLCV flag bits now come from
-// `backends::price_bundle`, shared with the C and Java abstract backends.
-
-fn emit_output(o: &mut String, out: &Output) {
-    let kind = if out.param_type == ParamType::Integer { "Integer" } else { "Real" };
-    let _ = write!(
-        o,
-        "OutputInfo {{ param_name: {:?}, kind: OutputType::{kind}, flags: OutputFlags({:#010x}) }}, ",
-        out.name,
-        output_flag_bits(&out.flags)
-    );
-}
-
-fn emit_opt(o: &mut String, opt: &OptInput, enums: &HashMap<String, EnumDef>) {
-    let display = opt.display_name.as_deref().unwrap_or(&opt.name);
-    let hint = opt.hint.as_deref().unwrap_or("");
-    let _ = write!(
-        o,
-        "OptInputInfo {{ param_name: {:?}, display_name: {:?}, hint: {:?}, flags: OptInputFlags({:#010x}), domain: ",
-        opt.name,
-        display,
-        hint,
-        opt_flag_bits(&opt.flags)
-    );
-    match &opt.param_type {
-        ParamType::Real => emit_real_domain(o, opt),
-        ParamType::Integer => emit_int_domain(o, opt),
-        ParamType::Enum(name) => emit_enum_domain(o, opt, enums.get(name)),
-        ParamType::Price(_) => {
-            // Not expected for optional inputs; emit a harmless empty real range.
-            o.push_str("OptDomain::RealRange { min: 0.0, max: 0.0, precision: 0, default: 0.0, suggested: (0.0, 0.0, 0.0) }");
-        }
-    }
-    o.push_str(" }, ");
-}
-
-fn emit_real_domain(o: &mut String, opt: &OptInput) {
-    let (min, max) = opt.range.unwrap_or((0.0, 0.0));
-    let prec = opt.precision.unwrap_or(0);
-    let def = opt.default.unwrap_or(0.0);
-    let (s, e, i) = opt.suggested.unwrap_or((0.0, 0.0, 0.0));
-    let _ = write!(
-        o,
-        "OptDomain::RealRange {{ min: {}, max: {}, precision: {}, default: {}, suggested: ({}, {}, {}) }}",
-        fl(min),
-        fl(max),
-        prec,
-        fl(def),
-        fl(s),
-        fl(e),
-        fl(i),
-    );
-}
-
-fn emit_int_domain(o: &mut String, opt: &OptInput) {
-    let (min, max) = opt.range.unwrap_or((0.0, 0.0));
-    let (min, max) = (min as i32, max as i32);
-    let def = opt.default.unwrap_or(0.0) as i32;
-    // Integer suggested values: prefer the explicit YAML `suggested` hints
-    // (matching ta_def_ui.c). Only when they are absent do we fall back to max
-    // for all three — func_api_xml applies that legacy fallback unconditionally.
-    let (s, e, i) = match opt.suggested {
-        Some((a, b, c)) => (a as i32, b as i32, c as i32),
-        None => (max, max, max),
+/// One `InputInfo`. Price components were folded back into a single
+/// `InputType::Price` (carrying the OHLCV bitmask and the canonical
+/// `inPriceXXX` name) by [`abstract_rows`](super::abstract_rows), via the same
+/// `price_bundle` fold the C abstract backend uses.
+fn emit_input(o: &mut String, inp: &InputRow) {
+    let kind = match inp.kind {
+        super::abstract_rows::InputKind::Price => "Price",
+        super::abstract_rows::InputKind::Real => "Real",
+        super::abstract_rows::InputKind::Integer => "Integer",
     };
     let _ = write!(
         o,
-        "OptDomain::IntegerRange {{ min: {min}, max: {max}, default: {def}, suggested: ({s}, {e}, {i}) }}"
+        "InputInfo {{ param_name: {:?}, kind: InputType::{kind}, flags: InputFlags({:#010x}) }}, ",
+        inp.param_name, inp.flags
     );
 }
 
-fn emit_enum_domain(o: &mut String, opt: &OptInput, enum_def: Option<&EnumDef>) {
-    let def = opt.default.unwrap_or(0.0) as i64;
-    o.push_str("OptDomain::IntegerList { values: &[");
-    if let Some(ed) = enum_def {
-        for v in &ed.variants {
-            let _ = write!(o, "({}, {:?}), ", i64::from(v.value), v.short_name);
-        }
-    }
-    let _ = write!(o, "], default: {def} }}");
+fn emit_output(o: &mut String, out: &OutputRow) {
+    let kind = match out.kind {
+        super::abstract_rows::OutputKind::Real => "Real",
+        super::abstract_rows::OutputKind::Integer => "Integer",
+    };
+    let _ = write!(
+        o,
+        "OutputInfo {{ param_name: {:?}, kind: OutputType::{kind}, flags: OutputFlags({:#010x}) }}, ",
+        out.param_name, out.flags
+    );
 }
 
-fn emit_api(o: &mut String, sorted: &[&FuncDef]) {
+fn emit_opt(o: &mut String, opt: &OptRow) {
+    // The row carries `precision` as `i32` (C's `TA_RealRange.precision` is an
+    // int); the generated `OptDomain::RealRange` narrows it to `u8`. Nothing in
+    // the shipped input comes close, but an out-of-range YAML value would emit a
+    // crate that does not compile — fail here instead, naming the parameter.
+    if let OptDomain::RealRange { precision, .. } = &opt.domain {
+        assert!(
+            (0..=255).contains(precision),
+            "{}: precision {precision} does not fit the generated `u8` field",
+            opt.param_name
+        );
+    }
+    let _ = write!(
+        o,
+        "OptInputInfo {{ param_name: {:?}, display_name: {:?}, hint: {:?}, flags: OptInputFlags({:#010x}), domain: ",
+        opt.param_name, opt.display_name, opt.hint, opt.flags
+    );
+    emit_domain(o, &opt.domain);
+    o.push_str(" }, ");
+}
+
+fn emit_domain(o: &mut String, domain: &OptDomain) {
+    match domain {
+        OptDomain::RealRange { min, max, precision, default, suggested } => {
+            let (s, e, i) = *suggested;
+            let _ = write!(
+                o,
+                "OptDomain::RealRange {{ min: {}, max: {}, precision: {}, default: {}, suggested: ({}, {}, {}) }}",
+                fl(*min),
+                fl(*max),
+                precision,
+                fl(*default),
+                fl(s),
+                fl(e),
+                fl(i),
+            );
+        }
+        OptDomain::IntegerRange { min, max, default, suggested } => {
+            let (s, e, i) = *suggested;
+            let _ = write!(
+                o,
+                "OptDomain::IntegerRange {{ min: {min}, max: {max}, default: {default}, suggested: ({s}, {e}, {i}) }}"
+            );
+        }
+        OptDomain::IntegerList { values, default } => {
+            o.push_str("OptDomain::IntegerList { values: &[");
+            for (v, name) in values {
+                let _ = write!(o, "({v}, {name:?}), ");
+            }
+            let _ = write!(o, "], default: {default} }}");
+        }
+        OptDomain::RealList { values, default } => {
+            o.push_str("OptDomain::RealList { values: &[");
+            for (v, name) in values {
+                let _ = write!(o, "({}, {name:?}), ", fl(*v));
+            }
+            let _ = write!(o, "], default: {} }}", fl(*default));
+        }
+    }
+}
+
+fn emit_api(o: &mut String, sorted: &[FuncRow]) {
     o.push_str(
         "/// Resolve a function name (e.g. \"RSI\") to its [`FuncId`].\n\
          ///\n\
@@ -289,108 +256,6 @@ fn pascal_ident(name: &str) -> String {
             }
         })
         .collect()
-}
-
-/// Map a group string (from YAML) to its `Group` enum variant identifier.
-/// Panics on an unknown group so a new/typo'd group fails codegen loudly.
-fn group_variant(g: &str) -> &'static str {
-    match g {
-        "Cycle Indicators" => "CycleIndicators",
-        "Math Operators" => "MathOperators",
-        "Math Transform" => "MathTransform",
-        "Momentum Indicators" => "MomentumIndicators",
-        "Overlap Studies" => "OverlapStudies",
-        "Pattern Recognition" => "PatternRecognition",
-        "Price Transform" => "PriceTransform",
-        "Statistic Functions" => "StatisticFunctions",
-        "Volatility Indicators" => "VolatilityIndicators",
-        "Volume Indicators" => "VolumeIndicators",
-        other => panic!("rust_abstract: unknown group '{other}'"),
-    }
-}
-
-/// Map an unstable-period function name to its `FuncUnstId` variant (the one
-/// metadata that IS a stable public contract, kept byte-for-byte aligned to C).
-fn unst_variant(name: &str) -> Option<&'static str> {
-    Some(match name {
-        "ADX" => "Adx",
-        "ATR" => "Atr",
-        "CMO" => "Cmo",
-        "DX" => "Dx",
-        "EMA" => "Ema",
-        "HT_DCPERIOD" => "HtDcPeriod",
-        "HT_DCPHASE" => "HtDcPhase",
-        "HT_PHASOR" => "HtPhasor",
-        "HT_SINE" => "HtSine",
-        "HT_TRENDLINE" => "HtTrendline",
-        "HT_TRENDMODE" => "HtTrendMode",
-        "KAMA" => "Kama",
-        "MAMA" => "Mama",
-        "MINUS_DI" => "MinusDI",
-        "MINUS_DM" => "MinusDM",
-        "NATR" => "Natr",
-        "PLUS_DI" => "PlusDI",
-        "PLUS_DM" => "PlusDM",
-        "RSI" => "Rsi",
-        "T3" => "T3",
-        _ => return None,
-    })
-}
-
-// --- flag bitmask helpers (exact C values from include/ta_abstract.h) ---
-
-pub(crate) fn func_flag_bits(flags: &[String]) -> u32 {
-    let mut b = 0u32;
-    for f in flags {
-        match f.as_str() {
-            "overlap" => b |= 0x0100_0000,
-            "stream" => b |= 0x0200_0000, // TA_FUNC_FLG_STREAM
-            "volume" => b |= 0x0400_0000,
-            "unstable_period" => b |= 0x0800_0000,
-            "candlestick" => b |= 0x1000_0000,
-            "path_dependent" => b |= 0x2000_0000, // TA_FUNC_FLG_PATH_DEP
-            _ => {}
-        }
-    }
-    b
-}
-
-pub(crate) fn opt_flag_bits(flags: &[String]) -> u32 {
-    let mut b = 0u32;
-    for f in flags {
-        match f.as_str() {
-            "percent" => b |= 0x0010_0000,
-            "degree" => b |= 0x0020_0000,
-            "currency" => b |= 0x0040_0000,
-            "advanced" => b |= 0x0100_0000,
-            _ => {}
-        }
-    }
-    b
-}
-
-pub(crate) fn output_flag_bits(flags: &[String]) -> u32 {
-    let mut b = 0u32;
-    for f in flags {
-        match f.as_str() {
-            "line" => b |= 0x0000_0001,
-            "dot_line" => b |= 0x0000_0002,
-            "dash_line" => b |= 0x0000_0004,
-            "dot" => b |= 0x0000_0008,
-            "histogram" => b |= 0x0000_0010,
-            "pattern_bool" => b |= 0x0000_0020,
-            "pattern_bull_bear" => b |= 0x0000_0040,
-            "pattern_strength" => b |= 0x0000_0080,
-            "positive" => b |= 0x0000_0100,
-            "negative" => b |= 0x0000_0200,
-            "zero" => b |= 0x0000_0400,
-            "upper_limit" => b |= 0x0000_0800,
-            "lower_limit" => b |= 0x0000_1000,
-            "nullable" => b |= 0x0000_2000,
-            _ => {}
-        }
-    }
-    b
 }
 
 /// Format an f64 as a valid Rust literal (Debug yields e.g. `2.0`, `0.1`, `3e37`).

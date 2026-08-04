@@ -246,12 +246,34 @@ int main( int argc, char **argv )
       return retValue;
    }
 
+   /* A server that will not start is only a legitimate skip when the caller
+    * did not ask for that language. `--language=csharp` on a box without the
+    * .NET SDK must fail loudly: "green because nothing ran" is the failure
+    * mode every gate in this file exists to prevent.
+    *
+    * CODEGEN_PIPE_SUPPORTED excludes Windows, where codegen_pipe_open is an
+    * unconditional-failure stub: there EVERY server is unavailable by design,
+    * the C reference tests are the whole contract, and hard-failing would break
+    * `--codegen --language=<anything>` for every Windows developer. */
+#define ABSTRACT_SERVER_MISSING(lang, filter, rv)                                  \
+   do {                                                                            \
+      if( (filter) != NULL && CODEGEN_PIPE_SUPPORTED ) {                           \
+         printf( "  ABSTRACT ERROR: --language named %s but its server could not " \
+                 "be started\n", (lang) );                                         \
+         if( (rv) == TA_TEST_PASS ) (rv) = TA_ABSTRACT_SERVER_ERROR;               \
+      } else {                                                                     \
+         printf( "  (%s server not available, skipping %s abstract parity)\n",     \
+                 (lang), (lang) );                                                 \
+      }                                                                            \
+   } while(0)
+
    /* Test abstract interface.
     * When codegen mode is active, also verify each call against the server.
     */
    {
       CodegenPipe abstractPipe;
       int abstractPipeOpen = 0;
+      ErrorNumber cMetaErr = TA_TEST_PASS;
       /* Only spawn the C server for abstract verification when C is actually in
        * the language filter. Under --language=rust the C server is not built
        * (regtest.py compiles servers with --backend=rust), so spawning it would
@@ -279,6 +301,12 @@ int main( int argc, char **argv )
             test_abstract_set_server(&abstractPipe);
             abstractPipeOpen = 1;
             printf( "  (with server verification)\n" );
+            /* The control arm. C's server answers the metadata RPCs from the
+             * very ta_abstract this compares against, so a failure here is a
+             * defect in the comparator, not in a backend — which is what makes
+             * a failure on Rust/Java/C# meaningful. It is also the only caller
+             * that reaches C's own abstract_for_each_func handler. */
+            cMetaErr = test_abstract_server_metadata(functionFilter);
          }
          else
          {
@@ -286,6 +314,8 @@ int main( int argc, char **argv )
          }
       }
       retValue = test_abstract();
+      if( retValue == TA_TEST_PASS )
+         retValue = cMetaErr;
       test_abstract_set_server(NULL);
       if( abstractPipeOpen )
          codegen_pipe_close(&abstractPipe);
@@ -339,7 +369,7 @@ int main( int argc, char **argv )
          }
          else
          {
-            printf( "  (Rust server not available, skipping Rust abstract parity)\n" );
+            ABSTRACT_SERVER_MISSING("rust", codegenLanguageFilter, retValue);
          }
       }
    }
@@ -372,9 +402,47 @@ int main( int argc, char **argv )
       }
       else
       {
-         printf( "  (Java server not available, skipping Java abstract parity)\n" );
+         ABSTRACT_SERVER_MISSING("java", codegenLanguageFilter, retValue);
       }
    }
+
+   /* C# abstract parity: the same two passes as Java and Rust — the metadata
+    * RPCs (TA_GetFuncInfo + the param-info getters) and the dynamic-dispatch
+    * path (abstract_call / abstract_get_lookback / TA_FunctionDescriptionXML),
+    * comparing output VALUES to the C reference for every function.
+    *
+    * Without this block the C# server's abstract RPCs would have exactly zero
+    * coverage and every gate would stay green: test_abstract_server_metadata()
+    * and the server legs of test_abstract() both short-circuit to TA_TEST_PASS
+    * when no pipe is set. The managed server spawns via
+    * `dotnet ta_codegen_csharp/TaCodegenServe.dll`. */
+   if( retValue == TA_TEST_PASS && doCodegenTest &&
+       ( codegenLanguageFilter == NULL || strstr(codegenLanguageFilter, "csharp") != NULL ) )
+   {
+      CodegenPipe csharpAbstractPipe;
+      const char *const csharpArgv[] = {"dotnet", "ta_codegen_csharp/TaCodegenServe.dll", NULL};
+      if( codegen_pipe_open(&csharpAbstractPipe, csharpArgv) == TA_TEST_PASS )
+      {
+         ErrorNumber e;
+         printf( "Testing Abstract metadata parity (C# server vs C)\n" );
+         test_abstract_set_server(&csharpAbstractPipe);
+         e = test_abstract_server_metadata(functionFilter);
+         if( e == TA_TEST_PASS )
+         {
+            printf( "Testing Abstract dynamic dispatch (C# server vs C)\n" );
+            e = test_abstract();
+         }
+         test_abstract_set_server(NULL);
+         codegen_pipe_close(&csharpAbstractPipe);
+         if( retValue == TA_TEST_PASS && e != TA_TEST_PASS )
+            retValue = e;
+      }
+      else
+      {
+         ABSTRACT_SERVER_MISSING("csharp", codegenLanguageFilter, retValue);
+      }
+   }
+#undef ABSTRACT_SERVER_MISSING
 
    if( retValue != TA_TEST_PASS )
    {

@@ -377,13 +377,18 @@ static void handle_TA_GetOptInputParameterInfo(const char *json, char *resp, int
       return;
    }
 
+   /* `hint` is carried for the same reason displayName is: for the ~80 opt slots
+    * that match a predefined TA_DEF_UI_* descriptor, C's copy is a hand-written
+    * literal in ta_abstract_c.rs and is NOT derived from the YAML — so comparing
+    * it is one of the few genuinely non-circular metadata checks available. */
    int pos = json_appendf(resp, resp_size, 0,
       "{\"type\":%d,\"paramName\":\"%s\",\"flags\":%d,"
-      "\"displayName\":\"%s\",\"defaultValue\":%.15g",
+      "\"displayName\":\"%s\",\"hint\":\"%s\",\"defaultValue\":%.15g",
       (int)info->type,
       info->paramName ? info->paramName : "",
       (int)info->flags,
       info->displayName ? info->displayName : "",
+      info->hint ? info->hint : "",
       info->defaultValue);
 
    /* Include range/list extended data if available */

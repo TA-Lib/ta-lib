@@ -10,6 +10,15 @@
  * SV_MAX_PIPES), which would not fit Windows' 1MB default stack. */
 #define CODEGEN_PIPE_RBUF (256 * 1024)
 
+/* 1 when this platform can actually spawn a JSON-RPC server subprocess.
+ * Windows has stubs (codegen_pipe.c), so EVERY server is legitimately
+ * unavailable there and a caller must not treat that as a failure. */
+#if defined(WIN32) || defined(_WIN32)
+#define CODEGEN_PIPE_SUPPORTED 0
+#else
+#define CODEGEN_PIPE_SUPPORTED 1
+#endif
+
 /* Opaque handle for the ta_codegen subprocess */
 typedef struct {
     int to_child_fd;    /* fd to write JSON-RPC requests */

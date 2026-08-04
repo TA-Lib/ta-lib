@@ -58,6 +58,13 @@ namespace TALib;
 /// </remarks>
 public partial class Core
 {
+    /// <summary>The catalogue of every indicator, for choosing one at run
+    /// time.</summary>
+    /// <remarks>A discovery hook, so a caller does not have to know the
+    /// <c>TALib.Metadata</c> namespace exists. See
+    /// <see cref="TALib.Metadata.FunctionCatalog"/>.</remarks>
+    public static TALib.Metadata.FunctionCatalog Functions => TALib.Metadata.FunctionCatalog.Default;
+
     /* The parameter sentinels the generated validation names. Values match
      * the C library's ta_defs.h. */
     internal const double TA_REAL_DEFAULT = -4e37;

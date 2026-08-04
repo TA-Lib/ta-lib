@@ -699,14 +699,23 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
 
     // Shipped C# library enums. Everything generated lives under library/src/
     // (per-indicator Core_*.cs files land there via the backend's out_subdir);
-    // the hand-written scaffolding stays in library/. Unlike Java there is no
-    // `func_filter.is_none()` guard to inherit — C# uses partial classes, one
-    // file per indicator, so a --func subset is correct rather than destructive.
+    // the hand-written scaffolding stays in library/. The per-indicator partial
+    // classes need no `--func` guard — one file per indicator, so a subset is
+    // correct rather than destructive.
     if backends_to_run.contains(&"csharp") {
         let csharp_src = root.join("ta_codegen/output/csharp/library/src");
         std::fs::create_dir_all(&csharp_src).unwrap();
         backends::csharp_enums::generate(&enums, &csharp_src.join("FuncUnstId.cs"));
         backends::csharp_enums::generate_matype(&enums, &csharp_src.join("MAType.cs"));
+        // The catalogue IS whole-corpus, so it renders `all_funcs` rather than
+        // the filtered set — the same source `rust_abstract` uses. Java's
+        // registry instead SKIPS under `--func` because its Core.java splice
+        // would drop every other indicator; here there is nothing to drop, and
+        // rendering the full corpus is strictly better than skipping: a
+        // `generate --func=SMA` followed by `build.py servers` would otherwise
+        // leave a catalogue whose entries the server's own
+        // `FunctionCatalog.Default[name]` lookups no longer find.
+        backends::csharp_metadata::generate(all_funcs, &enums, &csharp_src.join("metadata"));
     }
 }
 
