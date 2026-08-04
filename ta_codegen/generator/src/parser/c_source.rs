@@ -8,6 +8,9 @@ use crate::ir::{BinOp, CircBuf, CircBufLayout, Expr, HelperDef, HelperParam, Sta
 #[derive(Debug, Clone)]
 pub struct ParsedCSource {
     pub lookback_body: Vec<Statement>,
+    /// The lookback function's parameters and C types. Not all integers — 14
+    /// shipped lookbacks take a `double` optional input.
+    pub lookback_params: Vec<(String, String)>,
     pub functions: Vec<ParsedCFunction>,
     /// File-level comment blocks that preceded the first function (e.g. the
     /// `List of contributors` / `Change history` block). Each entry is one
@@ -96,7 +99,186 @@ pub fn parse_c_source_str(source: &str) -> ParsedCSource {
 /// Parse C source from a string, attributing diagnostics to `file` when given.
 fn parse_c_source_named(source: &str, file: Option<&str>) -> ParsedCSource {
     let (tokens, tok_lines, comments) = tokenize_with_comments(source, file);
-    extract_functions(&tokens, &tok_lines, &comments, file)
+    let parsed = extract_functions(&tokens, &tok_lines, &comments, file);
+    reject_implicit_narrowing(&parsed, file);
+    parsed
+}
+
+/// Refuse an implicit `double` -> `int` conversion in the input C.
+///
+/// C narrows silently; Java, C# and Rust all refuse the same statement, so
+/// `int r; double q; r = q;` generated four files of which three did not
+/// compile — and said nothing at generation time. Even where it does compile,
+/// the four languages disagree on negative and out-of-range values (issue
+/// #160: C truncates or is UB, Rust saturates, Java clamps), which is exactly
+/// why the explicit `(int)` cast is guarded and this shape cannot be silently
+/// given one of those meanings.
+///
+/// Deliberately conservative: it fires only when the value is *provably* a
+/// floating-point expression by declaration, never by naming heuristics.
+fn reject_implicit_narrowing(parsed: &ParsedCSource, file: Option<&str>) {
+    for f in &parsed.functions {
+        let mut ty = TypeNames::default();
+        for (name, ctype) in &f.params {
+            ty.add_c_param(name, ctype);
+        }
+        check_narrowing(&f.body, &ty, &f.name, file);
+    }
+    // Lookback parameters are NOT all integers — 14 shipped lookbacks take a
+    // `double` (`optInPenetration`, `optInNbDev`, ...), and assigning one to an
+    // int local is the exact shape this check exists to refuse.
+    let mut ty = TypeNames::default();
+    for (name, ctype) in &parsed.lookback_params {
+        ty.add_c_param(name, ctype);
+    }
+    check_narrowing(&parsed.lookback_body, &ty, "lookback", file);
+}
+
+/// The same check for `input/helpers/*.c`, which parse through a different
+/// entry point. A narrowing there is inlined into every caller, so it reaches
+/// all four backends multiplied by however many sites the helper serves.
+fn reject_implicit_narrowing_in_helpers(helpers: &[HelperDef], file: Option<&str>) {
+    for h in helpers {
+        let mut ty = TypeNames::default();
+        for p in &h.params {
+            ty.add_decl(&p.var_type, &p.name);
+        }
+        check_narrowing(&h.body, &ty, &h.name, file);
+    }
+}
+
+#[derive(Default, Clone)]
+struct TypeNames {
+    real: HashSet<String>,
+    real_array: HashSet<String>,
+    int: HashSet<String>,
+    int_array: HashSet<String>,
+}
+
+impl TypeNames {
+    fn add_c_param(&mut self, name: &str, ctype: &str) {
+        let is_ptr = ctype.contains('*') || ctype.contains('[');
+        let is_real = ctype.contains("double") || ctype.contains("float");
+        match (is_real, is_ptr) {
+            (true, true) => self.real_array.insert(name.to_string()),
+            (true, false) => self.real.insert(name.to_string()),
+            (false, true) => self.int_array.insert(name.to_string()),
+            // Ints reached through a pointer (`int *outBegIdx`) are written via
+            // PointerDeref, which this check does not classify.
+            (false, false) => self.int.insert(name.to_string()),
+        };
+    }
+
+    /// Record one declaration. Flattening a whole body into one namespace is
+    /// wrong — two disjoint blocks may reuse a name with different types, which
+    /// the backends render correctly as separate scopes — so scoping is handled
+    /// by `check_narrowing`, which clones the map per block.
+    fn add_decl(&mut self, var_type: &VarType, name: &str) {
+        match var_type {
+            VarType::Real => self.real.insert(name.to_string()),
+            VarType::Integer | VarType::Index => self.int.insert(name.to_string()),
+            VarType::RealPointer | VarType::RealArray(_) => self.real_array.insert(name.to_string()),
+            VarType::IntPointer | VarType::IntArray(_) => self.int_array.insert(name.to_string()),
+            VarType::RetCodeType => false,
+        };
+    }
+
+    /// Provably a floating-point expression — by declaration only.
+    fn is_real_expr(&self, e: &Expr) -> bool {
+        match e {
+            Expr::Literal(_) | Expr::Cast(VarType::Real, _) => true,
+            Expr::Var(n) => self.real.contains(n),
+            Expr::ArrayAccess(n, _) => self.real_array.contains(n),
+            Expr::BinOp(
+                l,
+                BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div,
+                r,
+            ) => self.is_real_expr(l) || self.is_real_expr(r),
+            Expr::Ternary(_, a, b) => self.is_real_expr(a) || self.is_real_expr(b),
+            // Everything else is not PROVABLY floating-point, which is the bar
+            // here. That includes an explicit `(int)` cast — writing one is the
+            // whole point, so it must stop the walk — and any call, whose
+            // return type this check does not resolve.
+            _ => false,
+        }
+    }
+
+    fn is_int_target<'e>(&self, target: &'e Expr) -> Option<&'e str> {
+        match target {
+            Expr::Var(n) if self.int.contains(n) => Some(n),
+            Expr::ArrayAccess(n, _) if self.int_array.contains(n) => Some(n),
+            _ => None,
+        }
+    }
+}
+
+fn check_narrowing(body: &[Statement], outer: &TypeNames, func: &str, file: Option<&str>) {
+    // This block's own scope: the enclosing names plus the declarations made
+    // here. Nested blocks each get their own clone, so two disjoint blocks may
+    // reuse a name with different types — which the backends render as separate
+    // scopes and compile — without one poisoning the other's classification.
+    let mut scope = outer.clone();
+    for stmt in body {
+        if let Statement::VarDecl { var_type, name, .. } = stmt {
+            scope.add_decl(var_type, name);
+        }
+    }
+    let ty = &scope;
+    let complain = |name: &str, value: &Expr| -> ! {
+        let where_ = file.map_or_else(String::new, |f| format!("{f}: "));
+        panic!(
+            "{where_}{func}: `{name}` is an integer, and it is assigned a \
+             floating-point expression ({value:?}) with no cast. C narrows that \
+             silently; Java, C# and Rust all reject the statement, so this \
+             generates four files of which three do not compile. The four \
+             languages also disagree on negative and out-of-range values \
+             (issue #160), so the generator will not choose a meaning for you. \
+             Write it explicitly: `{name} = (int)( ... );` — and guard the \
+             value's range first, as the shipped functions do."
+        )
+    };
+    for stmt in body {
+        match stmt {
+            Statement::VarDecl { var_type: VarType::Integer | VarType::Index, name, init: Some(init) } => {
+                if ty.is_real_expr(init) {
+                    complain(name, init);
+                }
+            }
+            Statement::Assign { target, value, compound } => {
+                if let Some(name) = ty.is_int_target(target) {
+                    // A compound assign carries the target in its desugared
+                    // left operand; only the true right-hand side is new.
+                    let rhs = match (compound, value) {
+                        (true, Expr::BinOp(_, _, r)) => r.as_ref(),
+                        _ => value,
+                    };
+                    if ty.is_real_expr(rhs) {
+                        complain(name, rhs);
+                    }
+                }
+            }
+            Statement::If { then_body, else_body, .. } => {
+                check_narrowing(then_body, ty, func, file);
+                check_narrowing(else_body, ty, func, file);
+            }
+            Statement::While { body: b, .. }
+            | Statement::DoWhile { body: b, .. }
+            | Statement::For { body: b, .. }
+            | Statement::Block { body: b } => check_narrowing(b, ty, func, file),
+            Statement::ForC { init, update, body: b, .. } => {
+                check_narrowing(std::slice::from_ref(init), ty, func, file);
+                check_narrowing(std::slice::from_ref(update), ty, func, file);
+                check_narrowing(b, ty, func, file);
+            }
+            Statement::Switch { cases, default, .. } => {
+                for (_, case_body) in cases {
+                    check_narrowing(case_body, ty, func, file);
+                }
+                check_narrowing(default, ty, func, file);
+            }
+            _ => {}
+        }
+    }
 }
 
 /// Parse a helper C file containing standalone utility functions.
@@ -114,7 +296,9 @@ pub fn parse_helper_file_str(source: &str) -> Vec<HelperDef> {
 
 fn parse_helper_file_named(source: &str, file: Option<&str>) -> Vec<HelperDef> {
     let (tokens, tok_lines, _comments) = tokenize_with_comments(source, file);
-    extract_helper_functions(&tokens, &tok_lines, file)
+    let helpers = extract_helper_functions(&tokens, &tok_lines, file);
+    reject_implicit_narrowing_in_helpers(&helpers, file);
+    helpers
 }
 
 // --- Tokenizer ---
@@ -697,6 +881,7 @@ fn extract_functions(
 ) -> ParsedCSource {
     let mut lookback_body = Vec::new();
     let mut functions = Vec::new();
+    let mut lookback_params: Vec<(String, String)> = Vec::new();
     let mut first_func_tok: Option<usize> = None;
     let mut i = 0;
 
@@ -716,6 +901,7 @@ fn extract_functions(
                             let body_tokens = &tokens[brace_start + 1..brace_end];
                             let body_lines = &tok_lines[brace_start + 1..brace_end];
                             let body_cmts = body_comments(comments, brace_start, brace_end);
+                            lookback_params = extract_func_params(tokens, i + 2);
                             lookback_body = parse_body(body_tokens, body_lines, &body_cmts, file);
                             i = brace_end + 1;
                             continue;
@@ -781,6 +967,7 @@ fn extract_functions(
 
     ParsedCSource {
         lookback_body,
+        lookback_params,
         functions,
         header_comments,
     }

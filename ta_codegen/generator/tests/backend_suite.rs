@@ -1322,7 +1322,7 @@ fn rust_forc_emits_range_iteration_when_possible() {
         body: vec![],
     };
 
-    let ctx = RustRenderCtx::for_lookback();
+    let ctx = RustRenderCtx::empty();
     let for_loop_vars: Vec<String> = vec![];
     let var_inits: std::collections::HashMap<String, &Expr> = std::collections::HashMap::new();
     let output_names: Vec<String> = vec![];
@@ -1382,7 +1382,7 @@ fn rust_inline_condition_parenthesizes_or_operand() {
         cond_comments: vec![Some(vec!["one".into()]), Some(vec!["two".into()])],
     };
 
-    let ctx = RustRenderCtx::for_lookback();
+    let ctx = RustRenderCtx::empty();
     let enums = HashMap::new();
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
@@ -1558,7 +1558,7 @@ fn rust_condition_from_int_ternary_helper_is_wrapped() {
         cond_comments: vec![],
     };
 
-    let ctx = RustRenderCtx::for_lookback();
+    let ctx = RustRenderCtx::empty();
     let enums = HashMap::new();
     let registry = make_registry();
     let helpers = make_helper_registry();
@@ -1640,7 +1640,7 @@ fn rust_forc_multi_init_falls_through_to_while() {
         body: vec![],
     };
 
-    let ctx = RustRenderCtx::for_lookback();
+    let ctx = RustRenderCtx::empty();
     let for_loop_vars: Vec<String> = vec![];
     let var_inits: std::collections::HashMap<String, &Expr> = std::collections::HashMap::new();
     let output_names: Vec<String> = vec![];
@@ -2736,12 +2736,20 @@ fn java_backend_hoisted_helper_declares_local_vars() {
 
 /// Helper to build a RustRenderCtx and call render_statement with minimal boilerplate.
 fn render_rust_stmt(stmt: &ir::Statement) -> String {
-    render_rust_stmt_with_ctx(stmt, &backends::rust_lang::RustRenderCtx::for_lookback())
+    render_rust_stmt_with_ctx(stmt, &backends::rust_lang::RustRenderCtx::empty())
 }
 
 fn render_rust_stmt_with_ctx(
     stmt: &ir::Statement,
     ctx: &backends::rust_lang::RustRenderCtx,
+) -> String {
+    render_rust_stmt_with_helpers(stmt, ctx, &HelperRegistry::empty())
+}
+
+fn render_rust_stmt_with_helpers(
+    stmt: &ir::Statement,
+    ctx: &backends::rust_lang::RustRenderCtx,
+    helpers: &HelperRegistry,
 ) -> String {
     let for_loop_vars: Vec<String> = vec![];
     let var_inits: std::collections::HashMap<String, &ir::Expr> =
@@ -2750,7 +2758,6 @@ fn render_rust_stmt_with_ctx(
     let opt_real_params: Vec<String> = vec![];
     let enums = HashMap::new();
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
     let inline_counter = std::cell::Cell::new(0);
 
     backends::rust_lang::render_statement(
@@ -2763,7 +2770,7 @@ fn render_rust_stmt_with_ctx(
         &opt_real_params,
         &enums,
         &registry,
-        &helpers,
+        helpers,
         &inline_counter,
     )
 }
@@ -2867,7 +2874,7 @@ fn rust_compound_assign_casts_i32_param_into_inferred_usize_var() {
     // `trailingPos1` is usize only via subscript inference (ctx.index_vars) —
     // its name matches no index heuristic — and the RHS is an i32 optIn param.
     // Regression for the `usize -= i32` mismatch in PR #154's ULTOSC ring wraps.
-    let mut ctx = backends::rust_lang::RustRenderCtx::for_lookback();
+    let mut ctx = backends::rust_lang::RustRenderCtx::empty();
     ctx.is_lookback = false;
     ctx.index_vars.insert("trailingPos1".to_string());
     let stmt = ir::Statement::Assign {
@@ -2888,7 +2895,7 @@ fn rust_compound_assign_casts_i32_param_into_inferred_usize_var() {
     // Ctx construction removes sentinels from index_vars, so in production a
     // sentinel (i32-rendered) reaches this gate only through the name
     // heuristic. Pin that arm: a heuristic-matched sentinel must stay uncast.
-    let mut sctx = backends::rust_lang::RustRenderCtx::for_lookback();
+    let mut sctx = backends::rust_lang::RustRenderCtx::empty();
     sctx.is_lookback = false;
     sctx.sentinel_vars.insert("highestIdx".to_string());
     let sstmt = ir::Statement::Assign {
@@ -2906,6 +2913,358 @@ fn rust_compound_assign_casts_i32_param_into_inferred_usize_var() {
             && !rendered.contains("as usize"),
         "compound assign into a heuristic-named sentinel (i32) var must stay uncast: {rendered}"
     );
+}
+
+/// Issue #158: the mirror of the test above. A target the generator has typed
+/// as an integer must never take the f64 RHS cast just because its name is on
+/// no index list — and an i32 target with a usize RHS needs the third branch
+/// (`as i32`) that used to be missing entirely.
+#[test]
+fn rust_compound_assign_types_target_by_declaration_not_by_name() {
+    // `k` is the strongest possible name to test with: `expr_is_float_typed`
+    // hard-codes it as Real (EMA's k factor). The declaration must still win.
+    // (a) declared Integer -> usize target, i32 optIn RHS: `as usize`, never `as f64`.
+    let mut ctx = backends::rust_lang::RustRenderCtx::empty();
+    ctx.is_lookback = false;
+    ctx.index_vars.insert("k".to_string());
+    let stmt = ir::Statement::Assign {
+        target: ir::Expr::Var("k".to_string()),
+        value: ir::Expr::BinOp(
+            Box::new(ir::Expr::Var("k".to_string())),
+            ir::BinOp::Add,
+            Box::new(ir::Expr::Var("optInTimePeriod".to_string())),
+        ),
+        compound: true,
+    };
+    let rendered = render_rust_stmt_with_ctx(&stmt, &ctx);
+    assert!(
+        rendered.contains("k += (optInTimePeriod) as usize") && !rendered.contains("as f64"),
+        "declared-Integer target must take the usize cast, not f64: {rendered}"
+    );
+
+    // (b) signed local (i32) + i32 optIn RHS: no cast at all. This is the shape
+    // issue #158 was filed on, but it was already correct at HEAD (b8619ed6b
+    // excluded sentinels from the f64 arm); what this pins is the I32 arm's
+    // bare-render path, which the three-arm rewrite could easily have lost.
+    let mut sctx = backends::rust_lang::RustRenderCtx::empty();
+    sctx.is_lookback = false;
+    sctx.sentinel_vars.insert("k".to_string());
+    let rendered = render_rust_stmt_with_ctx(&stmt, &sctx);
+    assert!(
+        rendered.contains("k += optInTimePeriod")
+            && !rendered.contains("as f64")
+            && !rendered.contains("as usize"),
+        "signed local + i32 param must render uncast: {rendered}"
+    );
+
+    // (c) signed local (i32) + usize RHS: `as i32`. Without this branch the
+    // bare `k += today` failed E0277 the other way round.
+    let mut mctx = backends::rust_lang::RustRenderCtx::empty();
+    mctx.is_lookback = false;
+    mctx.sentinel_vars.insert("k".to_string());
+    mctx.index_vars.insert("today".to_string());
+    let mixed = ir::Statement::Assign {
+        target: ir::Expr::Var("k".to_string()),
+        value: ir::Expr::BinOp(
+            Box::new(ir::Expr::Var("k".to_string())),
+            ir::BinOp::Add,
+            Box::new(ir::Expr::Var("today".to_string())),
+        ),
+        compound: true,
+    };
+    let rendered = render_rust_stmt_with_ctx(&mixed, &mctx);
+    assert!(
+        rendered.contains("k += (today) as i32"),
+        "i32 target with a usize RHS must take the i32 cast: {rendered}"
+    );
+
+    // (d) a Real local still gets the f64 cast — positively, via real_vars.
+    let mut rctx = backends::rust_lang::RustRenderCtx::empty();
+    rctx.is_lookback = false;
+    rctx.real_vars.insert("k".to_string());
+    let rendered = render_rust_stmt_with_ctx(&stmt, &rctx);
+    assert!(
+        rendered.contains("k += ((optInTimePeriod) as f64)"),
+        "Real target must still cast the i32 RHS to f64: {rendered}"
+    );
+
+    // (e) The cast has to follow what the RHS *renders* as, not its C type.
+    // `today + optInTimePeriod` renders `today + (optInTimePeriod) as usize`,
+    // i.e. usize, even though `expr_is_i32_typed` sees an i32 operand. Both an
+    // i32 and an f64 target must cast it.
+    let mixed_rhs = |target: &str| ir::Statement::Assign {
+        target: ir::Expr::Var(target.to_string()),
+        value: ir::Expr::BinOp(
+            Box::new(ir::Expr::Var(target.to_string())),
+            ir::BinOp::Add,
+            Box::new(ir::Expr::BinOp(
+                Box::new(ir::Expr::Var("today".to_string())),
+                ir::BinOp::Add,
+                Box::new(ir::Expr::Var("optInTimePeriod".to_string())),
+            )),
+        ),
+        compound: true,
+    };
+    let mut xctx = backends::rust_lang::RustRenderCtx::empty();
+    xctx.is_lookback = false;
+    xctx.index_vars.insert("today".to_string());
+    xctx.sentinel_vars.insert("k".to_string());
+    xctx.real_vars.insert("total".to_string());
+    let rendered = render_rust_stmt_with_ctx(&mixed_rhs("k"), &xctx);
+    assert!(
+        rendered.contains("as i32"),
+        "i32 target with a usize-RENDERING mixed RHS must cast: {rendered}"
+    );
+    let rendered = render_rust_stmt_with_ctx(&mixed_rhs("total"), &xctx);
+    assert!(
+        rendered.contains("as f64"),
+        "Real target with a usize-RENDERING mixed RHS must cast: {rendered}"
+    );
+
+    // (g) The bar range never narrows to i32, even into a signed target: bare,
+    // so it fails to compile rather than truncating above 2^31.
+    let mut ictx = backends::rust_lang::RustRenderCtx::empty();
+    ictx.is_lookback = false;
+    ictx.sentinel_vars.insert("k".to_string());
+    ictx.index_vars.insert("startIdx".to_string());
+    ictx.index_vars.insert("endIdx".to_string());
+    let range_rhs = ir::Statement::Assign {
+        target: ir::Expr::Var("k".to_string()),
+        value: ir::Expr::BinOp(
+            Box::new(ir::Expr::Var("k".to_string())),
+            ir::BinOp::Add,
+            Box::new(ir::Expr::BinOp(
+                Box::new(ir::Expr::Var("endIdx".to_string())),
+                ir::BinOp::Sub,
+                Box::new(ir::Expr::Var("startIdx".to_string())),
+            )),
+        ),
+        compound: true,
+    };
+    let rendered = render_rust_stmt_with_ctx(&range_rhs, &ictx);
+    assert!(
+        !rendered.contains("as i32"),
+        "the caller's bar range must never be narrowed to i32: {rendered}"
+    );
+
+    // (h) An unlisted Real optional parameter is Real because the YAML says so.
+    // `is_i32_opt_in_param` is a NEGATIVE allowlist, so consulting it first
+    // would call any Real param it has not been told about an integer.
+    let mut pctx = backends::rust_lang::RustRenderCtx::empty();
+    pctx.is_lookback = false;
+    let param_stmt = ir::Statement::Assign {
+        target: ir::Expr::Var("optInThreshold".to_string()),
+        value: ir::Expr::BinOp(
+            Box::new(ir::Expr::Var("optInThreshold".to_string())),
+            ir::BinOp::Add,
+            Box::new(ir::Expr::Var("optInTimePeriod".to_string())),
+        ),
+        compound: true,
+    };
+    let rendered = backends::rust_lang::render_statement(
+        &param_stmt,
+        12,
+        &pctx,
+        &[],
+        &std::collections::HashMap::new(),
+        &[],
+        &["optInThreshold".to_string()],
+        &HashMap::new(),
+        &make_registry(),
+        &HelperRegistry::empty(),
+        &std::cell::Cell::new(0),
+    );
+    assert!(
+        rendered.contains("optInThreshold += ((optInTimePeriod) as f64)"),
+        "a YAML-declared Real optIn param must be Real: {rendered}"
+    );
+
+    // (f) A signed local reaching a Real target is an integer too — the plain
+    // `expr_is_i32_typed` does not know about sentinels, so this arrived uncast.
+    let sentinel_rhs = ir::Statement::Assign {
+        target: ir::Expr::Var("total".to_string()),
+        value: ir::Expr::BinOp(
+            Box::new(ir::Expr::Var("total".to_string())),
+            ir::BinOp::Add,
+            Box::new(ir::Expr::Var("k".to_string())),
+        ),
+        compound: true,
+    };
+    let rendered = render_rust_stmt_with_ctx(&sentinel_rhs, &xctx);
+    assert!(
+        rendered.contains("total += ((k) as f64)"),
+        "Real target must cast a signed-local RHS to f64: {rendered}"
+    );
+}
+
+/// An implicit `double` -> `int` conversion in the input C is refused at parse
+/// time. C narrows silently, but Java, C# and Rust all reject the statement, so
+/// it used to generate four files of which three did not compile — with no
+/// diagnostic. The four languages also disagree on negative and out-of-range
+/// values (issue #160), so the generator must not pick a meaning.
+#[test]
+#[should_panic(expected = "is an integer, and it is assigned a floating-point expression")]
+fn parser_rejects_implicit_double_to_int_narrowing() {
+    parser::c_source::parse_c_source_str(
+        "TA_RetCode test( int startIdx, int endIdx, const double inReal[],
+                          int *outBegIdx, int *outNBElement, double outReal[] )
+         {
+            int r;
+            double q;
+            q = inReal[startIdx];
+            r = q;
+            *outBegIdx = 0; *outNBElement = r;
+            return TA_SUCCESS;
+         }",
+    );
+}
+
+/// The same body with the cast written out is accepted — the check must not
+/// fire on the explicit form every shipped function uses.
+#[test]
+fn parser_accepts_explicit_double_to_int_cast() {
+    let parsed = parser::c_source::parse_c_source_str(
+        "TA_RetCode test( int startIdx, int endIdx, const double inReal[],
+                          int *outBegIdx, int *outNBElement, double outReal[] )
+         {
+            int r;
+            double q;
+            q = inReal[startIdx];
+            r = (int)q;
+            *outBegIdx = 0; *outNBElement = r;
+            return TA_SUCCESS;
+         }",
+    );
+    assert_eq!(parsed.functions.len(), 1, "explicit cast must parse cleanly");
+}
+
+/// Issue #158: a helper-inlined temporary has no `VarDecl` in the body it is
+/// inlined into — the inliner renames the helper's own local `range` to
+/// `range_0` — so it must be typed from the HELPER's declaration, not from its
+/// name. Before this was handled, `range_0` reached the classifier with nothing
+/// to go on.
+#[test]
+fn rust_compound_assign_types_helper_inlined_temp_from_the_helper() {
+    let helper = |name: &str, local: &str, ty: ir::VarType| ir::HelperDef {
+        name: name.to_string(),
+        return_type: ir::VarType::Real,
+        params: vec![],
+        body: vec![ir::Statement::VarDecl {
+            var_type: ty,
+            name: local.to_string(),
+            init: None,
+        }],
+    };
+    let helpers = HelperRegistry::from_defs(vec![
+        helper("ta_true_range", "range", ir::VarType::Real),
+        helper("ta_some_counter", "slot", ir::VarType::Integer),
+    ]);
+    let compound = |target: &str| ir::Statement::Assign {
+        target: ir::Expr::Var(target.to_string()),
+        value: ir::Expr::BinOp(
+            Box::new(ir::Expr::Var(target.to_string())),
+            ir::BinOp::Add,
+            Box::new(ir::Expr::Var("optInTimePeriod".to_string())),
+        ),
+        compound: true,
+    };
+    let mut ctx = backends::rust_lang::RustRenderCtx::empty();
+    ctx.is_lookback = false;
+
+    // `range` is a double in the helper -> the i32 param must be cast to f64.
+    let rendered = render_rust_stmt_with_helpers(&compound("range_0"), &ctx, &helpers);
+    assert!(
+        rendered.contains("range_0 += ((optInTimePeriod) as f64)"),
+        "helper-declared Real temp must take the f64 cast: {rendered}"
+    );
+
+    // `slot` is an int in the helper -> usize, so the cast is `as usize`.
+    // Its NAME is on no index list, which is the whole point.
+    let rendered = render_rust_stmt_with_helpers(&compound("slot_2"), &ctx, &helpers);
+    assert!(
+        rendered.contains("slot_2 += (optInTimePeriod) as usize"),
+        "helper-declared integer temp must take the usize cast: {rendered}"
+    );
+
+    // Two helpers declaring the SAME name with different types must not resolve
+    // by whichever the registry yields first — it is a `HashMap`, so that would
+    // make generation depend on hash order.
+    let conflicting = HelperRegistry::from_defs(vec![
+        helper("ta_one", "amount", ir::VarType::Real),
+        helper("ta_two", "amount", ir::VarType::Integer),
+    ]);
+    let rendered = render_rust_stmt_with_helpers(&compound("amount_0"), &ctx, &conflicting);
+    assert!(
+        !rendered.contains("as usize"),
+        "a name two helpers type differently must not resolve from helper decls: {rendered}"
+    );
+}
+
+/// The lookback leg of the implicit-narrowing check: a `LookbackExpr::Code`
+/// body is parsed separately from the function bodies and needs its own guard.
+#[test]
+#[should_panic(expected = "is an integer, and it is assigned a floating-point expression")]
+fn parser_rejects_implicit_narrowing_in_a_lookback_body() {
+    parser::c_source::parse_c_source_str(
+        "int test_lookback( int optInTimePeriod )
+         {
+            int lb;
+            double scale;
+            scale = optInTimePeriod * 0.5;
+            lb = scale;
+            return lb;
+         }",
+    );
+}
+
+/// A lookback's own parameters are not all integers — 14 shipped lookbacks take
+/// a `double` (`optInPenetration`, `optInNbDev`, ...). They have to be typed
+/// from the signature, or assigning one to an int local slips through.
+#[test]
+#[should_panic(expected = "is an integer, and it is assigned a floating-point expression")]
+fn parser_rejects_implicit_narrowing_of_a_real_lookback_param() {
+    parser::c_source::parse_c_source_str(
+        "int test_lookback( int optInTimePeriod, double optInPenetration )
+         {
+            int lb;
+            lb = optInPenetration;
+            return lb + optInTimePeriod;
+         }",
+    );
+}
+
+/// `input/helpers/*.c` parse through a different entry point. A narrowing there
+/// is inlined into every call site, so it reaches all four backends multiplied
+/// by however many sites the helper serves.
+#[test]
+#[should_panic(expected = "is an integer, and it is assigned a floating-point expression")]
+fn parser_rejects_implicit_narrowing_inside_a_helper() {
+    parser::c_source::parse_helper_file_str(
+        "double ta_scaled_range(double th, double tl) {
+            double range = th - tl;
+            int whole;
+            whole = range;
+            return range + whole;
+         }",
+    );
+}
+
+/// Two disjoint blocks may reuse a name with different types. The backends
+/// render those as separate scopes and compile, so the check must not flatten
+/// a function into one namespace and reject the second declaration.
+#[test]
+fn parser_accepts_same_name_different_type_in_disjoint_scopes() {
+    let parsed = parser::c_source::parse_c_source_str(
+        "TA_RetCode test( int startIdx, int endIdx, const double inReal[],
+                          int *outBegIdx, int *outNBElement, double outReal[] )
+         {
+            if( startIdx > 0 ) { int    tmpz; tmpz = startIdx; (void)tmpz; }
+            if( startIdx > 1 ) { double tmpz; tmpz = 1.5;      (void)tmpz; }
+            *outBegIdx = 0; *outNBElement = 0;
+            return TA_SUCCESS;
+         }",
+    );
+    assert_eq!(parsed.functions.len(), 1, "disjoint scopes must parse cleanly");
 }
 
 #[test]
@@ -2928,7 +3287,7 @@ fn rust_vardecl_with_init_expr() {
 
 #[test]
 fn rust_vardecl_sentinel_var_renders_i32() {
-    let mut ctx = backends::rust_lang::RustRenderCtx::for_lookback();
+    let mut ctx = backends::rust_lang::RustRenderCtx::empty();
     ctx.sentinel_vars.insert("highestIdx".to_string());
     let stmt = ir::Statement::VarDecl {
         var_type: ir::VarType::Integer,
@@ -3916,7 +4275,7 @@ fn rust_continue_renders() {
 
 #[test]
 fn rust_compound_add_assignment() {
-    let mut ctx = backends::rust_lang::RustRenderCtx::for_lookback();
+    let mut ctx = backends::rust_lang::RustRenderCtx::empty();
     ctx.real_vars.insert("total".to_string());
     let stmt = ir::Statement::Assign {
         target: ir::Expr::Var("total".to_string()),
@@ -3936,7 +4295,7 @@ fn rust_compound_add_assignment() {
 
 #[test]
 fn rust_compound_sub_assignment() {
-    let mut ctx = backends::rust_lang::RustRenderCtx::for_lookback();
+    let mut ctx = backends::rust_lang::RustRenderCtx::empty();
     ctx.real_vars.insert("total".to_string());
     let stmt = ir::Statement::Assign {
         target: ir::Expr::Var("total".to_string()),
@@ -3956,7 +4315,7 @@ fn rust_compound_sub_assignment() {
 
 #[test]
 fn rust_compound_mul_assignment() {
-    let mut ctx = backends::rust_lang::RustRenderCtx::for_lookback();
+    let mut ctx = backends::rust_lang::RustRenderCtx::empty();
     ctx.real_vars.insert("total".to_string());
     let stmt = ir::Statement::Assign {
         target: ir::Expr::Var("total".to_string()),
@@ -3976,7 +4335,7 @@ fn rust_compound_mul_assignment() {
 
 #[test]
 fn rust_compound_div_assignment() {
-    let mut ctx = backends::rust_lang::RustRenderCtx::for_lookback();
+    let mut ctx = backends::rust_lang::RustRenderCtx::empty();
     ctx.real_vars.insert("total".to_string());
     let stmt = ir::Statement::Assign {
         target: ir::Expr::Var("total".to_string()),
@@ -4189,7 +4548,7 @@ fn rust_lookback_none() {
 #[test]
 fn rust_lookback_return_casts_to_usize() {
     // In lookback context, return values that are i32-typed should be cast to usize
-    let mut ctx = backends::rust_lang::RustRenderCtx::for_lookback();
+    let mut ctx = backends::rust_lang::RustRenderCtx::empty();
     ctx.is_lookback = true;
 
     let stmt = ir::Statement::Return {
@@ -4210,7 +4569,7 @@ fn rust_lookback_return_casts_to_usize() {
 fn rust_while_with_for_loop_var_renders_for_in() {
     use backends::rust_lang::RustRenderCtx;
 
-    let ctx = RustRenderCtx::for_lookback();
+    let ctx = RustRenderCtx::empty();
     let for_loop_vars: Vec<String> = vec!["i".to_string()];
     let init_expr = ir::Expr::Var("startIdx".to_string());
     let mut var_inits: std::collections::HashMap<String, &ir::Expr> =
@@ -4407,6 +4766,207 @@ fn rust_lookback_code_renders_var_types_correctly() {
     assert!(
         lookback_section.contains("[i32; 5 as usize]"),
         "Lookback should declare IntArray: {lookback_section}"
+    );
+}
+
+/// A lookback body must never fuse a multiply-add, in any backend.
+///
+/// C, Java and C# all pass `fma: None` when rendering a lookback ("pure integer
+/// index arithmetic"). Rust reaches fusion through `real_vars`, which was empty
+/// in the lookback context until issue #158 populated it — so fusing would have
+/// silently become Rust-only, and a lookback drives `outBegIdx` and the output
+/// length, making that a shape divergence rather than a tolerance one.
+#[test]
+fn rust_lookback_body_never_fuses_multiply_add() {
+    let decl = |name: &str| ir::Statement::VarDecl {
+        var_type: ir::VarType::Real,
+        name: name.to_string(),
+        init: None,
+    };
+    let lookback_stmts = vec![
+        decl("acc"),
+        decl("scale"),
+        decl("bias"),
+        // The canonical fusable shape: acc = acc + scale * bias.
+        ir::Statement::Assign {
+            target: ir::Expr::Var("acc".to_string()),
+            value: ir::Expr::BinOp(
+                Box::new(ir::Expr::Var("acc".to_string())),
+                ir::BinOp::Add,
+                Box::new(ir::Expr::BinOp(
+                    Box::new(ir::Expr::Var("scale".to_string())),
+                    ir::BinOp::Mul,
+                    Box::new(ir::Expr::Var("bias".to_string())),
+                )),
+            ),
+            compound: false,
+        },
+        ir::Statement::Return { value: Some(ir::Expr::IntLiteral(0)) },
+    ];
+    let body = vec![ir::Statement::Return {
+        value: Some(ir::Expr::Var("SUCCESS".to_string())),
+    }];
+    let func = ir::FuncDef {
+        name: "TEST".to_string(),
+        group: "Test".to_string(),
+        description: None,
+        camel_case: None,
+        hint: None,
+        flags: vec![],
+        inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
+        optional_inputs: vec![],
+        outputs: vec![ir::Output {
+            name: "outReal".to_string(),
+            param_type: ir::ParamType::Real,
+            flags: vec![],
+        }],
+        lookback: Some(ir::LookbackExpr::Code(lookback_stmts)),
+        body: body.clone(),
+        private_body: body,
+        private_extra_params: vec![],
+        private_param_init: vec![],
+        has_explicit_private: false,
+        header_comments: vec![],
+        doc: None,
+        streaming: false,
+    };
+    let enums = HashMap::new();
+    let out = backends::rust_lang::generate(&func, &enums, &make_registry(), &HelperRegistry::empty());
+    let section = extract_section(&out, "_lookback(", "pub fn test(");
+    let section = &section[..section.find("\n    }").expect("lookback body must close")];
+    assert!(
+        section.contains("acc = acc + scale * bias"),
+        "the fusable shape must actually reach the lookback renderer: {section}"
+    );
+    assert!(
+        !section.contains(".mul_add("),
+        "a lookback body must not fuse — C/Java/C# do not: {section}"
+    );
+}
+
+/// Issue #158: a lookback body's locals are typed by their declarations, so the
+/// variable's *name* cannot change the generated code.
+///
+/// The lookback renderer used to build an empty `RustRenderCtx`, which left
+/// every local to the naming heuristics. `expr_is_float_typed` hard-codes `k`
+/// as Real (EMA's k factor), so `int k; k += optInTimePeriod;` was declared
+/// `usize` and assigned `((optInTimePeriod) as f64)` — E0277 — while the same
+/// body written with `j` compiled. Both must now render identically.
+#[test]
+fn rust_lookback_body_types_locals_by_declaration_not_name() {
+    fn lookback_section_for(var: &str) -> String {
+        let lookback_stmts = vec![
+            ir::Statement::VarDecl {
+                var_type: ir::VarType::Integer,
+                name: var.to_string(),
+                init: None,
+            },
+            ir::Statement::Assign {
+                target: ir::Expr::Var(var.to_string()),
+                value: ir::Expr::Var("optInTimePeriod".to_string()),
+                compound: false,
+            },
+            ir::Statement::Assign {
+                target: ir::Expr::Var(var.to_string()),
+                value: ir::Expr::BinOp(
+                    Box::new(ir::Expr::Var(var.to_string())),
+                    ir::BinOp::Add,
+                    Box::new(ir::Expr::Var("optInTimePeriod".to_string())),
+                ),
+                compound: true,
+            },
+            ir::Statement::Return {
+                value: Some(ir::Expr::Var(var.to_string())),
+            },
+        ];
+        let body = vec![ir::Statement::Return {
+            value: Some(ir::Expr::Var("SUCCESS".to_string())),
+        }];
+        let func = ir::FuncDef {
+            name: "TEST".to_string(),
+            group: "Test".to_string(),
+            description: None,
+            camel_case: None,
+            hint: None,
+            flags: vec![],
+            inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
+            optional_inputs: vec![ir::OptInput {
+                name: "optInTimePeriod".to_string(),
+                param_type: ir::ParamType::Integer,
+                range: Some((2.0, 100_000.0)),
+                default: Some(30.0),
+                display_name: None,
+                hint: None,
+                flags: vec![],
+                suggested: None,
+                precision: None,
+            }],
+            outputs: vec![ir::Output {
+                name: "outReal".to_string(),
+                param_type: ir::ParamType::Real,
+                flags: vec![],
+            }],
+            lookback: Some(ir::LookbackExpr::Code(lookback_stmts)),
+            body: body.clone(),
+            private_body: body,
+            private_extra_params: vec![],
+            private_param_init: vec![],
+            has_explicit_private: false,
+            header_comments: vec![],
+            doc: None,
+            streaming: false,
+        };
+        let enums = HashMap::new();
+        let registry = make_registry();
+        let helpers = HelperRegistry::empty();
+        let out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let section = extract_section(&out, "_lookback(", "pub fn test(");
+        // Stop at the lookback's own closing brace — the tail of that slice is
+        // the guarded function's rustdoc, whose doctest mentions `as f64`.
+        let end = section.find("\n    }").expect("lookback body must close");
+        section[..end].to_string()
+    }
+
+    let with_k = lookback_section_for("k");
+    assert!(
+        with_k.contains("let mut k: usize = 0_usize"),
+        "lookback int local must declare usize: {with_k}"
+    );
+    assert!(
+        !with_k.contains("as f64"),
+        "an integer lookback local must never take an f64 RHS cast: {with_k}"
+    );
+    assert!(
+        with_k.contains("k += (optInTimePeriod) as usize"),
+        "usize lookback local must cast the i32 param RHS to usize: {with_k}"
+    );
+
+    // The name is not allowed to matter — this is the whole point of the issue.
+    // Substitute the identifier only where it stands alone (`lookback` contains
+    // a k) and keep every other byte, punctuation included: splitting on
+    // non-alphanumerics and re-joining would erase the operators, making
+    // `k -= x;` and `j += x;` compare equal.
+    fn blank_ident(src: &str, ident: &str) -> String {
+        let mut out = String::with_capacity(src.len());
+        let mut rest = src;
+        while let Some(pos) = rest.find(ident) {
+            let (before, at) = rest.split_at(pos);
+            let tail = &at[ident.len()..];
+            let boundary = |c: char| !c.is_alphanumeric() && c != '_';
+            let standalone = before.chars().next_back().is_none_or(boundary)
+                && tail.chars().next().is_none_or(boundary);
+            out.push_str(before);
+            out.push_str(if standalone { "@" } else { ident });
+            rest = tail;
+        }
+        out.push_str(rest);
+        out
+    }
+    let with_j = lookback_section_for("j");
+    assert_eq!(
+        blank_ident(&with_k, "k"),
+        blank_ident(&with_j, "j"),
+        "renaming a lookback local must not change the generated code"
     );
 }
 
@@ -7565,6 +8125,24 @@ fn rust_index_domain_never_narrows_to_i32() {
                 !out.rust.contains(needle),
                 "{name}: generated Rust narrows an index-domain value (`{needle}`)"
             );
+        }
+        // The needles above are the bare forms; an arithmetic expression
+        // narrows just as badly and matches none of them. A broader "any line
+        // with `as i32` mentioning the range" rule is wrong — MAVP's
+        // `(inPeriods[startIdx + i]) as i32` casts an i32 array element and
+        // only uses the range as a subscript — so pin the arithmetic forms.
+        for op in ['+', '-', '*'] {
+            for needle in [
+                format!("startIdx {op} "),
+                format!("endIdx {op} "),
+            ] {
+                for line in out.rust.lines().filter(|l| l.contains("as i32")) {
+                    assert!(
+                        !(line.contains(&needle) && !line.contains('[')),
+                        "{name}: generated Rust narrows an index-domain expression to i32: {line}"
+                    );
+                }
+            }
         }
     }
 }
