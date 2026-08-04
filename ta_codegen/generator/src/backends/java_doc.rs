@@ -267,7 +267,11 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
             RangeMeta::Max(hi) => meta.push(format!("maximum {hi}")),
             RangeMeta::Unbounded => {}
         }
-        // Every optional parameter accepts the cross-language default sentinel.
+        // Every optional parameter Java surfaces as a primitive accepts the
+        // cross-language default sentinel. An `enum:` param does not, and the
+        // branch above says nothing about it on purpose: `MAType` is a real enum
+        // and `Integer.MIN_VALUE` cannot be made into one (issue #162 — C, Rust
+        // and C# all type it as an integer and must substitute).
         meta.push(match opt.param_type {
             ParamType::Real => "{@code -4e37} selects the default".to_string(),
             _ => "{@code Integer.MIN_VALUE} selects the default".to_string(),

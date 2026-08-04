@@ -451,11 +451,19 @@ Architecture (see `fuzz_data.h`, the Rust port in
   output hashes the same on both sides).
 
 Scope rules (deliberate):
-- **No 0.6.4, no waivers; one tolerance + one ill-conditioning skip.** This is
+- **No 0.6.4, no waivers; one tolerance and two skips.** This is
   current-vs-current across languages, so — unlike `--fuzz-064` — there are none
   of the `#98`/`#107`/FMA-transition carve-outs. Every case is bitwise except
   the transcendental calls of Java and C# (1e-9, above). A non-tolerated
   mismatch is a real fusion-site / codegen divergence to fix.
+- **The second skip: the choice-list default sentinel, Java only.** Every
+  optional parameter gets a `TA_*_DEFAULT` vector that must resolve to the
+  declared default, `enum:MAType` included. Java's `MAType` is a real enum, so
+  that value is unrepresentable there and the driver never sends it (withheld
+  cases are counted and printed); C, Rust and C# type the parameter as an integer
+  and are held to it. These cases carry their own count and their own non-vacuity
+  floor: they are a small subset of `sentCases`, so the combined total cannot show
+  that the leg has stopped running.
 - **The one ill-conditioning skip: HT_DCPHASE / HT_SINE on the constant shape,
   for the tolerance-lane servers (Java and C#).** These two derive their output from `atan2` of the Hilbert
   transform's in-phase/quadrature components. On `FUZZ_CONSTANT` (flat O=H=L=C,

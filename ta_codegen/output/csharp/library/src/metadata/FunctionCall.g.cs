@@ -110,18 +110,14 @@ public sealed class FunctionCall
         {
             _realOpts[i] = RealDefault;
 
-            /* An unbound parameter means "the documented default", and this
-               picks whichever mechanism actually delivers that. For the range
-               domains the sentinel does, and using it keeps the unbound path
-               and an explicit sentinel the same code path. For a choice list it
-               does NOT: `(MAType)int.MinValue` is a legal C# value that no
-               backend maps back to the default (a known backend-wide gap, see
-               emit_opt_param_validation in backends/csharp.rs), so it would
-               reach the function and come back BadParam. The value goes in
-               directly instead. */
-            _intOpts[i] = info.OptInputs[i].Domain is OptInputDomain.IntegerList list
-                ? (int)list.Default
-                : IntDefault;
+            /* An unbound parameter means "the documented default", and the
+               sentinel is how every integer domain says that — choice lists
+               included since issue #162 taught the typed API to substitute
+               `(MAType)int.MinValue`. Leaving it to the sentinel keeps the
+               unbound path and an explicitly-passed sentinel on one code path,
+               and makes this binder exercise that substitution rather than
+               route around it. */
+            _intOpts[i] = IntDefault;
         }
 
         int nout = info.Outputs.Length;

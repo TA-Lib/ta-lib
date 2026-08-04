@@ -185,15 +185,17 @@ pub fn lookback_docs(func: &FuncDef, snake: &str, enums: &HashMap<String, EnumDe
 /// the function actually takes. Gated per kind because the two sentinels differ and
 /// several functions take only one kind: SAR and MAMA have no integer optional
 /// parameter at all, so an unconditional `i32::MIN` sentence documents an API they
-/// do not have. Returns `None` for a function whose optional parameters are all
-/// enums (no sentinel substitution is emitted for those).
+/// do not have. `enum:` params count as integer here — the Rust surface types them
+/// `i32` and substitutes the same `i32::MIN` (issue #162). Every function that has
+/// one also has a period today, so this changes no output; keeping the predicate
+/// honest is what stops that being load-bearing.
 fn default_sentinel_sentence(func: &FuncDef) -> Option<&'static str> {
     let takes = |want: fn(&ParamType) -> bool| {
         func.optional_inputs
             .iter()
             .any(|o| want(&o.param_type) && o.default.is_some())
     };
-    let has_int = takes(|t| matches!(t, ParamType::Integer));
+    let has_int = takes(|t| matches!(t, ParamType::Integer | ParamType::Enum(_)));
     let has_real = takes(|t| matches!(t, ParamType::Real));
     match (has_int, has_real) {
         (true, true) => Some(

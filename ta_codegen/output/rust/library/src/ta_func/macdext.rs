@@ -90,15 +90,24 @@ impl Core {
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
             return usize::MAX;
         }
+        if ((optInFastMAType) as i32) == (i32::MIN) {
+            optInFastMAType = 0;
+        }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return usize::MAX;
         }
+        if ((optInSlowMAType) as i32) == (i32::MIN) {
+            optInSlowMAType = 0;
+        }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 9;
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return usize::MAX;
+        }
+        if ((optInSignalMAType) as i32) == (i32::MIN) {
+            optInSignalMAType = 0;
         }
         let mut tempInteger: usize = 0_usize;
         let mut lookbackLargest: usize = 0_usize;
@@ -220,15 +229,24 @@ impl Core {
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        if ((optInFastMAType) as i32) == (i32::MIN) {
+            optInFastMAType = 0;
+        }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        if ((optInSlowMAType) as i32) == (i32::MIN) {
+            optInSlowMAType = 0;
+        }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 9;
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return RetCode::BadParam;
+        }
+        if ((optInSignalMAType) as i32) == (i32::MIN) {
+            optInSignalMAType = 0;
         }
         if outMACD.as_ptr() == outMACDSignal.as_ptr() || outMACD.as_ptr() == outMACDHist.as_ptr() || outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
             return RetCode::BadParam;
@@ -538,15 +556,24 @@ impl Core {
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        if ((optInFastMAType) as i32) == (i32::MIN) {
+            optInFastMAType = 0;
+        }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        if ((optInSlowMAType) as i32) == (i32::MIN) {
+            optInSlowMAType = 0;
+        }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 9;
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
+        }
+        if ((optInSignalMAType) as i32) == (i32::MIN) {
+            optInSignalMAType = 0;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
@@ -755,15 +782,24 @@ impl Core {
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        if ((optInFastMAType) as i32) == (i32::MIN) {
+            optInFastMAType = 0;
+        }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        if ((optInSlowMAType) as i32) == (i32::MIN) {
+            optInSlowMAType = 0;
+        }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 9;
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
+        }
+        if ((optInSignalMAType) as i32) == (i32::MIN) {
+            optInSignalMAType = 0;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;

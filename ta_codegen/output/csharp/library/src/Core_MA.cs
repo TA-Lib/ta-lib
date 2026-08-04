@@ -75,7 +75,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED).</param>
+   /// 10=DISABLED; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int MovingAverageLookback( int optInTimePeriod, MAType optInMAType )
    {
@@ -83,6 +83,9 @@ public partial class Core
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
+      }
+      if( (int)optInMAType == int.MinValue ) {
+         optInMAType = MAType.Sma;
       }
       int retValue = 0;
       if( optInTimePeriod <= 1 || optInMAType == MAType.Disabled ) {
@@ -152,6 +155,9 @@ public partial class Core
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( (int)optInMAType == int.MinValue ) {
+         optInMAType = MAType.Sma;
       }
       /* No-smoothing identity: period 1 (every MA type) or the explicit
        * TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
@@ -295,6 +301,9 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( (int)optInMAType == int.MinValue ) {
+         optInMAType = MAType.Sma;
+      }
       if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement = nbElement;
@@ -433,7 +442,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED).</param>
+   /// 10=DISABLED; <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Selected moving average of the input. Must hold at least <c>endIdx -
    /// startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -530,7 +539,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED).</param>
+   /// 10=DISABLED; <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Selected moving average of the input. Must hold at least <c>endIdx -
    /// startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,

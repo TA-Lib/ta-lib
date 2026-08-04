@@ -93,6 +93,9 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return usize::MAX;
         }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 0;
+        }
         return self.ma_lookback(optInMaxPeriod, optInMAType);
     }
     /// Moving average whose period varies per bar, driven by a companion period series. For each
@@ -192,6 +195,9 @@ impl Core {
             optInMaxPeriod = 30;
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return RetCode::BadParam;
+        }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 0;
         }
         let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
@@ -699,6 +705,9 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 0;
+        }
         // An inverted [min, max] period window is invalid (batch rejects).
         if optInMinPeriod > optInMaxPeriod {
             return Err(RetCode::BadParam);
@@ -777,6 +786,9 @@ impl Core {
             optInMaxPeriod = 30;
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
+        }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 0;
         }
         // An inverted [min, max] period window is invalid (batch rejects).
         if optInMinPeriod > optInMaxPeriod {

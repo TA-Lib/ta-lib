@@ -70,15 +70,18 @@ public partial class Core
    /// <param name="optInFastPeriod">Period of the fast MA (default 12; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInFastMAType">MA type for the fast MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowPeriod">Period of the slow MA (default 26; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInSlowMAType">MA type for the slow MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalPeriod">Period of the signal-line MA (default 9; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int MacdExtLookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
@@ -87,15 +90,24 @@ public partial class Core
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
          return -1;
       }
+      if( (int)optInFastMAType == int.MinValue ) {
+         optInFastMAType = MAType.Sma;
+      }
       if( optInSlowPeriod == int.MinValue ) {
          optInSlowPeriod = 26;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return -1;
       }
+      if( (int)optInSlowMAType == int.MinValue ) {
+         optInSlowMAType = MAType.Sma;
+      }
       if( optInSignalPeriod == int.MinValue ) {
          optInSignalPeriod = 9;
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return -1;
+      }
+      if( (int)optInSignalMAType == int.MinValue ) {
+         optInSignalMAType = MAType.Sma;
       }
       int tempInteger = 0;
       int lookbackLargest = 0;
@@ -150,15 +162,24 @@ public partial class Core
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( (int)optInFastMAType == int.MinValue ) {
+         optInFastMAType = MAType.Sma;
+      }
       if( optInSlowPeriod == int.MinValue ) {
          optInSlowPeriod = 26;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( (int)optInSlowMAType == int.MinValue ) {
+         optInSlowMAType = MAType.Sma;
+      }
       if( optInSignalPeriod == int.MinValue ) {
          optInSignalPeriod = 9;
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( (int)optInSignalMAType == int.MinValue ) {
+         optInSignalMAType = MAType.Sma;
       }
       if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
          return RetCode.BadParam ;
@@ -396,15 +417,24 @@ public partial class Core
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( (int)optInFastMAType == int.MinValue ) {
+         optInFastMAType = MAType.Sma;
+      }
       if( optInSlowPeriod == int.MinValue ) {
          optInSlowPeriod = 26;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( (int)optInSlowMAType == int.MinValue ) {
+         optInSlowMAType = MAType.Sma;
+      }
       if( optInSignalPeriod == int.MinValue ) {
          optInSignalPeriod = 9;
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( (int)optInSignalMAType == int.MinValue ) {
+         optInSignalMAType = MAType.Sma;
       }
       if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
          return RetCode.BadParam ;
@@ -599,15 +629,18 @@ public partial class Core
    /// <param name="optInFastPeriod">Period of the fast MA (default 12; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInFastMAType">MA type for the fast MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowPeriod">Period of the slow MA (default 26; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInSlowMAType">MA type for the slow MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalPeriod">Period of the signal-line MA (default 9; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="outMACD">MACD line: fast MA minus slow MA. Must hold at least <c>endIdx - startIdx
    /// + 1</c> values.</param>
    /// <param name="outMACDSignal">Signal line: MA of the MACD line. Must hold at least <c>endIdx - startIdx
@@ -729,15 +762,18 @@ public partial class Core
    /// <param name="optInFastPeriod">Period of the fast MA (default 12; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInFastMAType">MA type for the fast MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowPeriod">Period of the slow MA (default 26; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInSlowMAType">MA type for the slow MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalPeriod">Period of the signal-line MA (default 9; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="outMACD">MACD line: fast MA minus slow MA. Must hold at least <c>endIdx - startIdx
    /// + 1</c> values.</param>
    /// <param name="outMACDSignal">Signal line: MA of the MACD line. Must hold at least <c>endIdx - startIdx

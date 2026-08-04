@@ -94,6 +94,9 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return usize::MAX;
         }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 1;
+        }
         // The slow MA is the key factor determining the lookback period.
         return self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType);
     }
@@ -193,6 +196,9 @@ impl Core {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return RetCode::BadParam;
+        }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 1;
         }
         let mut startIdx = startIdx;
         let mut tempBuffer: Vec<f64> = Vec::new();
@@ -351,6 +357,9 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 1;
+        }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
@@ -466,6 +475,9 @@ impl Core {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
+        }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 1;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;

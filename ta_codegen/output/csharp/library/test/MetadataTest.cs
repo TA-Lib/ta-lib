@@ -622,12 +622,13 @@ public static class MetadataTest
                     types.Add(typeof(int));
                     break;
                 default:
-                    // A choice list takes the documented default explicitly: the
-                    // (MAType)int.MinValue sentinel is a known backend-wide gap
-                    // (see emit_opt_param_validation in backends/csharp.rs), so
-                    // sending it here would test that gap rather than the
-                    // dispatch this method exists to test.
-                    args.Add((MAType)(int)o.DefaultValue);
+                    // A choice list takes the sentinel too, since issue #162.
+                    // The bound path this is compared against passes the value
+                    // explicitly, so this leg is what asserts the typed API maps
+                    // (MAType)int.MinValue back to the declared default — which
+                    // is not the same value for every function (APO/PPO/PVO
+                    // default to EMA, the rest to SMA).
+                    args.Add((MAType)int.MinValue);
                     types.Add(typeof(MAType));
                     break;
             }
@@ -658,15 +659,15 @@ public static class MetadataTest
 
     /// <summary>
     /// An optional parameter left unbound must behave exactly as the documented
-    /// sentinel does — for the domains where the sentinel is implemented.
+    /// sentinel does.
     /// </summary>
-    /// <remarks>Every domain is covered, including choice lists — the binder
-    /// fills an unbound one with the documented default value rather than the
-    /// integer sentinel, because <c>(MAType)int.MinValue</c> is a legal C# value
-    /// that no backend maps back to the default (a documented backend-wide gap
-    /// shared with Rust and Java, see <c>backends/csharp.rs</c>). What this
-    /// asserts is the binder's contract — unbound means the documented default —
-    /// not the sentinel's, which <c>test_codegen.c</c>'s sweep owns.</remarks>
+    /// <remarks>Every domain is covered, choice lists included: since issue #162
+    /// the binder fills an unbound one with the integer sentinel like any other
+    /// integer domain, and <c>(MAType)int.MinValue</c> is mapped back to the
+    /// declared default by the typed API itself. So this asserts the binder's
+    /// contract — unbound means the documented default — over the substitution
+    /// rather than around it. The sentinel's own cross-language contract stays
+    /// with <c>test_codegen.c</c>'s sweep.</remarks>
     private static void UnboundParametersTakeTheDocumentedDefault()
     {
         int covered = 0;

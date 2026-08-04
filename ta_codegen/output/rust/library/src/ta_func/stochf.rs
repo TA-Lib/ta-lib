@@ -97,6 +97,9 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return usize::MAX;
         }
+        if ((optInFastD_MAType) as i32) == (i32::MIN) {
+            optInFastD_MAType = 0;
+        }
         let mut retValue: usize = 0_usize;
         // Account for the initial data needed for Fast-K.
         retValue = (optInFastK_Period - 1) as usize;
@@ -211,6 +214,9 @@ impl Core {
             optInFastD_Period = 3;
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return RetCode::BadParam;
+        }
+        if ((optInFastD_MAType) as i32) == (i32::MIN) {
+            optInFastD_MAType = 0;
         }
         if outFastK.as_ptr() == outFastD.as_ptr() {
             return RetCode::BadParam;
@@ -678,6 +684,9 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        if ((optInFastD_MAType) as i32) == (i32::MIN) {
+            optInFastD_MAType = 0;
+        }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
@@ -975,6 +984,9 @@ impl Core {
             optInFastD_Period = 3;
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
+        }
+        if ((optInFastD_MAType) as i32) == (i32::MIN) {
+            optInFastD_MAType = 0;
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;

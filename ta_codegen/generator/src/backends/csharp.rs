@@ -206,34 +206,41 @@ pub fn generate(
     out
 }
 
+/// `MAType` + `0` → `MAType.Sma`, the qualified form the rest of the C# backend
+/// emits. A value with no named variant falls back to the cast, which is the same
+/// C# value — the enum is an `int` with names, so nothing is lost.
+fn csharp_enum_literal(enum_name: &str, value: i32, enums: &HashMap<String, EnumDef>) -> String {
+    enums
+        .get(enum_name)
+        .and_then(|e| e.variants.iter().find(|v| v.value == value))
+        .map_or_else(
+            || format!("({enum_name}){value}"),
+            |v| format!("{enum_name}.{}", v.pascal_name),
+        )
+}
+
 /// Optional-parameter validation prologue (C#): map the `int.MinValue` /
 /// `TA_REAL_DEFAULT` sentinels to the documented default value, then reject
 /// out-of-range values. One source of truth for both variants: guarded
 /// functions fail with `RetCode.BadParam`, lookback functions fail with `-1`.
 ///
-/// Enum params (e.g. `MAType`) are deliberately NOT handled here, and the C#
-/// type system is not the reason. A C# enum is an `int` with names: `(MAType)
-/// int.MinValue` is a legal value, and the generated JSON-RPC server produces
-/// exactly that — `(MAType)GetInt(p, "optInMAType", 0)`. What is missing is the
-/// sentinel substitution C emits for every `enum:MAType` optional input:
+/// `enum:` params get the same treatment, because a C# enum is an `int` with
+/// names: `(MAType)int.MinValue` is a value a caller — or the generated server's
+/// `(MAType)GetInt(p, "optInMAType", 0)` — can produce, so it must resolve the way
+/// C's `if( (int)optInMAType == (int)0x80000000 )` does. The substituted value is
+/// that parameter's declared default, never a fixed 0: APO, PPO and PVO default to
+/// EMA, the other ten to SMA.
 ///
-/// ```c
-/// if( (int)optInMAType == (int)0x80000000 )   /* ta_MA.c, ta_BBANDS.c, ... */
-///    optInMAType = 0;
-/// ```
-///
-/// Without it `MovingAverage(.., (MAType)int.MinValue, ..)` falls through the
-/// switch to `default: BadParam` where C returns a 30-bar SMA, and the matching
-/// lookback returns 0 rather than 29.
-///
-/// This is a pre-existing, backend-wide gap shared with Rust and Java, tracked
-/// in `ta_codegen/generator/CLAUDE.md` under "Known Code Quality Issues"; the
-/// sentinel sweep in `test_codegen.c` excludes `IntegerList` for the same
-/// reason. Fixing it is a cross-backend change, not a C#-local one.
+/// Java needs no counterpart: its `MAType` is a real enum and `Core` takes
+/// `MAType`, so the sentinel is unrepresentable there rather than mishandled.
 // Integer optional-param defaults/ranges are `f64` in the IR; the integer-valued
 // casts to `i32` for literal emission are exact, not truncating.
 #[allow(clippy::cast_possible_truncation)]
-fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
+fn emit_opt_param_validation(
+    func: &FuncDef,
+    fail: &str,
+    enums: &HashMap<String, EnumDef>,
+) -> String {
     let mut out = String::new();
     for opt in &func.optional_inputs {
         match &opt.param_type {
@@ -274,7 +281,31 @@ fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
                     out.push('\n');
                 }
             }
-            ParamType::Enum(_) | ParamType::Price(_) => {}
+            ParamType::Enum(enum_name) => {
+                if let Some(default_val) = opt.default {
+                    // The comparison casts to `int` because C# defines no
+                    // implicit enum↔int conversion; the assignment uses the
+                    // qualified member, as the switch labels do.
+                    out.push_str(&format!(
+                        "      if( (int){name} == int.MinValue ) {{\n         {name} = {val};\n      }}",
+                        name = opt.name,
+                        val = csharp_enum_literal(enum_name, default_val as i32, enums)
+                    ));
+                    // No shipped enum param declares a `range:`, but emitting the
+                    // check keeps a future one from being silently un-gated here
+                    // while C (which shares its Integer arm) still enforces it.
+                    if let Some((min, max)) = opt.range {
+                        let min_i = min as i32;
+                        let max_i = max as i32;
+                        out.push_str(&format!(
+                            " else if( (int){name} < {min_i} || (int){name} > {max_i} ) {{\n         return {fail};\n      }}",
+                            name = opt.name
+                        ));
+                    }
+                    out.push('\n');
+                }
+            }
+            ParamType::Price(_) => {}
         }
     }
     out
@@ -310,7 +341,7 @@ fn gen_lookback(
 
     // Same param validation as the guarded function, with the lookback
     // bad-param contract: out-of-range returns -1.
-    let validation = emit_opt_param_validation(func, "-1");
+    let validation = emit_opt_param_validation(func, "-1", enums);
 
     let body = match &func.lookback {
         Some(LookbackExpr::Literal(n)) => format!("{validation}      return {n};"),
@@ -660,7 +691,7 @@ fn gen_func_inner(
         out.push_str("         return RetCode.OutOfRangeEndIndex ;\n");
         out.push_str("      }\n");
         // Optional parameter validation (default + range)
-        out.push_str(&emit_opt_param_validation(func, "RetCode.BadParam"));
+        out.push_str(&emit_opt_param_validation(func, "RetCode.BadParam", enums));
         // Output-distinctness (issue #108): aliasing two different output
         // arrays has no correct result, so reject it. Input == output stays
         // allowed. Array `==` is reference equality in C# as in Java.

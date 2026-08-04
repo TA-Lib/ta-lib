@@ -88,6 +88,9 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 0;
+        }
         let mut retValue: usize = 0_usize;
         if optInTimePeriod <= 1 || (optInMAType) as usize == 10 {
             return (0) as usize;
@@ -213,6 +216,9 @@ impl Core {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
+        }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 0;
         }
         let mut startIdx = startIdx;
         let mut retCode: RetCode = RetCode::Success;
@@ -455,6 +461,9 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 0;
+        }
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || (optInMAType) as usize == 10 {
             if historyLen < self.ma_lookback(optInTimePeriod, optInMAType) + 1 {
@@ -550,6 +559,9 @@ impl Core {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
+        }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 0;
         }
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || (optInMAType) as usize == 10 {

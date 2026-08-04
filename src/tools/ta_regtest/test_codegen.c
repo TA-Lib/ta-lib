@@ -3371,11 +3371,14 @@ static const char *const argv_064[] = {"./ta_064_serve", NULL};
                              * without this the MAType sweep would truncate
                              * silently (it never reaches the FUZZ_MAX_VEC guard). */
 #define FUZZ_MAX_VEC  80    /* parameter vectors per function. MACDEXT is widest:
-                             * 3 period ranges (~6 candidates each) + 3 MAType
-                             * lists (M-1 each) + 3 contract vectors per range param
-                             * + the defaults vector = ~3*M+25 in the MAType-list
-                             * length M; M=11 today => 58. 80 gives runway to M=18,
-                             * and still matches STREAM_MAX_VEC.
+                             * 3 period ranges (<= 6 candidates + 2 reject + 1
+                             * sentinel each) + 3 MAType lists (M-1 values + 1
+                             * sentinel each, #162) + the defaults vector <= 3*M+28
+                             * in the MAType-list length M. M=11 today => 61 worst
+                             * case, 60 actually built (one of optInSignalPeriod's
+                             * boundary candidates lands on its own default and is
+                             * dropped). 80 gives runway to M=17, and still matches
+                             * STREAM_MAX_VEC.
                              * fuzz_build_vectors reports any overflow (this cap or
                              * the cand cap) and the caller fails the run loudly. */
 #define FUZZ_MIN_PERIOD 2   /* period 1 is out of scope vs 0.6.4 (see CLAUDE.md) */
@@ -3551,11 +3554,12 @@ static void fuzz_add_out_of_range(const TA_OptInputParameterInfo *oi,
 }
 
 /* The "use the default" sentinel for one optional parameter: t3(x, 5, -4e37) must
- * give exactly t3(x, 5, 0.7), as TA_T3 always has. Emitted for every Range param,
- * bounded or not — the five [TA_REAL_MIN, TA_REAL_MAX] reals (BBANDS nbDevUp/Dn,
- * STDDEV/VAR nbDev, SAREXT startValue) get no range check, so this is their only
- * contract. IntegerList is excluded: C substitutes the declared default there and
- * Rust falls through to its `_` arm — tracked in ta_codegen/generator/CLAUDE.md. */
+ * give exactly t3(x, 5, 0.7), as TA_T3 always has. Emitted for EVERY optional
+ * domain, with no exemption — range params bounded or not (the five
+ * [TA_REAL_MIN, TA_REAL_MAX] reals get no range check, so this is their only
+ * contract) and choice lists alike. Excluding IntegerList here is what hid #162.
+ * Java cannot take the choice-list vector at all; it is exempted per SERVER
+ * instead — see xlang_lang_can_pass_enum_sentinel. */
 static void fuzz_add_default_sentinel(const TA_OptInputParameterInfo *oi,
                                       double cand[FUZZ_MAX_CAND],
                                       char candKind[FUZZ_MAX_CAND],
@@ -3563,12 +3567,10 @@ static void fuzz_add_default_sentinel(const TA_OptInputParameterInfo *oi,
 {
     double sentinel;
 
-    if( oi->type == TA_OptInput_IntegerRange )
+    if( oi->type == TA_OptInput_IntegerRange || oi->type == TA_OptInput_IntegerList )
         sentinel = (double)TA_INTEGER_DEFAULT;
-    else if( oi->type == TA_OptInput_RealRange )
-        sentinel = TA_REAL_DEFAULT;
     else
-        return;
+        sentinel = TA_REAL_DEFAULT;   /* RealRange + RealList (none shipped yet) */
 
     if( *nc >= FUZZ_MAX_CAND ) { (*overflow)++; return; }
     candKind[*nc] = FUZZ_VEC_SENTINEL;
@@ -4415,12 +4417,49 @@ typedef struct {
                                    * machine is a claim about that machine.
                                    * Rust stays 0: it reaches the same libm the
                                    * golden does.                             */
+    int                enumSentinel; /* 1 = this language's optional-param surface
+                                   * can CARRY the integer default sentinel on a
+                                   * choice-list parameter, so the #162 sentinel
+                                   * leg is a real assertion there. 0 = it cannot
+                                   * — see xlang_lang_can_pass_enum_sentinel. */
     CodegenPipe        cp;
     int                open;      /* 1 once the subprocess is up              */
     long long          cases;     /* cases compared against the golden        */
     long long          mism;      /* real bitwise/tolerance mismatches        */
     int                restarts;  /* recovered subprocess crashes             */
 } XlangServer;
+
+/* Which languages can be ASKED whether TA_INTEGER_DEFAULT on an enum:MAType
+ * parameter selects the declared default. C, Rust and C# type that parameter as
+ * an integer (a C# enum is an int with names), so the sentinel reaches their
+ * validation and the substitution is what maps it back (#162). Java's MAType is
+ * a real enum and Core takes MAType: the value is unrepresentable rather than
+ * mishandled, its server would die constructing one
+ * (MAType.values()[Integer.MIN_VALUE] throws), and substituting server-side
+ * would only manufacture a green. Withheld vectors are counted and printed. */
+static int xlang_lang_can_pass_enum_sentinel(const char *lang)
+{
+    if( !lang ) return 1;
+    return strcmp(lang, "java") != 0;
+}
+
+/* 1 when this parameter vector puts the default sentinel on a CHOICE-LIST
+ * parameter. Only one parameter is varied per vector and the all-defaults vector
+ * never holds a sentinel, so scanning the vector is exact — and it keeps the
+ * FUZZ_VEC_SENTINEL class single, rather than splitting it into two that every
+ * existing `kind[k] == FUZZ_VEC_SENTINEL` test would have to be taught. */
+static int xlang_sentinel_on_choice_list(const TA_FuncInfo *fi, const double *vals)
+{
+    for( unsigned int i = 0; i < fi->nbOptInput && i < FUZZ_MAX_OPT; i++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+        if( oi->type == TA_OptInput_IntegerList
+            && (int)vals[i] == TA_INTEGER_DEFAULT )
+            return 1;
+    }
+    return 0;
+}
 
 typedef struct {
     const char  *functionFilter;
@@ -4449,6 +4488,14 @@ typedef struct {
                                       * out of range, so its parity assertion was
                                       * vacuous. Fails the run.                    */
     long long    sentCases;          /* per-server comparisons on a sentinel vector */
+    long long    sentEnumCases;      /* ... of which on a CHOICE-LIST sentinel. Kept
+                                      * apart from sentCases because the range params
+                                      * keep that total large whether this leg runs
+                                      * or not (#162)                               */
+    long long    lbSentEnumCases;    /* ... the same, on the lookback tier          */
+    long long    sentEnumSkipped;    /* choice-list sentinel vectors skipped for a
+                                      * server whose typed enum cannot carry the
+                                      * sentinel (Java) — counted, not silent     */
     long long    sentNotDefault;     /* sentinel vectors where the in-process C
                                       * library did NOT reproduce the explicit
                                       * default's result. Fails the run.           */
@@ -4948,10 +4995,18 @@ static void xlang_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
 
         xlang_build_lookback_request(ctx->reqBuf, funcInfo, vec[k]);
 
+        /* Derived once per vector, not per server (issue #162). */
+        int enumSent = ( kind[k] == FUZZ_VEC_SENTINEL )
+                       && xlang_sentinel_on_choice_list(funcInfo, vec[k]);
+
         for( int sIdx = 0; sIdx < ctx->nsv; sIdx++ )
         {
             XlangServer *sv = &ctx->sv[sIdx];
             if( !sv->open ) continue;
+            /* The request is never SENT to a server that cannot represent the
+             * value: Java's MAType.values()[Integer.MIN_VALUE] throws out of an
+             * uncaught handler and takes the subprocess with it. */
+            if( enumSent && !sv->enumSentinel ) { ctx->sentEnumSkipped++; continue; }
             if( !xlang_call(sv, ctx->reqBuf, ctx->respBuf) )
             {
                 if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
@@ -4964,6 +5019,7 @@ static void xlang_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
             ctx->lbCases++;
             if( kind[k] == FUZZ_VEC_REJECT )   ctx->lbOorCases++;
             if( kind[k] == FUZZ_VEC_SENTINEL ) ctx->lbSentCases++;
+            if( enumSent )                     ctx->lbSentEnumCases++;
 
             if( !present )
             {
@@ -5215,6 +5271,10 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
                 ctx->comparisons++;
 
+                /* Derived once per vector, not per server (issue #162). */
+                int enumSent = ( kind[k] == FUZZ_VEC_SENTINEL )
+                               && xlang_sentinel_on_choice_list(funcInfo, vec[k]);
+
                 for( int sIdx = 0; sIdx < ctx->nsv; sIdx++ )
                 {
                     XlangServer *sv = &ctx->sv[sIdx];
@@ -5230,6 +5290,14 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     if( kind[k] == FUZZ_VEC_SENTINEL )
                     {
                         XHashParsed sent, dflt;
+                        /* Not sent to a server whose typed enum cannot carry it
+                         * (issue #162) — the request would kill the subprocess,
+                         * and a server-side substitution would only fake it. */
+                        if( enumSent && !sv->enumSentinel )
+                        {
+                            ctx->sentEnumSkipped++;
+                            continue;
+                        }
                         int okS = xlang_hash_call(ctx, sv, funcInfo, &hist, n, s, e,
                                                   shape, seeds[si], vec[k], &sent);
                         int okD = okS && xlang_hash_call(ctx, sv, funcInfo, &hist, n, s, e,
@@ -5242,6 +5310,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                         }
                         sv->cases++;
                         ctx->sentCases++;
+                        if( enumSent ) ctx->sentEnumCases++;
                         if( sent.rc != dflt.rc || sent.begIdx != dflt.begIdx ||
                             sent.nbElement != dflt.nbElement || sent.hash != dflt.hash )
                         {
@@ -5397,19 +5466,24 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
      * Every non-transcendental call in both stays bitwise. Rust reaches the
      * same libm as the golden and is bitwise throughout. */
     static XlangServer servers[] = {
-        {"rust",   "Rust", argv_rust,   1, 0, {0}, 0, 0, 0, 0},
-        {"java",   "Java", argv_java,   0, 0, {0}, 0, 0, 0, 0},
-        {"csharp", "C#",   argv_csharp, 0, 0, {0}, 0, 0, 0, 0},
+        {"rust",   "Rust", argv_rust,   1, 0, 0, {0}, 0, 0, 0, 0},
+        {"java",   "Java", argv_java,   0, 0, 0, {0}, 0, 0, 0, 0},
+        {"csharp", "C#",   argv_csharp, 0, 0, 0, {0}, 0, 0, 0, 0},
     };
     int nsv = (int)(sizeof(servers)/sizeof(servers[0]));
 
     /* tolTranscendental is FILLED IN from the shared predicate rather than
      * written per row above: server_verify.c applies the same rule on its own
      * path, and when the two were separate literals they disagreed — C# was
-     * bitwise here and Java-only there. One definition, both gates. */
+     * bitwise here and Java-only there. One definition, both gates.
+     * enumSentinel comes from its own predicate for the same reason. */
     for( int s = 0; s < nsv; s++ )
+    {
         servers[s].tolTranscendental =
             codegen_lang_needs_transcendental_tol(servers[s].name);
+        servers[s].enumSentinel =
+            xlang_lang_can_pass_enum_sentinel(servers[s].name);
+    }
 
     XlangCtx ctx;
     memset(&ctx, 0, sizeof(ctx));
@@ -5496,6 +5570,15 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     printf("param contract (#148): reject %lld batch + %lld lookback, sentinel %lld batch "
            "+ %lld lookback; %lld lookback case(s) total\n",
            ctx.oorCases, ctx.lbOorCases, ctx.sentCases, ctx.lbSentCases, ctx.lbCases);
+    printf("  of the sentinel cases, %lld batch + %lld lookback put it on a CHOICE-LIST "
+           "parameter (#162)%s\n",
+           ctx.sentEnumCases, ctx.lbSentEnumCases,
+           ctx.sentEnumSkipped ? "" : " — none skipped");
+    if( ctx.sentEnumSkipped > 0 )
+        printf("  (%lld more NOT asked of a server whose typed enum cannot carry the "
+               "sentinel — Java: MAType is a real enum and Core takes MAType, so "
+               "(MAType)Integer.MIN_VALUE cannot be constructed. Type safety discharges "
+               "#162 there rather than a check.)\n", ctx.sentEnumSkipped);
 
     free(ctx.reqBuf); free(ctx.respBuf);
 
@@ -5547,6 +5630,24 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                "%lld batch / %lld lookback — no vector any language had to reject or "
                "resolve, so the parameter contract is not gated at all.\n",
                ctx.oorCases, ctx.lbOorCases, ctx.sentCases, ctx.lbSentCases);
+        return TA_CODEGEN_OUTPUT_MISMATCH;
+    }
+    /* The choice-list sentinel needs a floor of its OWN. It is a strict subset of
+     * sentCases and the range params alone keep that in the thousands, so with
+     * this leg excluded the guard above stays green — which is how #162 survived.
+     * Requiring an enum-capable server to be open keeps `--language=java`, whose
+     * skip is legitimate, from tripping it. */
+    int enumCapableOpen = 0;
+    for( int s = 0; s < nsv; s++ )
+        if( servers[s].open && servers[s].enumSentinel ) enumCapableOpen = 1;
+    if( !functionFilter && enumCapableOpen && ctx.comparisons > 0 &&
+        (ctx.sentEnumCases == 0 || ctx.lbSentEnumCases == 0) )
+    {
+        printf("FAIL — VACUOUS CHOICE-LIST SENTINEL LEG: %lld batch / %lld lookback case(s) "
+               "put TA_INTEGER_DEFAULT on an enum:MAType parameter. That leg is what gates "
+               "issue #162; with none of it running, a backend can stop substituting the "
+               "declared default and every other count here stays healthy.\n",
+               ctx.sentEnumCases, ctx.lbSentEnumCases);
         return TA_CODEGEN_OUTPUT_MISMATCH;
     }
     if( totalMism == 0 && inFails == 0 && ctx.error == TA_TEST_PASS )
