@@ -173,6 +173,46 @@ fn is_int_array_or_vec(name: &str, ctx: &RustRenderCtx) -> bool {
         || ctx.int_output_names.contains(name)
 }
 
+/// Does this expression evaluate to `i32` because an `int` array element drives it?
+///
+/// True for a subscript of an `int` array, and — recursively — for arithmetic over
+/// one whose other operand cannot widen the result (another such subscript, or an
+/// integer literal).
+///
+/// This is deliberately **not** folded into [`expr_is_i32_typed_ctx`]. That
+/// predicate feeds the sentinel test (`ctx-typed i32 && !plain-typed i32`), so
+/// teaching it about arrays would make every `int` array element look like an
+/// opt-param sentinel and route the comparison down the branch that narrows the
+/// *other* side with `as i32` — turning `(periods[j] as usize) > longestPeriod`
+/// into `periods[j] > (longestPeriod as i32)`, an index-domain value narrowed to
+/// i32. Keeping it separate leaves a direct subscript rendering exactly as before
+/// and extends only the nested case. Issue #163.
+fn expr_is_int_array_typed(expr: &Expr, ctx: &RustRenderCtx) -> bool {
+    match expr {
+        Expr::ArrayAccess(name, _) => is_int_array_or_vec(name, ctx),
+        Expr::BinOp(
+            left,
+            BinOp::Add
+            | BinOp::Sub
+            | BinOp::Mul
+            | BinOp::Div
+            | BinOp::Mod
+            | BinOp::Shl
+            | BinOp::Shr
+            | BinOp::BitwiseAnd
+            | BinOp::BitwiseOr
+            | BinOp::BitwiseXor,
+            right,
+        ) => {
+            let stays_i32 =
+                |e: &Expr| expr_is_int_array_typed(e, ctx) || matches!(e, Expr::IntLiteral(_));
+            expr_is_int_array_typed(left, ctx) && stays_i32(right)
+                || expr_is_int_array_typed(right, ctx) && matches!(left.as_ref(), Expr::IntLiteral(_))
+        }
+        _ => false,
+    }
+}
+
 #[allow(clippy::implicit_hasher)]
 pub fn generate(
     func: &FuncDef,
@@ -3456,8 +3496,8 @@ fn render_binop(
         }
         // Cast i32 operands to usize when mixed with usize-typed operands (not float)
         // Also detect i32 array accesses (IntArray/IntPointer)
-        let arith_left_is_i32_arr = matches!(left, Expr::ArrayAccess(ref name, _) if is_int_array_or_vec(name, ctx));
-        let arith_right_is_i32_arr = matches!(right, Expr::ArrayAccess(ref name, _) if is_int_array_or_vec(name, ctx));
+        let arith_left_is_i32_arr = expr_is_int_array_typed(left, ctx);
+        let arith_right_is_i32_arr = expr_is_int_array_typed(right, ctx);
         let left_is_i32_eff = left_is_i32 || arith_left_is_i32_arr;
         let right_is_i32_eff = right_is_i32 || arith_right_is_i32_arr;
         let left_is_usize = !left_is_i32_eff && !left_is_float && !left_is_int_lit;
@@ -3536,8 +3576,8 @@ fn render_binop(
             }
         }
         // Also detect i32 array accesses (IntArray/IntPointer) using context
-        let left_is_i32_arr = matches!(left, Expr::ArrayAccess(ref name, _) if is_int_array_or_vec(name, ctx));
-        let right_is_i32_arr = matches!(right, Expr::ArrayAccess(ref name, _) if is_int_array_or_vec(name, ctx));
+        let left_is_i32_arr = expr_is_int_array_typed(left, ctx);
+        let right_is_i32_arr = expr_is_int_array_typed(right, ctx);
         let left_is_i32_eff = left_is_i32 || left_is_i32_arr;
         let right_is_i32_eff = right_is_i32 || right_is_i32_arr;
         if left_is_i32_eff && !right_is_i32_eff && !right_is_float && !right_is_int_lit && !cmp_left_sentinel {

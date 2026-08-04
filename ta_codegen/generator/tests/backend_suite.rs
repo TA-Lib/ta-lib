@@ -8421,3 +8421,102 @@ TA_RetCode max( int    startIdx,
         out.java
     );
 }
+
+/// Issue #163: arithmetic over an `int` array element, compared against a
+/// `usize`-typed variable, must carry a cast. `expr_is_i32_typed` recurses through
+/// arithmetic but has no `ArrayAccess` arm, while `render_binop`'s array tests knew
+/// about `int` arrays but matched a *direct* subscript only — so `dqI[hd] + 1`
+/// was typed by neither and rendered bare, failing to compile with E0308.
+///
+/// The two shapes that already worked are asserted alongside the four that did
+/// not, because they are what pin the root cause: a plain `int` local is usize in
+/// Rust and needs nothing, and an expression with a usize operand already got its
+/// cast from the arithmetic arm. A fix that changed either of those would be
+/// reaching too far — that is how the first attempt at this turned
+/// `(periods[j] as usize) > longestPeriod` into `periods[j] > (longestPeriod as
+/// i32)` in ULTOSC, narrowing an index-domain value.
+#[test]
+fn arithmetic_over_int_array_elements_is_typed_i32() {
+    let source = r#"
+int max_lookback( int optInTimePeriod )
+{
+   return (optInTimePeriod-1);
+}
+
+TA_RetCode max( int    startIdx,
+                int    endIdx,
+                const double inReal[],
+                int    optInTimePeriod,
+                int   *outBegIdx,
+                int   *outNBElement,
+                double outReal[] )
+{
+   int outIdx, trailingIdx, today;
+   int dqI[4];
+   int hd;
+
+   hd = 0;
+   dqI[hd] = startIdx;
+   outIdx = 0;
+   today = startIdx;
+   trailingIdx = startIdx;
+
+   while( today <= endIdx )
+   {
+      if( dqI[hd] + 1 < today )        /* was E0308 */
+         hd = 0;
+      if( dqI[hd] - 1 < today )        /* was E0308 */
+         hd = 0;
+      if( dqI[hd] * 2 < today )        /* was E0308 */
+         hd = 0;
+      if( dqI[hd] << 1 < today )       /* was E0308 */
+         hd = 0;
+      if( hd + 1 < today )             /* control: plain int local, already usize */
+         hd = 0;
+      if( trailingIdx + dqI[hd] < today )  /* control: usize operand present */
+         hd = 0;
+
+      outReal[outIdx++] = inReal[today];
+      trailingIdx++;
+      today++;
+   }
+
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("max", source);
+    let out = generate_all(&func, &enums);
+
+    // The four that did not compile now cast, in the usize (index) domain, and
+    // the cast is fully parenthesized — it sits on the left of a `<`, so without
+    // #159's wrap_cast this would not even parse.
+    for needle in [
+        "((dqI[hd] + 1) as usize) < today",
+        "((dqI[hd] - 1) as usize) < today",
+        "((dqI[hd] * 2) as usize) < today",
+        "((dqI[hd] << 1) as usize) < today",
+    ] {
+        assert!(
+            out.rust.contains(needle),
+            "Rust output missing `{needle}`:\n{}",
+            out.rust
+        );
+    }
+
+    // The two that already worked are untouched — no cast appears on either.
+    for needle in ["if hd + 1 < today {", "if trailingIdx + ((dqI[hd]) as usize) < today {"] {
+        assert!(
+            out.rust.contains(needle),
+            "Rust output should leave `{needle}` unchanged:\n{}",
+            out.rust
+        );
+    }
+
+    check_rust_cast_parens(&out.rust, "max/#163");
+
+    // C and Java compare directly; neither has a cast to place.
+    assert!(out.c.contains("if( dqI[hd] + 1 < today )"), "C changed:\n{}", out.c);
+    assert!(out.java.contains("if( dqI[hd] + 1 < today )"), "Java changed:\n{}", out.java);
+}
