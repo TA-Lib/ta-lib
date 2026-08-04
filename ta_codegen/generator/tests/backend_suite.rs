@@ -8619,3 +8619,58 @@ fn cast_parens_gate_flags_only_the_ambiguous_operators() {
         );
     }
 }
+
+/// An empty C comment must not abort `generate`. `/*  */` is ordinary C, and
+/// `/* * */` reduces to the same thing because the lone `*` is eaten as a
+/// continuation prefix; both reached `block_comment` with zero lines, which
+/// indexed `lines[1..]` on an empty slice and panicked out of the whole run.
+///
+/// Found by a synth3 fixture that happened to label a multiply with `/* * */`.
+#[test]
+fn empty_c_comments_do_not_abort_generation() {
+    for comment in ["/*  */", "/* * */", "/**/", "/*\n    *\n    */"] {
+        let source = format!(
+            r#"
+int max_lookback( int optInTimePeriod )
+{{
+   return (optInTimePeriod-1);
+}}
+
+TA_RetCode max( int    startIdx,
+                int    endIdx,
+                const double inReal[],
+                int    optInTimePeriod,
+                int   *outBegIdx,
+                int   *outNBElement,
+                double outReal[] )
+{{
+   int outIdx, i;
+
+   outIdx = 0;
+   for( i=startIdx; i <= endIdx; i++ )
+   {{
+      {comment}
+      outReal[outIdx++] = inReal[i];
+   }}
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}}
+"#
+        );
+        let (func, enums) = load_indicator_with_source("max", &source);
+        let out = generate_all(&func, &enums);
+        for (lang, text) in [("C", &out.c), ("Rust", &out.rust), ("Java", &out.java)] {
+            assert!(
+                !text.is_empty(),
+                "{lang} output empty for comment {comment:?}"
+            );
+        }
+        // The body still renders; the comment must not have eaten it.
+        assert!(
+            out.c.contains("outReal[outIdx++] = inReal[i];"),
+            "C body lost after comment {comment:?}:\n{}",
+            out.c
+        );
+    }
+}
