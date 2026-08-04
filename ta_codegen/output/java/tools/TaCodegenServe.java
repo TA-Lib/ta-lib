@@ -184356,15 +184356,16 @@ public class TaCodegenServe {
         AbsOut(int t, String p, int f) { type = t; paramName = p; flags = f; }
     }
     static final class AbsOpt {
-        final int type; final String paramName; final int flags; final String displayName; final double defaultValue;
+        final int type; final String paramName; final int flags; final String displayName;
+        final String hint; final double defaultValue;
         final double rmin, rmax; final int precision; final double rsugS, rsugE, rsugI; // RealRange
         final int imin, imax, isugS, isugE, isugI;                                      // IntegerRange
         final String valueList;                                                          // IntegerList
-        AbsOpt(int type, String paramName, int flags, String displayName, double defaultValue,
+        AbsOpt(int type, String paramName, int flags, String displayName, String hint, double defaultValue,
                double rmin, double rmax, int precision, double rsugS, double rsugE, double rsugI,
                int imin, int imax, int isugS, int isugE, int isugI, String valueList) {
             this.type = type; this.paramName = paramName; this.flags = flags;
-            this.displayName = displayName; this.defaultValue = defaultValue;
+            this.displayName = displayName; this.hint = hint; this.defaultValue = defaultValue;
             this.rmin = rmin; this.rmax = rmax; this.precision = precision;
             this.rsugS = rsugS; this.rsugE = rsugE; this.rsugI = rsugI;
             this.imin = imin; this.imax = imax; this.isugS = isugS; this.isugE = isugE; this.isugI = isugI;
@@ -184384,7 +184385,7 @@ public class TaCodegenServe {
     static {
         ABSTRACT.put("ACCBANDS", new AbsFunc("ACCBANDS", "Overlap Studies", "Acceleration Bands", "Accbands", 50331648,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
         ABSTRACT.put("ACOS", new AbsFunc("ACOS", "Math Transform", "Vector Trigonometric ACos", "Acos", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -184400,27 +184401,27 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ADOSC", new AbsFunc("ADOSC", "Volume Indicators", "Chaikin A/D Oscillator", "AdOsc", 570425344,
             new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",3.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",3.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ADX", new AbsFunc("ADX", "Momentum Indicators", "Average Directional Movement Index", "Adx", 167772160,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ADXR", new AbsFunc("ADXR", "Momentum Indicators", "Average Directional Movement Index Rating", "Adxr", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("APO", new AbsFunc("APO", "Momentum Indicators", "Absolute Price Oscillator", "Apo", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("AROON", new AbsFunc("AROON", "Momentum Indicators", "Aroon", "Aroon", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outAroonDown",4), new AbsOut(0,"outAroonUp",1) }));
         ABSTRACT.put("AROONOSC", new AbsFunc("AROONOSC", "Momentum Indicators", "Aroon Oscillator", "AroonOsc", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ASIN", new AbsFunc("ASIN", "Math Transform", "Vector Trigonometric ASin", "Asin", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -184432,11 +184433,11 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ATR", new AbsFunc("ATR", "Volatility Indicators", "Average True Range", "Atr", 167772160,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("AVGDEV", new AbsFunc("AVGDEV", "Price Transform", "Average Deviation", "AvgDev", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("AVGPRICE", new AbsFunc("AVGPRICE", "Price Transform", "Average Price", "AvgPrice", 50331648,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
@@ -184444,11 +184445,11 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("BBANDS", new AbsFunc("BBANDS", "Overlap Studies", "Bollinger Bands", "Bbands", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
         ABSTRACT.put("BETA", new AbsFunc("BETA", "Statistic Functions", "Beta", "Beta", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("BOP", new AbsFunc("BOP", "Momentum Indicators", "Balance Of Power", "Bop", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
@@ -184456,7 +184457,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("CCI", new AbsFunc("CCI", "Momentum Indicators", "Commodity Channel Index", "Cci", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("CDL2CROWS", new AbsFunc("CDL2CROWS", "Pattern Recognition", "Two Crows", "Cdl2Crows", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
@@ -184488,7 +184489,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("CDLABANDONEDBABY", new AbsFunc("CDLABANDONEDBABY", "Pattern Recognition", "Abandoned Baby", "CdlAbandonedBaby", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
-            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("CDLADVANCEBLOCK", new AbsFunc("CDLADVANCEBLOCK", "Pattern Recognition", "Advance Block", "CdlAdvanceBlock", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
@@ -184516,7 +184517,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("CDLDARKCLOUDCOVER", new AbsFunc("CDLDARKCLOUDCOVER", "Pattern Recognition", "Dark Cloud Cover", "CdlDarkCloudCover", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
-            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.5, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.5, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("CDLDOJI", new AbsFunc("CDLDOJI", "Pattern Recognition", "Doji", "CdlDoji", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
@@ -184536,11 +184537,11 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("CDLEVENINGDOJISTAR", new AbsFunc("CDLEVENINGDOJISTAR", "Pattern Recognition", "Evening Doji Star", "CdlEveningDojiStar", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
-            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("CDLEVENINGSTAR", new AbsFunc("CDLEVENINGSTAR", "Pattern Recognition", "Evening Star", "CdlEveningStar", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
-            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("CDLGAPSIDESIDEWHITE", new AbsFunc("CDLGAPSIDESIDEWHITE", "Pattern Recognition", "Up/Down-gap side-by-side white lines", "CdlGapSideSideWhite", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
@@ -184624,15 +184625,15 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("CDLMATHOLD", new AbsFunc("CDLMATHOLD", "Pattern Recognition", "Mat Hold", "CdlMatHold", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
-            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.5, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.5, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("CDLMORNINGDOJISTAR", new AbsFunc("CDLMORNINGDOJISTAR", "Pattern Recognition", "Morning Doji Star", "CdlMorningDojiStar", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
-            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("CDLMORNINGSTAR", new AbsFunc("CDLMORNINGSTAR", "Pattern Recognition", "Morning Star", "CdlMorningStar", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
-            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("CDLONNECK", new AbsFunc("CDLONNECK", "Pattern Recognition", "On-Neck Pattern", "CdlOnNeck", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
@@ -184708,19 +184709,19 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("CMF", new AbsFunc("CMF", "Volume Indicators", "Chaikin Money Flow", "Cmf", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("CMO", new AbsFunc("CMO", "Momentum Indicators", "Chande Momentum Oscillator", "Cmo", 167772160,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("CMOU", new AbsFunc("CMOU", "Momentum Indicators", "Chande Momentum Oscillator (Unsmoothed)", "Cmou", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("CORREL", new AbsFunc("CORREL", "Statistic Functions", "Pearson's Correlation Coefficient (r)", "Correl", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("COS", new AbsFunc("COS", "Math Transform", "Vector Trigonometric Cos", "Cos", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -184732,7 +184733,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("DEMA", new AbsFunc("DEMA", "Overlap Studies", "Double Exponential Moving Average", "Dema", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("DIV", new AbsFunc("DIV", "Math Operators", "Vector Arithmetic Div", "Div", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
@@ -184740,11 +184741,11 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("DX", new AbsFunc("DX", "Momentum Indicators", "Directional Movement Index", "Dx", 167772160,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("EMA", new AbsFunc("EMA", "Overlap Studies", "Exponential Moving Average", "Ema", 184549376,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("EXP", new AbsFunc("EXP", "Math Transform", "Vector Arithmetic Exp", "Exp", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -184756,7 +184757,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("HMA", new AbsFunc("HMA", "Overlap Studies", "Hull Moving Average", "Hma", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("HT_DCPERIOD", new AbsFunc("HT_DCPERIOD", "Cycle Indicators", "Hilbert Transform - Dominant Cycle Period", "HtDcPeriod", 167772160,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -184784,27 +184785,27 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("IMI", new AbsFunc("IMI", "Momentum Indicators", "Intraday Momentum Index", "Imi", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceOC",9) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("KAMA", new AbsFunc("KAMA", "Overlap Studies", "Kaufman Adaptive Moving Average", "Kama", 184549376,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("LINEARREG", new AbsFunc("LINEARREG", "Statistic Functions", "Linear Regression", "LinearReg", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("LINEARREG_ANGLE", new AbsFunc("LINEARREG_ANGLE", "Statistic Functions", "Linear Regression Angle", "LinearRegAngle", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("LINEARREG_INTERCEPT", new AbsFunc("LINEARREG_INTERCEPT", "Statistic Functions", "Linear Regression Intercept", "LinearRegIntercept", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("LINEARREG_SLOPE", new AbsFunc("LINEARREG_SLOPE", "Statistic Functions", "Linear Regression Slope", "LinearRegSlope", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("LN", new AbsFunc("LN", "Math Transform", "Vector Log Natural", "Ln", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -184816,35 +184817,35 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MA", new AbsFunc("MA", "Overlap Studies", "Moving average", "MovingAverage", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MACD", new AbsFunc("MACD", "Momentum Indicators", "Moving Average Convergence/Divergence", "Macd", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
         ABSTRACT.put("MACDEXT", new AbsFunc("MACDEXT", "Momentum Indicators", "MACD with controllable MA type", "MacdExt", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInFastMAType",0,"Fast MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED"), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInSlowMAType",0,"Slow MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED"), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSignalMAType",0,"Signal MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInFastMAType",0,"Fast MA","Type of Moving Average for fast MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED"), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInSlowMAType",0,"Slow MA","Type of Moving Average for slow MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED"), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSignalMAType",0,"Signal MA","Type of Moving Average for signal line",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
             new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
         ABSTRACT.put("MACDFIX", new AbsFunc("MACDFIX", "Momentum Indicators", "Moving Average Convergence/Divergence Fix 12/26", "MacdFix", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInSignalPeriod",0,"Signal Period",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
         ABSTRACT.put("MAMA", new AbsFunc("MAMA", "Overlap Studies", "MESA Adaptive Moving Average", "Mama", 184549376,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(0,"optInFastLimit",0,"Fast Limit",0.5, 0.01,0.99,2,0.21,0.8,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInSlowLimit",0,"Slow Limit",0.05, 0.01,0.99,2,0.01,0.6,0.01, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(0,"optInFastLimit",0,"Fast Limit","Upper limit use in the adaptive algorithm",0.5, 0.01,0.99,2,0.21,0.8,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInSlowLimit",0,"Slow Limit","Lower limit use in the adaptive algorithm",0.05, 0.01,0.99,2,0.01,0.6,0.01, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outMAMA",1), new AbsOut(0,"outFAMA",8196) }));
         ABSTRACT.put("MAVP", new AbsFunc("MAVP", "Overlap Studies", "Moving average with variable period", "MovingAverageVariablePeriod", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(1,"inPeriods",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInMinPeriod",0,"Minimum Period",2.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMaxPeriod",0,"Maximum Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
+            new AbsOpt[]{ new AbsOpt(2,"optInMinPeriod",0,"Minimum Period","Value less than minimum will be changed to Minimum period",2.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMaxPeriod",0,"Maximum Period","Value higher than maximum will be changed to Maximum period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MAX", new AbsFunc("MAX", "Math Operators", "Highest value over a specified period", "Max", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MAXINDEX", new AbsFunc("MAXINDEX", "Math Operators", "Index of highest value over a specified period", "MaxIndex", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("MEDPRICE", new AbsFunc("MEDPRICE", "Price Transform", "Median Price", "MedPrice", 50331648,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
@@ -184852,43 +184853,43 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MFI", new AbsFunc("MFI", "Momentum Indicators", "Money Flow Index", "Mfi", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MIDPOINT", new AbsFunc("MIDPOINT", "Overlap Studies", "MidPoint over period", "MidPoint", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MIDPRICE", new AbsFunc("MIDPRICE", "Overlap Studies", "Midpoint Price over period", "MidPrice", 50331648,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MIN", new AbsFunc("MIN", "Math Operators", "Lowest value over a specified period", "Min", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MININDEX", new AbsFunc("MININDEX", "Math Operators", "Index of lowest value over a specified period", "MinIndex", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("MINMAX", new AbsFunc("MINMAX", "Math Operators", "Lowest and highest values over a specified period", "MinMax", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outMin",1), new AbsOut(0,"outMax",1) }));
         ABSTRACT.put("MINMAXINDEX", new AbsFunc("MINMAXINDEX", "Math Operators", "Indexes of lowest and highest values over a specified period", "MinMaxIndex", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(1,"outMinIdx",1), new AbsOut(1,"outMaxIdx",1) }));
         ABSTRACT.put("MINUS_DI", new AbsFunc("MINUS_DI", "Momentum Indicators", "Minus Directional Indicator", "MinusDI", 167772160,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MINUS_DM", new AbsFunc("MINUS_DM", "Momentum Indicators", "Minus Directional Movement", "MinusDM", 167772160,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MOM", new AbsFunc("MOM", "Momentum Indicators", "Momentum", "Mom", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MULT", new AbsFunc("MULT", "Math Operators", "Vector Arithmetic Mult", "Mult", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
@@ -184896,7 +184897,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("NATR", new AbsFunc("NATR", "Volatility Indicators", "Normalized Average True Range", "Natr", 167772160,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("NVI", new AbsFunc("NVI", "Volume Indicators", "Negative Volume Index", "Nvi", 570425344,
             new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
@@ -184908,15 +184909,15 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PLUS_DI", new AbsFunc("PLUS_DI", "Momentum Indicators", "Plus Directional Indicator", "PlusDI", 167772160,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PLUS_DM", new AbsFunc("PLUS_DM", "Momentum Indicators", "Plus Directional Movement", "PlusDM", 167772160,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PPO", new AbsFunc("PPO", "Momentum Indicators", "Percentage Price Oscillator", "Ppo", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PVI", new AbsFunc("PVI", "Volume Indicators", "Positive Volume Index", "Pvi", 570425344,
             new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
@@ -184924,35 +184925,35 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PVO", new AbsFunc("PVO", "Volume Indicators", "Percentage Volume Oscillator", "Pvo", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceV",16) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ROC", new AbsFunc("ROC", "Momentum Indicators", "Rate of change : ((price/prevPrice)-1)*100", "Roc", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ROCP", new AbsFunc("ROCP", "Momentum Indicators", "Rate of change Percentage: (price-prevPrice)/prevPrice", "RocP", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ROCR", new AbsFunc("ROCR", "Momentum Indicators", "Rate of change ratio: (price/prevPrice)", "RocR", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ROCR100", new AbsFunc("ROCR100", "Momentum Indicators", "Rate of change ratio 100 scale: (price/prevPrice)*100", "RocR100", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("RSI", new AbsFunc("RSI", "Momentum Indicators", "Relative Strength Index", "Rsi", 167772160,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("SAR", new AbsFunc("SAR", "Overlap Studies", "Parabolic SAR", "Sar", 587202560,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
-            new AbsOpt[]{ new AbsOpt(0,"optInAcceleration",0,"Acceleration Factor",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInMaximum",0,"AF Maximum",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(0,"optInAcceleration",0,"Acceleration Factor","Acceleration Factor used up to the Maximum value",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInMaximum",0,"AF Maximum","Acceleration Factor Maximum value",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("SAREXT", new AbsFunc("SAREXT", "Overlap Studies", "Parabolic SAR - Extended", "SarExt", 587202560,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
-            new AbsOpt[]{ new AbsOpt(0,"optInStartValue",0,"Start Value",0.0, -3e37,3e37,4,0.0,0.0,0.0, 0,0,0,0,0, null), new AbsOpt(0,"optInOffsetOnReverse",0,"Offset on Reverse",0.0, 0.0,3e37,4,0.01,0.15,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationInitLong",0,"AF Init Long",0.02, 0.0,3e37,4,0.01,0.19,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationLong",0,"AF Long",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationMaxLong",0,"AF Max Long",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationInitShort",0,"AF Init Short",0.02, 0.0,3e37,4,0.01,0.19,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationShort",0,"AF Short",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationMaxShort",0,"AF Max Short",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(0,"optInStartValue",0,"Start Value","Start value and direction. 0 for Auto, >0 for Long, <0 for Short",0.0, -3e37,3e37,4,0.0,0.0,0.0, 0,0,0,0,0, null), new AbsOpt(0,"optInOffsetOnReverse",0,"Offset on Reverse","Percent offset added/removed to initial stop on short/long reversal",0.0, 0.0,3e37,4,0.01,0.15,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationInitLong",0,"AF Init Long","Acceleration Factor initial value for the Long direction",0.02, 0.0,3e37,4,0.01,0.19,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationLong",0,"AF Long","Acceleration Factor for the Long direction",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationMaxLong",0,"AF Max Long","Acceleration Factor maximum value for the Long direction",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationInitShort",0,"AF Init Short","Acceleration Factor initial value for the Short direction",0.02, 0.0,3e37,4,0.01,0.19,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationShort",0,"AF Short","Acceleration Factor for the Short direction",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationMaxShort",0,"AF Max Short","Acceleration Factor maximum value for the Short direction",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("SIN", new AbsFunc("SIN", "Math Transform", "Vector Trigonometric Sin", "Sin", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -184964,7 +184965,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("SMA", new AbsFunc("SMA", "Overlap Studies", "Simple Moving Average", "Sma", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("SQRT", new AbsFunc("SQRT", "Math Transform", "Vector Square Root", "Sqrt", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -184972,19 +184973,19 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("STDDEV", new AbsFunc("STDDEV", "Statistic Functions", "Standard Deviation", "StdDev", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",5.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations",1.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations","Nb of deviations",1.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("STOCH", new AbsFunc("STOCH", "Momentum Indicators", "Stochastic", "Stoch", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
             new AbsOut[]{ new AbsOut(0,"outSlowK",4), new AbsOut(0,"outSlowD",4) }));
         ABSTRACT.put("STOCHF", new AbsFunc("STOCHF", "Momentum Indicators", "Stochastic Fast", "StochF", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
             new AbsOut[]{ new AbsOut(0,"outFastK",1), new AbsOut(0,"outFastD",1) }));
         ABSTRACT.put("STOCHRSI", new AbsFunc("STOCHRSI", "Momentum Indicators", "Stochastic Relative Strength Index", "StochRsi", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED") },
             new AbsOut[]{ new AbsOut(0,"outFastK",1), new AbsOut(0,"outFastD",1) }));
         ABSTRACT.put("SUB", new AbsFunc("SUB", "Math Operators", "Vector Arithmetic Subtraction", "Sub", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
@@ -184992,11 +184993,11 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("SUM", new AbsFunc("SUM", "Math Operators", "Summation", "Sum", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("T3", new AbsFunc("T3", "Overlap Studies", "Triple Exponential Moving Average (T3)", "T3", 184549376,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInVFactor",0,"Volume Factor",0.7, 0.0,1.0,2,0.01,1.0,0.05, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInVFactor",0,"Volume Factor","Volume Factor",0.7, 0.0,1.0,2,0.01,1.0,0.05, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("TAN", new AbsFunc("TAN", "Math Transform", "Vector Trigonometric Tan", "Tan", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -185008,7 +185009,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("TEMA", new AbsFunc("TEMA", "Overlap Studies", "Triple Exponential Moving Average", "Tema", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("TRANGE", new AbsFunc("TRANGE", "Volatility Indicators", "True Range", "TrueRange", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
@@ -185016,15 +185017,15 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("TRIMA", new AbsFunc("TRIMA", "Overlap Studies", "Triangular Moving Average", "Trima", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("TRIX", new AbsFunc("TRIX", "Momentum Indicators", "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA", "Trix", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("TSF", new AbsFunc("TSF", "Statistic Functions", "Time Series Forecast", "Tsf", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("TYPPRICE", new AbsFunc("TYPPRICE", "Price Transform", "Typical Price", "TypPrice", 50331648,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
@@ -185032,15 +185033,15 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("ULTOSC", new AbsFunc("ULTOSC", "Momentum Indicators", "Ultimate Oscillator", "UltOsc", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod1",0,"First Period",7.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInTimePeriod2",0,"Second Period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInTimePeriod3",0,"Third Period",28.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod1",0,"First Period","Number of bars for 1st period.",7.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInTimePeriod2",0,"Second Period","Number of bars fro 2nd period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInTimePeriod3",0,"Third Period","Number of bars for 3rd period",28.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("VAR", new AbsFunc("VAR", "Statistic Functions", "Variance", "Variance", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations",1.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations","Nb of deviations",1.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("VWMA", new AbsFunc("VWMA", "Overlap Studies", "Volume Weighted Moving Average", "Vwma", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(0,"inPriceV",16) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("WCLPRICE", new AbsFunc("WCLPRICE", "Price Transform", "Weighted Close Price", "WclPrice", 50331648,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
@@ -185048,11 +185049,11 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("WILLR", new AbsFunc("WILLR", "Momentum Indicators", "Williams' %R", "WillR", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("WMA", new AbsFunc("WMA", "Overlap Studies", "Weighted Moving Average", "Wma", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
     }
 
@@ -185095,6 +185096,7 @@ public class TaCodegenServe {
             .append(",\"paramName\":").append(absStr(o.paramName))
             .append(",\"flags\":").append(o.flags)
             .append(",\"displayName\":").append(absStr(o.displayName))
+            .append(",\"hint\":").append(absStr(o.hint))
             .append(",\"defaultValue\":").append(o.defaultValue);
         if (o.type == 0) { // RealRange
             b.append(",\"min\":").append(o.rmin).append(",\"max\":").append(o.rmax)

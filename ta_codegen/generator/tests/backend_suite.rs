@@ -7568,3 +7568,149 @@ fn rust_index_domain_never_narrows_to_i32() {
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// The shared abstract row model
+// ---------------------------------------------------------------------------
+//
+// `backends::abstract_rows` is the one derivation the Rust registry, the Java
+// server table, the shipped Java registry and the shipped C# registry all
+// render. These pin the facts that used to be hand-maintained inside one
+// backend, plus the two domains that are currently unreachable — so the day one
+// appears, the sweep names the renderers that need a look.
+
+/// Load every shipped definition once, as the abstract rows.
+fn all_abstract_rows() -> Vec<ta_codegen_lib::backends::abstract_rows::FuncRow> {
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    let enums = parser::enums::load_enums(&base.join("enums.yaml"));
+    let funcs: Vec<ir::FuncDef> = discover_indicators()
+        .iter()
+        .map(|n| parser::yaml::parse_yaml(&base.join(format!("{n}/{n}.yaml"))))
+        .collect();
+    backends::abstract_rows::rows(&funcs, &enums)
+}
+
+/// The unstable-period set used to live as a 20-arm hardcoded name -> variant
+/// `match` inside `rust_abstract`, duplicating `enums.yaml`. It is now resolved
+/// by name (`TA_FUNC_UNST_<NAME>`), the same derivation the servers use. This
+/// pins the resulting set both ways: a lost mapping and a spurious one both fail.
+#[test]
+fn abstract_rows_unstable_period_set_is_exactly_the_twenty() {
+    const EXPECTED: &[(&str, &str)] = &[
+        ("ADX", "Adx"),
+        ("ATR", "Atr"),
+        ("CMO", "Cmo"),
+        ("DX", "Dx"),
+        ("EMA", "Ema"),
+        ("HT_DCPERIOD", "HtDcPeriod"),
+        ("HT_DCPHASE", "HtDcPhase"),
+        ("HT_PHASOR", "HtPhasor"),
+        ("HT_SINE", "HtSine"),
+        ("HT_TRENDLINE", "HtTrendline"),
+        ("HT_TRENDMODE", "HtTrendMode"),
+        ("KAMA", "Kama"),
+        ("MAMA", "Mama"),
+        ("MINUS_DI", "MinusDI"),
+        ("MINUS_DM", "MinusDM"),
+        ("NATR", "Natr"),
+        ("PLUS_DI", "PlusDI"),
+        ("PLUS_DM", "PlusDM"),
+        ("RSI", "Rsi"),
+        ("T3", "T3"),
+    ];
+
+    let rows = all_abstract_rows();
+    let mut got: Vec<(String, String)> = rows
+        .iter()
+        .filter_map(|r| r.unst.as_ref().map(|u| (r.name.clone(), u.pascal_name.clone())))
+        .collect();
+    got.sort();
+    let mut want: Vec<(String, String)> =
+        EXPECTED.iter().map(|(a, b)| ((*a).to_string(), (*b).to_string())).collect();
+    want.sort();
+    assert_eq!(got, want, "unstable-period set changed (name -> FuncUnstId variant)");
+
+    // The `unstable_period` function flag and the resolved id must not disagree:
+    // one without the other means a function that says it is recursive but has
+    // no state slot, or a slot nothing declares.
+    for r in &rows {
+        let flagged = r.flags & 0x0800_0000 != 0;
+        assert_eq!(
+            flagged,
+            r.unst.is_some(),
+            "{}: unstable_period flag ({flagged}) disagrees with its FuncUnstId ({:?})",
+            r.name,
+            r.unst.as_ref().map(|u| &u.c_name)
+        );
+    }
+}
+
+/// Every shipped `group:` string must parse into the closed `Group` set, and
+/// every variant must render back to the exact display string C's
+/// `TA_GroupString` and the YAML use.
+#[test]
+fn abstract_rows_group_strings_round_trip() {
+    use ta_codegen_lib::backends::abstract_rows::Group;
+    for g in Group::ALL {
+        assert_eq!(Group::parse(g.as_str()), *g, "group round-trip for {}", g.as_str());
+    }
+    let rows = all_abstract_rows();
+    for g in Group::ALL {
+        // Not an emptiness check: every declared group must actually be used,
+        // so a retired group cannot linger in the closed set unnoticed.
+        assert!(
+            rows.iter().any(|r| r.group == *g),
+            "no shipped function is in group {}",
+            g.as_str()
+        );
+    }
+}
+
+/// Two shapes the model can express that nothing currently declares. Pinned
+/// rather than asserted away: the renderers each have an arm for them that no
+/// gate exercises, so the day a definition uses one, this says so by name.
+#[test]
+fn abstract_rows_unreachable_domains_stay_unreachable() {
+    use ta_codegen_lib::backends::abstract_rows::{InputKind, OptDomain};
+    for r in all_abstract_rows() {
+        for o in &r.opt_inputs {
+            assert!(
+                !matches!(o.domain, OptDomain::RealList { .. }),
+                "{}.{} is the first real-list parameter — re-check the RealList arm in \
+                 rust_abstract, java_abstract, java_metadata and csharp_metadata",
+                r.name,
+                o.param_name
+            );
+        }
+        for i in &r.inputs {
+            assert!(
+                i.kind != InputKind::Integer,
+                "{}.{} is the first integer input — re-check every registry's Integer arm \
+                 and the ParamHolder/dispatch binding",
+                r.name,
+                i.param_name
+            );
+        }
+    }
+}
+
+/// A price bundle is ONE parameter carrying a component bitmask, not N arrays.
+/// `Core.Adx` takes three `double[]`, but `TA_FuncInfo.nbInput` for ADX is 1 —
+/// the fold every registry inherits from `price_bundle`.
+#[test]
+fn abstract_rows_price_bundle_is_one_parameter() {
+    use ta_codegen_lib::backends::abstract_rows::InputKind;
+    const HLC: u32 = 0x0000_0002 | 0x0000_0004 | 0x0000_0008;
+    let rows = all_abstract_rows();
+    let adx = rows.iter().find(|r| r.name == "ADX").expect("ADX row");
+    assert_eq!(adx.inputs.len(), 1, "ADX must present one bundled price input");
+    assert_eq!(adx.inputs[0].kind, InputKind::Price);
+    assert_eq!(adx.inputs[0].param_name, "inPriceHLC");
+    assert_eq!(adx.inputs[0].flags, HLC, "ADX's bundle is exactly H+L+C");
+
+    // And the non-bundled case still carries no component bits.
+    let sma = rows.iter().find(|r| r.name == "SMA").expect("SMA row");
+    assert_eq!(sma.inputs.len(), 1);
+    assert_eq!(sma.inputs[0].kind, InputKind::Real);
+    assert_eq!(sma.inputs[0].flags, 0);
+}

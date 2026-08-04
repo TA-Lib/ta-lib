@@ -294,6 +294,12 @@ static int abstract_json_get_string(const char *json, const char *field,
 
 #define CODEGEN_EPSILON 1e-6
 
+/* Coverage counters for the metadata sweep. Printed and asserted by
+ * test_abstract_server_metadata: a comparison that ran zero times reads exactly
+ * like one that passed. */
+static int g_optHintCompared = 0;
+static int g_optExtendedCompared = 0;
+
 /* Verify all ta_abstract metadata for a function against the server.
  * Calls TA_GetFuncInfo, TA_GetInputParameterInfo, TA_GetOptInputParameterInfo,
  * TA_GetOutputParameterInfo on both C and server, compares results.
@@ -448,6 +454,22 @@ static ErrorNumber abstract_verify_func_metadata(
                    funcName, i, crefOpt->displayName, srvDisplayName);
             return TA_ABSTRACT_CALL_MISMATCH;
         }
+        /* hint. Worth comparing precisely because it was not compared before:
+         * for an opt slot whose C descriptor is a predefined TA_DEF_UI_*, the
+         * hint is a hand-written literal in the generator and is NOT derived
+         * from the YAML the other backends read — so this is one of the few
+         * metadata checks that is not a generator comparing against itself. */
+        {
+            char srvHint[256] = {0};
+            const char *crefHint = crefOpt->hint ? crefOpt->hint : "";
+            abstract_json_get_string(g_abstractRespBuf, "hint", srvHint, sizeof(srvHint));
+            if( strcmp(srvHint, crefHint) != 0 ) {
+                printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] hint C=\"%s\" server=\"%s\"\n",
+                       funcName, i, crefHint, srvHint);
+                return TA_ABSTRACT_CALL_MISMATCH;
+            }
+            g_optHintCompared++;
+        }
         /* Compare defaultValue as double with tolerance */
         {
             double diff = srvDefault - crefOpt->defaultValue;
@@ -469,8 +491,14 @@ static ErrorNumber abstract_verify_func_metadata(
             }
         }
         /* Compare range/list extended data if available (min/max, precision,
-         * suggested optimization values, and enum value lists). */
+         * suggested optimization values, and enum value lists).
+         *
+         * The `if` is why g_optExtendedCompared exists: a NULL dataSet silently
+         * skips every one of those comparisons, so without a count the gate
+         * cannot distinguish "all ranges matched" from "no range was looked at".
+         * test_abstract_server_metadata asserts the count is non-zero. */
         if( crefOpt->dataSet ) {
+            g_optExtendedCompared++;
             if( crefOpt->type == TA_OptInput_IntegerRange ) {
                 const TA_IntegerRange *r = (const TA_IntegerRange *)crefOpt->dataSet;
                 int srvMin = abstract_json_get_int(g_abstractRespBuf, "min");
@@ -622,9 +650,177 @@ static void metaParityCb( const TA_FuncInfo *funcInfo, void *opaqueData )
     }
 }
 
+/* ---------------------------------------------------------------------------
+ * abstract_for_each_func parity.
+ *
+ * Every generated server implements this RPC and, until now, NOTHING called it
+ * in any language — so an implementation could be arbitrarily wrong (or absent)
+ * and every gate stayed green. This gives it a caller: the server's enumeration
+ * must name the same functions as C's TA_ForEachFunc, with the same group and
+ * the same nbInput/nbOptInput/nbOutput for each.
+ *
+ * Compared as a SET, not a sequence: C's TA_ForEachFunc walks group by group
+ * while the Rust/Java/C# registries enumerate name-sorted, so an order-sensitive
+ * comparison would fail on a correct server.
+ * --------------------------------------------------------------------------- */
+
+#define FOREACH_MAX_FUNC 512
+
+typedef struct {
+    const char *name;
+    const char *group;
+    unsigned int nbInput, nbOptInput, nbOutput;
+    int seen;
+} ForEachExpect;
+
+typedef struct { ForEachExpect *tab; int count; } ForEachCollectCtx;
+
+static void forEachCollectCb( const TA_FuncInfo *fi, void *opaqueData )
+{
+    ForEachCollectCtx *ctx = (ForEachCollectCtx *)opaqueData;
+    if( ctx->count >= FOREACH_MAX_FUNC )
+        return;
+    ForEachExpect *e = &ctx->tab[ctx->count++];
+    e->name       = fi->name;
+    e->group      = fi->group;
+    e->nbInput    = fi->nbInput;
+    e->nbOptInput = fi->nbOptInput;
+    e->nbOutput   = fi->nbOutput;
+    e->seen       = 0;
+}
+
+/* Copy the JSON object starting at `p` (which must point at '{') into `out`.
+ * Returns a pointer just past its closing '}', or NULL if malformed. The
+ * enumeration carries no nested objects and no braces inside strings, so a
+ * depth counter is enough. */
+static const char *forEachCopyObject( const char *p, char *out, int outSize )
+{
+    int depth = 0, i = 0;
+    if( *p != '{' ) return NULL;
+    while( *p ) {
+        if( *p == '{' ) depth++;
+        else if( *p == '}' ) depth--;
+        if( i < outSize - 1 ) out[i++] = *p;
+        p++;
+        if( depth == 0 ) break;
+    }
+    out[i] = '\0';
+    return depth == 0 ? p : NULL;
+}
+
+static ErrorNumber abstract_verify_for_each_func( void )
+{
+    static ForEachExpect expected[FOREACH_MAX_FUNC];
+    ForEachCollectCtx collect;
+    const char *p;
+    int nbFromServer = 0;
+    int i;
+
+    if( !g_abstractPipe ) return TA_TEST_PASS;
+
+    collect.tab = expected;
+    collect.count = 0;
+    TA_ForEachFunc( forEachCollectCb, &collect );
+
+    snprintf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE,
+             "{\"method\":\"abstract_for_each_func\",\"params\":{}}");
+    if( codegen_pipe_call(g_abstractPipe, g_abstractReqBuf,
+                          g_abstractRespBuf, ABSTRACT_JSON_BUF_SIZE) != TA_TEST_PASS
+        || abstract_json_is_error(g_abstractRespBuf) )
+    {
+        printf("  ABSTRACT ERROR: abstract_for_each_func server error\n");
+        return TA_ABSTRACT_SERVER_ERROR;
+    }
+
+    p = strstr(g_abstractRespBuf, "\"functions\":");
+    if( !p ) {
+        printf("  ABSTRACT ERROR: abstract_for_each_func response has no \"functions\" array\n");
+        return TA_ABSTRACT_CALL_MISMATCH;
+    }
+    p = strchr(p, '[');
+    if( !p ) {
+        printf("  ABSTRACT ERROR: abstract_for_each_func \"functions\" is not an array\n");
+        return TA_ABSTRACT_CALL_MISMATCH;
+    }
+    p++;
+
+    while( *p )
+    {
+        char obj[512];
+        char srvName[128] = {0};
+        char srvGroup[128] = {0};
+        int srvNbIn, srvNbOpt, srvNbOut;
+        int found = -1;
+
+        while( *p == ' ' || *p == ',' ) p++;
+        if( *p == ']' || *p == '\0' ) break;
+
+        p = forEachCopyObject(p, obj, (int)sizeof(obj));
+        if( !p ) {
+            printf("  ABSTRACT ERROR: abstract_for_each_func malformed entry\n");
+            return TA_ABSTRACT_CALL_MISMATCH;
+        }
+        nbFromServer++;
+
+        abstract_json_get_string(obj, "name", srvName, sizeof(srvName));
+        abstract_json_get_string(obj, "group", srvGroup, sizeof(srvGroup));
+        srvNbIn  = abstract_json_get_int(obj, "nbInput");
+        srvNbOpt = abstract_json_get_int(obj, "nbOptInput");
+        srvNbOut = abstract_json_get_int(obj, "nbOutput");
+
+        for( i = 0; i < collect.count; i++ ) {
+            if( expected[i].name && strcmp(expected[i].name, srvName) == 0 ) { found = i; break; }
+        }
+        if( found < 0 ) {
+            printf("  ABSTRACT ERROR: abstract_for_each_func lists '%s', which C does not\n", srvName);
+            return TA_ABSTRACT_CALL_MISMATCH;
+        }
+        if( expected[found].seen ) {
+            printf("  ABSTRACT ERROR: abstract_for_each_func lists '%s' twice\n", srvName);
+            return TA_ABSTRACT_CALL_MISMATCH;
+        }
+        expected[found].seen = 1;
+
+        if( expected[found].group && strcmp(expected[found].group, srvGroup) != 0 ) {
+            printf("  ABSTRACT ERROR [%s]: abstract_for_each_func group C=%s server=%s\n",
+                   srvName, expected[found].group, srvGroup);
+            return TA_ABSTRACT_CALL_MISMATCH;
+        }
+        if( srvNbIn  != (int)expected[found].nbInput ||
+            srvNbOpt != (int)expected[found].nbOptInput ||
+            srvNbOut != (int)expected[found].nbOutput )
+        {
+            printf("  ABSTRACT ERROR [%s]: abstract_for_each_func counts C=(%u,%u,%u) server=(%d,%d,%d)\n",
+                   srvName, expected[found].nbInput, expected[found].nbOptInput,
+                   expected[found].nbOutput, srvNbIn, srvNbOpt, srvNbOut);
+            return TA_ABSTRACT_CALL_MISMATCH;
+        }
+    }
+
+    for( i = 0; i < collect.count; i++ ) {
+        if( !expected[i].seen ) {
+            printf("  ABSTRACT ERROR: abstract_for_each_func omits '%s'\n", expected[i].name);
+            return TA_ABSTRACT_CALL_MISMATCH;
+        }
+    }
+    if( nbFromServer != collect.count ) {
+        printf("  ABSTRACT ERROR: abstract_for_each_func enumerated %d functions, C has %d\n",
+               nbFromServer, collect.count);
+        return TA_ABSTRACT_CALL_MISMATCH;
+    }
+    if( collect.count == 0 ) {
+        printf("  ABSTRACT ERROR: abstract_for_each_func compared nothing (C enumerated 0)\n");
+        return TA_ABSTRACT_CALL_MISMATCH;
+    }
+
+    printf( "  Abstract for-each parity: %d functions enumerated, all matched\n", nbFromServer );
+    return TA_TEST_PASS;
+}
+
 ErrorNumber test_abstract_server_metadata( const char *functionFilter )
 {
     ErrorNumber retValue;
+    ErrorNumber forEachErr;
     MetaParityCtx ctx;
 
     if( !g_abstractPipe )
@@ -638,14 +834,57 @@ ErrorNumber test_abstract_server_metadata( const char *functionFilter )
     ctx.checked  = 0;
     ctx.failed   = 0;
     ctx.filter   = functionFilter;
+    g_optHintCompared = 0;
+    g_optExtendedCompared = 0;
     TA_ForEachFunc( metaParityCb, &ctx );
 
-    printf( "  Abstract metadata parity: %d functions checked, %d failed\n",
-            ctx.checked, ctx.failed );
+    printf( "  Abstract metadata parity: %d functions checked, %d failed"
+            " (%d opt hints, %d opt ranges/lists compared)\n",
+            ctx.checked, ctx.failed, g_optHintCompared, g_optExtendedCompared );
+
+    /* A real disagreement outranks the vacuity checks below, and must be
+     * reported as itself: letting a dead server fall through to the
+     * "compared 0" branch would print 168 SERVER_ERRORs and then return
+     * CALL_MISMATCH, i.e. "the metadata disagreed" for a server that never
+     * answered. */
+    if( ctx.firstErr != TA_TEST_PASS )
+    {
+        freeLib();
+        return ctx.firstErr;
+    }
+
+    /* Non-vacuity: these counts were printed and never asserted, so a sweep that
+     * compared nothing read exactly like a pass.
+     *
+     * ALL of them are gated on an unfiltered run, and that is not laziness.
+     * `--function` carries two different vocabularies: the hand-written tests
+     * match it against a DO_TEST *group tag* (`MATH`, `Moving Averages`,
+     * `COMPOSITE`), while metaMatchesFilter matches it against a *function
+     * name*. Thirteen of the documented group tokens name no function at all,
+     * so requiring checked != 0 under a filter turns `--codegen
+     * --function="Moving Averages"` — a documented invocation — into a hard
+     * failure. Nothing is lost by gating: on an unfiltered run checked == 0
+     * would mean TA_ForEachFunc enumerated nothing, and
+     * abstract_verify_for_each_func fails on that unconditionally. */
+    if( functionFilter == NULL &&
+        (ctx.checked == 0 || g_optHintCompared == 0 || g_optExtendedCompared == 0) )
+    {
+        printf( "  ABSTRACT ERROR: metadata parity compared %d functions, %d opt hints "
+                "and %d opt ranges/lists over the whole library — expected all non-zero\n",
+                ctx.checked, g_optHintCompared, g_optExtendedCompared );
+        freeLib();
+        return TA_ABSTRACT_CALL_MISMATCH;
+    }
+
+    /* Enumeration parity is deliberately NOT filtered by --function: the whole
+     * point is that the server's list and C's are the same list. */
+    forEachErr = abstract_verify_for_each_func();
 
     retValue = freeLib();
     if( ctx.firstErr != TA_TEST_PASS )
         return ctx.firstErr;
+    if( forEachErr != TA_TEST_PASS )
+        return forEachErr;
     return retValue;
 }
 

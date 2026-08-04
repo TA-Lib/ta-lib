@@ -31,6 +31,11 @@
     <AssemblyName>TALib</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- The metadata catalogue is a generated static table with delegate
+         thunks, deliberately not reflection. This makes that a checked fact
+         rather than a claim: IL2026/IL3050 (trim/AOT-unsafe) become warnings
+         here, and TreatWarningsAsErrors turns them into build failures. -->
+    <IsAotCompatible>true</IsAotCompatible>
     <!-- NuGet packaging (PackageId, Version, license, readme) arrives with the
          release milestone; until then `dotnet pack` must not produce a
          placeholder package. -->

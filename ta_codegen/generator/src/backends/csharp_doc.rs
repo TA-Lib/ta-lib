@@ -305,7 +305,7 @@ fn csdoc(text: &str) -> String {
 
 /// Escape a raw (formula) line for XML content — entities only, no backtick
 /// handling (formulas use `*`/`<`/`>` as math, not markup).
-fn xml_escape_raw(text: &str) -> String {
+pub(crate) fn xml_escape_raw(text: &str) -> String {
     text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
 }
 

@@ -184,6 +184,51 @@ their internal ADX/RSI instead, so `UNSTABLE_MAP` maps them to
 `TA_FUNC_UNST_ADX`/`_RSI` (the DEMA→EMA pattern), keeping the converging
 range tolerance and the stream K-leg coverage.
 
+## Abstract-metadata parity — every language server vs the C library
+
+`ta_regtest.c` opens a dedicated pipe per language and points `test_abstract.c`
+at it (`test_abstract_set_server`). There is one block per language, and **the
+block is the coverage**: `test_abstract_server_metadata()` and the server legs of
+`test_abstract()` both short-circuit to `TA_TEST_PASS` when no pipe is set, so a
+server can implement every RPC perfectly or not at all and, without a block,
+every gate stays green. The C# block was added for exactly that reason — its
+RPCs had none.
+
+Each block runs two passes: the metadata getters (`TA_GetFuncInfo` +
+`TA_Get{Input,OptInput,Output}ParameterInfo`) for every function, and the
+dynamic-dispatch path (`abstract_call` / `abstract_get_lookback` /
+`TA_FunctionDescriptionXML`) comparing output **values**. The C server is run as
+the **control arm**: it answers from the very `ta_abstract` it is compared
+against, so a failure there is a comparator defect, which is what makes a failure
+on Rust/Java/C# meaningful.
+
+Three properties keep the sweep from passing vacuously:
+
+* **A missing server is a hard failure when its language was named.**
+  `--language=csharp` on a box with no .NET SDK used to print a skip and exit 0.
+* **`ctx.checked == 0` fails**, and on an unfiltered run so does comparing zero
+  opt-level hints or zero ranges — the counts are printed *and* asserted.
+* **`if( crefOpt->dataSet )` is counted.** That branch silently skips five field
+  comparisons; `g_optExtendedCompared` makes "we compared all the ranges"
+  distinguishable from "we looked at none".
+
+`abstract_for_each_func` **had no caller in any language** until
+`abstract_verify_for_each_func()`. It compares the server's enumeration against
+`TA_ForEachFunc` as a **set** — C walks group by group while the registries are
+name-sorted, so an order-sensitive compare would fail on a correct server — and
+reports a function C does not have, a duplicate, an omission, or a count
+mismatch. It is the only gate that can see a function *missing from* a registry,
+because the per-function getters are driven by C's own enumeration. Sabotage-
+proven: deleting one entry from the Java server's handler fails with
+`abstract_for_each_func omits 'WILLR'` while the metadata sweep still reports 0
+failures.
+
+Opt-level `hint` is compared too, and it was worth adding precisely because
+nothing compared it: for the ~80 opt slots whose C descriptor is a predefined
+`TA_DEF_UI_*`, the hint is a hand-written literal in the generator rather than a
+YAML-derived value, so this is one of the few metadata checks that is not a
+generator comparing against itself.
+
 ## The VARIANT gate — four-variant bitwise parity, no oracle (issue #137)
 
 Every function ships four times over: `TA_<N>`, `TA_<N>_Unguarded`, `TA_S_<N>`,

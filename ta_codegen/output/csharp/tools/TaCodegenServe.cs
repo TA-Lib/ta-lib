@@ -5,6 +5,7 @@ using System;
 using System.Text.Json;
 using System.Diagnostics;
 using TALib;
+using TALib.Metadata;
 
 public class TaCodegenServe {
     static Core core = new Core();
@@ -16,6 +17,9 @@ public class TaCodegenServe {
     static double[] refVolume = new double[MAX_ARRAY_SIZE];
     static double[] refOI = new double[MAX_ARRAY_SIZE];
     static int refN = 0;
+
+    static readonly JsonDocument EmptyParamsDoc = JsonDocument.Parse("{}");
+    static JsonElement EmptyParams => EmptyParamsDoc.RootElement;
 
     static long GetNanoTime() {
         long ts = Stopwatch.GetTimestamp();
@@ -89,7 +93,7 @@ public class TaCodegenServe {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
         string method = root.GetProperty("method").GetString()!;
-        var p = root.GetProperty("params");
+        var p = root.TryGetProperty("params", out var pv) ? pv : EmptyParams;
 
             if (method == "load_data") {
                 double[] tmpOpen = GetDoubleArray(p, "open");
@@ -654,9 +658,223 @@ public class TaCodegenServe {
                 string fn = p.GetProperty("funcName").GetString()!;
                 return $"{{\"lookback\":{ComputeLookback(fn, p)}}}";
             }
+            else if (method == "TA_GetFuncInfo") return AbsFuncInfo(p);
+            else if (method == "TA_GetInputParameterInfo") return AbsInputInfo(p);
+            else if (method == "TA_GetOptInputParameterInfo") return AbsOptInputInfo(p);
+            else if (method == "TA_GetOutputParameterInfo") return AbsOutputInfo(p);
+            else if (method == "abstract_for_each_func") return AbsForEachFunc();
+            else if (method == "TA_FunctionDescriptionXML") return AbsDescriptionXml();
+            else if (method == "abstract_call") return AbsCall(p);
             else {
                 return $"{{\"error\":\"Unknown method: {method}\"}}";
             }
+    }
+
+    const int ABSTRACT_XML_LENGTH = 195183;
+    const ulong ABSTRACT_XML_CHECKSUM = 15640089UL;
+
+    static string AbsStr(string? v) {
+        if (v is null) return "\"\"";
+        var b = new System.Text.StringBuilder("\"");
+        foreach (char c in v) {
+            if (c == '"' || c == '\\') b.Append('\\');
+            b.Append(c);
+        }
+        b.Append('"');
+        return b.ToString();
+    }
+
+    static string R(double v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+
+    static int DomainCode(OptInputDomain d) => d switch {
+        OptInputDomain.RealRange => 0,
+        OptInputDomain.RealList => 1,
+        OptInputDomain.IntegerRange => 2,
+        OptInputDomain.IntegerList => 3,
+        _ => throw new InvalidOperationException("unhandled OptInputDomain"),
+    };
+
+    static FunctionInfo? AbsLookup(JsonElement p) =>
+        FunctionCatalog.Default.TryGet(p.GetProperty("funcName").GetString()!, out var f) ? f : null;
+
+    static string AbsFuncInfo(JsonElement p) {
+        var f = AbsLookup(p);
+        if (f is null) return "{\"retCode\":2}";
+        return $"{{\"name\":{AbsStr(f.Name)},\"group\":{AbsStr(f.Group.ToDisplayName())}"
+             + $",\"hint\":{AbsStr(f.Hint)},\"camelCaseName\":{AbsStr(f.CamelCaseName)}"
+             + $",\"flags\":{(uint)f.Flags},\"nbInput\":{f.Inputs.Length}"
+             + $",\"nbOptInput\":{f.OptInputs.Length},\"nbOutput\":{f.Outputs.Length}}}";
+    }
+
+    static string AbsInputInfo(JsonElement p) {
+        var f = AbsLookup(p);
+        int i = GetInt(p, "paramIndex", -1);
+        if (f is null || i < 0 || i >= f.Inputs.Length) return "{\"retCode\":2}";
+        var ii = f.Inputs[i];
+        return $"{{\"type\":{(int)ii.Kind},\"paramName\":{AbsStr(ii.ParamName)},\"flags\":{(uint)ii.Components}}}";
+    }
+
+    static string AbsOutputInfo(JsonElement p) {
+        var f = AbsLookup(p);
+        int i = GetInt(p, "paramIndex", -1);
+        if (f is null || i < 0 || i >= f.Outputs.Length) return "{\"retCode\":2}";
+        var oo = f.Outputs[i];
+        return $"{{\"type\":{(int)oo.Kind},\"paramName\":{AbsStr(oo.ParamName)},\"flags\":{(uint)oo.Flags}}}";
+    }
+
+    static string AbsOptInputInfo(JsonElement p) {
+        var f = AbsLookup(p);
+        int i = GetInt(p, "paramIndex", -1);
+        if (f is null || i < 0 || i >= f.OptInputs.Length) return "{\"retCode\":2}";
+        var o = f.OptInputs[i];
+        var b = new System.Text.StringBuilder($"{{\"type\":{DomainCode(o.Domain)}")
+            .Append($",\"paramName\":{AbsStr(o.ParamName)}")
+            .Append($",\"flags\":{(uint)o.Flags}")
+            .Append($",\"displayName\":{AbsStr(o.DisplayName)}")
+            .Append($",\"hint\":{AbsStr(o.Hint)}")
+            .Append($",\"defaultValue\":{R(o.DefaultValue)}");
+        switch (o.Domain) {
+            case OptInputDomain.RealRange r:
+                b.Append($",\"min\":{R(r.Min)},\"max\":{R(r.Max)},\"precision\":{r.Precision}")
+                 .Append($",\"suggestedStart\":{R(r.SuggestedStart)}")
+                 .Append($",\"suggestedEnd\":{R(r.SuggestedEnd)}")
+                 .Append($",\"suggestedIncrement\":{R(r.SuggestedIncrement)}");
+                break;
+            case OptInputDomain.IntegerRange r:
+                b.Append($",\"min\":{r.Min},\"max\":{r.Max}")
+                 .Append($",\"suggestedStart\":{r.SuggestedStart}")
+                 .Append($",\"suggestedEnd\":{r.SuggestedEnd}")
+                 .Append($",\"suggestedIncrement\":{r.SuggestedIncrement}");
+                break;
+            case OptInputDomain.IntegerList l:
+                b.Append($",\"valueList\":{AbsStr(l.ToValueListString())}");
+                break;
+            case OptInputDomain.RealList l:
+                b.Append($",\"valueList\":{AbsStr(l.ToValueListString())}");
+                break;
+            default:
+                throw new InvalidOperationException("unhandled OptInputDomain");
+        }
+        b.Append('}');
+        return b.ToString();
+    }
+
+    static string AbsForEachFunc() {
+        var b = new System.Text.StringBuilder("{\"functions\":[");
+        bool first = true;
+        foreach (var f in FunctionCatalog.Default) {
+            if (!first) b.Append(',');
+            first = false;
+            b.Append($"{{\"name\":{AbsStr(f.Name)},\"group\":{AbsStr(f.Group.ToDisplayName())}")
+             .Append($",\"nbInput\":{f.Inputs.Length},\"nbOptInput\":{f.OptInputs.Length}")
+             .Append($",\"nbOutput\":{f.Outputs.Length}}}");
+        }
+        b.Append("]}");
+        return b.ToString();
+    }
+
+    static string AbsDescriptionXml() =>
+        $"{{\"length\":{ABSTRACT_XML_LENGTH},\"checksum\":{ABSTRACT_XML_CHECKSUM}}}";
+
+    /* The JSON key the driver sends a required input under. Price bundles are
+       sent one component per set bit; a lone real input keeps its own name,
+       and several become inReal0/inReal1/... by rank (test_abstract.c's
+       abstract_verify_server_call and expand_input_names agree on this). */
+    static string AbsRealInputKey(FunctionInfo f, int slot) {
+        int totalReal = 0, rank = 0;
+        for (int i = 0; i < f.Inputs.Length; i++) {
+            if (f.Inputs[i].Kind != InputKind.Real) continue;
+            if (i < slot) rank++;
+            totalReal++;
+        }
+        return totalReal == 1 ? f.Inputs[slot].ParamName : $"inReal{rank}";
+    }
+
+    static string AbsComponentKey(PriceComponents c) => c switch {
+        PriceComponents.Open => "inOpen",
+        PriceComponents.High => "inHigh",
+        PriceComponents.Low => "inLow",
+        PriceComponents.Close => "inClose",
+        PriceComponents.Volume => "inVolume",
+        PriceComponents.OpenInterest => "inOpenInterest",
+        _ => throw new ArgumentException($"not a single component: {c}"),
+    };
+
+    /* abstract_call — the fully generic path, bound through FunctionCall. This
+       is a genuinely independent second implementation rather than a reroute to
+       the per-function handler (which is what the Rust and Java servers do), so
+       a wrong slot index or a transposed price component shows up as diverging
+       VALUES against the C reference. */
+    static string AbsCall(JsonElement p) {
+        var f = AbsLookup(p);
+        if (f is null) return "{\"error\":\"Unknown function\"}";
+        int startIdx = GetInt(p, "startIdx", 0);
+        int endIdx = GetInt(p, "endIdx", 0);
+        int n = endIdx - startIdx + 1;
+        if (n < 1) n = 1;
+
+        var call = f.CreateCall(core);
+        for (int i = 0; i < f.Inputs.Length; i++) {
+            var info = f.Inputs[i];
+            if (info.Kind == InputKind.Price) {
+                foreach (var comp in info.SignatureOrder) {
+                    call.SetPriceInput(i, comp, GetDoubleArray(p, AbsComponentKey(comp)));
+                }
+            } else if (info.Kind == InputKind.Real) {
+                call.SetInput(i, GetDoubleArray(p, AbsRealInputKey(f, i)));
+            } else {
+                var raw = GetDoubleArray(p, info.ParamName);
+                var ints = new int[raw.Length];
+                for (int k = 0; k < raw.Length; k++) ints[k] = (int)raw[k];
+                call.SetInput(i, ints);
+            }
+        }
+
+        if (f.UnstableId is FuncUnstId unstId) {
+            core.unstablePeriod[(int)unstId] = GetInt(p, "unstablePeriod", 0);
+        }
+
+        for (int i = 0; i < f.OptInputs.Length; i++) {
+            var o = f.OptInputs[i];
+            if (o.Domain is OptInputDomain.RealRange or OptInputDomain.RealList) {
+                call.SetOption(i, GetDouble(p, o.ParamName, o.DefaultValue));
+            } else {
+                call.SetOption(i, GetInt(p, o.ParamName, (int)o.DefaultValue));
+            }
+        }
+
+        var realOuts = new double[f.Outputs.Length][];
+        var intOuts = new int[f.Outputs.Length][];
+        for (int k = 0; k < f.Outputs.Length; k++) {
+            if (f.Outputs[k].Kind == OutputKind.Real) {
+                realOuts[k] = new double[n];
+                call.SetOutput(k, realOuts[k]);
+            } else {
+                intOuts[k] = new int[n];
+                call.SetOutput(k, intOuts[k]);
+            }
+        }
+
+        int lookback = call.Lookback();
+        RetCode rc = call.TryInvoke(startIdx, endIdx, out OutRange range);
+
+        var b = new System.Text.StringBuilder();
+        b.Append($"{{\"lookback\":{lookback},\"retCode\":{(int)rc}")
+         .Append($",\"outBegIdx\":{range.BegIdx},\"outNBElement\":{range.Count}");
+        int realRank = 0, intRank = 0;
+        for (int k = 0; k < f.Outputs.Length; k++) {
+            if (f.Outputs[k].Kind == OutputKind.Real) {
+                string key = realRank == 0 ? "outReal" : $"outReal{realRank}";
+                realRank++;
+                b.Append($",\"{key}\":").Append(FormatArray(realOuts[k], range.Count));
+            } else {
+                string key = intRank == 0 ? "outInteger" : $"outInteger{intRank}";
+                intRank++;
+                b.Append($",\"{key}\":").Append(FormatIntArray(intOuts[k], range.Count));
+            }
+        }
+        b.Append('}');
+        return b.ToString();
     }
 
     static long ComputeLookback(string funcName, JsonElement p) {
@@ -1570,7 +1788,7 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[0] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["ADX"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -1914,7 +2132,7 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[2] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["ATR"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -5672,7 +5890,7 @@ public class TaCodegenServe {
             inReal = GetDoubleArray(p, "inReal");
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[3] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["CMO"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -6004,7 +6222,7 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[4] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["DX"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -6051,7 +6269,7 @@ public class TaCodegenServe {
             inReal = GetDoubleArray(p, "inReal");
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[5] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["EMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -6233,7 +6451,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        core.unstablePeriod[6] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["HT_DCPERIOD"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -6279,7 +6497,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        core.unstablePeriod[7] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["HT_DCPHASE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -6325,7 +6543,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        core.unstablePeriod[8] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["HT_PHASOR"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         double[] outArr1 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
@@ -6374,7 +6592,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        core.unstablePeriod[9] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["HT_SINE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         double[] outArr1 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
@@ -6423,7 +6641,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        core.unstablePeriod[10] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["HT_TRENDLINE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -6469,7 +6687,7 @@ public class TaCodegenServe {
         } else {
             inReal = GetDoubleArray(p, "inReal");
         }
-        core.unstablePeriod[11] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["HT_TRENDMODE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         int[] outArr0 = new int[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -6565,7 +6783,7 @@ public class TaCodegenServe {
             inReal = GetDoubleArray(p, "inReal");
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[13] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["KAMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -7097,7 +7315,7 @@ public class TaCodegenServe {
         }
         double optInFastLimit = GetDouble(p, "optInFastLimit", 0.0);
         double optInSlowLimit = GetDouble(p, "optInSlowLimit", 0.0);
-        core.unstablePeriod[14] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["MAMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         double[] outArr1 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
@@ -7684,7 +7902,7 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[16] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["MINUS_DI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -7734,7 +7952,7 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[17] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["MINUS_DM"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -7881,7 +8099,7 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[18] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["NATR"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -8030,7 +8248,7 @@ public class TaCodegenServe {
             inClose = GetDoubleArray(p, "inClose");
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[19] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["PLUS_DI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -8080,7 +8298,7 @@ public class TaCodegenServe {
             inLow = GetDoubleArray(p, "inLow");
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[20] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["PLUS_DM"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -8455,7 +8673,7 @@ public class TaCodegenServe {
             inReal = GetDoubleArray(p, "inReal");
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[21] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["RSI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
@@ -9099,7 +9317,7 @@ public class TaCodegenServe {
         }
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         double optInVFactor = GetDouble(p, "optInVFactor", 0.0);
-        core.unstablePeriod[23] = GetInt(p, "unstablePeriod", 0);
+        core.unstablePeriod[(int)FunctionCatalog.Default["T3"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         double[] outArr0 = new double[n];
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;

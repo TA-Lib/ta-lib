@@ -7,10 +7,10 @@
 //! reflected over `@FuncInfo` annotations, shipped empty function hints, and
 //! could only describe the guarded double-precision batch API.
 //!
-//! Both surfaces render from [`java_abstract::rows`], so they cannot disagree:
-//! the values come from the same `func_flag_bits` / `price_bundle` /
-//! helpers that build the C and Rust tables, and
-//! `test_abstract.c` already diffs the server's copy against C.
+//! Both surfaces render from [`abstract_rows::rows`](super::abstract_rows::rows),
+//! so they cannot disagree: the values come from the same backend-neutral rows
+//! the Rust and C# registries render, and `test_abstract.c` already diffs the
+//! server's copy against C.
 //!
 //! Scope is the guarded double-precision batch API — the same as the C and Rust
 //! abstract layers. Describing streaming handles, `Unguarded` variants and
@@ -21,7 +21,7 @@ use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::path::Path;
 
-use super::java_abstract::{rows, FuncRow};
+use super::abstract_rows::{rows, FuncRow, InputKind, OptDomain, OutputKind};
 use super::price_bundle;
 use crate::ir::{EnumDef, FuncDef, ParamType};
 
@@ -515,10 +515,13 @@ fn emit_function_factory(s: &mut String, f: &FuncRow) {
         s,
         "         {}, {}, {}, {}, {}, 0x{:08X},",
         js(&f.name),
-        js(&f.group),
+        js(f.group.as_str()),
         js(&f.hint),
-        js(&f.camel_case_name),
-        js(&f.java_method_name),
+        js(f.camel_case_name()),
+        // Derived here, with the very helper `java.rs` names the method with, so
+        // it cannot drift from the real signature — which is why it is not a
+        // field on the backend-neutral row.
+        js(&super::java::to_java_method_name(&f.name, f.camel_case.as_deref())),
         f.flags
     );
 
@@ -531,7 +534,7 @@ fn emit_function_factory(s: &mut String, f: &FuncRow) {
             let _ = writeln!(
                 s,
                 "            new InputInfo(InputType.{}, {}, 0x{:08X}){sep}",
-                input_type_name(inp.ty),
+                input_type_name(inp.kind),
                 js(&inp.param_name),
                 inp.flags
             );
@@ -545,12 +548,32 @@ fn emit_function_factory(s: &mut String, f: &FuncRow) {
         s.push_str("         List.of(\n");
         for (i, o) in f.opt_inputs.iter().enumerate() {
             let sep = if i + 1 == f.opt_inputs.len() { "" } else { "," };
-            let vl = o.value_list.as_ref().map_or_else(|| "null".to_string(), |v| js(v));
+            // Every domain's slots are carried positionally; the ones this
+            // domain does not use stay literal 0 / null, and `type()` is what
+            // tells a consumer which to read.
+            let (rmin, rmax, prec, rs, re, ri) = match &o.domain {
+                OptDomain::RealRange { min, max, precision, suggested, .. } => {
+                    (*min, *max, *precision, suggested.0, suggested.1, suggested.2)
+                }
+                _ => (0.0, 0.0, 0, 0.0, 0.0, 0.0),
+            };
+            let (imin, imax, is, ie, ii) = match &o.domain {
+                OptDomain::IntegerRange { min, max, suggested, .. } => {
+                    (*min, *max, suggested.0, suggested.1, suggested.2)
+                }
+                _ => (0, 0, 0, 0, 0),
+            };
+            let vl = match &o.domain {
+                OptDomain::IntegerList { .. } | OptDomain::RealList { .. } => {
+                    js(&o.domain.value_list_string())
+                }
+                _ => "null".to_string(),
+            };
             let _ = writeln!(s, "            new OptInputInfo(");
-            let _ = writeln!(s, "               OptInputType.{}, {}, 0x{:08X},", opt_type_name(o.ty), js(&o.param_name), o.flags);
-            let _ = writeln!(s, "               {}, {}, {},", js(&o.display_name), js(&o.hint), jd(o.default_value));
-            let _ = writeln!(s, "               {}, {}, {}, {}, {}, {},", jd(o.rmin), jd(o.rmax), o.precision, jd(o.rsug.0), jd(o.rsug.1), jd(o.rsug.2));
-            let _ = writeln!(s, "               {}, {}, {}, {}, {}, {}){sep}", o.imin, o.imax, o.isug.0, o.isug.1, o.isug.2, vl);
+            let _ = writeln!(s, "               OptInputType.{}, {}, 0x{:08X},", opt_type_name(&o.domain), js(&o.param_name), o.flags);
+            let _ = writeln!(s, "               {}, {}, {},", js(&o.display_name), js(&o.hint), jd(o.domain.default_as_f64()));
+            let _ = writeln!(s, "               {}, {}, {prec}, {}, {}, {},", jd(rmin), jd(rmax), jd(rs), jd(re), jd(ri));
+            let _ = writeln!(s, "               {imin}, {imax}, {is}, {ie}, {ii}, {vl}){sep}");
         }
         s.push_str("         ),\n");
     }
@@ -564,7 +587,7 @@ fn emit_function_factory(s: &mut String, f: &FuncRow) {
             let _ = writeln!(
                 s,
                 "            new OutputInfo(OutputType.{}, {}, 0x{:08X}){sep}",
-                output_type_name(out.ty),
+                output_type_name(out.kind),
                 js(&out.param_name),
                 out.flags
             );
@@ -574,27 +597,27 @@ fn emit_function_factory(s: &mut String, f: &FuncRow) {
     s.push_str("   }\n\n");
 }
 
-fn input_type_name(ty: i32) -> &'static str {
-    match ty {
-        0 => "PRICE",
-        2 => "INTEGER",
-        _ => "REAL",
+fn input_type_name(kind: InputKind) -> &'static str {
+    match kind {
+        InputKind::Price => "PRICE",
+        InputKind::Real => "REAL",
+        InputKind::Integer => "INTEGER",
     }
 }
 
-fn opt_type_name(ty: i32) -> &'static str {
-    match ty {
-        1 => "REAL_LIST",
-        2 => "INTEGER_RANGE",
-        3 => "INTEGER_LIST",
-        _ => "REAL_RANGE",
+fn opt_type_name(domain: &OptDomain) -> &'static str {
+    match domain {
+        OptDomain::RealRange { .. } => "REAL_RANGE",
+        OptDomain::RealList { .. } => "REAL_LIST",
+        OptDomain::IntegerRange { .. } => "INTEGER_RANGE",
+        OptDomain::IntegerList { .. } => "INTEGER_LIST",
     }
 }
 
-fn output_type_name(ty: i32) -> &'static str {
-    match ty {
-        1 => "INTEGER",
-        _ => "REAL",
+fn output_type_name(kind: OutputKind) -> &'static str {
+    match kind {
+        OutputKind::Real => "REAL",
+        OutputKind::Integer => "INTEGER",
     }
 }
 

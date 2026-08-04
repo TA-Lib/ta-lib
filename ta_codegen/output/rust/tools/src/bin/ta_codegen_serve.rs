@@ -15332,6 +15332,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                         "paramName": oi.param_name,
                         "flags": oi.flags.bits(),
                         "displayName": oi.display_name,
+                        "hint": oi.hint,
                         "defaultValue": default,
                     });
                     match oi.domain {
