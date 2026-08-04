@@ -213,68 +213,6 @@ public partial class Core
       }
       return retCode ;
    }
-   internal RetCode MovingAverageUnguarded( int startIdx,
-                                            int endIdx,
-                                            double[] inReal,
-                                            int optInTimePeriod,
-                                            MAType optInMAType,
-                                            out int outBegIdx,
-                                            out int outNBElement,
-                                            double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      RetCode retCode;
-      int nbElement = 0;
-      int outIdx = 0;
-      int todayIdx = 0;
-      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
-         nbElement = endIdx - startIdx + 1;
-         outNBElement = nbElement;
-         for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
-            outReal[outIdx] = inReal[todayIdx];
-         }
-         outBegIdx = startIdx;
-         return RetCode.Success ;
-      }
-      switch( optInMAType )
-      {
-      case MAType.Sma:
-         retCode = Sma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Ema:
-         retCode = Ema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Wma:
-         retCode = Wma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Dema:
-         retCode = Dema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Tema:
-         retCode = Tema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Trima:
-         retCode = Trima(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Kama:
-         retCode = Kama(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Mama:
-         retCode = Mama(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
-         break;
-      case MAType.T3:
-         retCode = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Hma:
-         retCode = Hma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      default:
-         retCode = RetCode.BadParam;
-         break;
-      }
-      return retCode ;
-   }
    internal RetCode MovingAverage( int startIdx,
                                    int endIdx,
                                    float[] inReal,
@@ -304,68 +242,6 @@ public partial class Core
       if( (int)optInMAType == int.MinValue ) {
          optInMAType = MAType.Sma;
       }
-      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
-         nbElement = endIdx - startIdx + 1;
-         outNBElement = nbElement;
-         for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
-            outReal[outIdx] = (double)inReal[todayIdx];
-         }
-         outBegIdx = startIdx;
-         return RetCode.Success ;
-      }
-      switch( optInMAType )
-      {
-      case MAType.Sma:
-         retCode = Sma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Ema:
-         retCode = Ema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Wma:
-         retCode = Wma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Dema:
-         retCode = Dema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Tema:
-         retCode = Tema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Trima:
-         retCode = Trima(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Kama:
-         retCode = Kama(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Mama:
-         retCode = Mama(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
-         break;
-      case MAType.T3:
-         retCode = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
-         break;
-      case MAType.Hma:
-         retCode = Hma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-         break;
-      default:
-         retCode = RetCode.BadParam;
-         break;
-      }
-      return retCode ;
-   }
-   internal RetCode MovingAverageUnguarded( int startIdx,
-                                            int endIdx,
-                                            float[] inReal,
-                                            int optInTimePeriod,
-                                            MAType optInMAType,
-                                            out int outBegIdx,
-                                            out int outNBElement,
-                                            double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      RetCode retCode;
-      int nbElement = 0;
-      int outIdx = 0;
-      int todayIdx = 0;
       if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement = nbElement;
@@ -469,44 +345,6 @@ public partial class Core
    /// <summary>
    /// Generic moving-average dispatcher that forwards the job to a concrete MA
    /// implementation selected by optInMAType. Single uniform interface over all
-   /// TA-Lib moving averages. — <b>unchecked</b> variant of
-   /// <c>MovingAverage</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="optInMAType">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange MovingAverageUnguarded( int startIdx,
-                                           int endIdx,
-                                           double[] inReal,
-                                           int optInTimePeriod,
-                                           MAType optInMAType,
-                                           double[] outReal )
-   {
-      MovingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Generic moving-average dispatcher that forwards the job to a concrete MA
-   /// implementation selected by optInMAType. Single uniform interface over all
    /// TA-Lib moving averages.
    /// </summary>
    /// <remarks>
@@ -561,47 +399,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("MA", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Generic moving-average dispatcher that forwards the job to a concrete MA
-   /// implementation selected by optInMAType. Single uniform interface over all
-   /// TA-Lib moving averages. — <b>unchecked</b> variant of
-   /// <c>MovingAverage</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="optInMAType">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange MovingAverageUnguarded( int startIdx,
-                                           int endIdx,
-                                           float[] inReal,
-                                           int optInTimePeriod,
-                                           MAType optInMAType,
-                                           double[] outReal )
-   {
-      MovingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

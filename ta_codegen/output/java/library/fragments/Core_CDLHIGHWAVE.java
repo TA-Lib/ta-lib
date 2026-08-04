@@ -122,69 +122,6 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlHignWaveUnguardedInternal( int startIdx,
-                                         int endIdx,
-                                         double inOpen[],
-                                         double inHigh[],
-                                         double inLow[],
-                                         double inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
-   {
-      double BodyPeriodTotal = 0;
-      double ShadowPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int BodyTrailingIdx = 0;
-      int ShadowTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int BodyShort_rangeType = this.candleSettings[CandleSettingType.BodyShort.ordinal()].rangeType.ordinal();
-      int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BodyShort.ordinal()].avgPeriod;
-      double BodyShort_factor = this.candleSettings[CandleSettingType.BodyShort.ordinal()].factor;
-      int ShadowVeryLong_rangeType = this.candleSettings[CandleSettingType.ShadowVeryLong.ordinal()].rangeType.ordinal();
-      int ShadowVeryLong_avgPeriod = this.candleSettings[CandleSettingType.ShadowVeryLong.ordinal()].avgPeriod;
-      double ShadowVeryLong_factor = this.candleSettings[CandleSettingType.ShadowVeryLong.ordinal()].factor;
-      lookbackTotal = cdlHignWaveLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      BodyPeriodTotal = 0;
-      BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
-      ShadowPeriodTotal = 0;
-      ShadowTrailingIdx = startIdx - ShadowVeryLong_avgPeriod;
-      i = BodyTrailingIdx;
-      while( i < startIdx ) {
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      i = ShadowTrailingIdx;
-      while( i < startIdx ) {
-         ShadowPeriodTotal += ((ShadowVeryLong_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowVeryLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      outIdx = 0;
-      do {
-         if( Math.abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowVeryLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowVeryLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) - Math.abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : 0.0)));
-         ShadowPeriodTotal += ((ShadowVeryLong_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowVeryLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0))) - ((ShadowVeryLong_rangeType == 0) ? (Math.abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx])) : ((ShadowVeryLong_rangeType == 1) ? (inHigh[ShadowTrailingIdx] - inLow[ShadowTrailingIdx]) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh[ShadowTrailingIdx] - inLow[ShadowTrailingIdx]) - Math.abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyTrailingIdx += 1;
-         ShadowTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
    RetCode cdlHignWaveInternal( int startIdx,
                                 int endIdx,
                                 float inOpen[],
@@ -214,69 +151,6 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdlHignWaveLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      BodyPeriodTotal = 0;
-      BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
-      ShadowPeriodTotal = 0;
-      ShadowTrailingIdx = startIdx - ShadowVeryLong_avgPeriod;
-      i = BodyTrailingIdx;
-      while( i < startIdx ) {
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      i = ShadowTrailingIdx;
-      while( i < startIdx ) {
-         ShadowPeriodTotal += ((ShadowVeryLong_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((ShadowVeryLong_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((ShadowVeryLong_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      outIdx = 0;
-      do {
-         if( Math.abs((double)inClose[i] - (double)inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((ShadowVeryLong_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((ShadowVeryLong_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((ShadowVeryLong_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((ShadowVeryLong_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.abs((double)inClose[BodyTrailingIdx] - (double)inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[BodyTrailingIdx] - (double)inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[BodyTrailingIdx] - (double)inLow[BodyTrailingIdx]) - Math.abs((double)inClose[BodyTrailingIdx] - (double)inOpen[BodyTrailingIdx])) : 0.0)));
-         ShadowPeriodTotal += ((ShadowVeryLong_rangeType == 0) ? (Math.abs((double)inClose[i] - (double)inOpen[i])) : ((ShadowVeryLong_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((ShadowVeryLong_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.abs((double)inClose[i] - (double)inOpen[i])) : 0.0))) - ((ShadowVeryLong_rangeType == 0) ? (Math.abs((double)inClose[ShadowTrailingIdx] - (double)inOpen[ShadowTrailingIdx])) : ((ShadowVeryLong_rangeType == 1) ? ((double)inHigh[ShadowTrailingIdx] - (double)inLow[ShadowTrailingIdx]) : ((ShadowVeryLong_rangeType == 2) ? (((double)inHigh[ShadowTrailingIdx] - (double)inLow[ShadowTrailingIdx]) - Math.abs((double)inClose[ShadowTrailingIdx] - (double)inOpen[ShadowTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyTrailingIdx += 1;
-         ShadowTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode cdlHignWaveUnguardedInternal( int startIdx,
-                                         int endIdx,
-                                         float inOpen[],
-                                         float inHigh[],
-                                         float inLow[],
-                                         float inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
-   {
-      double BodyPeriodTotal = 0;
-      double ShadowPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int BodyTrailingIdx = 0;
-      int ShadowTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int BodyShort_rangeType = this.candleSettings[CandleSettingType.BodyShort.ordinal()].rangeType.ordinal();
-      int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BodyShort.ordinal()].avgPeriod;
-      double BodyShort_factor = this.candleSettings[CandleSettingType.BodyShort.ordinal()].factor;
-      int ShadowVeryLong_rangeType = this.candleSettings[CandleSettingType.ShadowVeryLong.ordinal()].rangeType.ordinal();
-      int ShadowVeryLong_avgPeriod = this.candleSettings[CandleSettingType.ShadowVeryLong.ordinal()].avgPeriod;
-      double ShadowVeryLong_factor = this.candleSettings[CandleSettingType.ShadowVeryLong.ordinal()].factor;
       lookbackTotal = cdlHignWaveLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -377,37 +251,6 @@
     * very long lower shadow. Signals market indecision; the output sign reports
     * only candle color, not a bullish/bearish direction. A hit marks indecision
     * (long-legged candle); not directional - sign encodes only the candle's
-    * color. — <b>unchecked</b> variant of {@link Core#cdlHignWave}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange cdlHignWaveUnguarded( int startIdx,
-                                         int endIdx,
-                                         double inOpen[],
-                                         double inHigh[],
-                                         double inLow[],
-                                         double inClose[],
-                                         int outInteger[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      cdlHignWaveUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Single-candle pattern: a short real body with both a very long upper and a
-    * very long lower shadow. Signals market indecision; the output sign reports
-    * only candle color, not a bullish/bearish direction. A hit marks indecision
-    * (long-legged candle); not directional - sign encodes only the candle's
     * color.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -459,38 +302,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("CDLHIGHWAVE", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Single-candle pattern: a short real body with both a very long upper and a
-    * very long lower shadow. Signals market indecision; the output sign reports
-    * only candle color, not a bullish/bearish direction. A hit marks indecision
-    * (long-legged candle); not directional - sign encodes only the candle's
-    * color. — <b>unchecked</b> variant of {@link Core#cdlHignWave}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange cdlHignWaveUnguarded( int startIdx,
-                                         int endIdx,
-                                         float inOpen[],
-                                         float inHigh[],
-                                         float inLow[],
-                                         float inClose[],
-                                         int outInteger[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      cdlHignWaveUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

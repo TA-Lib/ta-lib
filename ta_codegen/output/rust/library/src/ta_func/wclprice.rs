@@ -179,78 +179,16 @@ impl Core {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
+        let _assertLb = self.wclprice_lookback();
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inHigh.len());
+        assert!(_assertStart > endIdx || endIdx < inLow.len());
+        assert!(_assertStart > endIdx || endIdx < inClose.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         // Weighted Close Price = (High + Low + (Close*2) ) / 4
-        outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            outReal[outIdx] = ((((inClose[i] as f64).mul_add(2.0, inHigh[i] + inLow[i])) / 4.0) as f64);
-            outIdx += 1;
-        }
-        i = (endIdx as usize) + 1;
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::wclprice`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::wclprice`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::wclprice`].
-    #[inline]
-    pub fn wclprice_unguarded(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, wclprice_unguarded_fma, wclprice_unguarded_impl, (startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal));
-        #[cfg(not(target_arch = "x86_64"))]
-        self.wclprice_unguarded_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
-    }
-    #[cfg(target_arch = "x86_64")]
-    #[target_feature(enable = "fma")]
-    fn wclprice_unguarded_fma(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        self.wclprice_unguarded_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
-    }
-    #[inline(always)]
-    fn wclprice_unguarded_impl(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        assert!(endIdx < inHigh.len());
-        assert!(endIdx < inLow.len());
-        assert!(endIdx < inClose.len());
-        let _assertLb = self.wclprice_lookback();
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
             outReal[outIdx] = ((((inClose[i] as f64).mul_add(2.0, inHigh[i] + inLow[i])) / 4.0) as f64);

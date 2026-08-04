@@ -171,6 +171,10 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.cmou_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -263,110 +267,6 @@ impl Core {
                 downSum += diff;
             }
             // Add the newest change: inReal[today] - inReal[today-1].
-            tempReal = inReal[today];
-            diff = tempReal - prevValue;
-            prevValue = tempReal;
-            if diff > 0.0 {
-                upSum += diff;
-            } else if diff < 0.0 {
-                downSum -= diff;
-            }
-            sum = upSum + downSum;
-            if !((sum).abs() < 1e-14) {
-                outReal[outIdx] = 100.0 * (upSum - downSum) / sum;
-                outIdx += 1;
-            } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
-            }
-            today += 1;
-        }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::cmou`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::cmou`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::cmou`].
-    #[inline]
-    pub fn cmou_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut outIdx: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut upSum: f64 = 0.0_f64;
-        let mut downSum: f64 = 0.0_f64;
-        let mut sum: f64 = 0.0_f64;
-        let mut diff: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut prevValue: f64 = 0.0_f64;
-        let mut trailingValue: f64 = 0.0_f64;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.cmou_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
-        lookbackTotal = self.cmou_lookback(optInTimePeriod);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            return RetCode::Success;
-        }
-        today = startIdx - lookbackTotal;
-        trailingIdx = today + 1;
-        prevValue = inReal[today];
-        trailingValue = prevValue;
-        upSum = 0.0;
-        downSum = 0.0;
-        // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
-        i = 0;
-        while i < ((optInTimePeriod) as usize) {
-            today += 1;
-            tempReal = inReal[today];
-            diff = tempReal - prevValue;
-            prevValue = tempReal;
-            if diff > 0.0 {
-                upSum += diff;
-            } else if diff < 0.0 {
-                downSum -= diff;
-            }
-            i += 1;
-        }
-        outIdx = 0;
-        sum = upSum + downSum;
-        if !((sum).abs() < 1e-14) {
-            outReal[outIdx] = 100.0 * (upSum - downSum) / sum;
-            outIdx += 1;
-        } else {
-            outReal[outIdx] = 0.0;
-            outIdx += 1;
-        }
-        today += 1;
-        while today <= endIdx {
-            tempReal = inReal[trailingIdx];
-            diff = tempReal - trailingValue;
-            trailingValue = tempReal;
-            trailingIdx += 1;
-            if diff > 0.0 {
-                upSum -= diff;
-            } else if diff < 0.0 {
-                downSum += diff;
-            }
             tempReal = inReal[today];
             diff = tempReal - prevValue;
             prevValue = tempReal;

@@ -223,6 +223,11 @@ impl Core {
         if outFastK.as_ptr() == outFastD.as_ptr() {
             return RetCode::BadParam;
         }
+        let _assertLb = self.stochrsi_lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outFastK.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outFastD.len());
         let mut startIdx = startIdx;
         let mut tempRSIBuffer: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;
@@ -264,69 +269,6 @@ impl Core {
             startIdx = lookbackTotal;
         }
         // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        (*outBegIdx) = startIdx;
-        tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
-        tempRSIBuffer = vec![0.0_f64; (tempArraySize * 1) as usize];
-        retCode = self.rsi(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, &mut outBegIdx1, &mut outNbElement1, &mut tempRSIBuffer[..]);
-        if retCode != RetCode::Success || outNbElement1 == 0 {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        retCode = self.stochf(0, tempArraySize - 1, &tempRSIBuffer, &tempRSIBuffer, &tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx2, outNBElement, outFastK, outFastD);
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::stochrsi`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::stochrsi`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::stochrsi`].
-    #[inline]
-    pub fn stochrsi_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInTimePeriod: i32,
-        mut optInFastK_Period: i32,
-        mut optInFastD_Period: i32,
-        mut optInFastD_MAType: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outFastK: &mut [f64],
-        outFastD: &mut [f64],
-    ) -> RetCode {
-        let mut tempRSIBuffer: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut lookbackSTOCHF: usize = 0_usize;
-        let mut tempArraySize: usize = 0_usize;
-        let mut outBegIdx1: usize = 0_usize;
-        let mut outBegIdx2: usize = 0_usize;
-        let mut outNbElement1: usize = 0_usize;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.stochrsi_lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outFastK.len());
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outFastD.len());
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
-        lookbackSTOCHF = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-        lookbackTotal = self.rsi_lookback(optInTimePeriod) + lookbackSTOCHF;
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
         if startIdx > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;

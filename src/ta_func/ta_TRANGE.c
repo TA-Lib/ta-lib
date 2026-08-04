@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -149,60 +149,6 @@ TA_LIB_API TA_RetCode TA_TRANGE( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_TRANGE_Unguarded( int    startIdx,
-                                           int    endIdx,
-                                           const double inHigh[],
-                                           const double inLow[],
-                                           const double inClose[],
-                                           int          *outBegIdx,
-                                           int          *outNBElement,
-                                           double        outReal[] )
-{
-   int today;
-   int outIdx;
-   double val2;
-   double val3;
-   double greatest;
-   double tempCY;
-   double tempLT;
-   double tempHT;
-
-   if( startIdx < 1 )
-   {
-      startIdx = 1;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outIdx = 0;
-   today = startIdx;
-   while( today <= endIdx )
-   {
-      tempLT = inLow[today];
-      tempHT = inHigh[today];
-      tempCY = inClose[today - 1];
-      greatest = tempHT - tempLT;
-      val2 = fabs(tempCY - tempHT);
-      if( val2 > greatest )
-      {
-         greatest = val2;
-      }
-      val3 = fabs(tempCY - tempLT);
-      if( val3 > greatest )
-      {
-         greatest = val3;
-      }
-      outReal[outIdx++] = greatest;
-      today += 1;
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_TRANGE( int    startIdx,
                         int    endIdx,
                         const float inHigh[],
@@ -234,60 +180,6 @@ TA_RetCode TA_S_TRANGE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   if( startIdx < 1 )
-   {
-      startIdx = 1;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outIdx = 0;
-   today = startIdx;
-   while( today <= endIdx )
-   {
-      tempLT = (double)inLow[today];
-      tempHT = (double)inHigh[today];
-      tempCY = (double)inClose[today - 1];
-      greatest = tempHT - tempLT;
-      val2 = fabs(tempCY - tempHT);
-      if( val2 > greatest )
-      {
-         greatest = val2;
-      }
-      val3 = fabs(tempCY - tempLT);
-      if( val3 > greatest )
-      {
-         greatest = val3;
-      }
-      outReal[outIdx++] = greatest;
-      today += 1;
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_TRANGE_Unguarded( int    startIdx,
-                                  int    endIdx,
-                                  const float inHigh[],
-                                  const float inLow[],
-                                  const float inClose[],
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  double        outReal[] )
-{
-   int today;
-   int outIdx;
-   double val2;
-   double val3;
-   double greatest;
-   double tempCY;
-   double tempLT;
-   double tempHT;
 
    if( startIdx < 1 )
    {

@@ -102,28 +102,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode AvgPriceUnguarded( int startIdx,
-                                       int endIdx,
-                                       double[] inOpen,
-                                       double[] inHigh,
-                                       double[] inLow,
-                                       double[] inClose,
-                                       out int outBegIdx,
-                                       out int outNBElement,
-                                       double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int outIdx = 0;
-      int i = 0;
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i] + inOpen[i]) / 4;
-      }
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode AvgPrice( int startIdx,
                               int endIdx,
                               float[] inOpen,
@@ -144,28 +122,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i] + (double)inOpen[i]) / 4;
-      }
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode AvgPriceUnguarded( int startIdx,
-                                       int endIdx,
-                                       float[] inOpen,
-                                       float[] inHigh,
-                                       float[] inLow,
-                                       float[] inClose,
-                                       out int outBegIdx,
-                                       out int outNBElement,
-                                       double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int outIdx = 0;
-      int i = 0;
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
          outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i] + (double)inOpen[i]) / 4;
@@ -225,45 +181,6 @@ public partial class Core
    /// <summary>
    /// Average Price: the arithmetic mean of each bar's open, high, low, and
    /// close. A price-transform overlap condensing OHLC into a single
-   /// representative price. — <b>unchecked</b> variant of <c>AvgPrice</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange AvgPriceUnguarded( int startIdx,
-                                      int endIdx,
-                                      double[] inOpen,
-                                      double[] inHigh,
-                                      double[] inLow,
-                                      double[] inClose,
-                                      double[] outReal )
-   {
-      AvgPriceUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Average Price: the arithmetic mean of each bar's open, high, low, and
-   /// close. A price-transform overlap condensing OHLC into a single
    /// representative price.
    /// </summary>
    /// <remarks>
@@ -313,48 +230,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("AVGPRICE", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Average Price: the arithmetic mean of each bar's open, high, low, and
-   /// close. A price-transform overlap condensing OHLC into a single
-   /// representative price. — <b>unchecked</b> variant of <c>AvgPrice</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange AvgPriceUnguarded( int startIdx,
-                                      int endIdx,
-                                      float[] inOpen,
-                                      float[] inHigh,
-                                      float[] inLow,
-                                      float[] inClose,
-                                      double[] outReal )
-   {
-      AvgPriceUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

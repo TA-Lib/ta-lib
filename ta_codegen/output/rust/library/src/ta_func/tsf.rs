@@ -193,6 +193,10 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.tsf_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -268,115 +272,6 @@ impl Core {
         // Each departing value is read before the output write of the same bar:
         // with outReal==inReal (in-place, #130) that write lands on the cell the
         // next iteration departs from.
-        while today <= endIdx {
-            SumXY = SumXY + SumY - (optInTimePeriod as f64) * trailingValue;
-            SumY = SumY - trailingValue + inReal[today];
-            m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
-            b = (SumY - m * SumX) / (optInTimePeriod as f64);
-            trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            outReal[outIdx] = (m as f64).mul_add(optInTimePeriod as f64, b);
-            outIdx += 1;
-            today += 1;
-        }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::tsf`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::tsf`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::tsf`].
-    #[inline]
-    pub fn tsf_unguarded(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, tsf_unguarded_fma, tsf_unguarded_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
-        #[cfg(not(target_arch = "x86_64"))]
-        self.tsf_unguarded_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
-    }
-    #[cfg(target_arch = "x86_64")]
-    #[target_feature(enable = "fma")]
-    fn tsf_unguarded_fma(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        self.tsf_unguarded_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
-    }
-    #[inline(always)]
-    fn tsf_unguarded_impl(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut outIdx: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut SumX: f64 = 0.0_f64;
-        let mut SumXY: f64 = 0.0_f64;
-        let mut SumY: f64 = 0.0_f64;
-        let mut SumXSqr: f64 = 0.0_f64;
-        let mut Divisor: f64 = 0.0_f64;
-        let mut m: f64 = 0.0_f64;
-        let mut b: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut tempValue1: f64 = 0.0_f64;
-        let mut trailingValue: f64 = 0.0_f64;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.tsf_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        lookbackTotal = self.tsf_lookback(optInTimePeriod);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        outIdx = 0;
-        today = startIdx;
-        trailingIdx = startIdx - lookbackTotal;
-        SumX = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * 0.5;
-        SumXSqr = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * (((2 * optInTimePeriod - 1)) as f64) / 6.0;
-        Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
-        SumXY = 0.0;
-        SumY = 0.0;
-        // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
-        i = (optInTimePeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
-            tempValue1 = inReal[today - i];
-            SumY += tempValue1;
-            SumXY += (i as f64) * tempValue1;
-        }
-        m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
-        b = (SumY - m * SumX) / (optInTimePeriod as f64);
-        trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-        outReal[outIdx] = (m as f64).mul_add(optInTimePeriod as f64, b);
-        outIdx += 1;
-        today += 1;
         while today <= endIdx {
             SumXY = SumXY + SumY - (optInTimePeriod as f64) * trailingValue;
             SumY = SumY - trailingValue + inReal[today];

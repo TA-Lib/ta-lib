@@ -948,21 +948,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.accbands_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.accbands_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -1021,18 +1008,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.acos_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.acos_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -1113,21 +1090,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ad_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &inVolume,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ad_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -1192,19 +1156,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.add_unguarded(
-                startIdx, endIdx,
-                &inReal0,
-                &inReal1,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.add_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -1289,23 +1242,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.adosc_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &inVolume,
-                optInFastPeriod,
-                optInSlowPeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.adosc_lookback(optInFastPeriod, optInSlowPeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -1383,21 +1321,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.adx_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.adx_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -1472,21 +1397,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.adxr_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.adxr_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -1549,21 +1461,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.apo_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInFastPeriod,
-                optInSlowPeriod,
-                optInMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -1632,20 +1531,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.aroon_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.aroon_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push('}');
@@ -1713,20 +1600,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.aroonosc_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.aroonosc_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -1783,18 +1658,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.asin_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.asin_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -1851,18 +1716,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.atan_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.atan_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -1940,21 +1795,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.atr_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.atr_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -2013,19 +1855,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.avgdev_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.avgdev_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -2106,21 +1937,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.avgprice_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.avgprice_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -2189,22 +2007,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.bbands_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                optInNbDevUp,
-                optInNbDevDn,
-                optInMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.bbands_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -2273,20 +2077,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.beta_unguarded(
-                startIdx, endIdx,
-                &inReal0,
-                &inReal1,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.beta_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -2367,21 +2159,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.bop_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.bop_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -2456,21 +2235,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cci_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cci_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -2551,21 +2317,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdl2crows_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdl2crows_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -2646,21 +2399,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdl3blackcrows_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdl3blackcrows_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -2741,21 +2481,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdl3inside_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdl3inside_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -2836,21 +2563,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdl3linestrike_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdl3linestrike_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -2931,21 +2645,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdl3outside_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdl3outside_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -3026,21 +2727,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdl3starsinsouth_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdl3starsinsouth_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -3121,21 +2809,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdl3whitesoldiers_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdl3whitesoldiers_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -3218,22 +2893,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlabandonedbaby_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlabandonedbaby_lookback(optInPenetration);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -3314,21 +2975,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdladvanceblock_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdladvanceblock_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -3409,21 +3057,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlbelthold_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlbelthold_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -3504,21 +3139,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlbreakaway_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlbreakaway_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -3599,21 +3221,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlclosingmarubozu_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlclosingmarubozu_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -3694,21 +3303,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlconcealbabyswall_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlconcealbabyswall_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -3789,21 +3385,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlcounterattack_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlcounterattack_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -3886,22 +3469,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdldarkcloudcover_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdldarkcloudcover_lookback(optInPenetration);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -3982,21 +3551,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdldoji_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdldoji_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -4077,21 +3633,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdldojistar_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdldojistar_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -4172,21 +3715,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdldragonflydoji_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdldragonflydoji_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -4267,21 +3797,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlengulfing_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlengulfing_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -4364,22 +3881,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdleveningdojistar_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdleveningdojistar_lookback(optInPenetration);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -4462,22 +3965,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdleveningstar_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdleveningstar_lookback(optInPenetration);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -4558,21 +4047,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlgapsidesidewhite_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlgapsidesidewhite_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -4653,21 +4129,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlgravestonedoji_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlgravestonedoji_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -4748,21 +4211,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlhammer_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlhammer_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -4843,21 +4293,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlhangingman_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlhangingman_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -4938,21 +4375,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlharami_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlharami_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -5033,21 +4457,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlharamicross_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlharamicross_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -5128,21 +4539,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlhighwave_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlhighwave_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -5223,21 +4621,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlhikkake_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlhikkake_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -5318,21 +4703,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlhikkakemod_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlhikkakemod_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -5413,21 +4785,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlhomingpigeon_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlhomingpigeon_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -5508,21 +4867,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlidentical3crows_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlidentical3crows_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -5603,21 +4949,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlinneck_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlinneck_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -5698,21 +5031,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlinvertedhammer_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlinvertedhammer_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -5793,21 +5113,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlkicking_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlkicking_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -5888,21 +5195,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlkickingbylength_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlkickingbylength_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -5983,21 +5277,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlladderbottom_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlladderbottom_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -6078,21 +5359,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdllongleggeddoji_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdllongleggeddoji_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -6173,21 +5441,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdllongline_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdllongline_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -6268,21 +5523,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlmarubozu_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlmarubozu_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -6363,21 +5605,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlmatchinglow_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlmatchinglow_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -6460,22 +5689,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlmathold_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlmathold_lookback(optInPenetration);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -6558,22 +5773,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlmorningdojistar_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlmorningdojistar_lookback(optInPenetration);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -6656,22 +5857,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlmorningstar_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlmorningstar_lookback(optInPenetration);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -6752,21 +5939,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlonneck_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlonneck_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -6847,21 +6021,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlpiercing_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlpiercing_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -6942,21 +6103,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlrickshawman_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlrickshawman_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -7037,21 +6185,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlrisefall3methods_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlrisefall3methods_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -7132,21 +6267,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlseparatinglines_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlseparatinglines_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -7227,21 +6349,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlshootingstar_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlshootingstar_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -7322,21 +6431,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlshortline_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlshortline_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -7417,21 +6513,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlspinningtop_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlspinningtop_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -7512,21 +6595,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlstalledpattern_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlstalledpattern_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -7607,21 +6677,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlsticksandwich_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlsticksandwich_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -7702,21 +6759,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdltakuri_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdltakuri_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -7797,21 +6841,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdltasukigap_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdltasukigap_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -7892,21 +6923,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlthrusting_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlthrusting_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -7987,21 +7005,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdltristar_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdltristar_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -8082,21 +7087,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlunique3river_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlunique3river_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -8177,21 +7169,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlupsidegap2crows_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlupsidegap2crows_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -8272,21 +7251,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cdlxsidegap3methods_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cdlxsidegap3methods_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -8343,18 +7309,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ceil_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ceil_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -8437,22 +7393,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cmf_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &inVolume,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cmf_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -8514,19 +7456,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cmo_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cmo_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -8585,19 +7516,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cmou_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cmou_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -8664,20 +7584,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.correl_unguarded(
-                startIdx, endIdx,
-                &inReal0,
-                &inReal1,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.correl_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -8734,18 +7642,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cos_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cos_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -8802,18 +7700,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.cosh_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.cosh_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -8872,19 +7760,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.dema_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.dema_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -8949,19 +7826,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.div_unguarded(
-                startIdx, endIdx,
-                &inReal0,
-                &inReal1,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.div_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -9039,21 +7905,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.dx_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.dx_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -9115,19 +7968,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ema_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ema_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -9184,18 +8026,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.exp_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.exp_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -9252,18 +8084,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.floor_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.floor_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -9322,19 +8144,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.hma_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.hma_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -9394,18 +8205,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ht_dcperiod_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ht_dcperiod_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -9465,18 +8266,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ht_dcphase_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ht_dcphase_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -9538,18 +8329,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ht_phasor_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ht_phasor_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push('}');
@@ -9612,18 +8393,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ht_sine_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ht_sine_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push('}');
@@ -9684,18 +8455,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ht_trendline_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ht_trendline_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -9755,18 +8516,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ht_trendmode_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ht_trendmode_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -9833,20 +8584,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.imi_unguarded(
-                startIdx, endIdx,
-                &inOpen,
-                &inClose,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.imi_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -9908,19 +8647,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.kama_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.kama_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -9979,19 +8707,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.linearreg_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.linearreg_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -10050,19 +8767,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.linearreg_angle_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.linearreg_angle_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -10121,19 +8827,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.linearreg_intercept_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.linearreg_intercept_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -10192,19 +8887,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.linearreg_slope_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.linearreg_slope_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -10261,18 +8945,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ln_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ln_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -10329,18 +9003,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.log10_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.log10_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -10401,20 +9065,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ma_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                optInMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ma_lookback(optInTimePeriod, optInMAType);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -10481,21 +9133,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.macd_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInFastPeriod,
-                optInSlowPeriod,
-                optInSignalPeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.macd_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -10570,24 +9209,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.macdext_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInFastPeriod,
-                optInFastMAType,
-                optInSlowPeriod,
-                optInSlowMAType,
-                optInSignalPeriod,
-                optInSignalMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.macdext_lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -10652,19 +9275,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.macdfix_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInSignalPeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.macdfix_lookback(optInSignalPeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -10732,20 +9344,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.mama_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInFastLimit,
-                optInSlowLimit,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.mama_lookback(optInFastLimit, optInSlowLimit);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push('}');
@@ -10817,22 +9417,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.mavp_unguarded(
-                startIdx, endIdx,
-                &inReal0,
-                &inReal1,
-                optInMinPeriod,
-                optInMaxPeriod,
-                optInMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -10891,19 +9477,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.max_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.max_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -10962,19 +9537,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.maxindex_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.maxindex_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -11039,19 +9603,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.medprice_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.medprice_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -11134,22 +9687,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.mfi_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &inVolume,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.mfi_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -11208,19 +9747,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.midpoint_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.midpoint_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -11287,20 +9815,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.midprice_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.midprice_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -11359,19 +9875,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.min_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.min_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -11430,19 +9935,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.minindex_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.minindex_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -11503,19 +9997,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.minmax_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.minmax_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push('}');
@@ -11577,19 +10060,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.minmaxindex_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0, &mut outIntBuf1,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.minmaxindex_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push_str(",\"outInteger1\":"); resp.push_str(&json_i32_array(&outIntBuf1[..outNBElement]));
             resp.push('}');
@@ -11668,21 +10140,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.minus_di_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.minus_di_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -11752,20 +10211,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.minus_dm_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.minus_dm_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -11824,19 +10271,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.mom_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.mom_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -11901,19 +10337,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.mult_unguarded(
-                startIdx, endIdx,
-                &inReal0,
-                &inReal1,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.mult_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -11991,21 +10416,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.natr_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.natr_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12070,19 +10482,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.nvi_unguarded(
-                startIdx, endIdx,
-                &inClose,
-                &inVolume,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.nvi_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12147,19 +10548,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.obv_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &inVolume,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.obv_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12237,21 +10627,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.plus_di_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.plus_di_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12321,20 +10698,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.plus_dm_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.plus_dm_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12397,21 +10762,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ppo_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInFastPeriod,
-                optInSlowPeriod,
-                optInMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ppo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12476,19 +10828,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.pvi_unguarded(
-                startIdx, endIdx,
-                &inClose,
-                &inVolume,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.pvi_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12551,21 +10892,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.pvo_unguarded(
-                startIdx, endIdx,
-                &inVolume,
-                optInFastPeriod,
-                optInSlowPeriod,
-                optInMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.pvo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12624,19 +10952,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.roc_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.roc_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12695,19 +11012,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.rocp_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.rocp_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12766,19 +11072,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.rocr_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.rocr_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12837,19 +11132,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.rocr100_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.rocr100_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12911,19 +11195,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.rsi_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.rsi_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -12992,21 +11265,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.sar_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                optInAcceleration,
-                optInMaximum,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.sar_lookback(optInAcceleration, optInMaximum);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -13087,27 +11347,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.sarext_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                optInStartValue,
-                optInOffsetOnReverse,
-                optInAccelerationInitLong,
-                optInAccelerationLong,
-                optInAccelerationMaxLong,
-                optInAccelerationInitShort,
-                optInAccelerationShort,
-                optInAccelerationMaxShort,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.sarext_lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -13164,18 +11405,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.sin_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.sin_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -13232,18 +11463,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.sinh_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.sinh_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -13302,19 +11523,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.sma_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.sma_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -13371,18 +11581,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.sqrt_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.sqrt_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -13443,20 +11643,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.stddev_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                optInNbDev,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.stddev_lookback(optInTimePeriod, optInNbDev);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -13541,25 +11729,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.stoch_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInFastK_Period,
-                optInSlowK_Period,
-                optInSlowK_MAType,
-                optInSlowD_Period,
-                optInSlowD_MAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.stoch_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push('}');
@@ -13641,23 +11812,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.stochf_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInFastK_Period,
-                optInFastD_Period,
-                optInFastD_MAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push('}');
@@ -13725,22 +11881,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.stochrsi_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                optInFastK_Period,
-                optInFastD_Period,
-                optInFastD_MAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.stochrsi_lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push('}');
@@ -13806,19 +11948,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.sub_unguarded(
-                startIdx, endIdx,
-                &inReal0,
-                &inReal1,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.sub_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -13877,19 +12008,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.sum_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.sum_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -13953,20 +12073,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.t3_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                optInVFactor,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.t3_lookback(optInTimePeriod, optInVFactor);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14023,18 +12131,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.tan_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.tan_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14091,18 +12189,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.tanh_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.tanh_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14161,19 +12249,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.tema_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.tema_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14246,20 +12323,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.trange_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.trange_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14318,19 +12383,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.trima_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.trima_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14389,19 +12443,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.trix_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.trix_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14460,19 +12503,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.tsf_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.tsf_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14545,20 +12577,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.typprice_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.typprice_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14637,23 +12657,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.ultosc_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInTimePeriod1,
-                optInTimePeriod2,
-                optInTimePeriod3,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14714,20 +12719,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.var_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                optInNbDev,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.var_lookback(optInTimePeriod, optInNbDev);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14794,20 +12787,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.vwma_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                &inVolume,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.vwma_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14880,20 +12861,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.wclprice_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.wclprice_lookback();
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -14968,21 +12937,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.willr_unguarded(
-                startIdx, endIdx,
-                &inHigh,
-                &inLow,
-                &inClose,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.willr_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp
@@ -15041,19 +12997,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let mut start_time_ung = Instant::now();
-            for _biu in 0..=bench_iters {
-                if _biu == 1 { start_time_ung = Instant::now(); }
-            rc = core.wma_unguarded(
-                startIdx, endIdx,
-                &inReal,
-                optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
-            );
-            }
-            let elapsed_ns_ung = start_time_ung.elapsed().as_nanos() as u64 / bench_iters as u64;
             let lookback = core.wma_lookback(optInTimePeriod);
-            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{},\"timing_ns_unguarded\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns, elapsed_ns_ung);
+            let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
             resp

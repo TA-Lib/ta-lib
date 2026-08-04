@@ -155,6 +155,13 @@ impl Core {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
+        let _assertLb = self.cdlengulfing_lookback();
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inOpen.len());
+        assert!(_assertStart > endIdx || endIdx < inHigh.len());
+        assert!(_assertStart > endIdx || endIdx < inLow.len());
+        assert!(_assertStart > endIdx || endIdx < inClose.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outInteger.len());
         let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -206,66 +213,6 @@ impl Core {
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::cdlengulfing`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::cdlengulfing`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::cdlengulfing`].
-    #[inline]
-    pub fn cdlengulfing_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inOpen: &[f64],
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outInteger: &mut [i32],
-    ) -> RetCode {
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        assert!(endIdx < inOpen.len());
-        assert!(endIdx < inHigh.len());
-        assert!(endIdx < inLow.len());
-        assert!(endIdx < inClose.len());
-        let _assertLb = self.cdlengulfing_lookback();
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outInteger.len());
-        lookbackTotal = self.cdlengulfing_lookback();
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        i = startIdx;
-        outIdx = 0;
-        loop {
-            if (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (inClose[i] >= inOpen[i - 1] && inOpen[i] < inClose[i - 1] || inClose[i] > inOpen[i - 1] && inOpen[i] <= inClose[i - 1]) || (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && (inOpen[i] >= inClose[i - 1] && inClose[i] < inOpen[i - 1] || inOpen[i] > inClose[i - 1] && inClose[i] <= inOpen[i - 1]) {
-                if inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] {
-                    outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 100) as i32;
-                    outIdx += 1;
-                } else {
-                    outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 80) as i32;
-                    outIdx += 1;
-                }
-            } else {
-                outInteger[outIdx] = 0;
-                outIdx += 1;
-            }
-            i += 1;
-            if !(i <= endIdx) { break; }
-        }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;

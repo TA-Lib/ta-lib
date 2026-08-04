@@ -87,9 +87,15 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - Ruby: [ta-lib-ruby](https://github.com/TA-Lib/ta-lib-ruby). Thanks @Youngv !
 - Zig: [ta-lib-zig](https://github.com/TA-Lib/ta-lib-zig). Thanks @mrjbq7 !
 
+### Removed
+- (#166) The `TA_*_Unguarded` / `TA_S_*_Unguarded` function variants, and their Java `xxxUnguarded` and C# `XxxUnguarded` equivalents, are withdrawn. They were introduced in 0.7.1 as a faster tier that skipped parameter validation, and undocumented since. Measurement across four toolchains showed skipping validation is **not** measurably cheaper at any range size — one platform was 20-45% *slower* — while the variants cost 15.5% of the library's `.text`. Callers should use the ordinary function (`TA_SMA`, `core.sma(..)`, `Sma(..)`), which returns the same values for the same valid inputs.
+  - The Rust crate's guarded functions gained the bounds-assert preamble the unguarded tier used to carry, so callers of `core.sma(..)` get the optimization the removed tier existed to provide.
+  - `include/ta_func_unguarded.h` is deleted. It was an installed public header, but 336 of its 706 lines declared the removed variants and the rest was internal plumbing (stream forward declarations, `TA_EMA_Private`, and one `stddev_using_precalc_ma` extern that was declared there and defined nowhere — any consumer referencing it has always failed to link). Nothing in the public API needed it: `include/ta_func.h` already carries the complete stream surface.
+  - `TA_EMA_Private` and `TA_S_EMA_Private` are no longer exported.
+
 ### Changed
 - Major simplification of how TA functions are written and generated: the new ta_codegen (Rust) replaces the outdated gen_code — a big win for maintainability and the coming Rust-native release. Thanks @chadfurman !
-- The `TA_FUNC_NO_RANGE_CHECK` compile flag is gone: parameter validation is always on in the public functions. Callers that used the flag for speed should call the new exported `TA_*_Unguarded` variants instead (no validation, same results for valid inputs).
+- The `TA_FUNC_NO_RANGE_CHECK` compile flag is gone: parameter validation is always on in the public functions. (0.7.1 suggested the exported `TA_*_Unguarded` variants as the replacement; see the Removed section below — those variants have been withdrawn and no replacement is needed, because validation was not measurably costing anything.)
 - Algo Optimization: MIDPOINT and MIDPRICE now cache the rolling min/max instead of rescanning the window each bar, reducing typical cost from O(n*period) toward O(n) (largest gains at bigger periods).
 - Removed outdated ta-lib/make directory. Use CMake and Autotools instead.
 - (#70) Documentation index updates. Thanks @kennethjor !

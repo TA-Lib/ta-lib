@@ -290,6 +290,7 @@ def get_src_generated_files() -> list:
         'include/ta_func.h',
         'include/ta_defs.h',
         'src/ta_func/*.c',
+        'src/ta_func/ta_func_stream_private.h',
         'src/ta_abstract/*.c',
         'src/ta_abstract/frames/*.c',
         'src/ta_abstract/frames/*.h',

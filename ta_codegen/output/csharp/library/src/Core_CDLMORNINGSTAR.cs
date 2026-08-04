@@ -199,77 +199,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlMorningStarUnguarded( int startIdx,
-                                             int endIdx,
-                                             double[] inOpen,
-                                             double[] inHigh,
-                                             double[] inLow,
-                                             double[] inClose,
-                                             double optInPenetration,
-                                             out int outBegIdx,
-                                             out int outNBElement,
-                                             int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double BodyShortPeriodTotal = 0;
-      double BodyLongPeriodTotal = 0;
-      double BodyShortPeriodTotal2 = 0;
-      int i = 0;
-      int outIdx = 0;
-      int BodyShortTrailingIdx = 0;
-      int BodyLongTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int BodyLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyLong].rangeType;
-      int BodyLong_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyLong].avgPeriod;
-      double BodyLong_factor = this.candleSettings[(int)CandleSettingType.BodyLong].factor;
-      int BodyShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyShort].rangeType;
-      int BodyShort_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyShort].avgPeriod;
-      double BodyShort_factor = this.candleSettings[(int)CandleSettingType.BodyShort].factor;
-      lookbackTotal = CdlMorningStarLookback(optInPenetration);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      BodyLongPeriodTotal = 0;
-      BodyShortPeriodTotal = 0;
-      BodyShortPeriodTotal2 = 0;
-      BodyLongTrailingIdx = startIdx - 2 - BodyLong_avgPeriod;
-      BodyShortTrailingIdx = startIdx - 1 - BodyShort_avgPeriod;
-      i = BodyLongTrailingIdx;
-      while( i < startIdx - 2 ) {
-         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyLong_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      i = BodyShortTrailingIdx;
-      while( i < startIdx - 1 ) {
-         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0)));
-         BodyShortPeriodTotal2 += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i + 1] - inOpen[i + 1])) : ((BodyShort_rangeType == 1) ? (inHigh[i + 1] - inLow[i + 1]) : ((BodyShort_rangeType == 2) ? ((inHigh[i + 1] - inLow[i + 1]) - Math.Abs(inClose[i + 1] - inOpen[i + 1])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.Max(inOpen[i - 1], inClose[i - 1]) < Math.Min(inOpen[i - 2], inClose[i - 2])) && inClose[i] > Math.FusedMultiplyAdd(Math.Abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.Abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.Abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal2 / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.Abs(inClose[i - 2] - inOpen[i - 2])) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx])) : ((BodyLong_rangeType == 1) ? (inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]) : ((BodyLong_rangeType == 2) ? ((inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx]) - Math.Abs(inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx])) : 0.0)));
-         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.Abs(inClose[i - 1] - inOpen[i - 1])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyShortTrailingIdx] - inOpen[BodyShortTrailingIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyShortTrailingIdx] - inLow[BodyShortTrailingIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyShortTrailingIdx] - inLow[BodyShortTrailingIdx]) - Math.Abs(inClose[BodyShortTrailingIdx] - inOpen[BodyShortTrailingIdx])) : 0.0)));
-         BodyShortPeriodTotal2 += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyShortTrailingIdx + 1] - inOpen[BodyShortTrailingIdx + 1])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyShortTrailingIdx + 1] - inLow[BodyShortTrailingIdx + 1]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyShortTrailingIdx + 1] - inLow[BodyShortTrailingIdx + 1]) - Math.Abs(inClose[BodyShortTrailingIdx + 1] - inOpen[BodyShortTrailingIdx + 1])) : 0.0)));
-         i += 1;
-         BodyLongTrailingIdx += 1;
-         BodyShortTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode CdlMorningStar( int startIdx,
                                     int endIdx,
                                     float[] inOpen,
@@ -308,77 +237,6 @@ public partial class Core
       } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = CdlMorningStarLookback(optInPenetration);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      BodyLongPeriodTotal = 0;
-      BodyShortPeriodTotal = 0;
-      BodyShortPeriodTotal2 = 0;
-      BodyLongTrailingIdx = startIdx - 2 - BodyLong_avgPeriod;
-      BodyShortTrailingIdx = startIdx - 1 - BodyShort_avgPeriod;
-      i = BodyLongTrailingIdx;
-      while( i < startIdx - 2 ) {
-         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      i = BodyShortTrailingIdx;
-      while( i < startIdx - 1 ) {
-         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0)));
-         BodyShortPeriodTotal2 += ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i + 1] - (double)inOpen[i + 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i + 1] - (double)inLow[i + 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i + 1] - (double)inLow[i + 1]) - Math.Abs((double)inClose[i + 1] - (double)inOpen[i + 1])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (Math.Max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.Min((double)inOpen[i - 2], (double)inClose[i - 2])) && (double)inClose[i] > Math.FusedMultiplyAdd(Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]), optInPenetration, (double)inClose[i - 2]) && Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal2 / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[BodyLongTrailingIdx] - (double)inOpen[BodyLongTrailingIdx])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[BodyLongTrailingIdx] - (double)inLow[BodyLongTrailingIdx]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[BodyLongTrailingIdx] - (double)inLow[BodyLongTrailingIdx]) - Math.Abs((double)inClose[BodyLongTrailingIdx] - (double)inOpen[BodyLongTrailingIdx])) : 0.0)));
-         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[BodyShortTrailingIdx] - (double)inOpen[BodyShortTrailingIdx])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[BodyShortTrailingIdx] - (double)inLow[BodyShortTrailingIdx]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[BodyShortTrailingIdx] - (double)inLow[BodyShortTrailingIdx]) - Math.Abs((double)inClose[BodyShortTrailingIdx] - (double)inOpen[BodyShortTrailingIdx])) : 0.0)));
-         BodyShortPeriodTotal2 += ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[BodyShortTrailingIdx + 1] - (double)inOpen[BodyShortTrailingIdx + 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[BodyShortTrailingIdx + 1] - (double)inLow[BodyShortTrailingIdx + 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[BodyShortTrailingIdx + 1] - (double)inLow[BodyShortTrailingIdx + 1]) - Math.Abs((double)inClose[BodyShortTrailingIdx + 1] - (double)inOpen[BodyShortTrailingIdx + 1])) : 0.0)));
-         i += 1;
-         BodyLongTrailingIdx += 1;
-         BodyShortTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode CdlMorningStarUnguarded( int startIdx,
-                                             int endIdx,
-                                             float[] inOpen,
-                                             float[] inHigh,
-                                             float[] inLow,
-                                             float[] inClose,
-                                             double optInPenetration,
-                                             out int outBegIdx,
-                                             out int outNBElement,
-                                             int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double BodyShortPeriodTotal = 0;
-      double BodyLongPeriodTotal = 0;
-      double BodyShortPeriodTotal2 = 0;
-      int i = 0;
-      int outIdx = 0;
-      int BodyShortTrailingIdx = 0;
-      int BodyLongTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int BodyLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyLong].rangeType;
-      int BodyLong_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyLong].avgPeriod;
-      double BodyLong_factor = this.candleSettings[(int)CandleSettingType.BodyLong].factor;
-      int BodyShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyShort].rangeType;
-      int BodyShort_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyShort].avgPeriod;
-      double BodyShort_factor = this.candleSettings[(int)CandleSettingType.BodyShort].factor;
       lookbackTotal = CdlMorningStarLookback(optInPenetration);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -483,49 +341,6 @@ public partial class Core
    /// small-bodied star gapping down, then a white candle closing well up into
    /// the first candle's body. Bullish reversal signal. A hit signals a bullish
    /// reversal (most meaningful after a downtrend, which the code does not
-   /// check). — <b>unchecked</b> variant of <c>CdlMorningStar</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="optInPenetration">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlMorningStarUnguarded( int startIdx,
-                                            int endIdx,
-                                            double[] inOpen,
-                                            double[] inHigh,
-                                            double[] inLow,
-                                            double[] inClose,
-                                            double optInPenetration,
-                                            int[] outInteger )
-   {
-      CdlMorningStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A three-candle bottom-reversal pattern: a long black candle, a
-   /// small-bodied star gapping down, then a white candle closing well up into
-   /// the first candle's body. Bullish reversal signal. A hit signals a bullish
-   /// reversal (most meaningful after a downtrend, which the code does not
    /// check).
    /// </summary>
    /// <remarks>
@@ -580,52 +395,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("CDLMORNINGSTAR", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A three-candle bottom-reversal pattern: a long black candle, a
-   /// small-bodied star gapping down, then a white candle closing well up into
-   /// the first candle's body. Bullish reversal signal. A hit signals a bullish
-   /// reversal (most meaningful after a downtrend, which the code does not
-   /// check). — <b>unchecked</b> variant of <c>CdlMorningStar</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="optInPenetration">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlMorningStarUnguarded( int startIdx,
-                                            int endIdx,
-                                            float[] inOpen,
-                                            float[] inHigh,
-                                            float[] inLow,
-                                            float[] inClose,
-                                            double optInPenetration,
-                                            int[] outInteger )
-   {
-      CdlMorningStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

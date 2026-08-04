@@ -170,58 +170,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlTasukiGapUnguarded( int startIdx,
-                                           int endIdx,
-                                           double[] inOpen,
-                                           double[] inHigh,
-                                           double[] inLow,
-                                           double[] inClose,
-                                           out int outBegIdx,
-                                           out int outNBElement,
-                                           int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double NearPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int NearTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int Near_rangeType = (int)this.candleSettings[(int)CandleSettingType.Near].rangeType;
-      int Near_avgPeriod = this.candleSettings[(int)CandleSettingType.Near].avgPeriod;
-      double Near_factor = this.candleSettings[(int)CandleSettingType.Near].factor;
-      lookbackTotal = CdlTasukiGapLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      NearPeriodTotal = 0;
-      NearTrailingIdx = startIdx - Near_avgPeriod;
-      i = NearTrailingIdx;
-      while( i < startIdx ) {
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.Abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( (Math.Min(inOpen[i - 1], inClose[i - 1]) > Math.Max(inOpen[i - 2], inClose[i - 2])) && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inOpen[i] < inClose[i - 1] && inOpen[i] > inOpen[i - 1] && inClose[i] < inOpen[i - 1] && inClose[i] > Math.Max(inClose[i - 2], inOpen[i - 2]) && Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.Abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (Math.Max(inOpen[i - 1], inClose[i - 1]) < Math.Min(inOpen[i - 2], inClose[i - 2])) && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inOpen[i] < inOpen[i - 1] && inOpen[i] > inClose[i - 1] && inClose[i] > inOpen[i - 1] && inClose[i] < Math.Min(inClose[i - 2], inOpen[i - 2]) && Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.Abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.Abs(inClose[i - 1] - inOpen[i - 1])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs(inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]) - Math.Abs(inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1])) : 0.0)));
-         i += 1;
-         NearTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode CdlTasukiGap( int startIdx,
                                   int endIdx,
                                   float[] inOpen,
@@ -248,58 +196,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = CdlTasukiGapLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      NearPeriodTotal = 0;
-      NearTrailingIdx = startIdx - Near_avgPeriod;
-      i = NearTrailingIdx;
-      while( i < startIdx ) {
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( (Math.Min((double)inOpen[i - 1], (double)inClose[i - 1]) > Math.Max((double)inOpen[i - 2], (double)inClose[i - 2])) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inOpen[i] < (double)inClose[i - 1] && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] < (double)inOpen[i - 1] && (double)inClose[i] > Math.Max((double)inClose[i - 2], (double)inOpen[i - 2]) && Math.Abs(Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (Math.Max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.Min((double)inOpen[i - 2], (double)inClose[i - 2])) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inOpen[i] < (double)inOpen[i - 1] && (double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] > (double)inOpen[i - 1] && (double)inClose[i] < Math.Min((double)inClose[i - 2], (double)inOpen[i - 2]) && Math.Abs(Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs((double)inClose[NearTrailingIdx - 1] - (double)inOpen[NearTrailingIdx - 1])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - 1] - (double)inLow[NearTrailingIdx - 1]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - 1] - (double)inLow[NearTrailingIdx - 1]) - Math.Abs((double)inClose[NearTrailingIdx - 1] - (double)inOpen[NearTrailingIdx - 1])) : 0.0)));
-         i += 1;
-         NearTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode CdlTasukiGapUnguarded( int startIdx,
-                                           int endIdx,
-                                           float[] inOpen,
-                                           float[] inHigh,
-                                           float[] inLow,
-                                           float[] inClose,
-                                           out int outBegIdx,
-                                           out int outNBElement,
-                                           int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double NearPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int NearTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int Near_rangeType = (int)this.candleSettings[(int)CandleSettingType.Near].rangeType;
-      int Near_avgPeriod = this.candleSettings[(int)CandleSettingType.Near].avgPeriod;
-      double Near_factor = this.candleSettings[(int)CandleSettingType.Near].factor;
       lookbackTotal = CdlTasukiGapLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -389,48 +285,6 @@ public partial class Core
    /// gap without filling it. An upside gap is a bullish continuation signal; a
    /// downside gap is a bearish continuation signal. Hit signals trend
    /// continuation: +100 bullish (in an uptrend), -100 bearish (in a downtrend).
-   /// — <b>unchecked</b> variant of <c>CdlTasukiGap</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlTasukiGapUnguarded( int startIdx,
-                                          int endIdx,
-                                          double[] inOpen,
-                                          double[] inHigh,
-                                          double[] inLow,
-                                          double[] inClose,
-                                          int[] outInteger )
-   {
-      CdlTasukiGapUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A three-candle pattern: a real-body-gapping candle followed by an
-   /// opposite-color candle that opens inside its body and closes back into the
-   /// gap without filling it. An upside gap is a bullish continuation signal; a
-   /// downside gap is a bearish continuation signal. Hit signals trend
-   /// continuation: +100 bullish (in an uptrend), -100 bearish (in a downtrend).
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
@@ -480,51 +334,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("CDLTASUKIGAP", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A three-candle pattern: a real-body-gapping candle followed by an
-   /// opposite-color candle that opens inside its body and closes back into the
-   /// gap without filling it. An upside gap is a bullish continuation signal; a
-   /// downside gap is a bearish continuation signal. Hit signals trend
-   /// continuation: +100 bullish (in an uptrend), -100 bearish (in a downtrend).
-   /// — <b>unchecked</b> variant of <c>CdlTasukiGap</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlTasukiGapUnguarded( int startIdx,
-                                          int endIdx,
-                                          float[] inOpen,
-                                          float[] inHigh,
-                                          float[] inLow,
-                                          float[] inClose,
-                                          int[] outInteger )
-   {
-      CdlTasukiGapUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

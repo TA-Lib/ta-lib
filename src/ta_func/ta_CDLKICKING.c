@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -192,87 +192,6 @@ TA_LIB_API TA_RetCode TA_CDLKICKING( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_CDLKICKING_Unguarded( int    startIdx,
-                                               int    endIdx,
-                                               const double inOpen[],
-                                               const double inHigh[],
-                                               const double inLow[],
-                                               const double inClose[],
-                                               int          *outBegIdx,
-                                               int          *outNBElement,
-                                               int        outInteger[] )
-{
-   double ShadowVeryShortPeriodTotal[2];
-   double BodyLongPeriodTotal[2];
-   int i;
-   int outIdx;
-   int totIdx;
-   int ShadowVeryShortTrailingIdx;
-   int BodyLongTrailingIdx;
-   int lookbackTotal;
-   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
-   int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
-   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
-   int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
-
-   lookbackTotal = TA_CDLKICKING_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   ShadowVeryShortPeriodTotal[1] = 0;
-   ShadowVeryShortPeriodTotal[0] = 0;
-   ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
-   BodyLongPeriodTotal[1] = 0;
-   BodyLongPeriodTotal[0] = 0;
-   BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
-   i = ShadowVeryShortTrailingIdx;
-   while( i < startIdx )
-   {
-      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + TA_CANDLERANGE(ShadowVeryShort,i - 1);
-      ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + TA_CANDLERANGE(ShadowVeryShort,i);
-      i += 1;
-   }
-   i = BodyLongTrailingIdx;
-   while( i < startIdx )
-   {
-      BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + TA_CANDLERANGE(BodyLong,i - 1);
-      BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + TA_CANDLERANGE(BodyLong,i);
-      i += 1;
-   }
-   i = startIdx;
-   outIdx = 0;
-   do
-   {
-      if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) && fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[1],i - 1) && (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[1],i - 1) && (((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[1],i - 1) && fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],i) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],i) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],i) && (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inLow[i] > inHigh[i - 1]) ? 1 : 0) || ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inHigh[i] < inLow[i - 1]) ? 1 : 0)) )
-      {
-         outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-      {
-         BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE(BodyLong,i - totIdx) - TA_CANDLERANGE(BodyLong,BodyLongTrailingIdx - totIdx));
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE(ShadowVeryShort,i - totIdx) - TA_CANDLERANGE(ShadowVeryShort,ShadowVeryShortTrailingIdx - totIdx));
-      }
-      i += 1;
-      ShadowVeryShortTrailingIdx += 1;
-      BodyLongTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_CDLKICKING( int    startIdx,
                             int    endIdx,
                             const float inOpen[],
@@ -313,87 +232,6 @@ TA_RetCode TA_S_CDLKICKING( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
-
-   lookbackTotal = TA_CDLKICKING_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   ShadowVeryShortPeriodTotal[1] = 0;
-   ShadowVeryShortPeriodTotal[0] = 0;
-   ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
-   BodyLongPeriodTotal[1] = 0;
-   BodyLongPeriodTotal[0] = 0;
-   BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
-   i = ShadowVeryShortTrailingIdx;
-   while( i < startIdx )
-   {
-      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + TA_CANDLERANGE(ShadowVeryShort,i - 1);
-      ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + TA_CANDLERANGE(ShadowVeryShort,i);
-      i += 1;
-   }
-   i = BodyLongTrailingIdx;
-   while( i < startIdx )
-   {
-      BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + TA_CANDLERANGE(BodyLong,i - 1);
-      BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + TA_CANDLERANGE(BodyLong,i);
-      i += 1;
-   }
-   i = startIdx;
-   outIdx = 0;
-   do
-   {
-      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[1],i - 1) && ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[1],i - 1) && ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inOpen[i - 1] : (double)inClose[i - 1]) - (double)inLow[i - 1]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[1],i - 1) && fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],i) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],i) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],i) && ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (((double)inLow[i] > (double)inHigh[i - 1]) ? 1 : 0) || (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (((double)inHigh[i] < (double)inLow[i - 1]) ? 1 : 0)) )
-      {
-         outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-      {
-         BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE(BodyLong,i - totIdx) - TA_CANDLERANGE(BodyLong,BodyLongTrailingIdx - totIdx));
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE(ShadowVeryShort,i - totIdx) - TA_CANDLERANGE(ShadowVeryShort,ShadowVeryShortTrailingIdx - totIdx));
-      }
-      i += 1;
-      ShadowVeryShortTrailingIdx += 1;
-      BodyLongTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_CDLKICKING_Unguarded( int    startIdx,
-                                      int    endIdx,
-                                      const float inOpen[],
-                                      const float inHigh[],
-                                      const float inLow[],
-                                      const float inClose[],
-                                      int          *outBegIdx,
-                                      int          *outNBElement,
-                                      int        outInteger[] )
-{
-   double ShadowVeryShortPeriodTotal[2];
-   double BodyLongPeriodTotal[2];
-   int i;
-   int outIdx;
-   int totIdx;
-   int ShadowVeryShortTrailingIdx;
-   int BodyLongTrailingIdx;
-   int lookbackTotal;
-   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
-   int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
-   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
-   int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    lookbackTotal = TA_CDLKICKING_Lookback();
    if( startIdx < lookbackTotal )

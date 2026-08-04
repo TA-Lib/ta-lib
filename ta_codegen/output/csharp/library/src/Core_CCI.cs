@@ -199,78 +199,6 @@ public partial class Core
       /* Free the circular buffer if it was dynamically allocated. */
       return RetCode.Success ;
    }
-   internal RetCode CciUnguarded( int startIdx,
-                                  int endIdx,
-                                  double[] inHigh,
-                                  double[] inLow,
-                                  double[] inClose,
-                                  int optInTimePeriod,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double tempReal = 0;
-      double tempReal2 = 0;
-      double theAverage = 0;
-      double lastValue = 0;
-      int i = 0;
-      int j = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      double[] circBuffer;
-      int circBuffer_Idx = 0;
-      int maxIdx_circBuffer = (30)-1;
-      lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
-      circBuffer = new double[optInTimePeriod];
-      maxIdx_circBuffer = (optInTimePeriod)-1;
-      circBuffer_Idx = 0;
-      i = startIdx - lookbackTotal;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            circBuffer[circBuffer_Idx] = (inHigh[i] + inLow[i] + inClose[i]) / 3;
-            i += 1;
-            circBuffer_Idx++;
-            if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
-         }
-      }
-      outIdx = 0;
-      do {
-         lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
-         circBuffer[circBuffer_Idx] = lastValue;
-         theAverage = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
-            theAverage += circBuffer[j];
-         }
-         theAverage /= optInTimePeriod;
-         tempReal2 = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
-            tempReal2 += Math.Abs(circBuffer[j] - theAverage);
-         }
-         tempReal = lastValue - theAverage;
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
-            outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-         circBuffer_Idx++;
-         if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode Cci( int startIdx,
                          int endIdx,
                          float[] inHigh,
@@ -305,78 +233,6 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
-      circBuffer = new double[optInTimePeriod];
-      maxIdx_circBuffer = (optInTimePeriod)-1;
-      circBuffer_Idx = 0;
-      i = startIdx - lookbackTotal;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            circBuffer[circBuffer_Idx] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
-            i += 1;
-            circBuffer_Idx++;
-            if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
-         }
-      }
-      outIdx = 0;
-      do {
-         lastValue = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
-         circBuffer[circBuffer_Idx] = lastValue;
-         theAverage = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
-            theAverage += circBuffer[j];
-         }
-         theAverage /= optInTimePeriod;
-         tempReal2 = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
-            tempReal2 += Math.Abs(circBuffer[j] - theAverage);
-         }
-         tempReal = lastValue - theAverage;
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
-            outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-         circBuffer_Idx++;
-         if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode CciUnguarded( int startIdx,
-                                  int endIdx,
-                                  float[] inHigh,
-                                  float[] inLow,
-                                  float[] inClose,
-                                  int optInTimePeriod,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double tempReal = 0;
-      double tempReal2 = 0;
-      double theAverage = 0;
-      double lastValue = 0;
-      int i = 0;
-      int j = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      double[] circBuffer;
-      int circBuffer_Idx = 0;
-      int maxIdx_circBuffer = (30)-1;
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -482,47 +338,6 @@ public partial class Core
    /// Commodity Channel Index: measures the current typical price relative to
    /// its simple moving average, scaled by mean absolute deviation. Momentum
    /// oscillator flagging overbought/oversold extremes. CCI &gt; +100
-   /// overbought; CCI &lt; -100 oversold. — <b>unchecked</b> variant of
-   /// <c>Cci</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CciUnguarded( int startIdx,
-                                 int endIdx,
-                                 double[] inHigh,
-                                 double[] inLow,
-                                 double[] inClose,
-                                 int optInTimePeriod,
-                                 double[] outReal )
-   {
-      CciUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Commodity Channel Index: measures the current typical price relative to
-   /// its simple moving average, scaled by mean absolute deviation. Momentum
-   /// oscillator flagging overbought/oversold extremes. CCI &gt; +100
    /// overbought; CCI &lt; -100 oversold.
    /// </summary>
    /// <remarks>
@@ -575,50 +390,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("CCI", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Commodity Channel Index: measures the current typical price relative to
-   /// its simple moving average, scaled by mean absolute deviation. Momentum
-   /// oscillator flagging overbought/oversold extremes. CCI &gt; +100
-   /// overbought; CCI &lt; -100 oversold. — <b>unchecked</b> variant of
-   /// <c>Cci</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CciUnguarded( int startIdx,
-                                 int endIdx,
-                                 float[] inHigh,
-                                 float[] inLow,
-                                 float[] inClose,
-                                 int optInTimePeriod,
-                                 double[] outReal )
-   {
-      CciUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

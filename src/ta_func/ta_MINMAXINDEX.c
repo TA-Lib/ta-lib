@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -191,100 +191,6 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_MINMAXINDEX_Unguarded( int    startIdx,
-                                                int    endIdx,
-                                                const double inReal[],
-                                                int optInTimePeriod,
-                                                int          *outBegIdx,
-                                                int          *outNBElement,
-                                                int        outMinIdx[],
-                                                int        outMaxIdx[] )
-{
-   double highest;
-   double lowest;
-   double tmpHigh;
-   double tmpLow;
-   int outIdx;
-   int nbInitialElementNeeded;
-   int trailingIdx;
-   int today;
-   int i;
-   int highestIdx;
-   int lowestIdx;
-
-   nbInitialElementNeeded = optInTimePeriod - 1;
-   if( startIdx < nbInitialElementNeeded )
-   {
-      startIdx = nbInitialElementNeeded;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outIdx = 0;
-   today = startIdx;
-   trailingIdx = startIdx - nbInitialElementNeeded;
-   highestIdx = 0 - 1;
-   highest = 0.0;
-   lowestIdx = 0 - 1;
-   lowest = 0.0;
-   while( today <= endIdx )
-   {
-      tmpHigh = inReal[today];
-      tmpLow = tmpHigh;
-      if( highestIdx < trailingIdx )
-      {
-         highestIdx = trailingIdx;
-         highest = inReal[highestIdx];
-         i = highestIdx;
-         TA_UNROLL(4)
-         while( ++i <= today )
-         {
-            tmpHigh = inReal[i];
-            if( tmpHigh > highest )
-            {
-               highestIdx = i;
-               highest = tmpHigh;
-            }
-         }
-      } else if( tmpHigh >= highest )
-      {
-         highestIdx = today;
-         highest = tmpHigh;
-      }
-      if( lowestIdx < trailingIdx )
-      {
-         lowestIdx = trailingIdx;
-         lowest = inReal[lowestIdx];
-         i = lowestIdx;
-         TA_UNROLL(4)
-         while( ++i <= today )
-         {
-            tmpLow = inReal[i];
-            if( tmpLow < lowest )
-            {
-               lowestIdx = i;
-               lowest = tmpLow;
-            }
-         }
-      } else if( tmpLow <= lowest )
-      {
-         lowestIdx = today;
-         lowest = tmpLow;
-      }
-      outMaxIdx[outIdx] = highestIdx;
-      outMinIdx[outIdx] = lowestIdx;
-      outIdx += 1;
-      trailingIdx += 1;
-      today += 1;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_MINMAXINDEX( int    startIdx,
                              int    endIdx,
                              const float inReal[],
@@ -323,100 +229,6 @@ TA_RetCode TA_S_MINMAXINDEX( int    startIdx,
       return TA_BAD_PARAM;
    if( outMinIdx == outMaxIdx )
       return TA_BAD_PARAM;
-
-   nbInitialElementNeeded = optInTimePeriod - 1;
-   if( startIdx < nbInitialElementNeeded )
-   {
-      startIdx = nbInitialElementNeeded;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outIdx = 0;
-   today = startIdx;
-   trailingIdx = startIdx - nbInitialElementNeeded;
-   highestIdx = 0 - 1;
-   highest = 0.0;
-   lowestIdx = 0 - 1;
-   lowest = 0.0;
-   while( today <= endIdx )
-   {
-      tmpHigh = (double)inReal[today];
-      tmpLow = tmpHigh;
-      if( highestIdx < trailingIdx )
-      {
-         highestIdx = trailingIdx;
-         highest = (double)inReal[highestIdx];
-         i = highestIdx;
-         TA_UNROLL(4)
-         while( ++i <= today )
-         {
-            tmpHigh = (double)inReal[i];
-            if( tmpHigh > highest )
-            {
-               highestIdx = i;
-               highest = tmpHigh;
-            }
-         }
-      } else if( tmpHigh >= highest )
-      {
-         highestIdx = today;
-         highest = tmpHigh;
-      }
-      if( lowestIdx < trailingIdx )
-      {
-         lowestIdx = trailingIdx;
-         lowest = (double)inReal[lowestIdx];
-         i = lowestIdx;
-         TA_UNROLL(4)
-         while( ++i <= today )
-         {
-            tmpLow = (double)inReal[i];
-            if( tmpLow < lowest )
-            {
-               lowestIdx = i;
-               lowest = tmpLow;
-            }
-         }
-      } else if( tmpLow <= lowest )
-      {
-         lowestIdx = today;
-         lowest = tmpLow;
-      }
-      outMaxIdx[outIdx] = highestIdx;
-      outMinIdx[outIdx] = lowestIdx;
-      outIdx += 1;
-      trailingIdx += 1;
-      today += 1;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_MINMAXINDEX_Unguarded( int    startIdx,
-                                       int    endIdx,
-                                       const float inReal[],
-                                       int optInTimePeriod,
-                                       int          *outBegIdx,
-                                       int          *outNBElement,
-                                       int        outMinIdx[],
-                                       int        outMaxIdx[] )
-{
-   double highest;
-   double lowest;
-   double tmpHigh;
-   double tmpLow;
-   int outIdx;
-   int nbInitialElementNeeded;
-   int trailingIdx;
-   int today;
-   int i;
-   int highestIdx;
-   int lowestIdx;
 
    nbInitialElementNeeded = optInTimePeriod - 1;
    if( startIdx < nbInitialElementNeeded )

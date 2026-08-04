@@ -52,27 +52,6 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode multUnguardedInternal( int startIdx,
-                                  int endIdx,
-                                  double inReal0[],
-                                  double inReal1[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-   {
-      int outIdx = 0;
-      int i = 0;
-      outIdx = 0;
-      i = startIdx;
-      while( i <= endIdx ) {
-         outReal[outIdx] = inReal0[i] * inReal1[i];
-         outIdx += 1;
-         i += 1;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
    RetCode multInternal( int startIdx,
                          int endIdx,
                          float inReal0[],
@@ -89,27 +68,6 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      outIdx = 0;
-      i = startIdx;
-      while( i <= endIdx ) {
-         outReal[outIdx] = (double)inReal0[i] * (double)inReal1[i];
-         outIdx += 1;
-         i += 1;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode multUnguardedInternal( int startIdx,
-                                  int endIdx,
-                                  float inReal0[],
-                                  float inReal1[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-   {
-      int outIdx = 0;
-      int i = 0;
       outIdx = 0;
       i = startIdx;
       while( i <= endIdx ) {
@@ -168,32 +126,6 @@
    }
    /**
     * Element-wise multiplication of two input series. Produces outReal[i] =
-    * inReal0[i] * inReal1[i]. — <b>unchecked</b> variant of {@link Core#mult}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange multUnguarded( int startIdx,
-                                  int endIdx,
-                                  double inReal0[],
-                                  double inReal1[],
-                                  double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      multUnguardedInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Element-wise multiplication of two input series. Produces outReal[i] =
     * inReal0[i] * inReal1[i].
     * <p><b>Formula</b>
     * <pre>{@code
@@ -238,33 +170,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("MULT", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Element-wise multiplication of two input series. Produces outReal[i] =
-    * inReal0[i] * inReal1[i]. — <b>unchecked</b> variant of {@link Core#mult}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange multUnguarded( int startIdx,
-                                  int endIdx,
-                                  float inReal0[],
-                                  float inReal1[],
-                                  double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      multUnguardedInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

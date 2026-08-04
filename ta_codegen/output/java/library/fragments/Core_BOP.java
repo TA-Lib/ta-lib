@@ -59,32 +59,6 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode bopUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 double inOpen[],
-                                 double inHigh[],
-                                 double inLow[],
-                                 double inClose[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      int outIdx = 0;
-      int i = 0;
-      double tempReal = 0;
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempReal = inHigh[i] - inLow[i];
-         if( (tempReal < 0.00000000000001) ) {
-            outReal[outIdx++] = 0.0;
-         } else {
-            outReal[outIdx++] = (inClose[i] - inOpen[i]) / tempReal;
-         }
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
    RetCode bopInternal( int startIdx,
                         int endIdx,
                         float inOpen[],
@@ -104,32 +78,6 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempReal = (double)inHigh[i] - (double)inLow[i];
-         if( (tempReal < 0.00000000000001) ) {
-            outReal[outIdx++] = 0.0;
-         } else {
-            outReal[outIdx++] = ((double)inClose[i] - (double)inOpen[i]) / tempReal;
-         }
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode bopUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 float inOpen[],
-                                 float inHigh[],
-                                 float inLow[],
-                                 float inClose[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      int outIdx = 0;
-      int i = 0;
-      double tempReal = 0;
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempReal = (double)inHigh[i] - (double)inLow[i];
@@ -194,36 +142,6 @@
     * Balance Of Power compares where the close sits relative to the open,
     * normalized by the bar's high-low range. A per-bar oscillator with no
     * smoothing. Positive: close above open (buyers dominated); negative:
-    * sellers dominated. — <b>unchecked</b> variant of {@link Core#bop}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange bopUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inOpen[],
-                                 double inHigh[],
-                                 double inLow[],
-                                 double inClose[],
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      bopUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Balance Of Power compares where the close sits relative to the open,
-    * normalized by the bar's high-low range. A per-bar oscillator with no
-    * smoothing. Positive: close above open (buyers dominated); negative:
     * sellers dominated.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -268,37 +186,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("BOP", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Balance Of Power compares where the close sits relative to the open,
-    * normalized by the bar's high-low range. A per-bar oscillator with no
-    * smoothing. Positive: close above open (buyers dominated); negative:
-    * sellers dominated. — <b>unchecked</b> variant of {@link Core#bop}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange bopUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inOpen[],
-                                 float inHigh[],
-                                 float inLow[],
-                                 float inClose[],
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      bopUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

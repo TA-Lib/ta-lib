@@ -190,90 +190,6 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode CorrelUnguarded( int startIdx,
-                                     int endIdx,
-                                     double[] inReal0,
-                                     double[] inReal1,
-                                     int optInTimePeriod,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double sumXY = 0;
-      double sumX = 0;
-      double sumY = 0;
-      double sumX2 = 0;
-      double sumY2 = 0;
-      double x = 0;
-      double y = 0;
-      double trailingX = 0;
-      double trailingY = 0;
-      double tempReal = 0;
-      int lookbackTotal = 0;
-      int today = 0;
-      int trailingIdx = 0;
-      int outIdx = 0;
-      lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx = startIdx;
-      trailingIdx = startIdx - lookbackTotal;
-      sumY2 = 0.0;
-      sumX2 = sumY2;
-      sumY = sumX2;
-      sumX = sumY;
-      sumXY = sumX;
-      for( today = trailingIdx; today <= startIdx; today += 1 ) {
-         x = inReal0[today];
-         sumX += x;
-         sumX2 += x * x;
-         y = inReal1[today];
-         sumXY += x * y;
-         sumY += y;
-         sumY2 += y * y;
-      }
-      trailingX = inReal0[trailingIdx];
-      trailingY = inReal1[trailingIdx++];
-      tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-      if( !(tempReal < 0.00000000000001) ) {
-         outReal[0] = (sumXY - sumX * sumY / optInTimePeriod) / Math.Sqrt(tempReal);
-      } else {
-         outReal[0] = 0.0;
-      }
-      outIdx = 1;
-      while( today <= endIdx ) {
-         sumX -= trailingX;
-         sumX2 -= trailingX * trailingX;
-         sumXY -= trailingX * trailingY;
-         sumY -= trailingY;
-         sumY2 -= trailingY * trailingY;
-         x = inReal0[today];
-         sumX += x;
-         sumX2 += x * x;
-         y = inReal1[today++];
-         sumXY += x * y;
-         sumY += y;
-         sumY2 += y * y;
-         trailingX = inReal0[trailingIdx];
-         trailingY = inReal1[trailingIdx++];
-         tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-         if( !(tempReal < 0.00000000000001) ) {
-            outReal[outIdx++] = (sumXY - sumX * sumY / optInTimePeriod) / Math.Sqrt(tempReal);
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-      }
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
    internal RetCode Correl( int startIdx,
                             int endIdx,
                             float[] inReal0,
@@ -310,90 +226,6 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx = startIdx;
-      trailingIdx = startIdx - lookbackTotal;
-      sumY2 = 0.0;
-      sumX2 = sumY2;
-      sumY = sumX2;
-      sumX = sumY;
-      sumXY = sumX;
-      for( today = trailingIdx; today <= startIdx; today += 1 ) {
-         x = (double)inReal0[today];
-         sumX += x;
-         sumX2 += x * x;
-         y = (double)inReal1[today];
-         sumXY += x * y;
-         sumY += y;
-         sumY2 += y * y;
-      }
-      trailingX = (double)inReal0[trailingIdx];
-      trailingY = (double)inReal1[trailingIdx++];
-      tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-      if( !(tempReal < 0.00000000000001) ) {
-         outReal[0] = (sumXY - sumX * sumY / optInTimePeriod) / Math.Sqrt(tempReal);
-      } else {
-         outReal[0] = 0.0;
-      }
-      outIdx = 1;
-      while( today <= endIdx ) {
-         sumX -= trailingX;
-         sumX2 -= trailingX * trailingX;
-         sumXY -= trailingX * trailingY;
-         sumY -= trailingY;
-         sumY2 -= trailingY * trailingY;
-         x = (double)inReal0[today];
-         sumX += x;
-         sumX2 += x * x;
-         y = (double)inReal1[today++];
-         sumXY += x * y;
-         sumY += y;
-         sumY2 += y * y;
-         trailingX = (double)inReal0[trailingIdx];
-         trailingY = (double)inReal1[trailingIdx++];
-         tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-         if( !(tempReal < 0.00000000000001) ) {
-            outReal[outIdx++] = (sumXY - sumX * sumY / optInTimePeriod) / Math.Sqrt(tempReal);
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-      }
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode CorrelUnguarded( int startIdx,
-                                     int endIdx,
-                                     float[] inReal0,
-                                     float[] inReal1,
-                                     int optInTimePeriod,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double sumXY = 0;
-      double sumX = 0;
-      double sumY = 0;
-      double sumX2 = 0;
-      double sumY2 = 0;
-      double x = 0;
-      double y = 0;
-      double trailingX = 0;
-      double trailingY = 0;
-      double tempReal = 0;
-      int lookbackTotal = 0;
-      int today = 0;
-      int trailingIdx = 0;
-      int outIdx = 0;
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -508,45 +340,6 @@ public partial class Core
    /// Pearson's correlation coefficient (r) between two input series over a
    /// rolling window of optInTimePeriod bars. Measures how linearly the two
    /// series move together. r near +1: strong positive co-movement; near -1:
-   /// strong inverse; near 0: no linear relationship. — <b>unchecked</b> variant
-   /// of <c>Correl</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal0">See the guarded method.</param>
-   /// <param name="inReal1">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CorrelUnguarded( int startIdx,
-                                    int endIdx,
-                                    double[] inReal0,
-                                    double[] inReal1,
-                                    int optInTimePeriod,
-                                    double[] outReal )
-   {
-      CorrelUnguarded(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Pearson's correlation coefficient (r) between two input series over a
-   /// rolling window of optInTimePeriod bars. Measures how linearly the two
-   /// series move together. r near +1: strong positive co-movement; near -1:
    /// strong inverse; near 0: no linear relationship.
    /// </summary>
    /// <remarks>
@@ -598,48 +391,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("CORREL", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Pearson's correlation coefficient (r) between two input series over a
-   /// rolling window of optInTimePeriod bars. Measures how linearly the two
-   /// series move together. r near +1: strong positive co-movement; near -1:
-   /// strong inverse; near 0: no linear relationship. — <b>unchecked</b> variant
-   /// of <c>Correl</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal0">See the guarded method.</param>
-   /// <param name="inReal1">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CorrelUnguarded( int startIdx,
-                                    int endIdx,
-                                    float[] inReal0,
-                                    float[] inReal1,
-                                    int optInTimePeriod,
-                                    double[] outReal )
-   {
-      CorrelUnguarded(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

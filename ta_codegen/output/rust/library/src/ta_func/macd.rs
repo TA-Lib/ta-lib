@@ -263,6 +263,12 @@ impl Core {
         if outMACD.as_ptr() == outMACDSignal.as_ptr() || outMACD.as_ptr() == outMACDHist.as_ptr() || outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
             return RetCode::BadParam;
         }
+        let _assertLb = self.macd_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outMACD.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDSignal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDHist.len());
         let mut startIdx = startIdx;
         let mut prevFast: f64 = 0.0_f64;
         let mut prevSlow: f64 = 0.0_f64;
@@ -423,184 +429,6 @@ impl Core {
             outIdx += 1;
         }
         // All done! Indicate the output limits and return success.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::macd`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::macd`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::macd`].
-    #[inline]
-    pub fn macd_unguarded(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        optInFastPeriod: i32,
-        optInSlowPeriod: i32,
-        optInSignalPeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outMACD: &mut [f64],
-        outMACDSignal: &mut [f64],
-        outMACDHist: &mut [f64],
-    ) -> RetCode {
-        #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, macd_unguarded_fma, macd_unguarded_impl, (startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist));
-        #[cfg(not(target_arch = "x86_64"))]
-        self.macd_unguarded_impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
-    }
-    #[cfg(target_arch = "x86_64")]
-    #[target_feature(enable = "fma")]
-    fn macd_unguarded_fma(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        optInFastPeriod: i32,
-        optInSlowPeriod: i32,
-        optInSignalPeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outMACD: &mut [f64],
-        outMACDSignal: &mut [f64],
-        outMACDHist: &mut [f64],
-    ) -> RetCode {
-        self.macd_unguarded_impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
-    }
-    #[inline(always)]
-    fn macd_unguarded_impl(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInFastPeriod: i32,
-        mut optInSlowPeriod: i32,
-        mut optInSignalPeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outMACD: &mut [f64],
-        outMACDSignal: &mut [f64],
-        outMACDHist: &mut [f64],
-    ) -> RetCode {
-        let mut prevFast: f64 = 0.0_f64;
-        let mut prevSlow: f64 = 0.0_f64;
-        let mut prevSignal: f64 = 0.0_f64;
-        let mut macdValue: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut slowK: f64 = 0.0_f64;
-        let mut fastK: f64 = 0.0_f64;
-        let mut signalK: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut tempInteger: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut lookbackSignal: usize = 0_usize;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.macd_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outMACD.len());
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDSignal.len());
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDHist.len());
-        if optInSlowPeriod < optInFastPeriod {
-            tempInteger = (optInSlowPeriod) as usize;
-            optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
-        }
-        if optInSlowPeriod == 0 {
-            optInSlowPeriod = 26;
-            slowK = 0.075;
-        } else {
-            slowK = 2.0 / ((optInSlowPeriod + 1) as f64);
-        }
-        if optInFastPeriod == 0 {
-            optInFastPeriod = 12;
-            fastK = 0.15;
-        } else {
-            fastK = 2.0 / ((optInFastPeriod + 1) as f64);
-        }
-        signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSignal = self.ema_lookback(optInSignalPeriod);
-        lookbackTotal = lookbackSignal;
-        lookbackTotal += self.ema_lookback(optInSlowPeriod);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        if self.compatibility == Compatibility::Default {
-            today = startIdx - lookbackTotal;
-            tempReal = 0.0;
-            i = (optInSlowPeriod - optInFastPeriod) as usize;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal += inReal[{ let _v = today; today += 1; _v }];
-            }
-            prevFast = 0.0;
-            i = (optInFastPeriod) as usize;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                prevFast += inReal[today];
-                tempReal += inReal[{ let _v = today; today += 1; _v }];
-            }
-            prevSlow = tempReal / ((optInSlowPeriod) as f64);
-            prevFast = prevFast / ((optInFastPeriod) as f64);
-            while today <= startIdx - lookbackSignal {
-                tempReal = inReal[{ let _v = today; today += 1; _v }];
-                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
-            }
-            macdValue = prevFast - prevSlow;
-            prevSignal = 0.0;
-            prevSignal += macdValue;
-            i = (optInSignalPeriod - 1) as usize;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal = inReal[{ let _v = today; today += 1; _v }];
-                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-            }
-            prevSignal = prevSignal / ((optInSignalPeriod) as f64);
-        } else {
-            prevFast = inReal[0];
-            prevSlow = inReal[0];
-            today = 1;
-            while today <= startIdx - lookbackSignal {
-                tempReal = inReal[{ let _v = today; today += 1; _v }];
-                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
-            }
-            macdValue = prevFast - prevSlow;
-            prevSignal = macdValue;
-        }
-        while today <= startIdx {
-            tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
-            macdValue = prevFast - prevSlow;
-            prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
-        }
-        outMACD[0] = macdValue;
-        outMACDSignal[0] = prevSignal;
-        outMACDHist[0] = macdValue - prevSignal;
-        outIdx = 1;
-        while today <= endIdx {
-            tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
-            macdValue = prevFast - prevSlow;
-            prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
-            outMACD[outIdx] = macdValue;
-            outMACDSignal[outIdx] = prevSignal;
-            outMACDHist[outIdx] = macdValue - prevSignal;
-            outIdx += 1;
-        }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;

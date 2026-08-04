@@ -1,18 +1,21 @@
-//! Generate `src/tools/ta_regtest/ta_variant_frame.h` — the generic four-variant
+//! Generate `src/tools/ta_regtest/ta_variant_frame.h` — the generic variant
 //! dispatcher used by `ta_regtest`'s variant-parity gate (issue #137).
 //!
-//! Every TA function ships in four flavours with identical arity:
+//! Every TA function ships in two flavours with identical arity:
 //!
-//! | symbol                     | inputs   | range checks |
-//! |----------------------------|----------|--------------|
-//! | `TA_<N>`                   | `double` | yes          |
-//! | `TA_<N>_Unguarded`         | `double` | no           |
-//! | `TA_S_<N>`                 | `float`  | yes          |
-//! | `TA_S_<N>_Unguarded`       | `float`  | no           |
+//! | symbol                     | inputs   |
+//! |----------------------------|----------|
+//! | `TA_<N>`                   | `double` |
+//! | `TA_S_<N>`                 | `float`  |
+//!
+//! (Before #166 there were four: each also had an `_Unguarded` twin that skipped
+//! the validation prologue. Those are gone, and with them the guarded-vs-unguarded
+//! leg of the gate — the surviving contract is `TA_S_` vs `TA_` on widened inputs,
+//! which is the leg that ever found a shipped defect.)
 //!
 //! The abstract layer (`TA_CallFunc` via `ta_frame.c`) only ever reaches the
-//! first, so the other three had no generic gate and were only covered where a
-//! hand-written test happened to call them. This header gives `ta_regtest` one
+//! first, so `TA_S_<N>` had no generic gate and was only covered where a
+//! hand-written test happened to call it. This header gives `ta_regtest` one
 //! uniform signature per flavour plus a table over every function, so a single
 //! `TA_ForEachFunc`-style loop can assert the whole matrix bit-for-bit with no
 //! external oracle.
@@ -168,9 +171,7 @@ fn emit_thunks(o: &mut String, func: &FuncDef) {
 
     for (suffix, callee, elem) in [
         ("VFrameD", format!("TA_{name}"), "double"),
-        ("VFrameDU", format!("TA_{name}_Unguarded"), "double"),
         ("VFrameS", format!("TA_S_{name}"), "float"),
-        ("VFrameSU", format!("TA_S_{name}_Unguarded"), "float"),
     ] {
         let _ = writeln!(
             o,
@@ -235,11 +236,10 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
          * Source of truth: ta_codegen/generator/src/backends/variant_frame.rs\n\
          * (regenerate: cd ta_codegen/generator && cargo run -- generate)\n\
          *\n\
-         * A uniform dispatcher over the four flavours every TA function ships:\n\
-         *   TA_<N>  TA_<N>_Unguarded  TA_S_<N>  TA_S_<N>_Unguarded\n\
-         * All four have identical arity, differing only in `double` vs `float`\n\
-         * input arrays and in whether the parameter-validation prologue is\n\
-         * present, so one signature per flavour covers every function.\n\
+         * A uniform dispatcher over the two flavours every TA function ships:\n\
+         *   TA_<N>   TA_S_<N>\n\
+         * Both have identical arity, differing only in `double` vs `float` input\n\
+         * arrays, so one signature per flavour covers every function.\n\
          *\n\
          * Used by src/tools/ta_regtest/ta_test_func/test_variants.c (issue #137).\n\
          * Only regenerated when the `c` backend runs.\n\
@@ -247,10 +247,6 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     );
     o.push_str("#ifndef TA_VARIANT_FRAME_H\n#define TA_VARIANT_FRAME_H\n\n");
     o.push_str("#ifndef TA_FUNC_H\n   #include \"ta_func.h\"\n#endif\n\n");
-    // ta_func.h does NOT pull in the unguarded declarations; without this the
-    // *_Unguarded calls below would become implicit declarations and silently
-    // mis-pass arguments.
-    o.push_str("#ifndef TA_FUNC_UNGUARDED_H\n   #include \"ta_func_unguarded.h\"\n#endif\n\n");
 
     o.push_str(
         "/* Which test series feeds a given input slot. Price groups are already\n\
@@ -290,20 +286,18 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
         "typedef struct {\n\
          \x20  const char          *name;         /* without the TA_ prefix */\n\
          \x20  TA_VFrameD           guarded;      /* TA_<N>                */\n\
-         \x20  TA_VFrameD           unguarded;    /* TA_<N>_Unguarded      */\n\
          \x20  TA_VFrameS           single;       /* TA_S_<N>              */\n\
-         \x20  TA_VFrameS           singleUnguarded; /* TA_S_<N>_Unguarded */\n\
          \x20  int                  nbInput;      /* flattened array parameters */\n\
          \x20  const TA_VInputKind *inputKind;\n\
          \x20  int                  nbOptInput;\n\
          \x20  const TA_VOptSpec   *optInput;     /* NULL when nbOptInput == 0 */\n\
          \x20  int                  nbOutput;\n\
          \x20  int                  outIsInteger; /* 1 = outputs are TA_Integer */\n\
-         \x20  /* 1 when guarded and unguarded both delegate to a shared\n\
-         \x20   * TA_<N>_Private body, making unguarded parity structurally true\n\
-         \x20   * rather than tested. Derived from the definition having an\n\
-         \x20   * explicit <name>_private() in ta_codegen/input/, so it can never\n\
-         \x20   * go stale against a hand-maintained list. */\n\
+         \x20  /* 1 when the guarded body delegates to a shared TA_<N>_Private\n\
+         \x20   * rather than holding the algorithm inline. Derived from the\n\
+         \x20   * definition having an explicit <name>_private() in\n\
+         \x20   * ta_codegen/input/, so it can never go stale against a\n\
+         \x20   * hand-maintained list. */\n\
          \x20  int                  delegatesToPrivate;\n\
          } TA_VariantEntry;\n\n",
     );
@@ -365,7 +359,7 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
         );
         let _ = writeln!(
             o,
-            "   {{ \"{n}\", TA_{n}_VFrameD, TA_{n}_VFrameDU, TA_{n}_VFrameS, TA_{n}_VFrameSU,\n\
+            "   {{ \"{n}\", TA_{n}_VFrameD, TA_{n}_VFrameS,\n\
              \x20    {nb_in}, TA_VIn_{n}, {nb_opt}, {opt_ptr}, {}, {}, {} }},",
             func.outputs.len(),
             i32::from(nb_int > 0),

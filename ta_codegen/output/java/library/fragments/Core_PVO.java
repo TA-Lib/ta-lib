@@ -115,49 +115,6 @@
       }
       return RetCode.Success ;
    }
-   RetCode pvoUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 double inVolume[],
-                                 int optInFastPeriod,
-                                 int optInSlowPeriod,
-                                 MAType optInMAType,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      double[] tempBuffer;
-      RetCode retCode;
-      double tempReal = 0;
-      int tempInteger = 0;
-      MInteger fastBeg = new MInteger();
-      MInteger fastNb = new MInteger();
-      int offset = 0;
-      int i = 0;
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-      if( optInSlowPeriod < optInFastPeriod ) {
-         tempInteger = optInSlowPeriod;
-         optInSlowPeriod = optInFastPeriod;
-         optInFastPeriod = tempInteger;
-      }
-      retCode = movingAverageInternal(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      retCode = movingAverageInternal(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      offset = fastNb.value - outNBElement.value;
-      for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-         tempReal = outReal[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
-         } else {
-            outReal[i] = 0.0;
-         }
-      }
-      return RetCode.Success ;
-   }
    RetCode pvoInternal( int startIdx,
                         int endIdx,
                         float inVolume[],
@@ -192,49 +149,6 @@
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-      if( optInSlowPeriod < optInFastPeriod ) {
-         tempInteger = optInSlowPeriod;
-         optInSlowPeriod = optInFastPeriod;
-         optInFastPeriod = tempInteger;
-      }
-      retCode = movingAverageInternal(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      retCode = movingAverageInternal(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      offset = fastNb.value - outNBElement.value;
-      for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-         tempReal = outReal[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            outReal[i] = (tempBuffer[i + offset] - tempReal) / tempReal * 100.0;
-         } else {
-            outReal[i] = 0.0;
-         }
-      }
-      return RetCode.Success ;
-   }
-   RetCode pvoUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 float inVolume[],
-                                 int optInFastPeriod,
-                                 int optInSlowPeriod,
-                                 MAType optInMAType,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      double[] tempBuffer;
-      RetCode retCode;
-      double tempReal = 0;
-      int tempInteger = 0;
-      MInteger fastBeg = new MInteger();
-      MInteger fastNb = new MInteger();
-      int offset = 0;
-      int i = 0;
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
@@ -326,39 +240,6 @@
     * and slow moving average of volume, expressed as a percentage of the slow
     * MA. Positive when short-term volume is above its longer-term average
     * (rising participation), negative when below. The default periods (12, 26)
-    * match MACD and PPO. — <b>unchecked</b> variant of {@link Core#pvo}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange pvoUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inVolume[],
-                                 int optInFastPeriod,
-                                 int optInSlowPeriod,
-                                 MAType optInMAType,
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      pvoUnguardedInternal(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Percentage Volume Oscillator: a variation of the [Percentage Price
-    * Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
-    * **volume** series instead of price. It is the difference between a fast
-    * and slow moving average of volume, expressed as a percentage of the slow
-    * MA. Positive when short-term volume is above its longer-term average
-    * (rising participation), negative when below. The default periods (12, 26)
     * match MACD and PPO.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -412,40 +293,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("PVO", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Percentage Volume Oscillator: a variation of the [Percentage Price
-    * Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
-    * **volume** series instead of price. It is the difference between a fast
-    * and slow moving average of volume, expressed as a percentage of the slow
-    * MA. Positive when short-term volume is above its longer-term average
-    * (rising participation), negative when below. The default periods (12, 26)
-    * match MACD and PPO. — <b>unchecked</b> variant of {@link Core#pvo}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange pvoUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inVolume[],
-                                 int optInFastPeriod,
-                                 int optInSlowPeriod,
-                                 MAType optInMAType,
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      pvoUnguardedInternal(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

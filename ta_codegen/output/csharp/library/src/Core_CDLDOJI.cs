@@ -151,57 +151,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlDojiUnguarded( int startIdx,
-                                      int endIdx,
-                                      double[] inOpen,
-                                      double[] inHigh,
-                                      double[] inLow,
-                                      double[] inClose,
-                                      out int outBegIdx,
-                                      out int outNBElement,
-                                      int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double BodyDojiPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int BodyDojiTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int BodyDoji_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyDoji].rangeType;
-      int BodyDoji_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyDoji].avgPeriod;
-      double BodyDoji_factor = this.candleSettings[(int)CandleSettingType.BodyDoji].factor;
-      lookbackTotal = CdlDojiLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      BodyDojiPeriodTotal = 0;
-      BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
-      i = BodyDojiTrailingIdx;
-      while( i < startIdx ) {
-         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      outIdx = 0;
-      do {
-         if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx])) : ((BodyDoji_rangeType == 1) ? (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx]) : ((BodyDoji_rangeType == 2) ? ((inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx]) - Math.Abs(inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyDojiTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode CdlDoji( int startIdx,
                              int endIdx,
                              float[] inOpen,
@@ -228,57 +177,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = CdlDojiLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      BodyDojiPeriodTotal = 0;
-      BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
-      i = BodyDojiTrailingIdx;
-      while( i < startIdx ) {
-         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      outIdx = 0;
-      do {
-         if( Math.Abs((double)inClose[i] - (double)inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[BodyDojiTrailingIdx] - (double)inOpen[BodyDojiTrailingIdx])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[BodyDojiTrailingIdx] - (double)inLow[BodyDojiTrailingIdx]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[BodyDojiTrailingIdx] - (double)inLow[BodyDojiTrailingIdx]) - Math.Abs((double)inClose[BodyDojiTrailingIdx] - (double)inOpen[BodyDojiTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyDojiTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode CdlDojiUnguarded( int startIdx,
-                                      int endIdx,
-                                      float[] inOpen,
-                                      float[] inHigh,
-                                      float[] inLow,
-                                      float[] inClose,
-                                      out int outBegIdx,
-                                      out int outNBElement,
-                                      int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double BodyDojiPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int BodyDojiTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int BodyDoji_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyDoji].rangeType;
-      int BodyDoji_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyDoji].avgPeriod;
-      double BodyDoji_factor = this.candleSettings[(int)CandleSettingType.BodyDoji].factor;
       lookbackTotal = CdlDojiLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -361,46 +259,6 @@ public partial class Core
    /// <summary>
    /// Single-candle Doji recognizer: fires when the real body (|close-open|) is
    /// at or below the BodyDoji threshold. Returns 100 on a match, 0 otherwise.
-   /// Market indecision; neither bullish nor bearish on its own. —
-   /// <b>unchecked</b> variant of <c>CdlDoji</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlDojiUnguarded( int startIdx,
-                                     int endIdx,
-                                     double[] inOpen,
-                                     double[] inHigh,
-                                     double[] inLow,
-                                     double[] inClose,
-                                     int[] outInteger )
-   {
-      CdlDojiUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Single-candle Doji recognizer: fires when the real body (|close-open|) is
-   /// at or below the BodyDoji threshold. Returns 100 on a match, 0 otherwise.
    /// Market indecision; neither bullish nor bearish on its own.
    /// </summary>
    /// <remarks>
@@ -450,49 +308,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("CDLDOJI", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Single-candle Doji recognizer: fires when the real body (|close-open|) is
-   /// at or below the BodyDoji threshold. Returns 100 on a match, 0 otherwise.
-   /// Market indecision; neither bullish nor bearish on its own. —
-   /// <b>unchecked</b> variant of <c>CdlDoji</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlDojiUnguarded( int startIdx,
-                                     int endIdx,
-                                     float[] inOpen,
-                                     float[] inHigh,
-                                     float[] inLow,
-                                     float[] inClose,
-                                     int[] outInteger )
-   {
-      CdlDojiUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

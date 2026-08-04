@@ -168,71 +168,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlShortLineUnguarded( int startIdx,
-                                           int endIdx,
-                                           double[] inOpen,
-                                           double[] inHigh,
-                                           double[] inLow,
-                                           double[] inClose,
-                                           out int outBegIdx,
-                                           out int outNBElement,
-                                           int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double BodyPeriodTotal = 0;
-      double ShadowPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int BodyTrailingIdx = 0;
-      int ShadowTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int BodyShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyShort].rangeType;
-      int BodyShort_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyShort].avgPeriod;
-      double BodyShort_factor = this.candleSettings[(int)CandleSettingType.BodyShort].factor;
-      int ShadowShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.ShadowShort].rangeType;
-      int ShadowShort_avgPeriod = this.candleSettings[(int)CandleSettingType.ShadowShort].avgPeriod;
-      double ShadowShort_factor = this.candleSettings[(int)CandleSettingType.ShadowShort].factor;
-      lookbackTotal = CdlShortLineLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      BodyPeriodTotal = 0;
-      BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
-      ShadowPeriodTotal = 0;
-      ShadowTrailingIdx = startIdx - ShadowShort_avgPeriod;
-      i = BodyTrailingIdx;
-      while( i < startIdx ) {
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      i = ShadowTrailingIdx;
-      while( i < startIdx ) {
-         ShadowPeriodTotal += ((ShadowShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((ShadowShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((ShadowShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      outIdx = 0;
-      do {
-         if( Math.Abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((ShadowShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((ShadowShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((ShadowShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((ShadowShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) - Math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : 0.0)));
-         ShadowPeriodTotal += ((ShadowShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((ShadowShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((ShadowShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0))) - ((ShadowShort_rangeType == 0) ? (Math.Abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx])) : ((ShadowShort_rangeType == 1) ? (inHigh[ShadowTrailingIdx] - inLow[ShadowTrailingIdx]) : ((ShadowShort_rangeType == 2) ? ((inHigh[ShadowTrailingIdx] - inLow[ShadowTrailingIdx]) - Math.Abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyTrailingIdx += 1;
-         ShadowTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode CdlShortLine( int startIdx,
                                   int endIdx,
                                   float[] inOpen,
@@ -264,71 +199,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = CdlShortLineLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      BodyPeriodTotal = 0;
-      BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
-      ShadowPeriodTotal = 0;
-      ShadowTrailingIdx = startIdx - ShadowShort_avgPeriod;
-      i = BodyTrailingIdx;
-      while( i < startIdx ) {
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      i = ShadowTrailingIdx;
-      while( i < startIdx ) {
-         ShadowPeriodTotal += ((ShadowShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((ShadowShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((ShadowShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      outIdx = 0;
-      do {
-         if( Math.Abs((double)inClose[i] - (double)inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((ShadowShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((ShadowShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0)))) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((ShadowShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((ShadowShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[BodyTrailingIdx] - (double)inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[BodyTrailingIdx] - (double)inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[BodyTrailingIdx] - (double)inLow[BodyTrailingIdx]) - Math.Abs((double)inClose[BodyTrailingIdx] - (double)inOpen[BodyTrailingIdx])) : 0.0)));
-         ShadowPeriodTotal += ((ShadowShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((ShadowShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((ShadowShort_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0))) - ((ShadowShort_rangeType == 0) ? (Math.Abs((double)inClose[ShadowTrailingIdx] - (double)inOpen[ShadowTrailingIdx])) : ((ShadowShort_rangeType == 1) ? ((double)inHigh[ShadowTrailingIdx] - (double)inLow[ShadowTrailingIdx]) : ((ShadowShort_rangeType == 2) ? (((double)inHigh[ShadowTrailingIdx] - (double)inLow[ShadowTrailingIdx]) - Math.Abs((double)inClose[ShadowTrailingIdx] - (double)inOpen[ShadowTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyTrailingIdx += 1;
-         ShadowTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode CdlShortLineUnguarded( int startIdx,
-                                           int endIdx,
-                                           float[] inOpen,
-                                           float[] inHigh,
-                                           float[] inLow,
-                                           float[] inClose,
-                                           out int outBegIdx,
-                                           out int outNBElement,
-                                           int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double BodyPeriodTotal = 0;
-      double ShadowPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int BodyTrailingIdx = 0;
-      int ShadowTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int BodyShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyShort].rangeType;
-      int BodyShort_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyShort].avgPeriod;
-      double BodyShort_factor = this.candleSettings[(int)CandleSettingType.BodyShort].factor;
-      int ShadowShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.ShadowShort].rangeType;
-      int ShadowShort_avgPeriod = this.candleSettings[(int)CandleSettingType.ShadowShort].avgPeriod;
-      double ShadowShort_factor = this.candleSettings[(int)CandleSettingType.ShadowShort].factor;
       lookbackTotal = CdlShortLineLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -429,48 +299,6 @@ public partial class Core
    /// shadows (a small-range candle). Not a directional signal — the output sign
    /// encodes candle color, not bullish/bearish sentiment. A hit only flags a
    /// small-range candle; the +/- sign is the candle's color (white/black), not
-   /// a reversal or continuation call. — <b>unchecked</b> variant of
-   /// <c>CdlShortLine</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlShortLineUnguarded( int startIdx,
-                                          int endIdx,
-                                          double[] inOpen,
-                                          double[] inHigh,
-                                          double[] inLow,
-                                          double[] inClose,
-                                          int[] outInteger )
-   {
-      CdlShortLineUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Single-candle pattern: a short real body with short upper and lower
-   /// shadows (a small-range candle). Not a directional signal — the output sign
-   /// encodes candle color, not bullish/bearish sentiment. A hit only flags a
-   /// small-range candle; the +/- sign is the candle's color (white/black), not
    /// a reversal or continuation call.
    /// </summary>
    /// <remarks>
@@ -525,51 +353,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("CDLSHORTLINE", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Single-candle pattern: a short real body with short upper and lower
-   /// shadows (a small-range candle). Not a directional signal — the output sign
-   /// encodes candle color, not bullish/bearish sentiment. A hit only flags a
-   /// small-range candle; the +/- sign is the candle's color (white/black), not
-   /// a reversal or continuation call. — <b>unchecked</b> variant of
-   /// <c>CdlShortLine</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlShortLineUnguarded( int startIdx,
-                                          int endIdx,
-                                          float[] inOpen,
-                                          float[] inHigh,
-                                          float[] inLow,
-                                          float[] inClose,
-                                          int[] outInteger )
-   {
-      CdlShortLineUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

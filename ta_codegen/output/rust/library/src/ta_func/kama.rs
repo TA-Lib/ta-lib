@@ -216,6 +216,10 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.kama_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut constMax: f64 = 0.0_f64;
         let mut constDiff: f64 = 0.0_f64;
@@ -362,163 +366,6 @@ impl Core {
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
-            outReal[outIdx] = prevKAMA;
-            outIdx += 1;
-        }
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::kama`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::kama`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::kama`].
-    #[inline]
-    pub fn kama_unguarded(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, kama_unguarded_fma, kama_unguarded_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
-        #[cfg(not(target_arch = "x86_64"))]
-        self.kama_unguarded_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
-    }
-    #[cfg(target_arch = "x86_64")]
-    #[target_feature(enable = "fma")]
-    fn kama_unguarded_fma(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        self.kama_unguarded_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
-    }
-    #[inline(always)]
-    fn kama_unguarded_impl(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut constMax: f64 = 0.0_f64;
-        let mut constDiff: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut tempReal2: f64 = 0.0_f64;
-        let mut sumROC1: f64 = 0.0_f64;
-        let mut periodROC: f64 = 0.0_f64;
-        let mut prevKAMA: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut trailingValue: f64 = 0.0_f64;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.kama_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        constMax = 2.0 / (30.0 + 1.0);
-        constDiff = 2.0 / (2.0 + 1.0) - constMax;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
-        if optInTimePeriod == 1 {
-            lookbackTotal = (self.unstable_period[FuncUnstId::Kama as usize]) as usize;
-            if startIdx < lookbackTotal {
-                startIdx = lookbackTotal;
-            }
-            if startIdx > endIdx {
-                return RetCode::Success;
-            }
-            (*outBegIdx) = startIdx;
-            outIdx = 0;
-            today = startIdx;
-            while today <= endIdx {
-                outReal[outIdx] = ((inReal[{ let _v = today; today += 1; _v }]) as f64);
-                outIdx += 1;
-            }
-            (*outNBElement) = outIdx;
-            return RetCode::Success;
-        }
-        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::Kama as usize]) as usize;
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        sumROC1 = 0.0;
-        today = startIdx - lookbackTotal;
-        trailingIdx = today;
-        i = (optInTimePeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal = inReal[{ let _v = today; today += 1; _v }];
-            tempReal -= inReal[today];
-            sumROC1 += (tempReal).abs();
-        }
-        prevKAMA = inReal[today - 1];
-        tempReal = inReal[today];
-        tempReal2 = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-        periodROC = tempReal - tempReal2;
-        trailingValue = tempReal2;
-        if sumROC1 <= periodROC || (sumROC1).abs() < 1e-14 {
-            tempReal = 1.0;
-        } else {
-            tempReal = (periodROC / sumROC1).abs();
-        }
-        tempReal = (tempReal as f64).mul_add(constDiff, constMax);
-        tempReal *= tempReal;
-        prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
-        while today <= startIdx {
-            tempReal = inReal[today];
-            tempReal2 = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            periodROC = tempReal - tempReal2;
-            sumROC1 -= (trailingValue - tempReal2).abs();
-            sumROC1 += (tempReal - inReal[today - 1]).abs();
-            trailingValue = tempReal2;
-            if sumROC1 <= periodROC || (sumROC1).abs() < 1e-14 {
-                tempReal = 1.0;
-            } else {
-                tempReal = (periodROC / sumROC1).abs();
-            }
-            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
-            tempReal *= tempReal;
-            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
-        }
-        outReal[0] = prevKAMA;
-        outIdx = 1;
-        (*outBegIdx) = today - 1;
-        while today <= endIdx {
-            tempReal = inReal[today];
-            tempReal2 = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            periodROC = tempReal - tempReal2;
-            sumROC1 -= (trailingValue - tempReal2).abs();
-            sumROC1 += (tempReal - inReal[today - 1]).abs();
-            trailingValue = tempReal2;
-            if sumROC1 <= periodROC || (sumROC1).abs() < 1e-14 {
-                tempReal = 1.0;
-            } else {
-                tempReal = (periodROC / sumROC1).abs();
-            }
-            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
-            tempReal *= tempReal;
             prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
             outReal[outIdx] = prevKAMA;
             outIdx += 1;

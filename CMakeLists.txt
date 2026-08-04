@@ -125,7 +125,6 @@ set(LIB_HEADERS
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_common.h"
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_defs.h"
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_func.h"
-	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_func_unguarded.h"
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/ta_libc.h"
 )
 

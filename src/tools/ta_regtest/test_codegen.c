@@ -14,9 +14,8 @@
 #include <math.h>
 #include <time.h>
 
-/* Display flags set by ta_regtest.c --no-guarded / --no-unguarded */
+/* Display flag set by ta_regtest.c --no-guarded */
 int g_hideGuarded = 0;
-int g_hideUnguarded = 0;
 #include <limits.h>
 #ifdef __APPLE__
 #include <mach/mach_time.h>
@@ -132,7 +131,6 @@ typedef struct {
     struct {
         int    tested;   /* 0=skipped, 1=pass, -1=fail */
         double avg_ns;
-        double avg_ns_unguarded;
     } langs[NUM_LANGUAGES];
 } FuncTimingResult;
 
@@ -414,8 +412,6 @@ typedef struct {
     long long c_ref_total_ns;
     long long server_total_ns;
     int       timing_count;
-    long long server_unguarded_total_ns;
-    int       timing_unguarded_count;
 } CodegenRangeTestParam;
 
 /* Forward declaration: defined with the sweep further below, used by the
@@ -814,14 +810,6 @@ static void compare_codegen_output_generic(
         fprintf(stderr, "DEBUG no timing_ns for TA_%s: %.120s\n", p->funcInfo->name, p->responseBuf);
     }
 
-    /* Parse server timing_ns_unguarded if present */
-    const char *timingUngVal = json_find_field(p->responseBuf, "timing_ns_unguarded", &len);
-    if( timingUngVal )
-    {
-        long long serverUngNs = strtoll(timingUngVal, NULL, 10);
-        p->server_unguarded_total_ns += serverUngNs;
-        p->timing_unguarded_count++;
-    }
 }
 
 /* ---- Edge-range server sweep ----
@@ -1452,15 +1440,12 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     double s_avg_ns = (params.timing_count > 0)
                       ? (double)params.server_total_ns / (double)params.timing_count
                       : 0.0;
-    double s_avg_ns_unguarded = (params.timing_unguarded_count > 0)
-                      ? (double)params.server_unguarded_total_ns / (double)params.timing_unguarded_count
-                      : 0.0;
 
     /* ---- Float-variant pass (TA_S_) ----
      * Every function at default params, C server only (the other backends
      * have no single-precision API): single-precision current vs
      * single-precision frozen reference. This is the systematic coverage
-     * for the 161 TA_S_ guarded+unguarded pairs.
+     * for the 161 TA_S_ guarded entry points.
      */
     if( params.codegenError == TA_TEST_PASS && strcmp(ctx->lang->name, "c") == 0 )
         run_float_leg(&params);
@@ -1570,8 +1555,6 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         {
             g_timingResults[resultIdx].langs[ctx->langIndex].tested  = -1;
             g_timingResults[resultIdx].langs[ctx->langIndex].avg_ns  = s_avg_ns;
-            if( params.timing_unguarded_count > 0 )
-                g_timingResults[resultIdx].langs[ctx->langIndex].avg_ns_unguarded = s_avg_ns_unguarded;
         }
         free_outputs(&params);
         TA_ParamHolderFree(paramHolder);
@@ -1587,8 +1570,6 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         {
             g_timingResults[resultIdx].langs[ctx->langIndex].tested  = -1;
             g_timingResults[resultIdx].langs[ctx->langIndex].avg_ns  = s_avg_ns;
-            if( params.timing_unguarded_count > 0 )
-                g_timingResults[resultIdx].langs[ctx->langIndex].avg_ns_unguarded = s_avg_ns_unguarded;
         }
         free_outputs(&params);
         TA_ParamHolderFree(paramHolder);
@@ -1602,8 +1583,6 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     {
         g_timingResults[resultIdx].langs[ctx->langIndex].tested  = 1;
         g_timingResults[resultIdx].langs[ctx->langIndex].avg_ns  = s_avg_ns;
-        if( params.timing_unguarded_count > 0 )
-            g_timingResults[resultIdx].langs[ctx->langIndex].avg_ns_unguarded = s_avg_ns_unguarded;
     }
 
     /* Print result with timing and speedup ratio */
@@ -1685,12 +1664,15 @@ static TA_Real    sweepGuardedReal[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
 static TA_Integer sweepGuardedInt[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
 
 /* Compare the in-process GUARDED call against the ta_ref_serve baseline for
- * one sweep variant. The language servers reply with their UNGUARDED result
- * (the server re-runs TA_X_Unguarded over the same buffers), so without this
- * leg the guarded path would only ever be verified at the hand-written pins:
- * server-vs-reference checks unguarded, this checks guarded, closing the
- * guarded/unguarded/reference triangle at every sweep variant. C only — the
- * in-process library IS the C backend. */
+ * one sweep variant.
+ *
+ * This leg was added because the language servers used to reply with their
+ * UNGUARDED result (the server re-ran TA_X_Unguarded over the same buffers), so
+ * the guarded path was only ever verified at the hand-written pins. #166 removed
+ * the unguarded tier, so server-vs-reference is now itself a guarded comparison
+ * — but this leg is kept: it is IN-PROCESS, so it is the one sweep check that
+ * does not cross the JSON-RPC boundary and cannot be blurred by %.15g. C only —
+ * the in-process library IS the C backend. */
 static void sweep_compare_guarded(CodegenRangeTestParam *p)
 {
     unsigned int i;
@@ -3032,13 +3014,6 @@ static void print_timing_table(const char *languageFilter)
     printf("Codegen Results + Timing (avg ns/call)\n");
     printf("=============================================\n");
 
-    /* Check if any language has unguarded data (and user hasn't hidden it) */
-    int hasUnguarded = 0;
-    if( !g_hideUnguarded )
-        for( int ri = 0; ri < g_numTimingResults && !hasUnguarded; ri++ )
-            for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
-                if( showLang[li] && g_timingResults[ri].langs[li].avg_ns_unguarded > 0 )
-                { hasUnguarded = 1; break; }
     int showGuarded = !g_hideGuarded;
 
     /* Header */
@@ -3049,8 +3024,6 @@ static void print_timing_table(const char *languageFilter)
         {
             if( showGuarded )
                 printf(" %9s", ALL_LANGUAGES[li].display);
-            if( hasUnguarded )
-                printf(" %9s", showGuarded ? "ung" : ALL_LANGUAGES[li].display);
         }
     }
     printf("\n");
@@ -3068,12 +3041,10 @@ static void print_timing_table(const char *languageFilter)
             if( st == 0 )
             {
                 if( showGuarded ) printf(" %9s", "--");
-                if( hasUnguarded ) printf(" %9s", "--");
             }
             else if( st == -1 )
             {
                 if( showGuarded ) printf(" %9s", "FAIL");
-                if( hasUnguarded ) printf(" %9s", "--");
             }
             else
             {
@@ -3093,21 +3064,6 @@ static void print_timing_table(const char *languageFilter)
                         printf(" %9.0f", r->langs[li].avg_ns);
                 }
 
-                /* Unguarded column: color relative to C-ref */
-                if( hasUnguarded )
-                {
-                    if( r->langs[li].avg_ns_unguarded > 0 )
-                    {
-                        if( r->c_ref_ns > 0 && r->langs[li].avg_ns_unguarded > r->c_ref_ns )
-                            printf(" \033[31m%9.0f\033[0m", r->langs[li].avg_ns_unguarded);
-                        else if( r->c_ref_ns > 0 && r->langs[li].avg_ns_unguarded < r->c_ref_ns )
-                            printf(" \033[32m%9.0f\033[0m", r->langs[li].avg_ns_unguarded);
-                        else
-                            printf(" %9.0f", r->langs[li].avg_ns_unguarded);
-                    }
-                    else
-                        printf(" %9s", "--");
-                }
             }
         }
         printf("\n");
@@ -3155,8 +3111,6 @@ static void write_timing_report(const char *filepath)
                     ALL_LANGUAGES[li].name,
                     (st == 1) ? "pass" : "fail",
                     r->langs[li].avg_ns);
-            if( r->langs[li].avg_ns_unguarded > 0 )
-                fprintf(f, ",\"avg_ns_unguarded\":%.0f", r->langs[li].avg_ns_unguarded);
             fprintf(f, "}");
         }
         fprintf(f, "}}");
@@ -3300,27 +3254,18 @@ static void write_markdown_report(const char *filepath, const char *languageFilt
             "\xe2\x94\x98\n");
     fprintf(f, "```\n\n");
 
-    /* Check if any language has unguarded data */
-    int mdHasUnguarded = 0;
-    for( int ri = 0; ri < g_numTimingResults && !mdHasUnguarded; ri++ )
-        for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
-            if( showLang[li] && g_timingResults[ri].langs[li].avg_ns_unguarded > 0 )
-            { mdHasUnguarded = 1; break; }
-
     /* Detailed per-function table */
     fprintf(f, "## Results (ns/call)\n\n");
     fprintf(f, "| Function |  C-ref |");
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( showLang[li] ) {
             fprintf(f, " %s |", ALL_LANGUAGES[li].display);
-            if( mdHasUnguarded ) fprintf(f, " %s-ung |", ALL_LANGUAGES[li].display);
         }
     }
     fprintf(f, "\n|----------|--------|");
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( showLang[li] ) {
             fprintf(f, "--------|");
-            if( mdHasUnguarded ) fprintf(f, "--------|");
         }
     }
     fprintf(f, "\n");
@@ -3333,20 +3278,11 @@ static void write_markdown_report(const char *filepath, const char *languageFilt
             if( !showLang[li] ) continue;
             if( r->langs[li].tested == -1 ) {
                 fprintf(f, " FAIL   |");
-                if( mdHasUnguarded ) fprintf(f, "     \xe2\x80\x94 |");
             } else if( r->langs[li].tested == 1 ) {
                 char t[32]; fmt_ns(t, sizeof(t), r->langs[li].avg_ns);
                 fprintf(f, " %6s |", t);
-                if( mdHasUnguarded ) {
-                    if( r->langs[li].avg_ns_unguarded > 0 ) {
-                        char u[32]; fmt_ns(u, sizeof(u), r->langs[li].avg_ns_unguarded);
-                        fprintf(f, " %6s |", u);
-                    } else
-                        fprintf(f, "     \xe2\x80\x94 |");
-                }
             } else {
                 fprintf(f, "     \xe2\x80\x94 |");
-                if( mdHasUnguarded ) fprintf(f, "     \xe2\x80\x94 |");
             }
         }
         fprintf(f, "\n");

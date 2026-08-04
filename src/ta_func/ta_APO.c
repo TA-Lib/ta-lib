@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -161,56 +161,6 @@ TA_LIB_API TA_RetCode TA_APO( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_APO_Unguarded( int    startIdx,
-                                        int    endIdx,
-                                        const double inReal[],
-                                        int optInFastPeriod,
-                                        int optInSlowPeriod,
-                                        TA_MAType optInMAType,
-                                        int          *outBegIdx,
-                                        int          *outNBElement,
-                                        double        outReal[] )
-{
-   double *tempBuffer;
-   TA_RetCode retCode;
-   int tempInteger;
-   int fastBeg;
-   int fastNb;
-   int offset;
-   int i;
-
-   tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
-   if( !tempBuffer )
-   {
-      return TA_ALLOC_ERR;
-   }
-   if( optInSlowPeriod < optInFastPeriod )
-   {
-      tempInteger = optInSlowPeriod;
-      optInSlowPeriod = optInFastPeriod;
-      optInFastPeriod = tempInteger;
-   }
-   retCode = TA_MA(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
-   if( retCode != TA_SUCCESS )
-   {
-      free(tempBuffer);
-      return retCode;
-   }
-   retCode = TA_MA(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,outBegIdx,outNBElement,outReal);
-   if( retCode != TA_SUCCESS )
-   {
-      free(tempBuffer);
-      return retCode;
-   }
-   offset = fastNb - *outNBElement;
-   for( i = 0; i < (int)*outNBElement; i += 1 )
-   {
-      outReal[i] = tempBuffer[i + offset] - outReal[i];
-   }
-   free(tempBuffer);
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_APO( int    startIdx,
                      int    endIdx,
                      const float inReal[],
@@ -248,56 +198,6 @@ TA_RetCode TA_S_APO( int    startIdx,
       optInMAType = 1;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
-   if( !tempBuffer )
-   {
-      return TA_ALLOC_ERR;
-   }
-   if( optInSlowPeriod < optInFastPeriod )
-   {
-      tempInteger = optInSlowPeriod;
-      optInSlowPeriod = optInFastPeriod;
-      optInFastPeriod = tempInteger;
-   }
-   retCode = TA_S_MA(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
-   if( retCode != TA_SUCCESS )
-   {
-      free(tempBuffer);
-      return retCode;
-   }
-   retCode = TA_S_MA(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,outBegIdx,outNBElement,outReal);
-   if( retCode != TA_SUCCESS )
-   {
-      free(tempBuffer);
-      return retCode;
-   }
-   offset = fastNb - *outNBElement;
-   for( i = 0; i < (int)*outNBElement; i += 1 )
-   {
-      outReal[i] = tempBuffer[i + offset] - outReal[i];
-   }
-   free(tempBuffer);
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_APO_Unguarded( int    startIdx,
-                               int    endIdx,
-                               const float inReal[],
-                               int optInFastPeriod,
-                               int optInSlowPeriod,
-                               TA_MAType optInMAType,
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] )
-{
-   double *tempBuffer;
-   TA_RetCode retCode;
-   int tempInteger;
-   int fastBeg;
-   int fastNb;
-   int offset;
-   int i;
 
    tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempBuffer )

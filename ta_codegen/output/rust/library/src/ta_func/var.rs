@@ -181,6 +181,10 @@ impl Core {
         } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.var_lookback(optInTimePeriod, optInNbDev);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut tempReal: f64 = 0.0_f64;
         let mut shift: f64 = 0.0_f64;
@@ -293,115 +297,6 @@ impl Core {
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::var`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::var`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::var`].
-    #[inline]
-    pub fn var_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInTimePeriod: i32,
-        mut optInNbDev: f64,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut tempReal: f64 = 0.0_f64;
-        let mut shift: f64 = 0.0_f64;
-        let mut periodTotal1: f64 = 0.0_f64;
-        let mut periodTotal2: f64 = 0.0_f64;
-        let mut meanValue1: f64 = 0.0_f64;
-        let mut variance: f64 = 0.0_f64;
-        let mut invPeriod: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut j: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut windowStart: usize = 0_usize;
-        let mut nbInitialElementNeeded: usize = 0_usize;
-        let mut barsSinceReseed: usize = 0_usize;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.var_lookback(optInTimePeriod, optInNbDev);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        nbInitialElementNeeded = (optInTimePeriod - 1) as usize;
-        if startIdx < nbInitialElementNeeded {
-            startIdx = nbInitialElementNeeded;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        invPeriod = 1.0 / (optInTimePeriod as f64);
-        trailingIdx = startIdx - nbInitialElementNeeded;
-        shift = inReal[trailingIdx];
-        periodTotal1 = 0.0;
-        periodTotal2 = 0.0;
-        // for( j = trailingIdx; j < startIdx; j += 1 )
-        j = trailingIdx;
-        while j < startIdx {
-            tempReal = inReal[j] - shift;
-            periodTotal1 += tempReal;
-            tempReal *= tempReal;
-            periodTotal2 += tempReal;
-            j += 1;
-        }
-        i = startIdx;
-        outIdx = 0;
-        barsSinceReseed = (32 * optInTimePeriod) as usize;
-        loop {
-            tempReal = inReal[i] - shift;
-            periodTotal1 += tempReal;
-            tempReal *= tempReal;
-            periodTotal2 += tempReal;
-            meanValue1 = periodTotal1 * invPeriod;
-            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-            tempReal = inReal[trailingIdx] - shift;
-            periodTotal1 -= tempReal;
-            tempReal *= tempReal;
-            periodTotal2 -= tempReal;
-            trailingIdx += 1;
-            barsSinceReseed -= 1;
-            if variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 {
-                barsSinceReseed = (32 * optInTimePeriod) as usize;
-                windowStart = i - nbInitialElementNeeded;
-                tempReal = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
-                    tempReal += inReal[j];
-                }
-                j = (i as usize) + 1;
-                shift = tempReal * invPeriod;
-                periodTotal1 = 0.0;
-                periodTotal2 = 0.0;
-                for j in (windowStart as usize)..(i as usize) + 1 {
-                    tempReal = inReal[j] - shift;
-                    periodTotal1 += tempReal;
-                    tempReal *= tempReal;
-                    periodTotal2 += tempReal;
-                }
-                j = (i as usize) + 1;
-                meanValue1 = periodTotal1 * invPeriod;
-                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-                tempReal = inReal[windowStart] - shift;
-                periodTotal1 -= tempReal;
-                tempReal *= tempReal;
-                periodTotal2 -= tempReal;
-            }
-            outReal[outIdx] = variance;
-            outIdx += 1;
-            i += 1;
-            if !(i <= endIdx) { break; }
-        }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;

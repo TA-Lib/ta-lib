@@ -632,17 +632,24 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // cutover option B). The generated C lib lives in `src/` too, so the
         // servers/unity build directly against `src/...` — no copy into output/c.
 
-        // Generate ta_func_unguarded.h into include/ (public header)
-        let unguarded_h = server_gen::generate_c_header_stub(all_funcs);
-        let include_path = root.join("include").join("ta_func_unguarded.h");
-        std::fs::write(&include_path, &unguarded_h).unwrap();
-        println!("  ta_func_unguarded.h -> {}", include_path.display());
-
-        // Generate ta_func_private.h into src/ta_func/ (alongside the generated indicators)
-        let private_h = server_gen::generate_c_private_header(all_funcs);
-        let private_path = root.join("src/ta_func").join("ta_func_private.h");
-        std::fs::write(&private_path, &private_h).unwrap();
-        println!("  ta_func_private.h -> {}", private_path.display());
+        // Generate the private stream header into src/ta_func/ (alongside the
+        // generated indicators). NOT installed: #166 replaced the public
+        // include/ta_func_unguarded.h, whose stream and private declarations
+        // never belonged in an installed header. Remove the two files it
+        // superseded so a stale copy cannot satisfy an include.
+        let stream_h = server_gen::generate_c_stream_private_header(all_funcs);
+        let stream_path = root.join("src/ta_func").join("ta_func_stream_private.h");
+        std::fs::write(&stream_path, &stream_h).unwrap();
+        println!("  ta_func_stream_private.h -> {}", stream_path.display());
+        for stale in [
+            root.join("include").join("ta_func_unguarded.h"),
+            root.join("src/ta_func").join("ta_func_private.h"),
+        ] {
+            if stale.exists() {
+                std::fs::remove_file(&stale).unwrap();
+                println!("  removed superseded header {}", stale.display());
+            }
+        }
 
         // Generate ta_abstract layer from YAML definitions
         backends::ta_abstract_c::generate(all_funcs, &enums, &out_base);
@@ -742,11 +749,9 @@ fn load_all_yaml_defs(base: &Path) -> Vec<ir::FuncDef> {
         if yaml_path.exists() {
             let mut func_def = parser::yaml::parse_yaml(&yaml_path);
             // Wire the parsed .c source too: cross-function artifacts written
-            // from this list (ta_func_unguarded.h, ta_func_private.h) need the
-            // source-derived fields — has_explicit_private and the private
-            // extra params. A YAML-only def silently dropped the TA_*_Private
-            // declarations from the shared headers on every --func=X run
-            // (caught by clang: implicit declaration of TA_EMA_Private).
+            // from this list need the source-derived fields — has_explicit_private,
+            // the private extra params, and `streaming`. A YAML-only def silently
+            // dropped declarations from the shared header on every --func=X run.
             let c_path = dir.join(format!("{}.c", dir_name));
             if c_path.exists() {
                 let parsed = parser::c_source::parse_c_source(&c_path);

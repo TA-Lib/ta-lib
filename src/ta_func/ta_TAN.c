@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -89,25 +89,6 @@ TA_LIB_API TA_RetCode TA_TAN( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_TAN_Unguarded( int    startIdx,
-                                        int    endIdx,
-                                        const double inReal[],
-                                        int          *outBegIdx,
-                                        int          *outNBElement,
-                                        double        outReal[] )
-{
-   int outIdx;
-   int i;
-
-   for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-   {
-      outReal[outIdx] = tan(inReal[i]);
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_TAN( int    startIdx,
                      int    endIdx,
                      const float inReal[],
@@ -127,25 +108,6 @@ TA_RetCode TA_S_TAN( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-   {
-      outReal[outIdx] = tan((double)inReal[i]);
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_TAN_Unguarded( int    startIdx,
-                               int    endIdx,
-                               const float inReal[],
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] )
-{
-   int outIdx;
-   int i;
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {

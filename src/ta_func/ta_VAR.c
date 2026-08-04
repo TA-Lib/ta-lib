@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -222,104 +222,6 @@ TA_LIB_API TA_RetCode TA_VAR( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_VAR_Unguarded( int    startIdx,
-                                        int    endIdx,
-                                        const double inReal[],
-                                        int optInTimePeriod,
-                                        double optInNbDev,
-                                        int          *outBegIdx,
-                                        int          *outNBElement,
-                                        double        outReal[] )
-{
-   double tempReal;
-   double shift;
-   double periodTotal1;
-   double periodTotal2;
-   double meanValue1;
-   double variance;
-   double invPeriod;
-   int i;
-   int j;
-   int outIdx;
-   int trailingIdx;
-   int windowStart;
-   int nbInitialElementNeeded;
-   int barsSinceReseed;
-
-   nbInitialElementNeeded = optInTimePeriod - 1;
-   if( startIdx < nbInitialElementNeeded )
-   {
-      startIdx = nbInitialElementNeeded;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   invPeriod = 1.0 / (double)optInTimePeriod;
-   trailingIdx = startIdx - nbInitialElementNeeded;
-   shift = inReal[trailingIdx];
-   periodTotal1 = 0.0;
-   periodTotal2 = 0.0;
-   for( j = trailingIdx; j < startIdx; j += 1 )
-   {
-      tempReal = inReal[j] - shift;
-      periodTotal1 += tempReal;
-      tempReal *= tempReal;
-      periodTotal2 += tempReal;
-   }
-   i = startIdx;
-   outIdx = 0;
-   barsSinceReseed = 32 * optInTimePeriod;
-   do
-   {
-      tempReal = inReal[i] - shift;
-      periodTotal1 += tempReal;
-      tempReal *= tempReal;
-      periodTotal2 += tempReal;
-      meanValue1 = periodTotal1 * invPeriod;
-      variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-      tempReal = inReal[trailingIdx] - shift;
-      periodTotal1 -= tempReal;
-      tempReal *= tempReal;
-      periodTotal2 -= tempReal;
-      trailingIdx += 1;
-      barsSinceReseed -= 1;
-      if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 )
-      {
-         barsSinceReseed = 32 * optInTimePeriod;
-         windowStart = i - nbInitialElementNeeded;
-         tempReal = 0.0;
-         for( j = windowStart; j <= i; j += 1 )
-         {
-            tempReal += inReal[j];
-         }
-         shift = tempReal * invPeriod;
-         periodTotal1 = 0.0;
-         periodTotal2 = 0.0;
-         for( j = windowStart; j <= i; j += 1 )
-         {
-            tempReal = inReal[j] - shift;
-            periodTotal1 += tempReal;
-            tempReal *= tempReal;
-            periodTotal2 += tempReal;
-         }
-         meanValue1 = periodTotal1 * invPeriod;
-         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-         tempReal = inReal[windowStart] - shift;
-         periodTotal1 -= tempReal;
-         tempReal *= tempReal;
-         periodTotal2 -= tempReal;
-      }
-      outReal[outIdx++] = variance;
-      i += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_VAR( int    startIdx,
                      int    endIdx,
                      const float inReal[],
@@ -361,104 +263,6 @@ TA_RetCode TA_S_VAR( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   nbInitialElementNeeded = optInTimePeriod - 1;
-   if( startIdx < nbInitialElementNeeded )
-   {
-      startIdx = nbInitialElementNeeded;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   invPeriod = 1.0 / (double)optInTimePeriod;
-   trailingIdx = startIdx - nbInitialElementNeeded;
-   shift = (double)inReal[trailingIdx];
-   periodTotal1 = 0.0;
-   periodTotal2 = 0.0;
-   for( j = trailingIdx; j < startIdx; j += 1 )
-   {
-      tempReal = (double)inReal[j] - shift;
-      periodTotal1 += tempReal;
-      tempReal *= tempReal;
-      periodTotal2 += tempReal;
-   }
-   i = startIdx;
-   outIdx = 0;
-   barsSinceReseed = 32 * optInTimePeriod;
-   do
-   {
-      tempReal = (double)inReal[i] - shift;
-      periodTotal1 += tempReal;
-      tempReal *= tempReal;
-      periodTotal2 += tempReal;
-      meanValue1 = periodTotal1 * invPeriod;
-      variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-      tempReal = (double)inReal[trailingIdx] - shift;
-      periodTotal1 -= tempReal;
-      tempReal *= tempReal;
-      periodTotal2 -= tempReal;
-      trailingIdx += 1;
-      barsSinceReseed -= 1;
-      if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 )
-      {
-         barsSinceReseed = 32 * optInTimePeriod;
-         windowStart = i - nbInitialElementNeeded;
-         tempReal = 0.0;
-         for( j = windowStart; j <= i; j += 1 )
-         {
-            tempReal += (double)inReal[j];
-         }
-         shift = tempReal * invPeriod;
-         periodTotal1 = 0.0;
-         periodTotal2 = 0.0;
-         for( j = windowStart; j <= i; j += 1 )
-         {
-            tempReal = (double)inReal[j] - shift;
-            periodTotal1 += tempReal;
-            tempReal *= tempReal;
-            periodTotal2 += tempReal;
-         }
-         meanValue1 = periodTotal1 * invPeriod;
-         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-         tempReal = (double)inReal[windowStart] - shift;
-         periodTotal1 -= tempReal;
-         tempReal *= tempReal;
-         periodTotal2 -= tempReal;
-      }
-      outReal[outIdx++] = variance;
-      i += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_VAR_Unguarded( int    startIdx,
-                               int    endIdx,
-                               const float inReal[],
-                               int optInTimePeriod,
-                               double optInNbDev,
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] )
-{
-   double tempReal;
-   double shift;
-   double periodTotal1;
-   double periodTotal2;
-   double meanValue1;
-   double variance;
-   double invPeriod;
-   int i;
-   int j;
-   int outIdx;
-   int trailingIdx;
-   int windowStart;
-   int nbInitialElementNeeded;
-   int barsSinceReseed;
 
    nbInitialElementNeeded = optInTimePeriod - 1;
    if( startIdx < nbInitialElementNeeded )

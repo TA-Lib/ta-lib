@@ -177,6 +177,11 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.imi_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inOpen.len());
+        assert!(_assertStart > endIdx || endIdx < inClose.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut lookback: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -207,63 +212,6 @@ impl Core {
                 // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
                 // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
                 // oscillator, so no up/down bias returns its neutral center, 50.0.
-                outReal[outIdx] = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
-            }
-            i = (startIdx as usize) + 1;
-            startIdx += 1;
-            outIdx += 1;
-        }
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::imi`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::imi`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::imi`].
-    #[inline]
-    pub fn imi_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inOpen: &[f64],
-        inClose: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut lookback: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        assert!(endIdx < inOpen.len());
-        assert!(endIdx < inClose.len());
-        let _assertLb = self.imi_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        outIdx = 0;
-        lookback = self.imi_lookback(optInTimePeriod);
-        if startIdx < lookback {
-            startIdx = lookback;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        (*outBegIdx) = startIdx;
-        while startIdx <= endIdx {
-            let mut upsum: f64 = 0.0;
-            let mut downsum: f64 = 0.0;
-            let mut i: usize = 0_usize;
-            for i in (startIdx - (((optInTimePeriod - 1)) as usize) as usize)..(startIdx as usize) + 1 {
-                let mut close: f64 = inClose[i];
-                let mut open: f64 = inOpen[i];
-                if close > open {
-                    upsum += close - open;
-                } else {
-                    downsum += open - close;
-                }
                 outReal[outIdx] = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
             }
             i = (startIdx as usize) + 1;

@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -119,43 +119,6 @@ TA_LIB_API TA_RetCode TA_NVI( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_NVI_Unguarded( int    startIdx,
-                                        int    endIdx,
-                                        const double inClose[],
-                                        const double inVolume[],
-                                        int          *outBegIdx,
-                                        int          *outNBElement,
-                                        double        outReal[] )
-{
-   int i;
-   int outIdx;
-   double prevNVI;
-   double prevClose;
-   double prevVolume;
-   double tempClose;
-   double tempVolume;
-
-   prevNVI = 1000.0;
-   prevClose = inClose[startIdx];
-   prevVolume = inVolume[startIdx];
-   outIdx = 0;
-   for( i = startIdx; i <= endIdx; i += 1 )
-   {
-      tempClose = inClose[i];
-      tempVolume = inVolume[i];
-      if( tempVolume < prevVolume && prevClose != 0.0 )
-      {
-         prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
-      }
-      outReal[outIdx++] = prevNVI;
-      prevClose = tempClose;
-      prevVolume = tempVolume;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_NVI( int    startIdx,
                      int    endIdx,
                      const float inClose[],
@@ -183,43 +146,6 @@ TA_RetCode TA_S_NVI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   prevNVI = 1000.0;
-   prevClose = (double)inClose[startIdx];
-   prevVolume = (double)inVolume[startIdx];
-   outIdx = 0;
-   for( i = startIdx; i <= endIdx; i += 1 )
-   {
-      tempClose = (double)inClose[i];
-      tempVolume = (double)inVolume[i];
-      if( tempVolume < prevVolume && prevClose != 0.0 )
-      {
-         prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
-      }
-      outReal[outIdx++] = prevNVI;
-      prevClose = tempClose;
-      prevVolume = tempVolume;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_NVI_Unguarded( int    startIdx,
-                               int    endIdx,
-                               const float inClose[],
-                               const float inVolume[],
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] )
-{
-   int i;
-   int outIdx;
-   double prevNVI;
-   double prevClose;
-   double prevVolume;
-   double tempClose;
-   double tempVolume;
 
    prevNVI = 1000.0;
    prevClose = (double)inClose[startIdx];

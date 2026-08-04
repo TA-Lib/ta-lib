@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -175,70 +175,6 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Unguarded( int    startIdx,
-                                                   int    endIdx,
-                                                   const double inOpen[],
-                                                   const double inHigh[],
-                                                   const double inLow[],
-                                                   const double inClose[],
-                                                   int          *outBegIdx,
-                                                   int          *outNBElement,
-                                                   int        outInteger[] )
-{
-   double NearPeriodTotal[4];
-   int i;
-   int outIdx;
-   int totIdx;
-   int NearTrailingIdx;
-   int lookbackTotal;
-   int Near_rangeType = TA_Globals->candleSettings[TA_Near].rangeType;
-   int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
-   double Near_factor = TA_Globals->candleSettings[TA_Near].factor;
-
-   lookbackTotal = TA_CDL3LINESTRIKE_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   NearPeriodTotal[3] = 0;
-   NearPeriodTotal[2] = 0;
-   NearTrailingIdx = startIdx - Near_avgPeriod;
-   i = NearTrailingIdx;
-   while( i < startIdx )
-   {
-      NearPeriodTotal[3] = NearPeriodTotal[3] + TA_CANDLERANGE(Near,i - 3);
-      NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE(Near,i - 2);
-      i += 1;
-   }
-   i = startIdx;
-   outIdx = 0;
-   do
-   {
-      if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE(Near,NearPeriodTotal[3],i - 3) && inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[3],i - 3) && inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) && inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) && (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && inClose[i - 1] > inClose[i - 2] && inClose[i - 2] > inClose[i - 3] && inOpen[i] > inClose[i - 1] && inClose[i] < inOpen[i - 3] || ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && inClose[i - 1] < inClose[i - 2] && inClose[i - 2] < inClose[i - 3] && inOpen[i] < inClose[i - 1] && inClose[i] > inOpen[i - 3]) )
-      {
-         outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-      {
-         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE(Near,i - totIdx) - TA_CANDLERANGE(Near,NearTrailingIdx - totIdx));
-      }
-      i += 1;
-      NearTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
                                 int    endIdx,
                                 const float inOpen[],
@@ -274,70 +210,6 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
-
-   lookbackTotal = TA_CDL3LINESTRIKE_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   NearPeriodTotal[3] = 0;
-   NearPeriodTotal[2] = 0;
-   NearTrailingIdx = startIdx - Near_avgPeriod;
-   i = NearTrailingIdx;
-   while( i < startIdx )
-   {
-      NearPeriodTotal[3] = NearPeriodTotal[3] + TA_CANDLERANGE(Near,i - 3);
-      NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE(Near,i - 2);
-      i += 1;
-   }
-   i = startIdx;
-   outIdx = 0;
-   do
-   {
-      if( (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (double)inOpen[i - 2] >= min((double)inOpen[i - 3],(double)inClose[i - 3]) - TA_CANDLEAVERAGE(Near,NearPeriodTotal[3],i - 3) && (double)inOpen[i - 2] <= max((double)inOpen[i - 3],(double)inClose[i - 3]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[3],i - 3) && (double)inOpen[i - 1] >= min((double)inOpen[i - 2],(double)inClose[i - 2]) - TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) && (double)inOpen[i - 1] <= max((double)inOpen[i - 2],(double)inClose[i - 2]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) && ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (double)inClose[i - 1] > (double)inClose[i - 2] && (double)inClose[i - 2] > (double)inClose[i - 3] && (double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] < (double)inOpen[i - 3] || (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i - 1] < (double)inClose[i - 2] && (double)inClose[i - 2] < (double)inClose[i - 3] && (double)inOpen[i] < (double)inClose[i - 1] && (double)inClose[i] > (double)inOpen[i - 3]) )
-      {
-         outInteger[outIdx++] = (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) * 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-      {
-         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE(Near,i - totIdx) - TA_CANDLERANGE(Near,NearTrailingIdx - totIdx));
-      }
-      i += 1;
-      NearTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_CDL3LINESTRIKE_Unguarded( int    startIdx,
-                                          int    endIdx,
-                                          const float inOpen[],
-                                          const float inHigh[],
-                                          const float inLow[],
-                                          const float inClose[],
-                                          int          *outBegIdx,
-                                          int          *outNBElement,
-                                          int        outInteger[] )
-{
-   double NearPeriodTotal[4];
-   int i;
-   int outIdx;
-   int totIdx;
-   int NearTrailingIdx;
-   int lookbackTotal;
-   int Near_rangeType = TA_Globals->candleSettings[TA_Near].rangeType;
-   int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
-   double Near_factor = TA_Globals->candleSettings[TA_Near].factor;
 
    lookbackTotal = TA_CDL3LINESTRIKE_Lookback();
    if( startIdx < lookbackTotal )

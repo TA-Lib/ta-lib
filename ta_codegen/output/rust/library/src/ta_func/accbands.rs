@@ -187,6 +187,14 @@ impl Core {
         if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
             return RetCode::BadParam;
         }
+        let _assertLb = self.accbands_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inHigh.len());
+        assert!(_assertStart > endIdx || endIdx < inLow.len());
+        assert!(_assertStart > endIdx || endIdx < inClose.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outRealUpperBand.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outRealMiddleBand.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outRealLowerBand.len());
         let mut startIdx = startIdx;
         let mut periodTotalUpper: f64 = 0.0_f64;
         let mut periodTotalMiddle: f64 = 0.0_f64;
@@ -278,109 +286,6 @@ impl Core {
             periodTotalMiddle -= inClose[trailingIdx];
             trailingIdx = trailingIdx + 1;
             // Write the three bands.
-            outRealUpperBand[outIdx] = tempUpper / (optInTimePeriod as f64);
-            outRealMiddleBand[outIdx] = tempMiddle / (optInTimePeriod as f64);
-            outRealLowerBand[outIdx] = tempLower / (optInTimePeriod as f64);
-            outIdx = outIdx + 1;
-        }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::accbands`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::accbands`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::accbands`].
-    #[inline]
-    pub fn accbands_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outRealUpperBand: &mut [f64],
-        outRealMiddleBand: &mut [f64],
-        outRealLowerBand: &mut [f64],
-    ) -> RetCode {
-        let mut periodTotalUpper: f64 = 0.0_f64;
-        let mut periodTotalMiddle: f64 = 0.0_f64;
-        let mut periodTotalLower: f64 = 0.0_f64;
-        let mut tempUpper: f64 = 0.0_f64;
-        let mut tempMiddle: f64 = 0.0_f64;
-        let mut tempLower: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        assert!(endIdx < inHigh.len());
-        assert!(endIdx < inLow.len());
-        assert!(endIdx < inClose.len());
-        let _assertLb = self.accbands_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outRealUpperBand.len());
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outRealMiddleBand.len());
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outRealLowerBand.len());
-        lookbackTotal = self.sma_lookback(optInTimePeriod);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        periodTotalUpper = 0.0;
-        periodTotalMiddle = 0.0;
-        periodTotalLower = 0.0;
-        trailingIdx = startIdx - lookbackTotal;
-        i = trailingIdx;
-        while i < startIdx {
-            tempReal = inHigh[i] + inLow[i];
-            if !((tempReal).abs() < 1e-14) {
-                tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
-                periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
-                periodTotalLower += inLow[i] * (1_f64 - tempReal);
-            } else {
-                periodTotalUpper += inHigh[i];
-                periodTotalLower += inLow[i];
-            }
-            periodTotalMiddle += inClose[i];
-            i = i + 1;
-        }
-        outIdx = 0;
-        while i <= endIdx {
-            tempReal = inHigh[i] + inLow[i];
-            if !((tempReal).abs() < 1e-14) {
-                tempReal = 4_f64 * (inHigh[i] - inLow[i]) / tempReal;
-                periodTotalUpper += inHigh[i] * (1_f64 + tempReal);
-                periodTotalLower += inLow[i] * (1_f64 - tempReal);
-            } else {
-                periodTotalUpper += inHigh[i];
-                periodTotalLower += inLow[i];
-            }
-            periodTotalMiddle += inClose[i];
-            i = i + 1;
-            tempUpper = periodTotalUpper;
-            tempMiddle = periodTotalMiddle;
-            tempLower = periodTotalLower;
-            tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
-            if !((tempReal).abs() < 1e-14) {
-                tempReal = 4_f64 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
-                periodTotalUpper -= inHigh[trailingIdx] * (1_f64 + tempReal);
-                periodTotalLower -= inLow[trailingIdx] * (1_f64 - tempReal);
-            } else {
-                periodTotalUpper -= inHigh[trailingIdx];
-                periodTotalLower -= inLow[trailingIdx];
-            }
-            periodTotalMiddle -= inClose[trailingIdx];
-            trailingIdx = trailingIdx + 1;
             outRealUpperBand[outIdx] = tempUpper / (optInTimePeriod as f64);
             outRealMiddleBand[outIdx] = tempMiddle / (optInTimePeriod as f64);
             outRealLowerBand[outIdx] = tempLower / (optInTimePeriod as f64);
