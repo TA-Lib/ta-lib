@@ -299,7 +299,7 @@ public partial class Core
       /* Fast-K calculation completed. This K calculation is returned
        * to the caller. It is smoothed to become Fast-D.
        */
-      retCode = MovingAverageUnguarded(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastD);
+      retCode = MovingAverage(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastD);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -434,7 +434,7 @@ public partial class Core
          trailingIdx += 1;
          today += 1;
       }
-      retCode = MovingAverageUnguarded(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastD);
+      retCode = MovingAverage(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastD);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -573,7 +573,7 @@ public partial class Core
          trailingIdx += 1;
          today += 1;
       }
-      retCode = MovingAverageUnguarded(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastD);
+      retCode = MovingAverage(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastD);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -690,7 +690,7 @@ public partial class Core
          trailingIdx += 1;
          today += 1;
       }
-      retCode = MovingAverageUnguarded(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastD);
+      retCode = MovingAverage(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastD);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }

@@ -336,7 +336,7 @@ impl Core {
         if minUsed == maxUsed {
             // Single distinct period: one MA pass, written straight into the
             // destination buffer. Nothing to group or copy.
-            retCode = self.ma_unguarded(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localFinalArray[..]);
+            retCode = self.ma(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localFinalArray[..]);
             if retCode != RetCode::Success {
                 if finalIsAllocated != 0 {
                 }
@@ -393,7 +393,7 @@ impl Core {
                     firstOccurrence = (sortedIdx[bucketStart]) as usize;
                     lastOccurrence = (sortedIdx[bucketEnd - 1]) as usize;
                     // Calculation of the MA required.
-                    retCode = self.ma_unguarded(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
+                    retCode = self.ma(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
                     if retCode != RetCode::Success {
                         if finalIsAllocated != 0 {
                         }
@@ -557,7 +557,7 @@ impl Core {
         }
         bucketOfs = vec![0_i32; ((maxUsed - minUsed + 2) * 1) as usize];
         if minUsed == maxUsed {
-            retCode = self.ma_unguarded(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localFinalArray[..]);
+            retCode = self.ma(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localFinalArray[..]);
             if retCode != RetCode::Success {
                 if finalIsAllocated != 0 {
                 }
@@ -595,7 +595,7 @@ impl Core {
                 if bucketEnd > bucketStart {
                     firstOccurrence = (sortedIdx[bucketStart]) as usize;
                     lastOccurrence = (sortedIdx[bucketEnd - 1]) as usize;
-                    retCode = self.ma_unguarded(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
+                    retCode = self.ma(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
                     if retCode != RetCode::Success {
                         if finalIsAllocated != 0 {
                         }

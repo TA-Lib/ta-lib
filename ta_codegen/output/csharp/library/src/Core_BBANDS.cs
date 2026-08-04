@@ -336,7 +336,7 @@ public partial class Core
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Calculate the middle band moving average. */
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outNBElement = 0;
          return retCode ;
@@ -344,7 +344,7 @@ public partial class Core
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)outBegIdx;
       /* Calculate the Standard Deviation into tempBuffer2. */
-      retCode = StdDevUnguarded((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
+      retCode = StdDev((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement = 0;
          return retCode ;
@@ -532,13 +532,13 @@ public partial class Core
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outNBElement = 0;
          return retCode ;
       }
       maBegIdx = (int)outBegIdx;
-      retCode = StdDevUnguarded((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
+      retCode = StdDev((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement = 0;
          return retCode ;
@@ -729,13 +729,13 @@ public partial class Core
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outNBElement = 0;
          return retCode ;
       }
       maBegIdx = (int)outBegIdx;
-      retCode = StdDevUnguarded((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
+      retCode = StdDev((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement = 0;
          return retCode ;
@@ -899,13 +899,13 @@ public partial class Core
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outNBElement = 0;
          return retCode ;
       }
       maBegIdx = (int)outBegIdx;
-      retCode = StdDevUnguarded((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
+      retCode = StdDev((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement = 0;
          return retCode ;

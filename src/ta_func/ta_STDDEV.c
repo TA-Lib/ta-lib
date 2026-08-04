@@ -105,7 +105,7 @@ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
       return TA_BAD_PARAM;
 
    /* Calculate the variance. */
-   retCode = TA_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
+   retCode = TA_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
    if( retCode != TA_SUCCESS )
    {
       return retCode;
@@ -158,7 +158,7 @@ TA_LIB_API TA_RetCode TA_STDDEV_Unguarded( int    startIdx,
    TA_RetCode retCode;
    double tempReal;
 
-   retCode = TA_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
+   retCode = TA_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
    if( retCode != TA_SUCCESS )
    {
       return retCode;
@@ -224,7 +224,7 @@ TA_RetCode TA_S_STDDEV( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   retCode = TA_S_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
+   retCode = TA_S_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
    if( retCode != TA_SUCCESS )
    {
       return retCode;
@@ -272,7 +272,7 @@ TA_RetCode TA_S_STDDEV_Unguarded( int    startIdx,
    TA_RetCode retCode;
    double tempReal;
 
-   retCode = TA_S_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
+   retCode = TA_S_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
    if( retCode != TA_SUCCESS )
    {
       return retCode;
@@ -406,7 +406,7 @@ TA_RetCode TA_STDDEV_OpenInternal( struct TA_STDDEV_Stream **stream, const doubl
             return subRc;
          }
       }
-      retCode = TA_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,sc_outReal);
+      retCode = TA_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,sc_outReal);
       if( retCode != TA_SUCCESS )
       {
          TA_VAR_Close( sub0 ); TA_Free( sc_outReal );
@@ -517,7 +517,7 @@ TA_LIB_API TA_RetCode TA_STDDEV_OpenAndFill( TA_STDDEV_Stream **stream, const do
             return subRc;
          }
       }
-      retCode = TA_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,sc_outReal);
+      retCode = TA_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,sc_outReal);
       if( retCode != TA_SUCCESS )
       {
          TA_VAR_Close( sub0 ); TA_Free( sc_outReal );

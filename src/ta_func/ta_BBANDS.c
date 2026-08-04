@@ -346,7 +346,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       return TA_ALLOC_ERR;
    }
    /* Calculate the middle band moving average. */
-   retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
+   retCode = TA_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       *outNBElement= 0;
@@ -357,7 +357,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
    /* Remember where the moving average begins, to realign it below. */
    maBegIdx = (int)*outBegIdx;
    /* Calculate the Standard Deviation into tempBuffer2. */
-   retCode = TA_STDDEV_Unguarded((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
+   retCode = TA_STDDEV((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
    if( retCode != TA_SUCCESS )
    {
       *outNBElement= 0;
@@ -586,7 +586,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_Unguarded( int    startIdx,
       free(tempBuffer1);
       return TA_ALLOC_ERR;
    }
-   retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
+   retCode = TA_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       *outNBElement= 0;
@@ -595,7 +595,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_Unguarded( int    startIdx,
       return retCode;
    }
    maBegIdx = (int)*outBegIdx;
-   retCode = TA_STDDEV_Unguarded((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
+   retCode = TA_STDDEV((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
    if( retCode != TA_SUCCESS )
    {
       *outNBElement= 0;
@@ -844,7 +844,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       free(tempBuffer1);
       return TA_ALLOC_ERR;
    }
-   retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
+   retCode = TA_S_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       *outNBElement= 0;
@@ -853,7 +853,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       return retCode;
    }
    maBegIdx = (int)*outBegIdx;
-   retCode = TA_S_STDDEV_Unguarded((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
+   retCode = TA_S_STDDEV((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
    if( retCode != TA_SUCCESS )
    {
       *outNBElement= 0;
@@ -1072,7 +1072,7 @@ TA_RetCode TA_S_BBANDS_Unguarded( int    startIdx,
       free(tempBuffer1);
       return TA_ALLOC_ERR;
    }
-   retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
+   retCode = TA_S_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       *outNBElement= 0;
@@ -1081,7 +1081,7 @@ TA_RetCode TA_S_BBANDS_Unguarded( int    startIdx,
       return retCode;
    }
    maBegIdx = (int)*outBegIdx;
-   retCode = TA_S_STDDEV_Unguarded((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
+   retCode = TA_S_STDDEV((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
    if( retCode != TA_SUCCESS )
    {
       *outNBElement= 0;
@@ -1272,7 +1272,7 @@ TA_RetCode TA_BBANDS_OpenInternal( struct TA_BBANDS_Stream **stream, const doubl
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,&dummyBegIdx,&dummyNBElement,tempBuffer1);
+      retCode = TA_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,&dummyBegIdx,&dummyNBElement,tempBuffer1);
       if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
       {
          dummyNBElement = 0;
@@ -1296,7 +1296,7 @@ TA_RetCode TA_BBANDS_OpenInternal( struct TA_BBANDS_Stream **stream, const doubl
             return subRc;
          }
       }
-      retCode = TA_STDDEV_Unguarded((int)dummyBegIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,tempBuffer2);
+      retCode = TA_STDDEV((int)dummyBegIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,tempBuffer2);
       if( retCode != TA_SUCCESS )
       {
          dummyNBElement = 0;
@@ -1472,7 +1472,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_OpenAndFill( TA_BBANDS_Stream **stream, const do
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,&dummyBegIdx,&dummyNBElement,tempBuffer1);
+      retCode = TA_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,&dummyBegIdx,&dummyNBElement,tempBuffer1);
       if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
       {
          dummyNBElement = 0;
@@ -1496,7 +1496,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_OpenAndFill( TA_BBANDS_Stream **stream, const do
             return subRc;
          }
       }
-      retCode = TA_STDDEV_Unguarded((int)dummyBegIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,tempBuffer2);
+      retCode = TA_STDDEV((int)dummyBegIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,tempBuffer2);
       if( retCode != TA_SUCCESS )
       {
          dummyNBElement = 0;

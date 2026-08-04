@@ -304,7 +304,7 @@ impl Core {
         // (ep is just used as a temp buffer here, the name
         //  of the parameter is not significant).
         let mut _dup_out: usize = 0_usize;
-        retCode = self.minus_dm_unguarded(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+        retCode = self.minus_dm(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
         if ep_temp[0] > 0_f64 {
             isLong = 0;
         } else {
@@ -534,7 +534,7 @@ impl Core {
             af = optInAcceleration;
         }
         let mut _dup_out: usize = 0_usize;
-        retCode = self.minus_dm_unguarded(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+        retCode = self.minus_dm(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
         if ep_temp[0] > 0_f64 {
             isLong = 0;
         } else {
@@ -896,7 +896,7 @@ impl Core {
         // (ep is just used as a temp buffer here, the name
         //  of the parameter is not significant).
         let mut _dup_out: usize = 0_usize;
-        retCode = self.minus_dm_unguarded(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+        retCode = self.minus_dm(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
         if ep_temp[0] > 0_f64 {
             isLong = 0;
         } else {
@@ -1180,7 +1180,7 @@ impl Core {
         // (ep is just used as a temp buffer here, the name
         //  of the parameter is not significant).
         let mut _dup_out: usize = 0_usize;
-        retCode = self.minus_dm_unguarded(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+        retCode = self.minus_dm(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
         if ep_temp[0] > 0_f64 {
             isLong = 0;
         } else {

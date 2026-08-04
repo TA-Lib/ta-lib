@@ -318,7 +318,7 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
     * Some documentation will refer to the smoothed version as being
     * "K-Slow", but often this end up to be shorten to "K".
     */
-   retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
+   retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       if( bufferIsAllocated )
@@ -333,7 +333,7 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
    /* Calculate the %D which is simply a moving average of
     * the already smoothed %K.
     */
-   retCode = TA_MA_Unguarded(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
+   retCode = TA_MA(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
    /* Copy tempBuffer into the caller buffer.
     * (Calculation could not be done directly in the
     *  caller buffer because more input data then the
@@ -482,7 +482,7 @@ TA_LIB_API TA_RetCode TA_STOCH_Unguarded( int    startIdx,
       trailingIdx += 1;
       today += 1;
    }
-   retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
+   retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       if( bufferIsAllocated )
@@ -493,7 +493,7 @@ TA_LIB_API TA_RetCode TA_STOCH_Unguarded( int    startIdx,
       *outNBElement= 0;
       return retCode;
    }
-   retCode = TA_MA_Unguarded(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
+   retCode = TA_MA(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
    memmove(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
@@ -663,7 +663,7 @@ TA_RetCode TA_S_STOCH( int    startIdx,
       trailingIdx += 1;
       today += 1;
    }
-   retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
+   retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       if( bufferIsAllocated )
@@ -674,7 +674,7 @@ TA_RetCode TA_S_STOCH( int    startIdx,
       *outNBElement= 0;
       return retCode;
    }
-   retCode = TA_MA_Unguarded(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
+   retCode = TA_MA(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
    memmove(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
@@ -810,7 +810,7 @@ TA_RetCode TA_S_STOCH_Unguarded( int    startIdx,
       trailingIdx += 1;
       today += 1;
    }
-   retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
+   retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       if( bufferIsAllocated )
@@ -821,7 +821,7 @@ TA_RetCode TA_S_STOCH_Unguarded( int    startIdx,
       *outNBElement= 0;
       return retCode;
    }
-   retCode = TA_MA_Unguarded(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
+   retCode = TA_MA(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
    memmove(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
@@ -1220,7 +1220,7 @@ TA_RetCode TA_STOCH_OpenInternal( struct TA_STOCH_Stream **stream, const double 
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,&dummyBegIdx,&dummyNBElement,tempBuffer);
+      retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,&dummyBegIdx,&dummyNBElement,tempBuffer);
       if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
       {
          if( bufferIsAllocated )
@@ -1250,7 +1250,7 @@ TA_RetCode TA_STOCH_OpenInternal( struct TA_STOCH_Stream **stream, const double 
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(0,(int)dummyNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD);
+      retCode = TA_MA(0,(int)dummyNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -1583,7 +1583,7 @@ TA_LIB_API TA_RetCode TA_STOCH_OpenAndFill( TA_STOCH_Stream **stream, const doub
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,&dummyBegIdx,&dummyNBElement,tempBuffer);
+      retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,&dummyBegIdx,&dummyNBElement,tempBuffer);
       if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
       {
          if( bufferIsAllocated )
@@ -1613,7 +1613,7 @@ TA_LIB_API TA_RetCode TA_STOCH_OpenAndFill( TA_STOCH_Stream **stream, const doub
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(0,(int)dummyNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD);
+      retCode = TA_MA(0,(int)dummyNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the

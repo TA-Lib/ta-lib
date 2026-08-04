@@ -326,7 +326,7 @@ public partial class Core
        * Some documentation will refer to the smoothed version as being
        * "K-Slow", but often this end up to be shorten to "K".
        */
-      retCode = MovingAverageUnguarded(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
+      retCode = MovingAverage(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -338,7 +338,7 @@ public partial class Core
       /* Calculate the %D which is simply a moving average of
        * the already smoothed %K.
        */
-      retCode = MovingAverageUnguarded(0, (int)outNBElement - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowD);
+      retCode = MovingAverage(0, (int)outNBElement - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -469,7 +469,7 @@ public partial class Core
          trailingIdx += 1;
          today += 1;
       }
-      retCode = MovingAverageUnguarded(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
+      retCode = MovingAverage(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -477,7 +477,7 @@ public partial class Core
          outNBElement = 0;
          return retCode ;
       }
-      retCode = MovingAverageUnguarded(0, (int)outNBElement - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowD);
+      retCode = MovingAverage(0, (int)outNBElement - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowD);
       Array.Copy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement * 1);
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -621,7 +621,7 @@ public partial class Core
          trailingIdx += 1;
          today += 1;
       }
-      retCode = MovingAverageUnguarded(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
+      retCode = MovingAverage(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -629,7 +629,7 @@ public partial class Core
          outNBElement = 0;
          return retCode ;
       }
-      retCode = MovingAverageUnguarded(0, (int)outNBElement - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowD);
+      retCode = MovingAverage(0, (int)outNBElement - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowD);
       Array.Copy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement * 1);
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -743,7 +743,7 @@ public partial class Core
          trailingIdx += 1;
          today += 1;
       }
-      retCode = MovingAverageUnguarded(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
+      retCode = MovingAverage(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -751,7 +751,7 @@ public partial class Core
          outNBElement = 0;
          return retCode ;
       }
-      retCode = MovingAverageUnguarded(0, (int)outNBElement - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowD);
+      retCode = MovingAverage(0, (int)outNBElement - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowD);
       Array.Copy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement * 1);
       if( (bufferIsAllocated) != 0 ) {
       }

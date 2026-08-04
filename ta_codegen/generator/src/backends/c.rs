@@ -2341,14 +2341,25 @@ mod tests {
             "ema_lookback should resolve to TA_EMA_Lookback"
         );
 
-        // bare sma and ema calls resolve to Unguarded (cross-indicator = skip validation)
+        // Bare sma/ema calls resolve to the guarded entry point (#166 step 1:
+        // cross-indicator composition is guarded-safe by construction).
+        // Anchored on the first argument so the assertion cannot be satisfied by
+        // a declaration or by the `TA_S_` single-precision sibling, and paired
+        // with the negative so it stays non-vacuous.
         assert!(
-            output.contains("TA_SMA_Unguarded("),
-            "sma should resolve to TA_SMA_Unguarded"
+            output.contains("TA_SMA(startIdx"),
+            "sma should resolve to a guarded TA_SMA call"
         );
         assert!(
-            output.contains("TA_EMA_Unguarded("),
-            "ema should resolve to TA_EMA_Unguarded"
+            output.contains("TA_EMA(startIdx"),
+            "ema should resolve to a guarded TA_EMA call"
+        );
+        // `ma` defines TA_MA_Unguarded but never TA_SMA/TA_EMA, so any occurrence
+        // of these two is necessarily a call — the negative cannot go vacuous
+        // while step 1 still emits the unguarded definitions.
+        assert!(
+            !output.contains("TA_SMA_Unguarded(") && !output.contains("TA_EMA_Unguarded("),
+            "no cross-indicator call may target an unguarded variant"
         );
     }
 }

@@ -119,7 +119,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       /* Calculate the variance. */
-      retCode = VarianceUnguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
+      retCode = Variance(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -163,7 +163,7 @@ public partial class Core
       int i = 0;
       RetCode retCode;
       double tempReal = 0;
-      retCode = VarianceUnguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
+      retCode = Variance(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -218,7 +218,7 @@ public partial class Core
       } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      retCode = VarianceUnguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
+      retCode = Variance(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -257,7 +257,7 @@ public partial class Core
       int i = 0;
       RetCode retCode;
       double tempReal = 0;
-      retCode = VarianceUnguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
+      retCode = Variance(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }

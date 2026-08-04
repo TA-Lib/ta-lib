@@ -458,7 +458,7 @@ impl Core {
         tempBuffer1 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         tempBuffer2 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         // Calculate the middle band moving average.
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+        retCode = self.ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return retCode;
@@ -466,7 +466,7 @@ impl Core {
         // Remember where the moving average begins, to realign it below.
         maBegIdx = ((*outBegIdx) as usize) as usize;
         // Calculate the Standard Deviation into tempBuffer2.
-        retCode = self.stddev_unguarded(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
+        retCode = self.stddev(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
         if retCode != RetCode::Success {
             (*outNBElement) = 0;
             return retCode;
@@ -710,13 +710,13 @@ impl Core {
         }
         tempBuffer1 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         tempBuffer2 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+        retCode = self.ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return retCode;
         }
         maBegIdx = ((*outBegIdx) as usize) as usize;
-        retCode = self.stddev_unguarded(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
+        retCode = self.stddev(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
         if retCode != RetCode::Success {
             (*outNBElement) = 0;
             return retCode;
@@ -874,7 +874,7 @@ impl Core {
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.ma_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInMAType)?;
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+        retCode = self.ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return Err(retCode);
@@ -885,7 +885,7 @@ impl Core {
         // Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub1, _) = self.stddev_open_internal(&inReal[..((endIdx) as usize) + 1], (((*outBegIdx) as usize) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.stddev_unguarded(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
+        retCode = self.stddev(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
         if retCode != RetCode::Success {
             (*outNBElement) = 0;
             return Err(retCode);
@@ -1037,7 +1037,7 @@ impl Core {
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.ma_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInMAType)?;
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+        retCode = self.ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return Err(retCode);
@@ -1048,7 +1048,7 @@ impl Core {
         // Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub1, _) = self.stddev_open_internal(&inReal[..((endIdx) as usize) + 1], (((*outBegIdx) as usize) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.stddev_unguarded(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
+        retCode = self.stddev(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
         if retCode != RetCode::Success {
             (*outNBElement) = 0;
             return Err(retCode);
