@@ -60,19 +60,12 @@
  *  TA_S_ a float array and TA_ the exact same values widened back to double, and
  *  the outputs must be bit-identical.
  *
- * Until #166 there were four variants and a second contract, UNGUARDED ==
- * GUARDED. Both `_Unguarded` bodies are gone, so that contract is not weakened
- * here — it has no subject left. The `TA_S_` leg is the one that ever found a
- * shipped defect (TA_S_WMA at optInTimePeriod==1 did a memmove of
- * *sizeof(double)* out of a `const float*`), and it is untouched.
+ * This gate found a live defect on its first run: TA_S_WMA at
+ * optInTimePeriod==1 did a memmove of *sizeof(double)* out of a `const float*`.
  *
- * Before this gate the contract was not checked generically:
- *
- *  - The abstract layer (TA_CallFunc / ta_frame.c) only reaches the guarded
- *    double entry point, so nothing here could sweep the float one.
- *  - The guarded TA_S_<N> was observed NOWHERE: the generated server called
- *    TA_S_<N> and then TA_S_<N>_Unguarded into the same output buffer, so the
- *    guarded result was always overwritten before it was reported.
+ * Before it, the contract was not checked generically: the abstract layer
+ * (TA_CallFunc / ta_frame.c) only reaches the guarded double entry point, so
+ * nothing swept the float one.
  *
  * The gate needs no oracle and no server — the two variants check each other.
  * It runs on a bare ./ta_regtest so the autotools dist-verification nightly
@@ -648,10 +641,10 @@ static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
       const void *c  = e->outIsInteger ? (const void *)ctx->outSi[i] : (const void *)ctx->outS[i];
       size_t len = (size_t)nbD * width;
 
-      /* Counted HERE, at the memcmp itself, not at the call above. The
-       * pre-#166 counters were incremented before the comparisons and
-       * independently of them, so deleting a memcmp left the summary printing
-       * byte-identical numbers while the gate checked strictly less. */
+      /* Counted HERE, at the memcmp itself, not at the call above: a counter
+       * incremented before the comparisons and independently of them lets a
+       * deleted memcmp leave the summary printing byte-identical numbers while
+       * the gate checks strictly less. */
       ctx->nbOutputCmp++;
 
       if( memcmp( a, c, len ) != 0 )
@@ -677,8 +670,8 @@ static ErrorNumber run_one_function( VariantCtx *ctx, const TA_VariantEntry *e )
    int j, c, r, nbCand;
    int nb = ctx->nb;
 
-   /* startIdx deliberately spans below and above any plausible lookback; the
-    * unguarded variants must handle both, the clamp lives in the shared body. */
+   /* startIdx deliberately spans below and above any plausible lookback; both
+    * variants must handle either, the clamp lives in the shared body. */
    const int ranges[][2] = { { 0, 0 }, { 37, 0 }, { 0, 60 }, { 200, 0 } };
    const int nbRange = (int)( sizeof(ranges) / sizeof(ranges[0]) );
 

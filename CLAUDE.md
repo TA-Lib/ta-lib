@@ -164,13 +164,8 @@ is the shipped `ta-lib` crate, `tools/` holds the JSON-RPC server/bench.
   panics — never undefined behavior. The body carries a bounds-assert preamble
   (the LLVM proof that elides per-access bounds checks); it is skipped when the
   lookback clamp means the call computes nothing, so a call that returns
-  `Success` with zero elements cannot panic. No `#[inline]`: the `_unguarded`
-  tier carried one, but #166 measured no regression from dropping it and
-  `#[inline]` on 168 public functions inflates crate metadata for every consumer.
-- **Cross-indicator calls target the guarded entry point.** There is no
-  `_unguarded` tier: issue #166 removed it after measurement showed skipping
-  validation was not cheaper on any toolchain, and 22.6M interposed internal
-  calls showed every internal call site already satisfied the guarded contract.
+  `Success` with zero elements cannot panic.
+- **Cross-indicator calls target the guarded entry point.**
 - Functions with extra internal params (e.g., EMA's k factor) expose them on an
   `xxx_private` variant; the guarded variant pre-computes them and delegates.
 - Rustdoc is generated from each function's canonical `<name>.md`

@@ -156,7 +156,6 @@ fn check_c_variants(c: &str, upper: &str, name: &str) {
         name,
         upper
     );
-    // #166: the unguarded tier is gone from every function, in both precisions.
     assert!(
         !c.contains("_Unguarded"),
         "{name}: C must not emit an unguarded variant"
@@ -164,7 +163,7 @@ fn check_c_variants(c: &str, upper: &str, name: &str) {
 }
 
 /// Check that all Rust variants exist for a given indicator.
-/// Since #166: `foo` (guarded) plus `foo_lookback`, and `foo_private` only for the
+/// `foo` (guarded) plus `foo_lookback`, and `foo_private` only for the
 /// definitions that declare one. No `_unguarded`, `_unchecked` or
 /// `_unguarded_unchecked` variants. Concrete f64 types, not generic.
 fn check_rust_generic_variants(r: &str, snake: &str, name: &str) {
@@ -182,8 +181,6 @@ fn check_rust_generic_variants(r: &str, snake: &str, name: &str) {
         name,
         snake
     );
-    // #166: the unguarded tier is gone. `_private` survives for the one
-    // definition that declares it, so the assertion is on `_unguarded` only.
     assert!(
         !r.contains("_unguarded"),
         "{name}: Rust must not emit an unguarded variant"
@@ -205,7 +202,6 @@ fn check_java_variants(j: &str, lower: &str, name: &str) {
         name,
         lower
     );
-    // #166: the unguarded core and its public wrapper are gone.
     assert!(
         !j.contains("Unguarded"),
         "{name}: Java must not emit an unguarded variant"
@@ -416,10 +412,8 @@ fn test_ma_c_cross_calls() {
         c.contains("TA_EMA_Lookback("),
         "C: MA should call TA_EMA_Lookback"
     );
-    // Bare cross-indicator calls resolve to the guarded entry point (#166 step 1).
-    // Anchored on the first argument: bare `TA_SMA(` would also match a
-    // declaration, and the negative below keeps the pair non-vacuous while the
-    // unguarded variants are still emitted.
+    // Bare cross-indicator calls resolve to the guarded entry point. Anchored on
+    // the first argument: bare `TA_SMA(` would also match a declaration.
     assert!(
         c.contains("TA_SMA(startIdx"),
         "C: MA should call guarded TA_SMA"
@@ -474,7 +468,7 @@ fn test_ma_rust_cross_calls() {
         r.contains("self.ema_lookback("),
         "Rust: MA should call self.ema_lookback"
     );
-    // Bare cross-indicator calls go to the guarded fn (#166 step 1)
+    // Bare cross-indicator calls go to the guarded fn
     assert!(
         r.contains("self.sma("),
         "Rust: MA should call self.sma"
@@ -495,12 +489,10 @@ fn test_ma_rust_cross_calls() {
 
 /// Helper: extract the section of output between `start_marker` and `end_marker`.
 ///
-/// BOTH markers must be present. A missing end marker used to fall back to
-/// "everything after the start", which silently turned a bounded
-/// `contains(..)` assertion into "the whole output mentions this somewhere" —
-/// so a test kept passing while checking strictly less. #166 deleted several
-/// end markers at once (they named the `_Unguarded` variants), which is exactly
-/// the case that must fail loudly rather than go quiet.
+/// BOTH markers must be present. Falling back to "everything after the start" on
+/// a missing end marker silently turns a bounded `contains(..)` assertion into
+/// "the whole output mentions this somewhere", so a test keeps passing while
+/// checking strictly less.
 fn extract_section(output: &str, start_marker: &str, end_marker: &str) -> String {
     let start = output
         .find(start_marker)
@@ -517,8 +509,7 @@ fn test_c_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");
     let out = generate_all(&func, &enums);
 
-    // Bounded by the float twin, which now directly follows the double guarded
-    // body (#166 removed the `_Unguarded` variant that used to be the boundary).
+    // Bounded by the float twin, which directly follows the double guarded body.
     let guarded = extract_section(&out.c, "TA_RetCode TA_SMA(", "TA_RetCode TA_S_SMA(");
     assert!(
         guarded.contains("TA_OUT_OF_RANGE_START_INDEX"),
@@ -532,9 +523,8 @@ fn test_c_sma_guarded_has_validation() {
 
 #[test]
 fn test_c_ema_private_omits_validation() {
-    // #166 removed the `_Unguarded` tier this used to check. The surviving
-    // "exactly one tier validates" invariant is guarded-vs-`_Private`, so it is
-    // anchored on EMA — the one definition in ta_codegen/input/ with an
+    // Exactly one tier validates: the guarded entry point, not `_Private`.
+    // Anchored on EMA — the one definition in ta_codegen/input/ with an
     // explicit _private.
     let (func, enums) = load_indicator("ema");
     let out = generate_all(&func, &enums);
@@ -560,7 +550,10 @@ fn test_java_sma_guarded_has_validation() {
     let out = generate_all(&func, &enums);
 
     // Extract the guarded core (between its own signature and the unguarded one)
-    let guarded = extract_section(&out.java, "RetCode smaInternal(", "public OutRange sma(");
+    // Bounded to the DOUBLE core alone: the float twin is an overload with the
+    // same name, so a marker that spans both would let it satisfy the assertion.
+    let guarded = extract_section(&out.java, "RetCode smaInternal( int startIdx", "double inReal[]");
+    let guarded = format!("{guarded}{}", extract_section(&out.java, "double inReal[]", "float inReal[]"));
     assert!(
         guarded.contains("OutOfRangeStartIndex"),
         "Java guarded SMA should have start index validation"
@@ -584,9 +577,8 @@ fn test_rust_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");
     let out = generate_all(&func, &enums);
 
-    // The guarded Rust function holds the algorithm and validates first.
-    // Bounded by the end of the impl block (#166 removed `pub fn sma_unguarded(`,
-    // which used to be the boundary).
+    // The guarded Rust function holds the algorithm and validates first, bounded
+    // by the end of the impl block.
     let guarded = extract_section(&out.rust, "pub fn sma(", "\n}\n");
     assert!(
         guarded.contains("endIdx < startIdx"),
@@ -1155,7 +1147,7 @@ fn test_rust_generic_output_smoke() {
     );
     assert!(
         !r.contains("_unguarded"),
-        "Rust SMA must not emit an unguarded variant (#166)"
+        "Rust SMA must not emit an unguarded variant"
     );
 
     // 2. No _s suffix methods
@@ -1188,7 +1180,7 @@ fn test_rust_generic_output_smoke() {
 
     // 6. Exactly 4 pub fn: guarded + lookback + the stream tier's open +
     // open_and_fill (open_internal is pub(crate), update/peek live on the handle
-    // type). #166 removed the fifth, sma_unguarded.
+    // type).
     let pub_fn_count = r.matches("pub fn sma").count();
     assert_eq!(
         pub_fn_count, 4,
@@ -3698,7 +3690,7 @@ fn rust_cross_indicator_call_via_generate() {
     let helpers = make_helpers();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    // Cross-indicator calls resolve to the guarded fn (#166 step 1)
+    // Cross-indicator calls resolve to the guarded fn
     assert!(
         rust_out.contains("self.sma("),
         "MA Rust should call self.sma(): {rust_out}"
@@ -3735,7 +3727,6 @@ fn rust_private_cross_indicator_call() {
     // EMA has explicit _private with extra params. Registry routes:
     //   ema() → ema(), ema_private() → ema_private()
     // The `_private` arm is orthogonal to the guarded/unguarded pair and is
-    // untouched by the #166 repoint — that is what this test pins.
     // (MACD was the original vehicle for both paths, but its lockstep fusion
     // removed the EMA calls.) The bare-name path is exercised by MA's dispatch;
     // the private-name path by EMA's guarded body delegating to ema_private().
@@ -7990,10 +7981,9 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
             let calls = out.matches("ta_lib_dispatch::dispatch_fma!").count();
             let clones = out.matches("#[target_feature(enable = \"fma\")]").count();
             assert_eq!(calls, clones, "{name}: dispatcher/clone count mismatch");
-            // The surviving batch variant must carry its clone. (#166 removed
-            // the `_unguarded` twin that used to be pinned alongside it; a
-            // future private-delegating fused function would trip the
-            // dispatcher/clone balance above on purpose.)
+            // The batch variant must carry its clone. (A future
+            // private-delegating fused function would trip the dispatcher/clone
+            // balance above on purpose.)
             assert!(
                 out.contains(&format!("fn {name}_fma(")),
                 "{name}: guarded variant lost its FMA clone"

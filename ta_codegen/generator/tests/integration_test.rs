@@ -237,7 +237,7 @@ fn test_rust_sma_from_c_produces_valid_output() {
     );
     assert!(
         !output.contains("_unguarded"),
-        "#166: the unguarded variant must not be emitted"
+        "no unguarded variant may be emitted"
     );
     assert!(
         output.contains("RetCode::Success"),
@@ -459,8 +459,8 @@ fn test_rust_generates_generic_variants() {
         "Missing sma function"
     );
 
-    // #166: the unguarded tier is gone; the guarded fn renders its own body with
-    // safe [] indexing (SMA declares no _private to delegate to).
+    // The guarded fn renders its own body with safe [] indexing (SMA declares no
+    // _private to delegate to).
     assert!(
         !output.contains("_unguarded"),
         "the unguarded variant must not be emitted"
@@ -486,7 +486,7 @@ fn test_rust_mult_generates_generic_variants() {
     let func = load_mult();
     let output = backends::rust_lang::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
 
-    // Since #166: one batch entry point, concrete f64.
+    // One batch entry point, concrete f64.
     assert!(
         output.contains("pub fn mult("),
         "Missing mult function"

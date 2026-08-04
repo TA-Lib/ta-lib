@@ -129,40 +129,6 @@ pub fn guarded_docs(
     b.render()
 }
 
-/// Javadoc for the public unguarded wrapper.
-///
-/// Documents the sharp edge honestly, including where it differs from Rust's
-/// unguarded tier: Rust hands back the `RetCode`, so a Rust caller can see a
-/// precondition violation; the Java wrapper returns `OutRange` and cannot.
-pub fn unguarded_docs(func: &FuncDef, java_name: &str, single_precision: bool) -> String {
-    let empty = DocDef::default();
-    let doc = func.doc.as_ref().unwrap_or(&empty);
-    let mut b = Block::new();
-
-    b.para(&format!(
-        "{} — <b>unchecked</b> variant of {{@link Core#{java_name}}}.",
-        summary_text(func, doc)
-    ));
-    b.para(
-        "Validates nothing and never throws. The caller guarantees: non-negative \
-         {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output arrays \
-         distinct from each other, and every optional parameter already resolved and \
-         within its documented range — a sentinel such as {@code Integer.MIN_VALUE} is \
-         <b>not</b> substituted here.",
-    );
-    b.para(
-        "Breaking any of those yields an empty {@link OutRange} or undefined output \
-         rather than a diagnostic. (C and Rust return a status code from this tier, so \
-         their callers can detect it; this one has nowhere to report it.) Use the guarded \
-         method unless the arguments are already known good.",
-    );
-    if single_precision {
-        b.para("This is the {@code float[]} overload; see the guarded method.");
-    }
-    b.blank();
-    b.tag("return", "The range written, exactly as the guarded method reports it.");
-    b.render()
-}
 
 /// Javadoc for the public lookback method.
 #[allow(clippy::implicit_hasher)]

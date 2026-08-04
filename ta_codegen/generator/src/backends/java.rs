@@ -694,10 +694,7 @@ fn gen_func(
 
 /// `name_override` distinguishes the two things this emits: `Some(..)` is the
 /// `Private` variant (no validation prologue, extra private params), `None` is the
-/// guarded internal core. Before #166 a separate `logic` flag also selected the
-/// `…UnguardedInternal` core; with that gone the flag was exactly
-/// `name_override.is_some()`, so it was removed rather than kept as a second name
-/// for the same condition.
+/// guarded internal core.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 fn gen_func_inner(
     func: &FuncDef,
@@ -800,8 +797,7 @@ fn gen_func_inner(
 
     // Carry source comments only in the double-precision implementation (guarded
     // `xxx` and, for explicit-private functions, `xxxPrivate`). Strip them from the
-    // single-precision copy. Before #166 this also had to exclude the double
-    // unguarded duplicate; with that core gone, precision is the only axis.
+    // single-precision copy.
     let keep_comments = !single_precision;
     let body_stripped;
     let body: &[Statement] = if keep_comments {
@@ -901,8 +897,7 @@ fn gen_func_inner(
     }
 
     // Validation prologue. Omitted for the `Private` variant, whose callers are the
-    // guarded cores that have already validated (#166: this used to also be where
-    // the `…UnguardedInternal` core skipped it).
+    // guarded cores that have already validated.
     if name_override.is_none() {
         out.push_str("      if( startIdx < 0 ) {\n");
         out.push_str("         return RetCode.OutOfRangeStartIndex ;\n");
@@ -933,8 +928,8 @@ fn gen_func_inner(
     let inline_counter = Cell::new(0);
     // FMA fusion sites for this body — same detector Rust/C use, so the three
     // backends fuse identical sites. The index-param seeds never affect a fusion
-    // decision (never float operands), so the unguarded seed set is used uniformly.
-    let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::UNGUARDED_INDEX_SEEDS);
+    // decision (never float operands), so one seed set is used uniformly.
+    let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::INDEX_PARAM_SEEDS);
     let ctx = JavaRenderCtx {
         single_precision,
         address_of_vars: &address_of_vars,
@@ -2416,7 +2411,7 @@ mod tests {
 
         // The internal core is emitted, package-private (no `public`).
         assert!(output.contains("   RetCode smaInternal("), "Missing guarded core");
-        assert!(!output.contains("Unguarded"), "the unguarded tier must be gone (#166)");
+        assert!(!output.contains("Unguarded"), "no unguarded tier may exist");
         assert!(
             !output.contains("public RetCode sma"),
             "cores must be package-private — RetCode never appears on the public surface"

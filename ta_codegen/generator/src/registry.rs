@@ -139,16 +139,11 @@ impl Registry {
             }
         }
 
-        // Bare indicator names resolve to the guarded variant (issue #166 step 1).
+        // Bare indicator names resolve to the guarded entry point.
         //
-        // Every internal call site already satisfies the guarded contract, and
-        // structurally so: a composite's lookback is *defined* as its callee's
-        // lookback plus the extra history it needs, so a startIdx already clamped
-        // to the composite's lookback lands exactly on the callee's. Verified by
-        // interposing on all 336 unguarded entry points and running the guarded
-        // twin against the same arguments — 22,589,480 internal calls across the
-        // batch and streaming bodies of both the double and TA_S_ families, with
-        // zero guarded rejections and zero value differences.
+        // This is safe structurally: a composite's lookback is *defined* as its
+        // callee's lookback plus the extra history it needs, so a startIdx already
+        // clamped to the composite's lookback lands exactly on the callee's.
         //
         // Java routes to the package-private guarded core (`…Internal`), not the
         // public `…` wrapper: the callers pass the C-shaped MInteger out-params,
@@ -266,7 +261,6 @@ mod tests {
         );
 
         // C backend: bare indicator names resolve to the guarded entry point
-        // (cross-indicator composition is guarded-safe by construction — #166)
         assert_eq!(registry.resolve_call("sma", Lang::C), "TA_SMA");
         assert_eq!(registry.resolve_call("ema", Lang::C), "TA_EMA");
 
@@ -326,10 +320,9 @@ mod tests {
     fn test_registry_bare_name_resolves_to_guarded() {
         let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
         let registry = Registry::from_dir(&base);
-        // Bare indicator names resolve to the guarded entry point (#166 step 1)
+        // Bare indicator names resolve to the guarded entry point
         assert_eq!(registry.resolve_call("sma", Lang::C), "TA_SMA");
-        // _private still resolves to Private — an orthogonal variant, not a
-        // guarded/unguarded pair, so this arm is untouched by the repoint.
+        // _private is an orthogonal variant with its own arm.
         assert_eq!(registry.resolve_call("sma_private", Lang::C), "TA_SMA_Private");
         // For Rust, bare names resolve to the guarded fn
         assert_eq!(registry.resolve_call("sma", Lang::Rust), "sma");

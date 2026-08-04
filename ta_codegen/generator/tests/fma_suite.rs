@@ -111,7 +111,7 @@ fn fma_fusion_is_seed_invariant_across_all_functions() {
         let f = load_func_full(&name);
         for body in [&f.body, &f.private_body] {
             let g = fma::build_fma_var_sets(body, &f.outputs, &fma::GUARDED_INDEX_SEEDS);
-            let u = fma::build_fma_var_sets(body, &f.outputs, &fma::UNGUARDED_INDEX_SEEDS);
+            let u = fma::build_fma_var_sets(body, &f.outputs, &fma::INDEX_PARAM_SEEDS);
             let (fa, fb, disagree) = compare_fusion(body, &g.view(), &u.view());
             assert_eq!(
                 disagree, 0,
@@ -138,7 +138,7 @@ fn fma_fusion_fires_for_known_candidates() {
     ];
     for name in FUSING {
         let f = load_func_full(name);
-        let u = fma::build_fma_var_sets(&f.private_body, &f.outputs, &fma::UNGUARDED_INDEX_SEEDS);
+        let u = fma::build_fma_var_sets(&f.private_body, &f.outputs, &fma::INDEX_PARAM_SEEDS);
         let n = fused_count(&f.private_body, &u.view());
         assert!(n > 0, "{name}: expected >=1 fused a*b+c site, found 0");
     }

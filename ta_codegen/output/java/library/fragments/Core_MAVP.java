@@ -160,14 +160,10 @@
        * range of periods actually used so all later work is sized by the data,
        * not by optInMaxPeriod. The floor at 1 (and on minUsed's start value)
        * keeps a period below 1 from indexing the occurrence tables out of range.
-       *
-       * #166 removed the unguarded entry points, so no caller can now reach here
-       * with optInMinPeriod < 1 — mavp.yaml caps both periods at [1, 100000] and
-       * the guarded prologue rejects anything else. The floor STAYS: this file is
-       * the source of truth for four backends, and it is what makes the shared
-       * source safe by construction rather than by trusting each backend's
-       * prologue to be identical. Deleting it would leave the four bodies relying
-       * on a property nothing in this file states.
+       * mavp.yaml caps both periods at [1, 100000], so it is inert through the
+       * API; it is kept because this file is the source of truth for four
+       * backends and it makes the shared source safe by construction rather than
+       * by trusting each backend's prologue to be identical.
        */
       minUsed = optInMaxPeriod;
       if( minUsed < 1 ) {
@@ -194,25 +190,22 @@
       }
       /* Bound the bucket table before sizing it.
        *
-       * UNREACHABLE since #166, and kept deliberately. Both periods are capped at
-       * 100000 (mavp.yaml), so the widest spread the API can now express is 99999
-       * — the bound cannot trip from any entry point in any language. Until #166
-       * an off-contract UNGUARDED call could carry a near-INT_MAX period, and the
-       * size expression below would then overflow: signed-overflow UB in C, a
-       * wrapped negative in Java, a usize underflow panic in Rust.
+       * Unreachable through the API: mavp.yaml caps both periods at 100000, so
+       * the widest spread expressible is 99999. It is kept because it protects a
+       * memory-safety property and this file is the source of truth for four
+       * backends — without it the size expression below can overflow (signed
+       * overflow in C, a wrapped negative in Java, a usize underflow panic in
+       * Rust), and the four bodies would rest on each backend's prologue being
+       * byte-for-byte equivalent, which nothing here states or checks. One
+       * integer comparison per call is a cheap way not to depend on that.
        *
-       * It stays because the property it protects is a memory-safety one and this
-       * file is the source of truth for four backends: the alternative is four
-       * bodies whose safety rests on each backend's prologue being byte-for-byte
-       * equivalent, which nothing here states or checks. One integer comparison
-       * per call is a cheap way not to depend on that. Written as a plain integer
-       * comparison on purpose — that is the only construct that means the same
-       * thing in every backend. A (size_t) cast would NOT help: this dialect's
-       * size_t parses to the generic index type and renders back as int in both
-       * the C and the Java output (it is a Rust-only annotation).
+       * Written as a plain integer comparison on purpose — that is the only
+       * construct that means the same thing in every backend. A (size_t) cast
+       * would NOT help: this dialect's size_t parses to the generic index type
+       * and renders back as int in both the C and the Java output (it is a
+       * Rust-only annotation).
        *
-       * If you are about to delete this, delete the clamps and the comments
-       * together, or the next reader will delete the clamps and keep neither.
+       * If you delete this, delete the clamps and the comments together.
        */
       if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
          if( (finalIsAllocated) != 0 ) {

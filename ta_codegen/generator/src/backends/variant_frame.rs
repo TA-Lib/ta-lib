@@ -8,11 +8,6 @@
 //! | `TA_<N>`                   | `double` |
 //! | `TA_S_<N>`                 | `float`  |
 //!
-//! (Before #166 there were four: each also had an `_Unguarded` twin that skipped
-//! the validation prologue. Those are gone, and with them the guarded-vs-unguarded
-//! leg of the gate — the surviving contract is `TA_S_` vs `TA_` on widened inputs,
-//! which is the leg that ever found a shipped defect.)
-//!
 //! The abstract layer (`TA_CallFunc` via `ta_frame.c`) only ever reaches the
 //! first, so `TA_S_<N>` had no generic gate and was only covered where a
 //! hand-written test happened to call it. This header gives `ta_regtest` one

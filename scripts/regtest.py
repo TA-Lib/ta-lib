@@ -190,8 +190,7 @@ def ensure_reference_serve(root, bin_dir):
         # use_float leg); the ORACLE property lives in lib_a, which stays the
         # frozen pinned-tag build. The two trees' public C API declarations are
         # identical (audited), so current headers link cleanly against the
-        # frozen library. TA_*_Unguarded/TA_S_*_Unguarded calls are compiled
-        # out via TA_REF_SERVE (the frozen lib has no unguarded symbols).
+        # frozen library.
         serve_src, _lib_ignored, includes = _ta_ref_serve_paths(root, os.path.join(root, "cmake-build"))
         # Build the frozen reference static lib (the tag is immutable, but the
         # FP-contraction setting must match this tree's — see build_frozen_lib).

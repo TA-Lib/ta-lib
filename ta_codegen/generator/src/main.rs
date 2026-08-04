@@ -633,9 +633,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // servers/unity build directly against `src/...` — no copy into output/c.
 
         // Generate the private stream header into src/ta_func/ (alongside the
-        // generated indicators). NOT installed: #166 replaced the public
-        // include/ta_func_unguarded.h, whose stream and private declarations
-        // never belonged in an installed header. Remove the two files it
+        // generated indicators). NOT installed. Remove the two headers it
         // superseded so a stale copy cannot satisfy an include.
         let stream_h = server_gen::generate_c_stream_private_header(all_funcs);
         let stream_path = root.join("src/ta_func").join("ta_func_stream_private.h");
@@ -1994,10 +1992,8 @@ ta-lib-dispatch = { path = "../dispatch", version = "=0.1.0" }
 //! To change a setting, build a new `Core` (cloning is cheap); [`Core::to_builder()`]
 //! seeds a builder from an existing instance.
 //!
-//! Every indicator also has an `*_unguarded` variant that skips parameter
-//! validation for internal cross-indicator calls — prefer the checked methods.
-//! The crate is `#![forbid(unsafe_code)]`: misuse of an `*_unguarded` variant
-//! panics, it never triggers undefined behavior. On x86-64, the batch entry
+//! The crate is `#![forbid(unsafe_code)]`: a bounds violation panics, it never
+//! triggers undefined behavior. On x86-64, the batch entry
 //! points of indicators built on fused multiply-adds are compiled twice and the
 //! hardware-FMA clone is selected at runtime (the same dispatch the C library
 //! performs via `target_clones`); both paths are correctly rounded, so results

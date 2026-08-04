@@ -248,20 +248,14 @@ autotools dist nightly runs:
 **`TA_S_` == `TA_` on widened inputs** — PR #33's contract. Feed `TA_S_` a float
 array and `TA_` those same floats widened back; outputs must match bit for bit.
 
-Until #166 there were four variants and a second contract, *unguarded == guarded*.
-Both `_Unguarded` bodies are gone, so that contract has no subject left — it was
-not weakened, it was removed with the thing it described.
-
 Dispatch comes from the generated `ta_variant_frame.h`
 (`generator/src/backends/variant_frame.rs`): two uniform thunks plus a row per
 function. A **header on purpose** — no source-list entry, so the CMake/autotools
 lists cannot drift.
 
 Sabotage-proven to catch what nothing caught before: `-999.0` in **guarded**
-`TA_S_ADX` (the server called `TA_S_<N>` then `TA_S_<N>_Unguarded` into the *same*
-buffer, so the guarded single-precision result was reported nowhere, for any
-function — the removal of that rerun is itself a #166 consequence), and a `1e-12`
-drift in a `TA_S_` body (ref diff is 1e-9, float leg 1e-6 — this gate is bitwise).
+`TA_S_ADX`, and a `1e-12` drift in a `TA_S_` body (ref diff is 1e-9, float leg
+1e-6 — this gate is bitwise).
 
 **It found a live defect on first run:** `TA_S_WMA` at `optInTimePeriod == 1` did
 `memmove(..., n * sizeof(double))` out of a `const float*` — wrong bits plus a
@@ -273,9 +267,9 @@ handles the in-place `out == in` case from #94.
 
 The gate prints its coverage and asserts it non-zero, so it cannot pass by
 silently doing nothing. The counter that matters is `nbOutputCmp`, incremented
-**at the memcmp itself**: the pre-#166 counters were bumped before the
-comparisons and independently of them, so deleting a comparison left the summary
-printing byte-identical numbers while the gate checked strictly less.
+**at the memcmp itself** — a counter bumped before the comparisons and
+independently of them lets a deleted comparison leave the summary printing
+byte-identical numbers while the gate checks strictly less.
 
 ## Transport
 
@@ -420,7 +414,7 @@ Architecture (see `fuzz_data.h`, the Rust port in
     per-function `TA_<name>` request with `want_hash`. Same guarded call, same
     `out_hash`. No server-side change was needed — this reuses the #115 machinery.
   - Both take the digest of the **guarded** call — like-for-like with the golden's
-    `TA_CallFunc`. (#166 removed the unguarded rerun that used to follow it.)
+    `TA_CallFunc`.
 - **Transcendental tolerance (Java and C#).** Java's fdlibm differs from the C
   libm by ~1 ULP on `atan/sin/cos/exp/log/...`; .NET's `Math.*` is not
   guaranteed to reach the platform libm and empirically does not on some hosts.
