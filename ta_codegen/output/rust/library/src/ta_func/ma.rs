@@ -92,7 +92,7 @@ impl Core {
             optInMAType = 0;
         }
         let mut retValue: usize = 0_usize;
-        if optInTimePeriod <= 1 || (optInMAType) as usize == 10 {
+        if optInTimePeriod <= 1 || ((optInMAType) as usize) == 10 {
             return (0) as usize;
         }
         match optInMAType {
@@ -227,7 +227,7 @@ impl Core {
         let mut todayIdx: usize = 0_usize;
         // No-smoothing identity: period 1 (every MA type) or the explicit
         // TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
-        if optInTimePeriod == 1 || (optInMAType) as usize == 10 {
+        if optInTimePeriod == 1 || ((optInMAType) as usize) == 10 {
             nbElement = endIdx - startIdx + 1;
             (*outNBElement) = nbElement;
             // for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 )
@@ -307,7 +307,7 @@ impl Core {
         let _assertLb = self.ma_lookback(optInTimePeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        if optInTimePeriod == 1 || (optInMAType) as usize == 10 {
+        if optInTimePeriod == 1 || ((optInMAType) as usize) == 10 {
             nbElement = endIdx - startIdx + 1;
             (*outNBElement) = nbElement;
             // for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 )
@@ -404,7 +404,7 @@ enum MaSub {
 #[allow(unused_parens)]
 impl Core {
     fn ma_step_internal(&self, sp: &mut MaStreamState, inReal: f64, outReal: &mut f64) {
-        if sp.optInTimePeriod == 1 || (sp.optInMAType) as usize == 10 {
+        if sp.optInTimePeriod == 1 || ((sp.optInMAType) as usize) == 10 {
             (*outReal) = inReal;
             return;
         }
@@ -465,7 +465,7 @@ impl Core {
             optInMAType = 0;
         }
         let historyLen: usize = inReal.len();
-        if optInTimePeriod == 1 || (optInMAType) as usize == 10 {
+        if optInTimePeriod == 1 || ((optInMAType) as usize) == 10 {
             if historyLen < self.ma_lookback(optInTimePeriod, optInMAType) + 1 {
                 return Err(RetCode::BadParam);
             }
@@ -564,7 +564,7 @@ impl Core {
             optInMAType = 0;
         }
         let historyLen: usize = inReal.len();
-        if optInTimePeriod == 1 || (optInMAType) as usize == 10 {
+        if optInTimePeriod == 1 || ((optInMAType) as usize) == 10 {
             if historyLen < self.ma_lookback(optInTimePeriod, optInMAType) + 1 {
                 return Err(RetCode::BadParam);
             }

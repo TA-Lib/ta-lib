@@ -199,7 +199,7 @@ impl Core {
         // and this function will become easier to understand.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < (optInTimePeriod) as usize {
+        if startIdx < ((optInTimePeriod) as usize) {
             startIdx = (optInTimePeriod) as usize;
         }
         // Make sure there is still something to evaluate.
@@ -213,7 +213,7 @@ impl Core {
         // output to be the same buffer.
         outIdx = 0;
         today = startIdx;
-        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        trailingIdx = startIdx - ((optInTimePeriod) as usize);
         lowestIdx = 0 - 1;
         highestIdx = 0 - 1;
         lowest = 0.0;
@@ -222,7 +222,7 @@ impl Core {
         while today <= endIdx {
             // Keep track of the lowestIdx
             tmp = inLow[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -239,7 +239,7 @@ impl Core {
             }
             // Keep track of the highestIdx
             tmp = inHigh[today];
-            if highestIdx < (trailingIdx) as i32 {
+            if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
@@ -309,7 +309,7 @@ impl Core {
         let _assertLb = self.aroonosc_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        if startIdx < (optInTimePeriod) as usize {
+        if startIdx < ((optInTimePeriod) as usize) {
             startIdx = (optInTimePeriod) as usize;
         }
         if startIdx > endIdx {
@@ -319,7 +319,7 @@ impl Core {
         }
         outIdx = 0;
         today = startIdx;
-        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        trailingIdx = startIdx - ((optInTimePeriod) as usize);
         lowestIdx = 0 - 1;
         highestIdx = 0 - 1;
         lowest = 0.0;
@@ -327,7 +327,7 @@ impl Core {
         factor = (100.0 as f64) / (optInTimePeriod as f64);
         while today <= endIdx {
             tmp = inLow[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -343,7 +343,7 @@ impl Core {
                 lowest = tmp;
             }
             tmp = inHigh[today];
-            if highestIdx < (trailingIdx) as i32 {
+            if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
@@ -425,7 +425,7 @@ impl Core {
             sp.lowestIdx = sp.trailingIdx;
             sp.lowest = sp.x_inLow[(sp.lowestIdx % sp.xCap) as usize];
             sp.i = sp.lowestIdx;
-            while ({ sp.i += 1; sp.i }) as i32 <= sp.today {
+            while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
                 tmp = sp.x_inLow[(sp.i % sp.xCap) as usize];
                 if tmp <= sp.lowest {
                     sp.lowestIdx = sp.i;
@@ -442,7 +442,7 @@ impl Core {
             sp.highestIdx = sp.trailingIdx;
             sp.highest = sp.x_inHigh[(sp.highestIdx % sp.xCap) as usize];
             sp.i = sp.highestIdx;
-            while ({ sp.i += 1; sp.i }) as i32 <= sp.today {
+            while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
                 tmp = sp.x_inHigh[(sp.i % sp.xCap) as usize];
                 if tmp >= sp.highest {
                     sp.highestIdx = sp.i;
@@ -512,7 +512,7 @@ impl Core {
         // and this function will become easier to understand.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < (optInTimePeriod) as usize {
+        if startIdx < ((optInTimePeriod) as usize) {
             startIdx = (optInTimePeriod) as usize;
         }
         // Make sure there is still something to evaluate.
@@ -526,7 +526,7 @@ impl Core {
         // output to be the same buffer.
         outIdx = 0;
         today = startIdx;
-        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        trailingIdx = startIdx - ((optInTimePeriod) as usize);
         lowestIdx = 0 - 1;
         highestIdx = 0 - 1;
         lowest = 0.0;
@@ -535,7 +535,7 @@ impl Core {
         while today <= endIdx {
             // Keep track of the lowestIdx
             tmp = inLow[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -552,7 +552,7 @@ impl Core {
             }
             // Keep track of the highestIdx
             tmp = inHigh[today];
-            if highestIdx < (trailingIdx) as i32 {
+            if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
@@ -690,7 +690,7 @@ impl Core {
         // and this function will become easier to understand.
         // Move up the start index if there is not
         // enough initial data.
-        if startIdx < (optInTimePeriod) as usize {
+        if startIdx < ((optInTimePeriod) as usize) {
             startIdx = (optInTimePeriod) as usize;
         }
         // Make sure there is still something to evaluate.
@@ -704,7 +704,7 @@ impl Core {
         // output to be the same buffer.
         outIdx = 0;
         today = startIdx;
-        trailingIdx = startIdx - (optInTimePeriod) as usize;
+        trailingIdx = startIdx - ((optInTimePeriod) as usize);
         lowestIdx = 0 - 1;
         highestIdx = 0 - 1;
         lowest = 0.0;
@@ -713,7 +713,7 @@ impl Core {
         while today <= endIdx {
             // Keep track of the lowestIdx
             tmp = inLow[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -730,7 +730,7 @@ impl Core {
             }
             // Keep track of the highestIdx
             tmp = inHigh[today];
-            if highestIdx < (trailingIdx) as i32 {
+            if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;

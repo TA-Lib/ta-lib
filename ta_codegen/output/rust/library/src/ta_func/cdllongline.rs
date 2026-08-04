@@ -196,9 +196,9 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyPeriodTotal = 0.0;
-        BodyTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        BodyTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
         ShadowPeriodTotal = 0.0;
-        ShadowTrailingIdx = startIdx - (ShadowShort_avgPeriod) as usize;
+        ShadowTrailingIdx = startIdx - ((ShadowShort_avgPeriod) as usize);
         i = BodyTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -383,9 +383,9 @@ impl Core {
             return RetCode::Success;
         }
         BodyPeriodTotal = 0.0;
-        BodyTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        BodyTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
         ShadowPeriodTotal = 0.0;
-        ShadowTrailingIdx = startIdx - (ShadowShort_avgPeriod) as usize;
+        ShadowTrailingIdx = startIdx - ((ShadowShort_avgPeriod) as usize);
         i = BodyTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -710,9 +710,9 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyPeriodTotal = 0.0;
-        BodyTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        BodyTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
         ShadowPeriodTotal = 0.0;
-        ShadowTrailingIdx = startIdx - (ShadowShort_avgPeriod) as usize;
+        ShadowTrailingIdx = startIdx - ((ShadowShort_avgPeriod) as usize);
         i = BodyTrailingIdx;
         while i < startIdx {
             let mut _candlerange_4: f64;
@@ -977,9 +977,9 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyPeriodTotal = 0.0;
-        BodyTrailingIdx = startIdx - (BodyLong_avgPeriod) as usize;
+        BodyTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
         ShadowPeriodTotal = 0.0;
-        ShadowTrailingIdx = startIdx - (ShadowShort_avgPeriod) as usize;
+        ShadowTrailingIdx = startIdx - ((ShadowShort_avgPeriod) as usize);
         i = BodyTrailingIdx;
         while i < startIdx {
             let mut _candlerange_10: f64;

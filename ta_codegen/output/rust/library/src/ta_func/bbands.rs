@@ -311,7 +311,7 @@ impl Core {
         let mut tempReal2: f64 = 0.0_f64;
         let mut tempBuffer1: Vec<f64> = Vec::new();
         let mut tempBuffer2: Vec<f64> = Vec::new();
-        if (optInMAType) as usize == 0 {
+        if ((optInMAType) as usize) == 0 {
             // SMA fast path: the middle band (SMA) and the standard deviation share one
             // pass over the window below. Bit-identical to the general MA + STDDEV path
             // (which the stream composes for every MA type).
@@ -429,9 +429,9 @@ impl Core {
             (*outBegIdx) = startIdx;
             // Now do a tight loop to calculate the upper/lower band at the same time.
             if optInNbDevUp == optInNbDevDn {
-                // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+                // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
                 i = 0;
-                while i < (((*outNBElement) as usize)) as usize {
+                while i < ((((*outNBElement) as usize)) as usize) {
                     tempReal = outRealUpperBand[i] * optInNbDevUp;
                     tempReal2 = outRealMiddleBand[i];
                     outRealUpperBand[i] = tempReal2 + tempReal;
@@ -439,9 +439,9 @@ impl Core {
                     i += 1;
                 }
             } else {
-                // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+                // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
                 i = 0;
-                while i < (((*outNBElement) as usize)) as usize {
+                while i < ((((*outNBElement) as usize)) as usize) {
                     tempReal = outRealUpperBand[i];
                     tempReal2 = outRealMiddleBand[i];
                     outRealUpperBand[i] = (tempReal as f64).mul_add(optInNbDevUp, tempReal2);
@@ -479,8 +479,8 @@ impl Core {
         // the same bar. The guarded subtraction keeps shiftIdx non-negative even when
         // the standard deviation produced no output (an empty range leaves *outBegIdx
         // at 0), which the unconditional copy below then handles as a zero-length move.
-        if (((*outBegIdx) as usize)) as usize > maBegIdx {
-            shiftIdx = (((*outBegIdx) as usize)) as usize - maBegIdx;
+        if ((((*outBegIdx) as usize)) as usize) > maBegIdx {
+            shiftIdx = ((((*outBegIdx) as usize)) as usize) - maBegIdx;
         } else {
             shiftIdx = 0;
         }
@@ -492,9 +492,9 @@ impl Core {
         };
         // Now do a tight loop to calculate the upper/lower band at the same time.
         if optInNbDevUp == optInNbDevDn {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal = tempBuffer2[i] * optInNbDevUp;
                 tempReal2 = outRealMiddleBand[i];
                 outRealUpperBand[i] = tempReal2 + tempReal;
@@ -502,9 +502,9 @@ impl Core {
                 i += 1;
             }
         } else {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal2 = outRealMiddleBand[i];
                 outRealUpperBand[i] = (((tempBuffer2[i] as f64).mul_add(optInNbDevUp, tempReal2)) as f64);
                 outRealLowerBand[i] = ((tempReal2 - tempBuffer2[i] * optInNbDevDn) as f64);
@@ -589,7 +589,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealUpperBand.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealMiddleBand.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealLowerBand.len());
-        if (optInMAType) as usize == 0 {
+        if ((optInMAType) as usize) == 0 {
             let mut maTotal: f64 = 0.0_f64;
             let mut shift: f64 = 0.0_f64;
             let mut varTotal1: f64 = 0.0_f64;
@@ -686,9 +686,9 @@ impl Core {
             (*outNBElement) = _outIdx;
             (*outBegIdx) = startIdx;
             if optInNbDevUp == optInNbDevDn {
-                // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+                // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
                 i = 0;
-                while i < (((*outNBElement) as usize)) as usize {
+                while i < ((((*outNBElement) as usize)) as usize) {
                     tempReal = outRealUpperBand[i] * optInNbDevUp;
                     tempReal2 = outRealMiddleBand[i];
                     outRealUpperBand[i] = tempReal2 + tempReal;
@@ -696,9 +696,9 @@ impl Core {
                     i += 1;
                 }
             } else {
-                // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+                // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
                 i = 0;
-                while i < (((*outNBElement) as usize)) as usize {
+                while i < ((((*outNBElement) as usize)) as usize) {
                     tempReal = outRealUpperBand[i];
                     tempReal2 = outRealMiddleBand[i];
                     outRealUpperBand[i] = (tempReal as f64).mul_add(optInNbDevUp, tempReal2);
@@ -721,8 +721,8 @@ impl Core {
             (*outNBElement) = 0;
             return retCode;
         }
-        if (((*outBegIdx) as usize)) as usize > maBegIdx {
-            shiftIdx = (((*outBegIdx) as usize)) as usize - maBegIdx;
+        if ((((*outBegIdx) as usize)) as usize) > maBegIdx {
+            shiftIdx = ((((*outBegIdx) as usize)) as usize) - maBegIdx;
         } else {
             shiftIdx = 0;
         }
@@ -733,9 +733,9 @@ impl Core {
             outRealMiddleBand[_di.._di + _n].copy_from_slice(&tempBuffer1[_si.._si + _n]);
         };
         if optInNbDevUp == optInNbDevDn {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal = tempBuffer2[i] * optInNbDevUp;
                 tempReal2 = outRealMiddleBand[i];
                 outRealUpperBand[i] = tempReal2 + tempReal;
@@ -743,9 +743,9 @@ impl Core {
                 i += 1;
             }
         } else {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal2 = outRealMiddleBand[i];
                 outRealUpperBand[i] = (((tempBuffer2[i] as f64).mul_add(optInNbDevUp, tempReal2)) as f64);
                 outRealLowerBand[i] = ((tempReal2 - tempBuffer2[i] * optInNbDevDn) as f64);
@@ -898,8 +898,8 @@ impl Core {
         // the same bar. The guarded subtraction keeps shiftIdx non-negative even when
         // the standard deviation produced no output (an empty range leaves *outBegIdx
         // at 0), which the unconditional copy below then handles as a zero-length move.
-        if (((*outBegIdx) as usize)) as usize > maBegIdx {
-            shiftIdx = (((*outBegIdx) as usize)) as usize - maBegIdx;
+        if ((((*outBegIdx) as usize)) as usize) > maBegIdx {
+            shiftIdx = ((((*outBegIdx) as usize)) as usize) - maBegIdx;
         } else {
             shiftIdx = 0;
         }
@@ -911,9 +911,9 @@ impl Core {
         };
         // Now do a tight loop to calculate the upper/lower band at the same time.
         if optInNbDevUp == optInNbDevDn {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal = tempBuffer2[i] * optInNbDevUp;
                 tempReal2 = sc_outRealMiddleBand[i];
                 sc_outRealUpperBand[i] = tempReal2 + tempReal;
@@ -921,9 +921,9 @@ impl Core {
                 i += 1;
             }
         } else {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal2 = sc_outRealMiddleBand[i];
                 sc_outRealUpperBand[i] = (tempBuffer2[i] as f64).mul_add(optInNbDevUp, tempReal2);
                 sc_outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
@@ -1061,8 +1061,8 @@ impl Core {
         // the same bar. The guarded subtraction keeps shiftIdx non-negative even when
         // the standard deviation produced no output (an empty range leaves *outBegIdx
         // at 0), which the unconditional copy below then handles as a zero-length move.
-        if (((*outBegIdx) as usize)) as usize > maBegIdx {
-            shiftIdx = (((*outBegIdx) as usize)) as usize - maBegIdx;
+        if ((((*outBegIdx) as usize)) as usize) > maBegIdx {
+            shiftIdx = ((((*outBegIdx) as usize)) as usize) - maBegIdx;
         } else {
             shiftIdx = 0;
         }
@@ -1074,9 +1074,9 @@ impl Core {
         };
         // Now do a tight loop to calculate the upper/lower band at the same time.
         if optInNbDevUp == optInNbDevDn {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal = tempBuffer2[i] * optInNbDevUp;
                 tempReal2 = sc_outRealMiddleBand[i];
                 sc_outRealUpperBand[i] = tempReal2 + tempReal;
@@ -1084,9 +1084,9 @@ impl Core {
                 i += 1;
             }
         } else {
-            // for( i = 0; i < (((*outNBElement) as usize)) as usize; i += 1 )
+            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < (((*outNBElement) as usize)) as usize {
+            while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal2 = sc_outRealMiddleBand[i];
                 sc_outRealUpperBand[i] = (tempBuffer2[i] as f64).mul_add(optInNbDevUp, tempReal2);
                 sc_outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;

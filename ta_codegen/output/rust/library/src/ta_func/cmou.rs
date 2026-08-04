@@ -215,9 +215,9 @@ impl Core {
         trailingValue = prevValue;
         upSum = 0.0;
         downSum = 0.0;
-        // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+        // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
         i = 0;
-        while i < (optInTimePeriod) as usize {
+        while i < ((optInTimePeriod) as usize) {
             today += 1;
             tempReal = inReal[today];
             diff = tempReal - prevValue;
@@ -333,9 +333,9 @@ impl Core {
         trailingValue = prevValue;
         upSum = 0.0;
         downSum = 0.0;
-        // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+        // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
         i = 0;
-        while i < (optInTimePeriod) as usize {
+        while i < ((optInTimePeriod) as usize) {
             today += 1;
             tempReal = inReal[today];
             diff = tempReal - prevValue;
@@ -528,9 +528,9 @@ impl Core {
         trailingValue = prevValue;
         upSum = 0.0;
         downSum = 0.0;
-        // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+        // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
         i = 0;
-        while i < (optInTimePeriod) as usize {
+        while i < ((optInTimePeriod) as usize) {
             today += 1;
             tempReal = inReal[today];
             diff = tempReal - prevValue;
@@ -705,9 +705,9 @@ impl Core {
         trailingValue = prevValue;
         upSum = 0.0;
         downSum = 0.0;
-        // for( i = 0; i < (optInTimePeriod) as usize; i += 1 )
+        // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
         i = 0;
-        while i < (optInTimePeriod) as usize {
+        while i < ((optInTimePeriod) as usize) {
             today += 1;
             tempReal = inReal[today];
             diff = tempReal - prevValue;

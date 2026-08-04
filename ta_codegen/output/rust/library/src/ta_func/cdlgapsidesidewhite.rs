@@ -202,8 +202,8 @@ impl Core {
         // Add-up the initial period, except for the last value.
         NearPeriodTotal = 0.0;
         EqualPeriodTotal = 0.0;
-        NearTrailingIdx = startIdx - (Near_avgPeriod) as usize;
-        EqualTrailingIdx = startIdx - (Equal_avgPeriod) as usize;
+        NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+        EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
         i = NearTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -402,8 +402,8 @@ impl Core {
         }
         NearPeriodTotal = 0.0;
         EqualPeriodTotal = 0.0;
-        NearTrailingIdx = startIdx - (Near_avgPeriod) as usize;
-        EqualTrailingIdx = startIdx - (Equal_avgPeriod) as usize;
+        NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+        EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
         i = NearTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -747,8 +747,8 @@ impl Core {
         // Add-up the initial period, except for the last value.
         NearPeriodTotal = 0.0;
         EqualPeriodTotal = 0.0;
-        NearTrailingIdx = startIdx - (Near_avgPeriod) as usize;
-        EqualTrailingIdx = startIdx - (Equal_avgPeriod) as usize;
+        NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+        EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
         i = NearTrailingIdx;
         while i < startIdx {
             let mut _candlerange_4: f64;
@@ -1077,8 +1077,8 @@ impl Core {
         // Add-up the initial period, except for the last value.
         NearPeriodTotal = 0.0;
         EqualPeriodTotal = 0.0;
-        NearTrailingIdx = startIdx - (Near_avgPeriod) as usize;
-        EqualTrailingIdx = startIdx - (Equal_avgPeriod) as usize;
+        NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
+        EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
         i = NearTrailingIdx;
         while i < startIdx {
             let mut _candlerange_10: f64;

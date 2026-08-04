@@ -184,7 +184,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyDojiPeriodTotal = 0.0;
-        BodyDojiTrailingIdx = startIdx - (BodyDoji_avgPeriod) as usize;
+        BodyDojiTrailingIdx = startIdx - ((BodyDoji_avgPeriod) as usize);
         i = BodyDojiTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -310,7 +310,7 @@ impl Core {
             return RetCode::Success;
         }
         BodyDojiPeriodTotal = 0.0;
-        BodyDojiTrailingIdx = startIdx - (BodyDoji_avgPeriod) as usize;
+        BodyDojiTrailingIdx = startIdx - ((BodyDoji_avgPeriod) as usize);
         i = BodyDojiTrailingIdx;
         while i < startIdx {
             let mut _candlerange_0: f64;
@@ -517,7 +517,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyDojiPeriodTotal = 0.0;
-        BodyDojiTrailingIdx = startIdx - (BodyDoji_avgPeriod) as usize;
+        BodyDojiTrailingIdx = startIdx - ((BodyDoji_avgPeriod) as usize);
         i = BodyDojiTrailingIdx;
         while i < startIdx {
             let mut _candlerange_2: f64;
@@ -699,7 +699,7 @@ impl Core {
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyDojiPeriodTotal = 0.0;
-        BodyDojiTrailingIdx = startIdx - (BodyDoji_avgPeriod) as usize;
+        BodyDojiTrailingIdx = startIdx - ((BodyDoji_avgPeriod) as usize);
         i = BodyDojiTrailingIdx;
         while i < startIdx {
             let mut _candlerange_5: f64;

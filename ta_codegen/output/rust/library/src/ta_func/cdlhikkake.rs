@@ -226,7 +226,7 @@ impl Core {
             } else if cd > 0 &&
                (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
             {
-                outInteger[outIdx] = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+                outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
                 outIdx += 1;
                 cd = 0;
             } else {
@@ -314,7 +314,7 @@ impl Core {
                 outInteger[outIdx] = (patternResult) as i32;
                 outIdx += 1;
             } else if cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) {
-                outInteger[outIdx] = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+                outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
                 outIdx += 1;
                 cd = 0;
             } else {
@@ -378,7 +378,7 @@ impl Core {
         } else if sp.cd > 0 &&
            (sp.patternResult > 0 && inClose > sp.savedHigh || sp.patternResult < 0 && inClose < sp.savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
         {
-            (*outInteger) = (sp.patternResult + (100 * (if sp.patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+            (*outInteger) = (sp.patternResult + ((100 * (if sp.patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
             sp.cd = 0;
         } else {
             (*outInteger) = 0;
@@ -481,7 +481,7 @@ impl Core {
             } else if cd > 0 &&
                (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
             {
-                lastValue_outInteger = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+                lastValue_outInteger = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
                 cd = 0;
             } else {
                 lastValue_outInteger = 0;
@@ -632,7 +632,7 @@ impl Core {
             } else if cd > 0 &&
                (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
             {
-                outInteger[outIdx] = (patternResult + (100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32) as i32;
+                outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
                 outIdx += 1;
                 cd = 0;
             } else {

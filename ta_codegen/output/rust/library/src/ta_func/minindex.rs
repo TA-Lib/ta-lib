@@ -196,7 +196,7 @@ impl Core {
         lowest = 0.0;
         while today <= endIdx {
             tmp = inReal[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inReal[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -267,7 +267,7 @@ impl Core {
         lowest = 0.0;
         while today <= endIdx {
             tmp = inReal[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inReal[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -340,7 +340,7 @@ impl Core {
             sp.lowestIdx = sp.trailingIdx;
             sp.lowest = sp.x_inReal[(sp.lowestIdx % sp.xCap) as usize];
             sp.i = sp.lowestIdx;
-            while ({ sp.i += 1; sp.i }) as i32 <= sp.today {
+            while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
                 tmp = sp.x_inReal[(sp.i % sp.xCap) as usize];
                 if tmp < sp.lowest {
                     sp.lowestIdx = sp.i;
@@ -410,7 +410,7 @@ impl Core {
         lowest = 0.0;
         while today <= endIdx {
             tmp = inReal[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inReal[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
@@ -539,7 +539,7 @@ impl Core {
         lowest = 0.0;
         while today <= endIdx {
             tmp = inReal[today];
-            if lowestIdx < (trailingIdx) as i32 {
+            if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inReal[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;

@@ -241,9 +241,9 @@ impl Core {
             circBuffer[circBuffer_Idx] = lastValue;
             // Calculate the average for the whole period.
             theAverage = 0.0;
-            // for( j = 0; j < (optInTimePeriod) as usize; j += 1 )
+            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
             j = 0;
-            while j < (optInTimePeriod) as usize {
+            while j < ((optInTimePeriod) as usize) {
                 theAverage += circBuffer[j];
                 j += 1;
             }
@@ -251,9 +251,9 @@ impl Core {
             // Do the summation of the ABS(TypePrice-average)
             // for the whole period.
             tempReal2 = 0.0;
-            // for( j = 0; j < (optInTimePeriod) as usize; j += 1 )
+            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
             j = 0;
-            while j < (optInTimePeriod) as usize {
+            while j < ((optInTimePeriod) as usize) {
                 tempReal2 += (circBuffer[j] - theAverage).abs();
                 j += 1;
             }
@@ -341,17 +341,17 @@ impl Core {
             lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3_f64;
             circBuffer[circBuffer_Idx] = lastValue;
             theAverage = 0.0;
-            // for( j = 0; j < (optInTimePeriod) as usize; j += 1 )
+            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
             j = 0;
-            while j < (optInTimePeriod) as usize {
+            while j < ((optInTimePeriod) as usize) {
                 theAverage += circBuffer[j];
                 j += 1;
             }
             theAverage /= ((optInTimePeriod) as f64);
             tempReal2 = 0.0;
-            // for( j = 0; j < (optInTimePeriod) as usize; j += 1 )
+            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
             j = 0;
-            while j < (optInTimePeriod) as usize {
+            while j < ((optInTimePeriod) as usize) {
                 tempReal2 += (circBuffer[j] - theAverage).abs();
                 j += 1;
             }
@@ -413,9 +413,9 @@ impl Core {
         sp.cb_circBuffer[sp.circBuffer_Idx] = lastValue;
         // Calculate the average for the whole period.
         sp.theAverage = 0.0;
-        // for( sp.j = 0; sp.j < (sp.optInTimePeriod) as usize; sp.j += 1 )
+        // for( sp.j = 0; sp.j < ((sp.optInTimePeriod) as usize); sp.j += 1 )
         sp.j = 0;
-        while sp.j < (sp.optInTimePeriod) as usize {
+        while sp.j < ((sp.optInTimePeriod) as usize) {
             sp.theAverage += sp.cb_circBuffer[sp.j];
             sp.j += 1;
         }
@@ -423,9 +423,9 @@ impl Core {
         // Do the summation of the ABS(TypePrice-average)
         // for the whole period.
         sp.tempReal2 = 0.0;
-        // for( sp.j = 0; sp.j < (sp.optInTimePeriod) as usize; sp.j += 1 )
+        // for( sp.j = 0; sp.j < ((sp.optInTimePeriod) as usize); sp.j += 1 )
         sp.j = 0;
-        while sp.j < (sp.optInTimePeriod) as usize {
+        while sp.j < ((sp.optInTimePeriod) as usize) {
             sp.tempReal2 += (sp.cb_circBuffer[sp.j] - sp.theAverage).abs();
             sp.j += 1;
         }
@@ -518,9 +518,9 @@ impl Core {
             circBuffer[circBuffer_Idx] = lastValue;
             // Calculate the average for the whole period.
             theAverage = 0.0;
-            // for( j = 0; j < (optInTimePeriod) as usize; j += 1 )
+            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
             j = 0;
-            while j < (optInTimePeriod) as usize {
+            while j < ((optInTimePeriod) as usize) {
                 theAverage += circBuffer[j];
                 j += 1;
             }
@@ -528,9 +528,9 @@ impl Core {
             // Do the summation of the ABS(TypePrice-average)
             // for the whole period.
             tempReal2 = 0.0;
-            // for( j = 0; j < (optInTimePeriod) as usize; j += 1 )
+            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
             j = 0;
-            while j < (optInTimePeriod) as usize {
+            while j < ((optInTimePeriod) as usize) {
                 tempReal2 += (circBuffer[j] - theAverage).abs();
                 j += 1;
             }
@@ -675,9 +675,9 @@ impl Core {
             circBuffer[circBuffer_Idx] = lastValue;
             // Calculate the average for the whole period.
             theAverage = 0.0;
-            // for( j = 0; j < (optInTimePeriod) as usize; j += 1 )
+            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
             j = 0;
-            while j < (optInTimePeriod) as usize {
+            while j < ((optInTimePeriod) as usize) {
                 theAverage += circBuffer[j];
                 j += 1;
             }
@@ -685,9 +685,9 @@ impl Core {
             // Do the summation of the ABS(TypePrice-average)
             // for the whole period.
             tempReal2 = 0.0;
-            // for( j = 0; j < (optInTimePeriod) as usize; j += 1 )
+            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
             j = 0;
-            while j < (optInTimePeriod) as usize {
+            while j < ((optInTimePeriod) as usize) {
                 tempReal2 += (circBuffer[j] - theAverage).abs();
                 j += 1;
             }

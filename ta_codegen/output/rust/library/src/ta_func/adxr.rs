@@ -88,7 +88,7 @@ impl Core {
             return usize::MAX;
         }
         if optInTimePeriod > 1 {
-            return ((optInTimePeriod) as usize + self.adx_lookback(optInTimePeriod) - 1) as usize;
+            return (((optInTimePeriod) as usize) + self.adx_lookback(optInTimePeriod) - 1) as usize;
         } else {
             return (3) as usize;
         }
@@ -219,21 +219,21 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        adx = vec![0.0_f64; ((endIdx - startIdx + (optInTimePeriod) as usize) * 1) as usize];
+        adx = vec![0.0_f64; ((endIdx - startIdx + ((optInTimePeriod) as usize)) * 1) as usize];
         // Compute ADX over a range that starts (period-1) bars earlier, so each
         // ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
-        retCode = self.adx_unguarded((startIdx - ((optInTimePeriod - 1)) as usize) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
+        retCode = self.adx_unguarded((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
         // ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
         // the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
         // is adx[k]; the ADX range holds (period-1) more elements than the output.
-        nbElement = (*outNBElement) - ((optInTimePeriod - 1)) as usize;
+        nbElement = (*outNBElement) - (((optInTimePeriod - 1)) as usize);
         // for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
         outIdx = 0;
         while outIdx < nbElement {
-            outReal[outIdx] = ((((adx[(outIdx + ((optInTimePeriod - 1)) as usize) as usize] + adx[outIdx]) / 2.0)) as f64);
+            outReal[outIdx] = ((((adx[(outIdx + (((optInTimePeriod - 1)) as usize)) as usize] + adx[outIdx]) / 2.0)) as f64);
             outIdx += 1;
         }
         (*outBegIdx) = startIdx;
@@ -279,16 +279,16 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        adx = vec![0.0_f64; ((endIdx - startIdx + (optInTimePeriod) as usize) * 1) as usize];
-        retCode = self.adx_unguarded((startIdx - ((optInTimePeriod - 1)) as usize) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
+        adx = vec![0.0_f64; ((endIdx - startIdx + ((optInTimePeriod) as usize)) * 1) as usize];
+        retCode = self.adx_unguarded((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
-        nbElement = (*outNBElement) - ((optInTimePeriod - 1)) as usize;
+        nbElement = (*outNBElement) - (((optInTimePeriod - 1)) as usize);
         // for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
         outIdx = 0;
         while outIdx < nbElement {
-            outReal[outIdx] = ((((adx[(outIdx + ((optInTimePeriod - 1)) as usize) as usize] + adx[outIdx]) / 2.0)) as f64);
+            outReal[outIdx] = ((((adx[(outIdx + (((optInTimePeriod - 1)) as usize)) as usize] + adx[outIdx]) / 2.0)) as f64);
             outIdx += 1;
         }
         (*outBegIdx) = startIdx;
@@ -394,24 +394,24 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
-        adx = vec![0.0_f64; ((endIdx - startIdx + (optInTimePeriod) as usize) * 1) as usize];
+        adx = vec![0.0_f64; ((endIdx - startIdx + ((optInTimePeriod) as usize)) * 1) as usize];
         // Compute ADX over a range that starts (period-1) bars earlier, so each
         // ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
         // Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.adx_open_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod)?;
-        retCode = self.adx_unguarded((startIdx - ((optInTimePeriod - 1)) as usize) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
+        retCode = self.adx_unguarded((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
         // ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
         // the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
         // is adx[k]; the ADX range holds (period-1) more elements than the output.
-        nbElement = (*outNBElement) - ((optInTimePeriod - 1)) as usize;
+        nbElement = (*outNBElement) - (((optInTimePeriod - 1)) as usize);
         // for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
         outIdx = 0;
         while outIdx < nbElement {
-            sc_outReal[outIdx] = ((adx[(outIdx + ((optInTimePeriod - 1)) as usize) as usize] + adx[outIdx]) / 2.0);
+            sc_outReal[outIdx] = ((adx[(outIdx + (((optInTimePeriod - 1)) as usize)) as usize] + adx[outIdx]) / 2.0);
             outIdx += 1;
         }
         (*outBegIdx) = startIdx;
@@ -520,24 +520,24 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
-        adx = vec![0.0_f64; ((endIdx - startIdx + (optInTimePeriod) as usize) * 1) as usize];
+        adx = vec![0.0_f64; ((endIdx - startIdx + ((optInTimePeriod) as usize)) * 1) as usize];
         // Compute ADX over a range that starts (period-1) bars earlier, so each
         // ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
         // Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.adx_open_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod)?;
-        retCode = self.adx_unguarded((startIdx - ((optInTimePeriod - 1)) as usize) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
+        retCode = self.adx_unguarded((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
         // ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
         // the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
         // is adx[k]; the ADX range holds (period-1) more elements than the output.
-        nbElement = (*outNBElement) - ((optInTimePeriod - 1)) as usize;
+        nbElement = (*outNBElement) - (((optInTimePeriod - 1)) as usize);
         // for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
         outIdx = 0;
         while outIdx < nbElement {
-            sc_outReal[outIdx] = ((adx[(outIdx + ((optInTimePeriod - 1)) as usize) as usize] + adx[outIdx]) / 2.0);
+            sc_outReal[outIdx] = ((adx[(outIdx + (((optInTimePeriod - 1)) as usize)) as usize] + adx[outIdx]) / 2.0);
             outIdx += 1;
         }
         (*outBegIdx) = startIdx;

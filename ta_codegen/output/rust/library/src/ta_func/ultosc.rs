@@ -270,7 +270,7 @@ impl Core {
             // for( j = 0; j < 3; j += 1 )
             j = 0;
             while j < 3 {
-                if usedFlag[j] == 0 && (periods[j]) as usize > longestPeriod {
+                if usedFlag[j] == 0 && ((periods[j]) as usize) > longestPeriod {
                     longestPeriod = (periods[j]) as usize;
                     longestIndex = j;
                 }
@@ -309,8 +309,8 @@ impl Core {
         b2Total = 0.0;
         a3Total = 0.0;
         b3Total = 0.0;
-        // for( i = startIdx - (optInTimePeriod3) as usize + 1; i < startIdx; i += 1 )
-        i = startIdx - (optInTimePeriod3) as usize + 1;
+        // for( i = startIdx - ((optInTimePeriod3) as usize) + 1; i < startIdx; i += 1 )
+        i = startIdx - ((optInTimePeriod3) as usize) + 1;
         while i < startIdx {
             tempLT = inLow[i];
             tempHT = inHigh[i];
@@ -330,11 +330,11 @@ impl Core {
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
             if term_Idx > maxIdx_term { term_Idx = 0; }
-            if i >= startIdx - (optInTimePeriod1) as usize + 1 {
+            if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
                 a1Total += closeMinusTrueLow;
                 b1Total += trueRange;
             }
-            if i >= startIdx - (optInTimePeriod2) as usize + 1 {
+            if i >= startIdx - ((optInTimePeriod2) as usize) + 1 {
                 a2Total += closeMinusTrueLow;
                 b2Total += trueRange;
             }
@@ -348,12 +348,12 @@ impl Core {
         // The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
         // `today` and, once advanced past it, the slot of the bar leaving the
         // longest window. The two shorter windows trail it by a fixed offset.
-        trailingPos1 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod1) as usize + 1;
-        if trailingPos1 >= (optInTimePeriod3) as usize {
+        trailingPos1 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod1) as usize) + 1;
+        if trailingPos1 >= ((optInTimePeriod3) as usize) {
             trailingPos1 -= (optInTimePeriod3) as usize;
         }
-        trailingPos2 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod2) as usize + 1;
-        if trailingPos2 >= (optInTimePeriod3) as usize {
+        trailingPos2 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod2) as usize) + 1;
+        if trailingPos2 >= ((optInTimePeriod3) as usize) {
             trailingPos2 -= (optInTimePeriod3) as usize;
         }
         while today <= endIdx {
@@ -396,13 +396,13 @@ impl Core {
             a1Total -= term_closeMinusTrueLow[trailingPos1];
             b1Total -= term_trueRange[trailingPos1];
             trailingPos1 += 1;
-            if trailingPos1 >= (optInTimePeriod3) as usize {
+            if trailingPos1 >= ((optInTimePeriod3) as usize) {
                 trailingPos1 = 0;
             }
             a2Total -= term_closeMinusTrueLow[trailingPos2];
             b2Total -= term_trueRange[trailingPos2];
             trailingPos2 += 1;
-            if trailingPos2 >= (optInTimePeriod3) as usize {
+            if trailingPos2 >= ((optInTimePeriod3) as usize) {
                 trailingPos2 = 0;
             }
             term_Idx += 1;
@@ -497,7 +497,7 @@ impl Core {
             // for( j = 0; j < 3; j += 1 )
             j = 0;
             while j < 3 {
-                if usedFlag[j] == 0 && (periods[j]) as usize > longestPeriod {
+                if usedFlag[j] == 0 && ((periods[j]) as usize) > longestPeriod {
                     longestPeriod = (periods[j]) as usize;
                     longestIndex = j;
                 }
@@ -528,8 +528,8 @@ impl Core {
         b2Total = 0.0;
         a3Total = 0.0;
         b3Total = 0.0;
-        // for( i = startIdx - (optInTimePeriod3) as usize + 1; i < startIdx; i += 1 )
-        i = startIdx - (optInTimePeriod3) as usize + 1;
+        // for( i = startIdx - ((optInTimePeriod3) as usize) + 1; i < startIdx; i += 1 )
+        i = startIdx - ((optInTimePeriod3) as usize) + 1;
         while i < startIdx {
             tempLT = inLow[i];
             tempHT = inHigh[i];
@@ -549,11 +549,11 @@ impl Core {
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
             if term_Idx > maxIdx_term { term_Idx = 0; }
-            if i >= startIdx - (optInTimePeriod1) as usize + 1 {
+            if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
                 a1Total += closeMinusTrueLow;
                 b1Total += trueRange;
             }
-            if i >= startIdx - (optInTimePeriod2) as usize + 1 {
+            if i >= startIdx - ((optInTimePeriod2) as usize) + 1 {
                 a2Total += closeMinusTrueLow;
                 b2Total += trueRange;
             }
@@ -563,12 +563,12 @@ impl Core {
         }
         today = startIdx;
         outIdx = 0;
-        trailingPos1 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod1) as usize + 1;
-        if trailingPos1 >= (optInTimePeriod3) as usize {
+        trailingPos1 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod1) as usize) + 1;
+        if trailingPos1 >= ((optInTimePeriod3) as usize) {
             trailingPos1 -= (optInTimePeriod3) as usize;
         }
-        trailingPos2 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod2) as usize + 1;
-        if trailingPos2 >= (optInTimePeriod3) as usize {
+        trailingPos2 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod2) as usize) + 1;
+        if trailingPos2 >= ((optInTimePeriod3) as usize) {
             trailingPos2 -= (optInTimePeriod3) as usize;
         }
         while today <= endIdx {
@@ -607,13 +607,13 @@ impl Core {
             a1Total -= term_closeMinusTrueLow[trailingPos1];
             b1Total -= term_trueRange[trailingPos1];
             trailingPos1 += 1;
-            if trailingPos1 >= (optInTimePeriod3) as usize {
+            if trailingPos1 >= ((optInTimePeriod3) as usize) {
                 trailingPos1 = 0;
             }
             a2Total -= term_closeMinusTrueLow[trailingPos2];
             b2Total -= term_trueRange[trailingPos2];
             trailingPos2 += 1;
-            if trailingPos2 >= (optInTimePeriod3) as usize {
+            if trailingPos2 >= ((optInTimePeriod3) as usize) {
                 trailingPos2 = 0;
             }
             term_Idx += 1;
@@ -719,13 +719,13 @@ impl Core {
         sp.a1Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos1];
         sp.b1Total -= sp.cb_term_trueRange[sp.trailingPos1];
         sp.trailingPos1 += 1;
-        if sp.trailingPos1 >= (sp.optInTimePeriod3) as usize {
+        if sp.trailingPos1 >= ((sp.optInTimePeriod3) as usize) {
             sp.trailingPos1 = 0;
         }
         sp.a2Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos2];
         sp.b2Total -= sp.cb_term_trueRange[sp.trailingPos2];
         sp.trailingPos2 += 1;
-        if sp.trailingPos2 >= (sp.optInTimePeriod3) as usize {
+        if sp.trailingPos2 >= ((sp.optInTimePeriod3) as usize) {
             sp.trailingPos2 = 0;
         }
         sp.term_Idx = sp.term_Idx + 1;
@@ -829,7 +829,7 @@ impl Core {
             // for( j = 0; j < 3; j += 1 )
             j = 0;
             while j < 3 {
-                if usedFlag[j] == 0 && (periods[j]) as usize > longestPeriod {
+                if usedFlag[j] == 0 && ((periods[j]) as usize) > longestPeriod {
                     longestPeriod = (periods[j]) as usize;
                     longestIndex = j;
                 }
@@ -868,8 +868,8 @@ impl Core {
         b2Total = 0.0;
         a3Total = 0.0;
         b3Total = 0.0;
-        // for( i = startIdx - (optInTimePeriod3) as usize + 1; i < startIdx; i += 1 )
-        i = startIdx - (optInTimePeriod3) as usize + 1;
+        // for( i = startIdx - ((optInTimePeriod3) as usize) + 1; i < startIdx; i += 1 )
+        i = startIdx - ((optInTimePeriod3) as usize) + 1;
         while i < startIdx {
             tempLT = inLow[i];
             tempHT = inHigh[i];
@@ -889,11 +889,11 @@ impl Core {
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
             if term_Idx > maxIdx_term { term_Idx = 0; }
-            if i >= startIdx - (optInTimePeriod1) as usize + 1 {
+            if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
                 a1Total += closeMinusTrueLow;
                 b1Total += trueRange;
             }
-            if i >= startIdx - (optInTimePeriod2) as usize + 1 {
+            if i >= startIdx - ((optInTimePeriod2) as usize) + 1 {
                 a2Total += closeMinusTrueLow;
                 b2Total += trueRange;
             }
@@ -907,12 +907,12 @@ impl Core {
         // The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
         // `today` and, once advanced past it, the slot of the bar leaving the
         // longest window. The two shorter windows trail it by a fixed offset.
-        trailingPos1 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod1) as usize + 1;
-        if trailingPos1 >= (optInTimePeriod3) as usize {
+        trailingPos1 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod1) as usize) + 1;
+        if trailingPos1 >= ((optInTimePeriod3) as usize) {
             trailingPos1 -= (optInTimePeriod3) as usize;
         }
-        trailingPos2 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod2) as usize + 1;
-        if trailingPos2 >= (optInTimePeriod3) as usize {
+        trailingPos2 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod2) as usize) + 1;
+        if trailingPos2 >= ((optInTimePeriod3) as usize) {
             trailingPos2 -= (optInTimePeriod3) as usize;
         }
         while today <= endIdx {
@@ -955,13 +955,13 @@ impl Core {
             a1Total -= term_closeMinusTrueLow[trailingPos1];
             b1Total -= term_trueRange[trailingPos1];
             trailingPos1 += 1;
-            if trailingPos1 >= (optInTimePeriod3) as usize {
+            if trailingPos1 >= ((optInTimePeriod3) as usize) {
                 trailingPos1 = 0;
             }
             a2Total -= term_closeMinusTrueLow[trailingPos2];
             b2Total -= term_trueRange[trailingPos2];
             trailingPos2 += 1;
-            if trailingPos2 >= (optInTimePeriod3) as usize {
+            if trailingPos2 >= ((optInTimePeriod3) as usize) {
                 trailingPos2 = 0;
             }
             term_Idx += 1;
@@ -1124,7 +1124,7 @@ impl Core {
             // for( j = 0; j < 3; j += 1 )
             j = 0;
             while j < 3 {
-                if usedFlag[j] == 0 && (periods[j]) as usize > longestPeriod {
+                if usedFlag[j] == 0 && ((periods[j]) as usize) > longestPeriod {
                     longestPeriod = (periods[j]) as usize;
                     longestIndex = j;
                 }
@@ -1163,8 +1163,8 @@ impl Core {
         b2Total = 0.0;
         a3Total = 0.0;
         b3Total = 0.0;
-        // for( i = startIdx - (optInTimePeriod3) as usize + 1; i < startIdx; i += 1 )
-        i = startIdx - (optInTimePeriod3) as usize + 1;
+        // for( i = startIdx - ((optInTimePeriod3) as usize) + 1; i < startIdx; i += 1 )
+        i = startIdx - ((optInTimePeriod3) as usize) + 1;
         while i < startIdx {
             tempLT = inLow[i];
             tempHT = inHigh[i];
@@ -1184,11 +1184,11 @@ impl Core {
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
             if term_Idx > maxIdx_term { term_Idx = 0; }
-            if i >= startIdx - (optInTimePeriod1) as usize + 1 {
+            if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
                 a1Total += closeMinusTrueLow;
                 b1Total += trueRange;
             }
-            if i >= startIdx - (optInTimePeriod2) as usize + 1 {
+            if i >= startIdx - ((optInTimePeriod2) as usize) + 1 {
                 a2Total += closeMinusTrueLow;
                 b2Total += trueRange;
             }
@@ -1202,12 +1202,12 @@ impl Core {
         // The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
         // `today` and, once advanced past it, the slot of the bar leaving the
         // longest window. The two shorter windows trail it by a fixed offset.
-        trailingPos1 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod1) as usize + 1;
-        if trailingPos1 >= (optInTimePeriod3) as usize {
+        trailingPos1 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod1) as usize) + 1;
+        if trailingPos1 >= ((optInTimePeriod3) as usize) {
             trailingPos1 -= (optInTimePeriod3) as usize;
         }
-        trailingPos2 = term_Idx + (optInTimePeriod3) as usize - (optInTimePeriod2) as usize + 1;
-        if trailingPos2 >= (optInTimePeriod3) as usize {
+        trailingPos2 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod2) as usize) + 1;
+        if trailingPos2 >= ((optInTimePeriod3) as usize) {
             trailingPos2 -= (optInTimePeriod3) as usize;
         }
         while today <= endIdx {
@@ -1250,13 +1250,13 @@ impl Core {
             a1Total -= term_closeMinusTrueLow[trailingPos1];
             b1Total -= term_trueRange[trailingPos1];
             trailingPos1 += 1;
-            if trailingPos1 >= (optInTimePeriod3) as usize {
+            if trailingPos1 >= ((optInTimePeriod3) as usize) {
                 trailingPos1 = 0;
             }
             a2Total -= term_closeMinusTrueLow[trailingPos2];
             b2Total -= term_trueRange[trailingPos2];
             trailingPos2 += 1;
-            if trailingPos2 >= (optInTimePeriod3) as usize {
+            if trailingPos2 >= ((optInTimePeriod3) as usize) {
                 trailingPos2 = 0;
             }
             term_Idx += 1;

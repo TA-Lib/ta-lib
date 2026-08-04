@@ -269,7 +269,7 @@ impl Core {
         // to its single-pass implementation. Period 1 stays on the generic
         // path: ma() copies the input for it instead of running an EMA
         // recursion.
-        if (optInFastMAType) as usize == 1 && (optInSlowMAType) as usize == 1 && (optInSignalMAType) as usize == 1 && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 {
+        if ((optInFastMAType) as usize) == 1 && ((optInSlowMAType) as usize) == 1 && ((optInSignalMAType) as usize) == 1 && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 {
             return self.macd_unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
         }
         // Make sure slow is really slower than
@@ -412,7 +412,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACD.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDSignal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACDHist.len());
-        if (optInFastMAType) as usize == 1 && (optInSlowMAType) as usize == 1 && (optInSignalMAType) as usize == 1 && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 {
+        if ((optInFastMAType) as usize) == 1 && ((optInSlowMAType) as usize) == 1 && ((optInSignalMAType) as usize) == 1 && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 {
             return self.macd_unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
         }
         if optInSlowPeriod < optInFastPeriod {
