@@ -229,6 +229,15 @@ nothing compared it: for the ~80 opt slots whose C descriptor is a predefined
 YAML-derived value, so this is one of the few metadata checks that is not a
 generator comparing against itself.
 
+Where this runs: **one** nightly job — dev-nightly's `xlang` step, which is the
+only one invoking `regtest.py --codegen-only` unfiltered. The other `--codegen`
+jobs narrow to `rust` or `c,rust`, and `main-nightly` runs `--xlang-hash`, which
+reaches `abstract_get_lookback` and no other abstract RPC. So every gate in this
+section has a single point of failure in CI. That is deliberate rather than
+overlooked: a second job would buy redundancy against runner flakiness, not
+against defects. Worth knowing before assuming a green `main` nightly says
+anything about abstract-metadata parity.
+
 ## The VARIANT gate — four-variant bitwise parity, no oracle (issue #137)
 
 Every function ships four times over: `TA_<N>`, `TA_<N>_Unguarded`, `TA_S_<N>`,

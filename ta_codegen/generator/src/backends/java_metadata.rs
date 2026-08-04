@@ -22,8 +22,7 @@ use std::fmt::Write as _;
 use std::path::Path;
 
 use super::abstract_rows::{rows, FuncRow, InputKind, OptDomain, OutputKind};
-use super::price_bundle;
-use crate::ir::{EnumDef, FuncDef, ParamType};
+use crate::ir::{EnumDef, FuncDef};
 
 /// Java package (and directory) the registry is emitted into.
 const PACKAGE: &str = "io.github.talib.metadata";
@@ -113,7 +112,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, lib_src: &P
     write(&dir, "FunctionInfo.java", &function_info_record());
     write(&dir, "Functions.java", &functions_registry(&rows));
     write(&dir, "ParamHolder.java", &param_holder_class());
-    write(&dir, "Dispatch.java", &dispatch_class(funcs));
+    write(&dir, "Dispatch.java", &dispatch_class(&rows));
 
     println!("  java metadata registry -> {} ({} functions)", dir.display(), rows.len());
 }
@@ -550,24 +549,31 @@ fn emit_function_factory(s: &mut String, f: &FuncRow) {
             let sep = if i + 1 == f.opt_inputs.len() { "" } else { "," };
             // Every domain's slots are carried positionally; the ones this
             // domain does not use stay literal 0 / null, and `type()` is what
-            // tells a consumer which to read.
+            // tells a consumer which to read. The arms are spelled out rather
+            // than caught by `_` so a new OptDomain variant fails to compile
+            // here too: a catch-all would hand it zeros and a null value list,
+            // which is a plausible-looking row rather than a build error.
             let (rmin, rmax, prec, rs, re, ri) = match &o.domain {
                 OptDomain::RealRange { min, max, precision, suggested, .. } => {
                     (*min, *max, *precision, suggested.0, suggested.1, suggested.2)
                 }
-                _ => (0.0, 0.0, 0, 0.0, 0.0, 0.0),
+                OptDomain::IntegerRange { .. }
+                | OptDomain::IntegerList { .. }
+                | OptDomain::RealList { .. } => (0.0, 0.0, 0, 0.0, 0.0, 0.0),
             };
             let (imin, imax, is, ie, ii) = match &o.domain {
                 OptDomain::IntegerRange { min, max, suggested, .. } => {
                     (*min, *max, suggested.0, suggested.1, suggested.2)
                 }
-                _ => (0, 0, 0, 0, 0),
+                OptDomain::RealRange { .. }
+                | OptDomain::IntegerList { .. }
+                | OptDomain::RealList { .. } => (0, 0, 0, 0, 0),
             };
             let vl = match &o.domain {
                 OptDomain::IntegerList { .. } | OptDomain::RealList { .. } => {
                     js(&o.domain.value_list_string())
                 }
-                _ => "null".to_string(),
+                OptDomain::RealRange { .. } | OptDomain::IntegerRange { .. } => "null".to_string(),
             };
             let _ = writeln!(s, "            new OptInputInfo(");
             let _ = writeln!(s, "               OptInputType.{}, {}, 0x{:08X},", opt_type_name(&o.domain), js(&o.param_name), o.flags);
@@ -904,10 +910,7 @@ public final class ParamHolder {
 }
 
 /// The generated `switch` from a function name onto its typed public wrapper.
-fn dispatch_class(funcs: &[FuncDef]) -> String {
-    let mut sorted: Vec<&FuncDef> = funcs.iter().collect();
-    sorted.sort_by(|a, b| a.name.cmp(&b.name));
-
+fn dispatch_class(rows: &[FuncRow]) -> String {
     let mut s = header("MF,CC");
     s.push_str(
         "import io.github.talib.Core;
@@ -931,50 +934,45 @@ fn dispatch_class(funcs: &[FuncDef]) -> String {
 ",
     );
 
-    for f in &sorted {
+    for f in rows {
         let camel = super::java::to_java_method_name(&f.name, f.camel_case.as_deref());
-        // Collapsed input slots, so the holder's indices line up with FunctionInfo.
-        let mut slot_of: HashMap<String, (usize, usize)> = HashMap::new();
-        let mut slot = 0usize;
-        for grouped in price_bundle::group(&f.inputs) {
-            match grouped {
-                price_bundle::Grouped::Price(bundle) => {
-                    for inp in &bundle {
-                        let comp = inp.price.expect("bundle member carries a PriceRef").component;
-                        slot_of.insert(inp.name.clone(), (slot, comp as usize));
-                    }
-                    slot += 1;
-                }
-                price_bundle::Grouped::Single(inp) => {
-                    slot_of.insert(inp.name.clone(), (slot, usize::MAX));
-                    slot += 1;
-                }
-            }
-        }
 
+        // Argument order comes STRAIGHT from the row the registry publishes:
+        // a price bundle is one slot, and `signature_components` is the order
+        // the typed method takes its arrays in. This used to re-fold `FuncDef`
+        // with a second `price_bundle::group` pass, whose agreement with the
+        // row's own slot numbering nothing checked.
+        //
+        // Not merely equivalent to the old fold — strictly safer than it. That
+        // one keyed a `HashMap<String, _>` on the input NAME, which is derived
+        // from the price component, so two bundles sharing a component would
+        // have collided and pointed both at one slot. Reading the row cannot:
+        // the slot IS the row's index.
         let mut args: Vec<String> = vec!["startIdx".into(), "endIdx".into()];
-        for inp in &f.inputs {
-            let (sl, comp) = slot_of[&inp.name];
-            if comp == usize::MAX {
-                match inp.param_type {
-                    ParamType::Integer => args.push(format!("h.intInput({sl})")),
-                    _ => args.push(format!("h.realInput({sl})")),
+        for (slot, inp) in f.inputs.iter().enumerate() {
+            match inp.kind {
+                InputKind::Price => {
+                    for c in &inp.signature_components {
+                        args.push(format!("h.price({slot}, {})", *c as usize));
+                    }
                 }
-            } else {
-                args.push(format!("h.price({sl}, {comp})"));
+                InputKind::Real => args.push(format!("h.realInput({slot})")),
+                InputKind::Integer => args.push(format!("h.intInput({slot})")),
             }
         }
-        for (k, opt) in f.optional_inputs.iter().enumerate() {
-            match &opt.param_type {
-                ParamType::Real => args.push(format!("h.realOpt({k})")),
-                ParamType::Enum(_) => args.push(format!("h.maTypeOpt({k})")),
-                _ => args.push(format!("h.intOpt({k})")),
+        for (k, opt) in f.opt_inputs.iter().enumerate() {
+            match &opt.domain {
+                OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+                    args.push(format!("h.realOpt({k})"));
+                }
+                OptDomain::IntegerList { .. } => args.push(format!("h.maTypeOpt({k})")),
+                OptDomain::IntegerRange { .. } => args.push(format!("h.intOpt({k})")),
             }
         }
         for (k, out) in f.outputs.iter().enumerate() {
-            match out.param_type {
-                ParamType::Integer => args.push(format!("h.intOutput({k})")),
-                _ => args.push(format!("h.realOutput({k})")),
+            match out.kind {
+                OutputKind::Integer => args.push(format!("h.intOutput({k})")),
+                OutputKind::Real => args.push(format!("h.realOutput({k})")),
             }
         }
 
