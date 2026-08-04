@@ -143,48 +143,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlEngulfingUnguarded( int startIdx,
-                                           int endIdx,
-                                           double[] inOpen,
-                                           double[] inHigh,
-                                           double[] inLow,
-                                           double[] inClose,
-                                           out int outBegIdx,
-                                           out int outNBElement,
-                                           int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int i = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      lookbackTotal = CdlEngulfingLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (inClose[i] >= inOpen[i - 1] && inOpen[i] < inClose[i - 1] || inClose[i] > inOpen[i - 1] && inOpen[i] <= inClose[i - 1]) || ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (inOpen[i] >= inClose[i - 1] && inClose[i] < inOpen[i - 1] || inOpen[i] > inClose[i - 1] && inClose[i] <= inOpen[i - 1]) ) {
-            if( inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] ) {
-               outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
-            } else {
-               outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 80;
-            }
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode CdlEngulfing( int startIdx,
                                   int endIdx,
                                   float[] inOpen,
@@ -206,48 +164,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = CdlEngulfingLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((double)inClose[i] >= (double)inOpen[i - 1] && (double)inOpen[i] < (double)inClose[i - 1] || (double)inClose[i] > (double)inOpen[i - 1] && (double)inOpen[i] <= (double)inClose[i - 1]) || (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((double)inOpen[i] >= (double)inClose[i - 1] && (double)inClose[i] < (double)inOpen[i - 1] || (double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] <= (double)inOpen[i - 1]) ) {
-            if( (double)inOpen[i] != (double)inClose[i - 1] && (double)inClose[i] != (double)inOpen[i - 1] ) {
-               outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
-            } else {
-               outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 80;
-            }
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode CdlEngulfingUnguarded( int startIdx,
-                                           int endIdx,
-                                           float[] inOpen,
-                                           float[] inHigh,
-                                           float[] inLow,
-                                           float[] inClose,
-                                           out int outBegIdx,
-                                           out int outNBElement,
-                                           int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int i = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
       lookbackTotal = CdlEngulfingLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -332,48 +248,6 @@ public partial class Core
    /// the first candle's opposite-colored real body. Bullish (white engulfs
    /// black) or bearish (black engulfs white) reversal signal. Bullish reversal
    /// at +100/+80, bearish at -100/-80; ideally after a downtrend (bullish) or
-   /// uptrend (bearish), which the code does not verify. — <b>unchecked</b>
-   /// variant of <c>CdlEngulfing</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlEngulfingUnguarded( int startIdx,
-                                          int endIdx,
-                                          double[] inOpen,
-                                          double[] inHigh,
-                                          double[] inLow,
-                                          double[] inClose,
-                                          int[] outInteger )
-   {
-      CdlEngulfingUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A two-candle reversal pattern where the second candle's real body engulfs
-   /// the first candle's opposite-colored real body. Bullish (white engulfs
-   /// black) or bearish (black engulfs white) reversal signal. Bullish reversal
-   /// at +100/+80, bearish at -100/-80; ideally after a downtrend (bullish) or
    /// uptrend (bearish), which the code does not verify.
    /// </summary>
    /// <remarks>
@@ -425,51 +299,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("CDLENGULFING", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A two-candle reversal pattern where the second candle's real body engulfs
-   /// the first candle's opposite-colored real body. Bullish (white engulfs
-   /// black) or bearish (black engulfs white) reversal signal. Bullish reversal
-   /// at +100/+80, bearish at -100/-80; ideally after a downtrend (bullish) or
-   /// uptrend (bearish), which the code does not verify. — <b>unchecked</b>
-   /// variant of <c>CdlEngulfing</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlEngulfingUnguarded( int startIdx,
-                                          int endIdx,
-                                          float[] inOpen,
-                                          float[] inHigh,
-                                          float[] inLow,
-                                          float[] inClose,
-                                          int[] outInteger )
-   {
-      CdlEngulfingUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

@@ -99,53 +99,6 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode trueRangeUnguardedInternal( int startIdx,
-                                       int endIdx,
-                                       double inHigh[],
-                                       double inLow[],
-                                       double inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       double outReal[] )
-   {
-      int today = 0;
-      int outIdx = 0;
-      double val2 = 0;
-      double val3 = 0;
-      double greatest = 0;
-      double tempCY = 0;
-      double tempLT = 0;
-      double tempHT = 0;
-      if( startIdx < 1 ) {
-         startIdx = 1;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      while( today <= endIdx ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
-         greatest = tempHT - tempLT;
-         val2 = Math.abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
-         val3 = Math.abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
-         outReal[outIdx++] = greatest;
-         today += 1;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
    RetCode trueRangeInternal( int startIdx,
                               int endIdx,
                               float inHigh[],
@@ -169,53 +122,6 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( startIdx < 1 ) {
-         startIdx = 1;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      while( today <= endIdx ) {
-         tempLT = (double)inLow[today];
-         tempHT = (double)inHigh[today];
-         tempCY = (double)inClose[today - 1];
-         greatest = tempHT - tempLT;
-         val2 = Math.abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
-         val3 = Math.abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
-         outReal[outIdx++] = greatest;
-         today += 1;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode trueRangeUnguardedInternal( int startIdx,
-                                       int endIdx,
-                                       float inHigh[],
-                                       float inLow[],
-                                       float inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       double outReal[] )
-   {
-      int today = 0;
-      int outIdx = 0;
-      double val2 = 0;
-      double val3 = 0;
-      double greatest = 0;
-      double tempCY = 0;
-      double tempLT = 0;
-      double tempHT = 0;
       if( startIdx < 1 ) {
          startIdx = 1;
       }
@@ -302,35 +208,6 @@
     * True Range: the greatest of today's high-low span and the two gaps between
     * yesterday's close and today's high/low. Base volatility measure used to
     * build ATR/NATR. Larger values mean wider or gappier bars (higher
-    * volatility). — <b>unchecked</b> variant of {@link Core#trueRange}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange trueRangeUnguarded( int startIdx,
-                                       int endIdx,
-                                       double inHigh[],
-                                       double inLow[],
-                                       double inClose[],
-                                       double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      trueRangeUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * True Range: the greatest of today's high-low span and the two gaps between
-    * yesterday's close and today's high/low. Base volatility measure used to
-    * build ATR/NATR. Larger values mean wider or gappier bars (higher
     * volatility).
     * <p><b>Formula</b>
     * <pre>{@code
@@ -380,36 +257,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("TRANGE", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * True Range: the greatest of today's high-low span and the two gaps between
-    * yesterday's close and today's high/low. Base volatility measure used to
-    * build ATR/NATR. Larger values mean wider or gappier bars (higher
-    * volatility). — <b>unchecked</b> variant of {@link Core#trueRange}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange trueRangeUnguarded( int startIdx,
-                                       int endIdx,
-                                       float inHigh[],
-                                       float inLow[],
-                                       float inClose[],
-                                       double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      trueRangeUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

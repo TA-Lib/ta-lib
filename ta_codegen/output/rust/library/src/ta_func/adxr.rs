@@ -189,6 +189,12 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.adxr_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inHigh.len());
+        assert!(_assertStart > endIdx || endIdx < inLow.len());
+        assert!(_assertStart > endIdx || endIdx < inClose.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut adx: Vec<f64> = Vec::new();
         let mut adxrLookback: usize = 0_usize;
@@ -229,61 +235,6 @@ impl Core {
         // ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
         // the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
         // is adx[k]; the ADX range holds (period-1) more elements than the output.
-        nbElement = (*outNBElement) - (((optInTimePeriod - 1)) as usize);
-        // for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
-        outIdx = 0;
-        while outIdx < nbElement {
-            outReal[outIdx] = ((((adx[(outIdx + (((optInTimePeriod - 1)) as usize)) as usize] + adx[outIdx]) / 2.0)) as f64);
-            outIdx += 1;
-        }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = nbElement;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::adxr`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::adxr`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::adxr`].
-    #[inline]
-    pub fn adxr_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut adx: Vec<f64> = Vec::new();
-        let mut adxrLookback: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut nbElement: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
-        assert!(endIdx < inHigh.len());
-        assert!(endIdx < inLow.len());
-        assert!(endIdx < inClose.len());
-        let _assertLb = self.adxr_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        adxrLookback = self.adxr_lookback(optInTimePeriod);
-        if startIdx < adxrLookback {
-            startIdx = adxrLookback;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        adx = vec![0.0_f64; ((endIdx - startIdx + ((optInTimePeriod) as usize)) * 1) as usize];
-        retCode = self.adx((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
-        if retCode != RetCode::Success {
-            return retCode;
-        }
         nbElement = (*outNBElement) - (((optInTimePeriod - 1)) as usize);
         // for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
         outIdx = 0;

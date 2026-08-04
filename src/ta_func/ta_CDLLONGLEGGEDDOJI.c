@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -176,78 +176,6 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Unguarded( int    startIdx,
-                                                      int    endIdx,
-                                                      const double inOpen[],
-                                                      const double inHigh[],
-                                                      const double inLow[],
-                                                      const double inClose[],
-                                                      int          *outBegIdx,
-                                                      int          *outNBElement,
-                                                      int        outInteger[] )
-{
-   double BodyDojiPeriodTotal;
-   double ShadowLongPeriodTotal;
-   int i;
-   int outIdx;
-   int BodyDojiTrailingIdx;
-   int ShadowLongTrailingIdx;
-   int lookbackTotal;
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
-   int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
-   int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
-   int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
-   double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
-
-   lookbackTotal = TA_CDLLONGLEGGEDDOJI_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   BodyDojiPeriodTotal = 0;
-   BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
-   ShadowLongPeriodTotal = 0;
-   ShadowLongTrailingIdx = startIdx - ShadowLong_avgPeriod;
-   i = BodyDojiTrailingIdx;
-   while( i < startIdx )
-   {
-      BodyDojiPeriodTotal += TA_CANDLERANGE(BodyDoji,i);
-      i += 1;
-   }
-   i = ShadowLongTrailingIdx;
-   while( i < startIdx )
-   {
-      ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i);
-      i += 1;
-   }
-   outIdx = 0;
-   do
-   {
-      if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) || (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i)) )
-      {
-         outInteger[outIdx++] = 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      BodyDojiPeriodTotal += TA_CANDLERANGE(BodyDoji,i) - TA_CANDLERANGE(BodyDoji,BodyDojiTrailingIdx);
-      ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i) - TA_CANDLERANGE(ShadowLong,ShadowLongTrailingIdx);
-      i += 1;
-      BodyDojiTrailingIdx += 1;
-      ShadowLongTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_CDLLONGLEGGEDDOJI( int    startIdx,
                                    int    endIdx,
                                    const float inOpen[],
@@ -287,78 +215,6 @@ TA_RetCode TA_S_CDLLONGLEGGEDDOJI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
-
-   lookbackTotal = TA_CDLLONGLEGGEDDOJI_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   BodyDojiPeriodTotal = 0;
-   BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
-   ShadowLongPeriodTotal = 0;
-   ShadowLongTrailingIdx = startIdx - ShadowLong_avgPeriod;
-   i = BodyDojiTrailingIdx;
-   while( i < startIdx )
-   {
-      BodyDojiPeriodTotal += TA_CANDLERANGE(BodyDoji,i);
-      i += 1;
-   }
-   i = ShadowLongTrailingIdx;
-   while( i < startIdx )
-   {
-      ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i);
-      i += 1;
-   }
-   outIdx = 0;
-   do
-   {
-      if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) || ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i)) )
-      {
-         outInteger[outIdx++] = 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      BodyDojiPeriodTotal += TA_CANDLERANGE(BodyDoji,i) - TA_CANDLERANGE(BodyDoji,BodyDojiTrailingIdx);
-      ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i) - TA_CANDLERANGE(ShadowLong,ShadowLongTrailingIdx);
-      i += 1;
-      BodyDojiTrailingIdx += 1;
-      ShadowLongTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_CDLLONGLEGGEDDOJI_Unguarded( int    startIdx,
-                                             int    endIdx,
-                                             const float inOpen[],
-                                             const float inHigh[],
-                                             const float inLow[],
-                                             const float inClose[],
-                                             int          *outBegIdx,
-                                             int          *outNBElement,
-                                             int        outInteger[] )
-{
-   double BodyDojiPeriodTotal;
-   double ShadowLongPeriodTotal;
-   int i;
-   int outIdx;
-   int BodyDojiTrailingIdx;
-   int ShadowLongTrailingIdx;
-   int lookbackTotal;
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
-   int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
-   int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
-   int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
-   double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
 
    lookbackTotal = TA_CDLLONGLEGGEDDOJI_Lookback();
    if( startIdx < lookbackTotal )

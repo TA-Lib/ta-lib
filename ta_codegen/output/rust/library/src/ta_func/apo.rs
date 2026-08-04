@@ -200,6 +200,10 @@ impl Core {
         if ((optInMAType) as i32) == (i32::MIN) {
             optInMAType = 1;
         }
+        let _assertLb = self.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut tempBuffer: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;
@@ -233,59 +237,6 @@ impl Core {
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
         offset = fastNb - (*outNBElement);
         // Calculate (fast MA)-(slow MA) in the output.
-        // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-        i = 0;
-        while i < ((((*outNBElement) as usize)) as usize) {
-            outReal[i] = ((tempBuffer[i + offset] - outReal[i]) as f64);
-            i += 1;
-        }
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::apo`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::apo`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::apo`].
-    #[inline]
-    pub fn apo_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInFastPeriod: i32,
-        mut optInSlowPeriod: i32,
-        mut optInMAType: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut tempBuffer: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
-        let mut tempInteger: usize = 0_usize;
-        let mut fastBeg: usize = 0_usize;
-        let mut fastNb: usize = 0_usize;
-        let mut offset: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        tempBuffer = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
-        if optInSlowPeriod < optInFastPeriod {
-            tempInteger = (optInSlowPeriod) as usize;
-            optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
-        }
-        retCode = self.ma(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
-        if retCode != RetCode::Success {
-            return retCode;
-        }
-        retCode = self.ma(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-        if retCode != RetCode::Success {
-            return retCode;
-        }
-        offset = fastNb - (*outNBElement);
         // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
         while i < ((((*outNBElement) as usize)) as usize) {

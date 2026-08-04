@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -173,71 +173,6 @@ TA_LIB_API TA_RetCode TA_VWMA( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_VWMA_Unguarded( int    startIdx,
-                                         int    endIdx,
-                                         const double inReal[],
-                                         const double inVolume[],
-                                         int optInTimePeriod,
-                                         int          *outBegIdx,
-                                         int          *outNBElement,
-                                         double        outReal[] )
-{
-   double sumPV;
-   double sumV;
-   double tempPV;
-   double tempV;
-   double tempReal;
-   int i;
-   int outIdx;
-   int trailingIdx;
-   int lookbackTotal;
-
-   lookbackTotal = (int)(optInTimePeriod - 1);
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   sumPV = 0.0;
-   sumV = 0.0;
-   trailingIdx = startIdx - lookbackTotal;
-   i = trailingIdx;
-   if( optInTimePeriod > 1 )
-   {
-      while( i < startIdx )
-      {
-         tempReal = inReal[i] * inVolume[i];
-         sumPV += tempReal;
-         sumV += inVolume[i];
-         i = i + 1;
-      }
-   }
-   outIdx = 0;
-   while( i <= endIdx )
-   {
-      tempReal = inReal[i] * inVolume[i];
-      sumPV += tempReal;
-      sumV += inVolume[i];
-      i = i + 1;
-      tempPV = sumPV;
-      tempV = sumV;
-      tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
-      sumPV -= tempReal;
-      sumV -= inVolume[trailingIdx];
-      outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
-      trailingIdx = trailingIdx + 1;
-      outIdx = outIdx + 1;
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_VWMA( int    startIdx,
                       int    endIdx,
                       const float inReal[],
@@ -272,71 +207,6 @@ TA_RetCode TA_S_VWMA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   lookbackTotal = (int)(optInTimePeriod - 1);
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   sumPV = 0.0;
-   sumV = 0.0;
-   trailingIdx = startIdx - lookbackTotal;
-   i = trailingIdx;
-   if( optInTimePeriod > 1 )
-   {
-      while( i < startIdx )
-      {
-         tempReal = (double)inReal[i] * (double)inVolume[i];
-         sumPV += tempReal;
-         sumV += (double)inVolume[i];
-         i = i + 1;
-      }
-   }
-   outIdx = 0;
-   while( i <= endIdx )
-   {
-      tempReal = (double)inReal[i] * (double)inVolume[i];
-      sumPV += tempReal;
-      sumV += (double)inVolume[i];
-      i = i + 1;
-      tempPV = sumPV;
-      tempV = sumV;
-      tempReal = (double)inReal[trailingIdx] * (double)inVolume[trailingIdx];
-      sumPV -= tempReal;
-      sumV -= (double)inVolume[trailingIdx];
-      outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
-      trailingIdx = trailingIdx + 1;
-      outIdx = outIdx + 1;
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_VWMA_Unguarded( int    startIdx,
-                                int    endIdx,
-                                const float inReal[],
-                                const float inVolume[],
-                                int optInTimePeriod,
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                double        outReal[] )
-{
-   double sumPV;
-   double sumV;
-   double tempPV;
-   double tempV;
-   double tempReal;
-   int i;
-   int outIdx;
-   int trailingIdx;
-   int lookbackTotal;
 
    lookbackTotal = (int)(optInTimePeriod - 1);
    if( startIdx < lookbackTotal )

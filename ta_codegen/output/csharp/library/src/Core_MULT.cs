@@ -98,29 +98,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode MultUnguarded( int startIdx,
-                                   int endIdx,
-                                   double[] inReal0,
-                                   double[] inReal1,
-                                   out int outBegIdx,
-                                   out int outNBElement,
-                                   double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int outIdx = 0;
-      int i = 0;
-      outIdx = 0;
-      i = startIdx;
-      while( i <= endIdx ) {
-         outReal[outIdx] = inReal0[i] * inReal1[i];
-         outIdx += 1;
-         i += 1;
-      }
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode Mult( int startIdx,
                           int endIdx,
                           float[] inReal0,
@@ -139,29 +116,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      outIdx = 0;
-      i = startIdx;
-      while( i <= endIdx ) {
-         outReal[outIdx] = (double)inReal0[i] * (double)inReal1[i];
-         outIdx += 1;
-         i += 1;
-      }
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode MultUnguarded( int startIdx,
-                                   int endIdx,
-                                   float[] inReal0,
-                                   float[] inReal1,
-                                   out int outBegIdx,
-                                   out int outNBElement,
-                                   double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int outIdx = 0;
-      int i = 0;
       outIdx = 0;
       i = startIdx;
       while( i <= endIdx ) {
@@ -218,40 +172,6 @@ public partial class Core
    }
    /// <summary>
    /// Element-wise multiplication of two input series. Produces outReal[i] =
-   /// inReal0[i] * inReal1[i]. — <b>unchecked</b> variant of <c>Mult</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal0">See the guarded method.</param>
-   /// <param name="inReal1">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange MultUnguarded( int startIdx,
-                                  int endIdx,
-                                  double[] inReal0,
-                                  double[] inReal1,
-                                  double[] outReal )
-   {
-      MultUnguarded(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Element-wise multiplication of two input series. Produces outReal[i] =
    /// inReal0[i] * inReal1[i].
    /// </summary>
    /// <remarks>
@@ -297,43 +217,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("MULT", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Element-wise multiplication of two input series. Produces outReal[i] =
-   /// inReal0[i] * inReal1[i]. — <b>unchecked</b> variant of <c>Mult</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal0">See the guarded method.</param>
-   /// <param name="inReal1">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange MultUnguarded( int startIdx,
-                                  int endIdx,
-                                  float[] inReal0,
-                                  float[] inReal1,
-                                  double[] outReal )
-   {
-      MultUnguarded(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

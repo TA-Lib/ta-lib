@@ -118,42 +118,6 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode rocUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      int inIdx = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      double tempReal = 0;
-      if( startIdx < optInTimePeriod ) {
-         startIdx = optInTimePeriod;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      inIdx = startIdx;
-      trailingIdx = startIdx - optInTimePeriod;
-      while( inIdx <= endIdx ) {
-         tempReal = inReal[trailingIdx++];
-         if( tempReal != 0.0 ) {
-            outReal[outIdx++] = (inReal[inIdx] / tempReal - 1.0) * 100.0;
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-         inIdx += 1;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
    RetCode rocInternal( int startIdx,
                         int endIdx,
                         float inReal[],
@@ -177,42 +141,6 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx < optInTimePeriod ) {
-         startIdx = optInTimePeriod;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      inIdx = startIdx;
-      trailingIdx = startIdx - optInTimePeriod;
-      while( inIdx <= endIdx ) {
-         tempReal = (double)inReal[trailingIdx++];
-         if( tempReal != 0.0 ) {
-            outReal[outIdx++] = ((double)inReal[inIdx] / tempReal - 1.0) * 100.0;
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-         inIdx += 1;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode rocUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      int inIdx = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      double tempReal = 0;
       if( startIdx < optInTimePeriod ) {
          startIdx = optInTimePeriod;
       }
@@ -290,35 +218,6 @@
     * Rate-of-change momentum oscillator: the percent change of price versus the
     * price optInTimePeriod bars earlier. Centered at zero with positive and
     * negative values. Positive when price rose over the period, negative when
-    * it fell; magnitude scales the move. — <b>unchecked</b> variant of
-    * {@link Core#roc}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange rocUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInTimePeriod,
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      rocUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Rate-of-change momentum oscillator: the percent change of price versus the
-    * price optInTimePeriod bars earlier. Centered at zero with positive and
-    * negative values. Positive when price rose over the period, negative when
     * it fell; magnitude scales the move.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -365,36 +264,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("ROC", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Rate-of-change momentum oscillator: the percent change of price versus the
-    * price optInTimePeriod bars earlier. Centered at zero with positive and
-    * negative values. Positive when price rose over the period, negative when
-    * it fell; magnitude scales the move. — <b>unchecked</b> variant of
-    * {@link Core#roc}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange rocUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInTimePeriod,
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      rocUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

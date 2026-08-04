@@ -156,6 +156,11 @@ impl Core {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
+        let _assertLb = self.pvi_lookback();
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inClose.len());
+        assert!(_assertStart > endIdx || endIdx < inVolume.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -176,55 +181,6 @@ impl Core {
             // prevClose != 0 guards the percentage-change division: a zero previous
             // close is a degenerate input that would otherwise emit NaN/Inf; carry
             // the index forward unchanged instead. Never triggers on real prices.
-            if tempVolume > prevVolume && prevClose != 0.0 {
-                prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
-            }
-            outReal[outIdx] = prevPVI;
-            outIdx += 1;
-            prevClose = tempClose;
-            prevVolume = tempVolume;
-        }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::pvi`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::pvi`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::pvi`].
-    #[inline]
-    pub fn pvi_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inClose: &[f64],
-        inVolume: &[f64],
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut prevPVI: f64 = 0.0_f64;
-        let mut prevClose: f64 = 0.0_f64;
-        let mut prevVolume: f64 = 0.0_f64;
-        let mut tempClose: f64 = 0.0_f64;
-        let mut tempVolume: f64 = 0.0_f64;
-        assert!(endIdx < inClose.len());
-        assert!(endIdx < inVolume.len());
-        let _assertLb = self.pvi_lookback();
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        prevPVI = 1000.0;
-        prevClose = inClose[startIdx];
-        prevVolume = inVolume[startIdx];
-        outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            tempClose = inClose[i];
-            tempVolume = inVolume[i];
             if tempVolume > prevVolume && prevClose != 0.0 {
                 prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
             }

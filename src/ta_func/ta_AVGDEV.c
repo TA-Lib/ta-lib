@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -129,55 +129,6 @@ TA_LIB_API TA_RetCode TA_AVGDEV( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_AVGDEV_Unguarded( int    startIdx,
-                                           int    endIdx,
-                                           const double inReal[],
-                                           int optInTimePeriod,
-                                           int          *outBegIdx,
-                                           int          *outNBElement,
-                                           double        outReal[] )
-{
-   int today;
-   int outIdx;
-   int lookback;
-
-   lookback = optInTimePeriod - 1;
-   if( startIdx < lookback )
-   {
-      startIdx = lookback;
-   }
-   today = startIdx;
-   if( today > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   *outBegIdx= today;
-   outIdx = 0;
-   while( today <= endIdx )
-   {
-      double todaySum;
-      double todayDev;
-      int i;
-      todaySum = 0.0;
-      for( i = 0; i < optInTimePeriod; i += 1 )
-      {
-         todaySum += inReal[today - i];
-      }
-      todayDev = 0.0;
-      for( i = 0; i < optInTimePeriod; i += 1 )
-      {
-         todayDev += fabs(inReal[today - i] - todaySum / optInTimePeriod);
-      }
-      outReal[outIdx] = todayDev / optInTimePeriod;
-      outIdx += 1;
-      today += 1;
-   }
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_AVGDEV( int    startIdx,
                         int    endIdx,
                         const float inReal[],
@@ -203,55 +154,6 @@ TA_RetCode TA_S_AVGDEV( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   lookback = optInTimePeriod - 1;
-   if( startIdx < lookback )
-   {
-      startIdx = lookback;
-   }
-   today = startIdx;
-   if( today > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   *outBegIdx= today;
-   outIdx = 0;
-   while( today <= endIdx )
-   {
-      double todaySum;
-      double todayDev;
-      int i;
-      todaySum = 0.0;
-      for( i = 0; i < optInTimePeriod; i += 1 )
-      {
-         todaySum += (double)inReal[today - i];
-      }
-      todayDev = 0.0;
-      for( i = 0; i < optInTimePeriod; i += 1 )
-      {
-         todayDev += fabs((double)inReal[today - i] - todaySum / optInTimePeriod);
-      }
-      outReal[outIdx] = todayDev / optInTimePeriod;
-      outIdx += 1;
-      today += 1;
-   }
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_AVGDEV_Unguarded( int    startIdx,
-                                  int    endIdx,
-                                  const float inReal[],
-                                  int optInTimePeriod,
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  double        outReal[] )
-{
-   int today;
-   int outIdx;
-   int lookback;
 
    lookback = optInTimePeriod - 1;
    if( startIdx < lookback )

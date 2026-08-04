@@ -143,12 +143,6 @@ fn check_c_variants(c: &str, upper: &str, name: &str) {
         name,
         upper
     );
-    assert!(
-        c.contains(&format!("TA_{}_Unguarded(", upper)),
-        "{}: C missing TA_{}_Unguarded",
-        name,
-        upper
-    );
     // TA_INT_* macros are no longer generated
     assert!(
         !c.contains(&format!("#define TA_INT_{}", upper)),
@@ -162,17 +156,17 @@ fn check_c_variants(c: &str, upper: &str, name: &str) {
         name,
         upper
     );
+    // #166: the unguarded tier is gone from every function, in both precisions.
     assert!(
-        c.contains(&format!("TA_S_{}_Unguarded(", upper)),
-        "{}: C missing TA_S_{}_Unguarded",
-        name,
-        upper
+        !c.contains("_Unguarded"),
+        "{name}: C must not emit an unguarded variant"
     );
 }
 
 /// Check that all Rust variants exist for a given indicator.
-/// After the 2-variant refactor: only `foo` (guarded) + `foo_unguarded`.
-/// No `_unchecked` or `_unguarded_unchecked` variants. Concrete f64 types, not generic.
+/// Since #166: `foo` (guarded) plus `foo_lookback`, and `foo_private` only for the
+/// definitions that declare one. No `_unguarded`, `_unchecked` or
+/// `_unguarded_unchecked` variants. Concrete f64 types, not generic.
 fn check_rust_generic_variants(r: &str, snake: &str, name: &str) {
     // Lookback (non-generic)
     assert!(
@@ -188,12 +182,11 @@ fn check_rust_generic_variants(r: &str, snake: &str, name: &str) {
         name,
         snake
     );
-    // Unguarded (concrete f64, no generics)
+    // #166: the unguarded tier is gone. `_private` survives for the one
+    // definition that declares it, so the assertion is on `_unguarded` only.
     assert!(
-        r.contains(&format!("fn {}_unguarded(", snake)),
-        "{}: Rust missing fn {}_unguarded(",
-        name,
-        snake
+        !r.contains("_unguarded"),
+        "{name}: Rust must not emit an unguarded variant"
     );
 }
 
@@ -212,11 +205,10 @@ fn check_java_variants(j: &str, lower: &str, name: &str) {
         name,
         lower
     );
+    // #166: the unguarded core and its public wrapper are gone.
     assert!(
-        j.contains(&format!("{}Unguarded(", lower)),
-        "{}: Java missing {}Unguarded",
-        name,
-        lower
+        !j.contains("Unguarded"),
+        "{name}: Java must not emit an unguarded variant"
     );
 }
 
@@ -502,13 +494,21 @@ fn test_ma_rust_cross_calls() {
 // ---------------------------------------------------------------------------
 
 /// Helper: extract the section of output between `start_marker` and `end_marker`.
-/// If `end_marker` is not found, returns everything after `start_marker`.
+///
+/// BOTH markers must be present. A missing end marker used to fall back to
+/// "everything after the start", which silently turned a bounded
+/// `contains(..)` assertion into "the whole output mentions this somewhere" —
+/// so a test kept passing while checking strictly less. #166 deleted several
+/// end markers at once (they named the `_Unguarded` variants), which is exactly
+/// the case that must fail loudly rather than go quiet.
 fn extract_section(output: &str, start_marker: &str, end_marker: &str) -> String {
     let start = output
         .find(start_marker)
-        .unwrap_or_else(|| panic!("Could not find '{}' in output", start_marker));
+        .unwrap_or_else(|| panic!("Could not find start marker '{start_marker}' in output"));
     let rest = &output[start..];
-    let end = rest.find(end_marker).unwrap_or(rest.len());
+    let end = rest.find(end_marker).unwrap_or_else(|| {
+        panic!("Could not find end marker '{end_marker}' after '{start_marker}' — the section would be unbounded")
+    });
     rest[..end].to_string()
 }
 
@@ -517,8 +517,9 @@ fn test_c_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");
     let out = generate_all(&func, &enums);
 
-    // Extract guarded function (between TA_SMA( and TA_SMA_Unguarded)
-    let guarded = extract_section(&out.c, "TA_RetCode TA_SMA(", "TA_SMA_Unguarded(");
+    // Bounded by the float twin, which now directly follows the double guarded
+    // body (#166 removed the `_Unguarded` variant that used to be the boundary).
+    let guarded = extract_section(&out.c, "TA_RetCode TA_SMA(", "TA_RetCode TA_S_SMA(");
     assert!(
         guarded.contains("TA_OUT_OF_RANGE_START_INDEX"),
         "C guarded SMA should have start index validation"
@@ -530,19 +531,26 @@ fn test_c_sma_guarded_has_validation() {
 }
 
 #[test]
-fn test_c_sma_logic_omits_validation() {
-    let (func, enums) = load_indicator("sma");
+fn test_c_ema_private_omits_validation() {
+    // #166 removed the `_Unguarded` tier this used to check. The surviving
+    // "exactly one tier validates" invariant is guarded-vs-`_Private`, so it is
+    // anchored on EMA — the one definition in ta_codegen/input/ with an
+    // explicit _private.
+    let (func, enums) = load_indicator("ema");
     let out = generate_all(&func, &enums);
 
-    // Extract logic function (between TA_SMA_Unguarded( and #define TA_INT_SMA)
-    let logic = extract_section(&out.c, "TA_SMA_Unguarded(", "TA_S_SMA(");
-    assert!(
-        !logic.contains("TA_OUT_OF_RANGE_START_INDEX"),
-        "C logic SMA should NOT have start index validation"
+    let private = extract_section(
+        &out.c,
+        "static TA_RetCode TA_EMA_Private(",
+        "TA_LIB_API TA_RetCode TA_EMA(",
     );
     assert!(
-        !logic.contains("TA_OUT_OF_RANGE_END_INDEX"),
-        "C logic SMA should NOT have end index validation"
+        !private.contains("TA_OUT_OF_RANGE_START_INDEX"),
+        "C EMA _Private should NOT have start index validation"
+    );
+    assert!(
+        !private.contains("TA_OUT_OF_RANGE_END_INDEX"),
+        "C EMA _Private should NOT have end index validation"
     );
 }
 
@@ -552,7 +560,7 @@ fn test_java_sma_guarded_has_validation() {
     let out = generate_all(&func, &enums);
 
     // Extract the guarded core (between its own signature and the unguarded one)
-    let guarded = extract_section(&out.java, "RetCode smaInternal(", "smaUnguardedInternal(");
+    let guarded = extract_section(&out.java, "RetCode smaInternal(", "public OutRange sma(");
     assert!(
         guarded.contains("OutOfRangeStartIndex"),
         "Java guarded SMA should have start index validation"
@@ -560,22 +568,14 @@ fn test_java_sma_guarded_has_validation() {
 }
 
 #[test]
-fn test_java_sma_logic_omits_validation() {
-    let (func, enums) = load_indicator("sma");
+fn test_java_ema_private_omits_validation() {
+    let (func, enums) = load_indicator("ema");
     let out = generate_all(&func, &enums);
 
-    // Extract unguarded function (find smaUnguarded, get section until next "public RetCode")
-    let logic_start = out.java.find("smaUnguarded(").expect("Missing smaUnguarded");
-    let logic_section = &out.java[logic_start..];
-    // Look for next public function or end
-    let end = logic_section
-        .find("public RetCode sma(")
-        .or_else(|| logic_section.find("public int"))
-        .unwrap_or(logic_section.len());
-    let logic = &logic_section[..end];
+    let private = extract_section(&out.java, "RetCode emaPrivate(", "RetCode emaInternal(");
     assert!(
-        !logic.contains("OutOfRangeStartIndex"),
-        "Java logic SMA should NOT have start index validation"
+        !private.contains("OutOfRangeStartIndex"),
+        "Java emaPrivate should NOT have start index validation"
     );
 }
 
@@ -584,13 +584,10 @@ fn test_rust_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");
     let out = generate_all(&func, &enums);
 
-    // The guarded Rust function delegates to _unguarded, but first validates params.
-    // After 2-variant refactor: concrete f64 types, no generics.
-    let guarded = extract_section(
-        &out.rust,
-        "pub fn sma(",
-        "pub fn sma_unguarded(",
-    );
+    // The guarded Rust function holds the algorithm and validates first.
+    // Bounded by the end of the impl block (#166 removed `pub fn sma_unguarded(`,
+    // which used to be the boundary).
+    let guarded = extract_section(&out.rust, "pub fn sma(", "\n}\n");
     assert!(
         guarded.contains("endIdx < startIdx"),
         "Rust guarded SMA should have endIdx < startIdx check"
@@ -598,45 +595,24 @@ fn test_rust_sma_guarded_has_validation() {
 }
 
 #[test]
-fn test_rust_sma_unguarded_omits_validation() {
-    let (func, enums) = load_indicator("sma");
+fn test_rust_ema_private_omits_validation() {
+    let (func, enums) = load_indicator("ema");
     let out = generate_all(&func, &enums);
 
-    // The unguarded function should not have the range check.
-    // After 2-variant refactor: concrete f64 types, no _unchecked variant.
-    let unguarded_start = out
-        .rust
-        .find("pub fn sma_unguarded(")
-        .expect("Missing sma_unguarded");
-    let unguarded_section = &out.rust[unguarded_start..];
-    // No _unchecked variant anymore; use end of impl block or file as boundary
-    let end = unguarded_section.len();
-    let unguarded = &unguarded_section[..end];
+    let private = extract_section(&out.rust, "pub fn ema_private(", "\n}\n");
     assert!(
-        !unguarded.contains("OutOfRangeStartIndex"),
-        "Rust unguarded SMA should NOT have range validation"
+        !private.contains("OutOfRangeStartIndex"),
+        "Rust ema_private should NOT have range validation"
     );
 }
 
 // Also test a different indicator for validation (RSI)
 #[test]
-fn test_c_rsi_logic_omits_validation() {
-    let (func, enums) = load_indicator("rsi");
-    let out = generate_all(&func, &enums);
-
-    let logic = extract_section(&out.c, "TA_RSI_Unguarded(", "TA_S_RSI(");
-    assert!(
-        !logic.contains("TA_OUT_OF_RANGE_START_INDEX"),
-        "C logic RSI should NOT have start index validation"
-    );
-}
-
-#[test]
 fn test_c_rsi_guarded_has_validation() {
     let (func, enums) = load_indicator("rsi");
     let out = generate_all(&func, &enums);
 
-    let guarded = extract_section(&out.c, "TA_RetCode TA_RSI(", "TA_RSI_Unguarded(");
+    let guarded = extract_section(&out.c, "TA_RetCode TA_RSI(", "TA_RetCode TA_S_RSI(");
     assert!(
         guarded.contains("TA_OUT_OF_RANGE_START_INDEX"),
         "C guarded RSI should have start index validation"
@@ -1178,8 +1154,8 @@ fn test_rust_generic_output_smoke() {
         "Rust SMA should have pub fn sma("
     );
     assert!(
-        r.contains("pub fn sma_unguarded("),
-        "Rust SMA should have pub fn sma_unguarded("
+        !r.contains("_unguarded"),
+        "Rust SMA must not emit an unguarded variant (#166)"
     );
 
     // 2. No _s suffix methods
@@ -1210,13 +1186,13 @@ fn test_rust_generic_output_smoke() {
         "Rust SMA should NOT contain _unguarded_unchecked variants"
     );
 
-    // 6. Exactly 5 pub fn: guarded + unguarded + lookback + the stream tier's
-    // open + open_and_fill (open_internal is pub(crate), update/peek live on
-    // the handle type).
+    // 6. Exactly 4 pub fn: guarded + lookback + the stream tier's open +
+    // open_and_fill (open_internal is pub(crate), update/peek live on the handle
+    // type). #166 removed the fifth, sma_unguarded.
     let pub_fn_count = r.matches("pub fn sma").count();
     assert_eq!(
-        pub_fn_count, 5,
-        "Rust SMA should have exactly 5 pub fn (sma, sma_unguarded, sma_lookback, sma_open, sma_open_and_fill), got {}",
+        pub_fn_count, 4,
+        "Rust SMA should have exactly 4 pub fn (sma, sma_lookback, sma_open, sma_open_and_fill), got {}",
         pub_fn_count
     );
 }
@@ -8014,17 +7990,13 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
             let calls = out.matches("ta_lib_dispatch::dispatch_fma!").count();
             let clones = out.matches("#[target_feature(enable = \"fma\")]").count();
             assert_eq!(calls, clones, "{name}: dispatcher/clone count mismatch");
-            // BOTH batch variants must carry their clone — a one-variant
-            // partial no-op keeps calls==clones balanced, so pin each by
-            // name. (A future private-delegating fused function would trip
-            // this on purpose: a human must decide where dispatch goes.)
+            // The surviving batch variant must carry its clone. (#166 removed
+            // the `_unguarded` twin that used to be pinned alongside it; a
+            // future private-delegating fused function would trip the
+            // dispatcher/clone balance above on purpose.)
             assert!(
                 out.contains(&format!("fn {name}_fma(")),
                 "{name}: guarded variant lost its FMA clone"
-            );
-            assert!(
-                out.contains(&format!("fn {name}_unguarded_fma(")),
-                "{name}: unguarded variant lost its FMA clone"
             );
             // The fused sites live on in the renamed portable impl.
             assert!(

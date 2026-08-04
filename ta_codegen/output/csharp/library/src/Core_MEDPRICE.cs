@@ -105,26 +105,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode MedPriceUnguarded( int startIdx,
-                                       int endIdx,
-                                       double[] inHigh,
-                                       double[] inLow,
-                                       out int outBegIdx,
-                                       out int outNBElement,
-                                       double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int outIdx = 0;
-      int i = 0;
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (inHigh[i] + inLow[i]) / 2.0;
-      }
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode MedPrice( int startIdx,
                               int endIdx,
                               float[] inHigh,
@@ -143,26 +123,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i]) / 2.0;
-      }
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode MedPriceUnguarded( int startIdx,
-                                       int endIdx,
-                                       float[] inHigh,
-                                       float[] inLow,
-                                       out int outBegIdx,
-                                       out int outNBElement,
-                                       double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int outIdx = 0;
-      int i = 0;
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
          outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i]) / 2.0;
@@ -216,40 +176,6 @@ public partial class Core
    }
    /// <summary>
    /// Median Price: the midpoint of each bar's high and low. A price-transform
-   /// overlay. — <b>unchecked</b> variant of <c>MedPrice</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange MedPriceUnguarded( int startIdx,
-                                      int endIdx,
-                                      double[] inHigh,
-                                      double[] inLow,
-                                      double[] outReal )
-   {
-      MedPriceUnguarded(startIdx, endIdx, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Median Price: the midpoint of each bar's high and low. A price-transform
    /// overlay.
    /// </summary>
    /// <remarks>
@@ -295,43 +221,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("MEDPRICE", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Median Price: the midpoint of each bar's high and low. A price-transform
-   /// overlay. — <b>unchecked</b> variant of <c>MedPrice</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange MedPriceUnguarded( int startIdx,
-                                      int endIdx,
-                                      float[] inHigh,
-                                      float[] inLow,
-                                      double[] outReal )
-   {
-      MedPriceUnguarded(startIdx, endIdx, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

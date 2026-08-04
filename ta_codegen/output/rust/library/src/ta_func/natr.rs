@@ -184,6 +184,12 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.natr_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inHigh.len());
+        assert!(_assertStart > endIdx || endIdx < inLow.len());
+        assert!(_assertStart > endIdx || endIdx < inClose.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -348,139 +354,6 @@ impl Core {
             prevATR /= ((optInTimePeriod) as f64);
             if optInTimePeriod <= 1 {
                 // No smoothing: emit the raw True Range (unnormalized).
-                outReal[outIdx] = prevATR;
-            } else {
-                tempValue = inClose[today];
-                if !((tempValue).abs() < 1e-14) {
-                    outReal[outIdx] = prevATR / tempValue * 100.0;
-                } else {
-                    outReal[outIdx] = 0.0;
-                }
-            }
-            outIdx += 1;
-            today += 1;
-        }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::natr`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::natr`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::natr`].
-    #[inline]
-    pub fn natr_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut nbATR: usize = 0_usize;
-        let mut prevATR: f64 = 0.0_f64;
-        let mut periodTotal: f64 = 0.0_f64;
-        let mut tempValue: f64 = 0.0_f64;
-        let mut val2: f64 = 0.0_f64;
-        let mut val3: f64 = 0.0_f64;
-        let mut greatest: f64 = 0.0_f64;
-        let mut tempCY: f64 = 0.0_f64;
-        let mut tempLT: f64 = 0.0_f64;
-        let mut tempHT: f64 = 0.0_f64;
-        assert!(endIdx < inHigh.len());
-        assert!(endIdx < inLow.len());
-        assert!(endIdx < inClose.len());
-        let _assertLb = self.natr_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
-        lookbackTotal = self.natr_lookback(optInTimePeriod);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            return RetCode::Success;
-        }
-        today = startIdx - lookbackTotal + 1;
-        periodTotal = 0.0;
-        i = (optInTimePeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            greatest = tempHT - tempLT;
-            val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
-            val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
-            periodTotal += greatest;
-            today += 1;
-        }
-        prevATR = periodTotal / ((optInTimePeriod) as f64);
-        i = (self.unstable_period[FuncUnstId::Natr as usize]) as usize;
-        while i != 0 {
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            greatest = tempHT - tempLT;
-            val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
-            val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
-            today += 1;
-            i -= 1;
-        }
-        outIdx = 1;
-        if optInTimePeriod <= 1 {
-            outReal[0] = prevATR;
-        } else {
-            tempValue = inClose[startIdx];
-            if !((tempValue).abs() < 1e-14) {
-                outReal[0] = prevATR / tempValue * 100.0;
-            } else {
-                outReal[0] = 0.0;
-            }
-        }
-        nbATR = endIdx - startIdx + 1;
-        while { nbATR = nbATR.wrapping_sub(1); nbATR } != 0 {
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            greatest = tempHT - tempLT;
-            val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
-            val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
-            if optInTimePeriod <= 1 {
                 outReal[outIdx] = prevATR;
             } else {
                 tempValue = inClose[today];

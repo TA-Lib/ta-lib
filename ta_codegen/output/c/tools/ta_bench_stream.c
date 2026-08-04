@@ -13,8 +13,7 @@
 
 #include "bench_corpus.h"
 
-#include "ta_func_unguarded.h"
-#include "ta_func/ta_func_private.h"
+#include "ta_func/ta_func_stream_private.h"
 
 #include "ta_common/ta_global.c"
 #include "ta_func/ta_utility.c"

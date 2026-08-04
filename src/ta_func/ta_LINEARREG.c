@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -186,75 +186,6 @@ TA_LIB_API TA_RetCode TA_LINEARREG( int    startIdx,
 }
 
 TA_FMA_MULTIVERSION
-TA_LIB_API TA_RetCode TA_LINEARREG_Unguarded( int    startIdx,
-                                              int    endIdx,
-                                              const double inReal[],
-                                              int optInTimePeriod,
-                                              int          *outBegIdx,
-                                              int          *outNBElement,
-                                              double        outReal[] )
-{
-   int outIdx;
-   int today;
-   int lookbackTotal;
-   int trailingIdx;
-   double SumX;
-   double SumXY;
-   double SumY;
-   double SumXSqr;
-   double Divisor;
-   double m;
-   double b;
-   int i;
-   double tempValue1;
-   double trailingValue;
-
-   lookbackTotal = TA_LINEARREG_Lookback(optInTimePeriod);
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outIdx = 0;
-   today = startIdx;
-   trailingIdx = startIdx - lookbackTotal;
-   SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-   SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
-   Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
-   SumXY = 0;
-   SumY = 0;
-   for( i = optInTimePeriod; i-- != 0;  )
-   {
-      tempValue1 = inReal[today - i];
-      SumY += tempValue1;
-      SumXY += (double)i * tempValue1;
-   }
-   m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-   b = (SumY - m * SumX) / (double)optInTimePeriod;
-   trailingValue = inReal[trailingIdx++];
-   outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
-   today += 1;
-   while( today <= endIdx )
-   {
-      SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
-      SumY = SumY - trailingValue + inReal[today];
-      m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-      b = (SumY - m * SumX) / (double)optInTimePeriod;
-      trailingValue = inReal[trailingIdx++];
-      outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
-      today += 1;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_FMA_MULTIVERSION
 TA_RetCode TA_S_LINEARREG( int    startIdx,
                            int    endIdx,
                            const float inReal[],
@@ -291,75 +222,6 @@ TA_RetCode TA_S_LINEARREG( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   lookbackTotal = TA_LINEARREG_Lookback(optInTimePeriod);
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outIdx = 0;
-   today = startIdx;
-   trailingIdx = startIdx - lookbackTotal;
-   SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-   SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
-   Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
-   SumXY = 0;
-   SumY = 0;
-   for( i = optInTimePeriod; i-- != 0;  )
-   {
-      tempValue1 = (double)inReal[today - i];
-      SumY += tempValue1;
-      SumXY += (double)i * tempValue1;
-   }
-   m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-   b = (SumY - m * SumX) / (double)optInTimePeriod;
-   trailingValue = (double)inReal[trailingIdx++];
-   outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
-   today += 1;
-   while( today <= endIdx )
-   {
-      SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
-      SumY = SumY - trailingValue + (double)inReal[today];
-      m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-      b = (SumY - m * SumX) / (double)optInTimePeriod;
-      trailingValue = (double)inReal[trailingIdx++];
-      outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
-      today += 1;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_FMA_MULTIVERSION
-TA_RetCode TA_S_LINEARREG_Unguarded( int    startIdx,
-                                     int    endIdx,
-                                     const float inReal[],
-                                     int optInTimePeriod,
-                                     int          *outBegIdx,
-                                     int          *outNBElement,
-                                     double        outReal[] )
-{
-   int outIdx;
-   int today;
-   int lookbackTotal;
-   int trailingIdx;
-   double SumX;
-   double SumXY;
-   double SumY;
-   double SumXSqr;
-   double Divisor;
-   double m;
-   double b;
-   int i;
-   double tempValue1;
-   double trailingValue;
 
    lookbackTotal = TA_LINEARREG_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )

@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -236,89 +236,6 @@ TA_LIB_API TA_RetCode TA_DEMA( int    startIdx,
 }
 
 TA_FMA_MULTIVERSION
-TA_LIB_API TA_RetCode TA_DEMA_Unguarded( int    startIdx,
-                                         int    endIdx,
-                                         const double inReal[],
-                                         int optInTimePeriod,
-                                         int          *outBegIdx,
-                                         int          *outNBElement,
-                                         double        outReal[] )
-{
-   double prevEMA1;
-   double prevEMA2;
-   double tempReal;
-   double optInK_1;
-   int i;
-   int today;
-   int outIdx;
-   int lookbackEMA;
-   int lookbackTotal;
-
-   *outNBElement= 0;
-   *outBegIdx= 0;
-   lookbackEMA = TA_EMA_Lookback(optInTimePeriod);
-   lookbackTotal = lookbackEMA * 2;
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      return TA_SUCCESS;
-   }
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
-   {
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
-      {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      while( today <= startIdx - lookbackEMA )
-      {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 )
-      {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         tempReal += prevEMA1;
-      }
-      prevEMA2 = tempReal / optInTimePeriod;
-   } else 
-   {
-      prevEMA1 = inReal[0];
-      today = 1;
-      while( today <= startIdx - lookbackEMA )
-      {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      prevEMA2 = prevEMA1;
-   }
-   while( today <= startIdx )
-   {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-   }
-   outReal[0] = 2.0 * prevEMA1 - prevEMA2;
-   outIdx = 1;
-   while( today <= endIdx )
-   {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      outReal[outIdx++] = 2.0 * prevEMA1 - prevEMA2;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_FMA_MULTIVERSION
 TA_RetCode TA_S_DEMA( int    startIdx,
                       int    endIdx,
                       const float inReal[],
@@ -350,89 +267,6 @@ TA_RetCode TA_S_DEMA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   *outNBElement= 0;
-   *outBegIdx= 0;
-   lookbackEMA = TA_EMA_Lookback(optInTimePeriod);
-   lookbackTotal = lookbackEMA * 2;
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      return TA_SUCCESS;
-   }
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
-   {
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
-      {
-         tempReal += (double)inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      while( today <= startIdx - lookbackEMA )
-      {
-         prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 )
-      {
-         prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         tempReal += prevEMA1;
-      }
-      prevEMA2 = tempReal / optInTimePeriod;
-   } else 
-   {
-      prevEMA1 = (double)inReal[0];
-      today = 1;
-      while( today <= startIdx - lookbackEMA )
-      {
-         prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      prevEMA2 = prevEMA1;
-   }
-   while( today <= startIdx )
-   {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-   }
-   outReal[0] = 2.0 * prevEMA1 - prevEMA2;
-   outIdx = 1;
-   while( today <= endIdx )
-   {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      outReal[outIdx++] = 2.0 * prevEMA1 - prevEMA2;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_FMA_MULTIVERSION
-TA_RetCode TA_S_DEMA_Unguarded( int    startIdx,
-                                int    endIdx,
-                                const float inReal[],
-                                int optInTimePeriod,
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                double        outReal[] )
-{
-   double prevEMA1;
-   double prevEMA2;
-   double tempReal;
-   double optInK_1;
-   int i;
-   int today;
-   int outIdx;
-   int lookbackEMA;
-   int lookbackTotal;
 
    *outNBElement= 0;
    *outBegIdx= 0;

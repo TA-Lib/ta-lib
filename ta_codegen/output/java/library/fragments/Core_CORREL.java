@@ -144,88 +144,6 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode correlUnguardedInternal( int startIdx,
-                                    int endIdx,
-                                    double inReal0[],
-                                    double inReal1[],
-                                    int optInTimePeriod,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outReal[] )
-   {
-      double sumXY = 0;
-      double sumX = 0;
-      double sumY = 0;
-      double sumX2 = 0;
-      double sumY2 = 0;
-      double x = 0;
-      double y = 0;
-      double trailingX = 0;
-      double trailingY = 0;
-      double tempReal = 0;
-      int lookbackTotal = 0;
-      int today = 0;
-      int trailingIdx = 0;
-      int outIdx = 0;
-      lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx.value = startIdx;
-      trailingIdx = startIdx - lookbackTotal;
-      sumY2 = 0.0;
-      sumX2 = sumY2;
-      sumY = sumX2;
-      sumX = sumY;
-      sumXY = sumX;
-      for( today = trailingIdx; today <= startIdx; today += 1 ) {
-         x = inReal0[today];
-         sumX += x;
-         sumX2 += x * x;
-         y = inReal1[today];
-         sumXY += x * y;
-         sumY += y;
-         sumY2 += y * y;
-      }
-      trailingX = inReal0[trailingIdx];
-      trailingY = inReal1[trailingIdx++];
-      tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-      if( !(tempReal < 0.00000000000001) ) {
-         outReal[0] = (sumXY - sumX * sumY / optInTimePeriod) / Math.sqrt(tempReal);
-      } else {
-         outReal[0] = 0.0;
-      }
-      outIdx = 1;
-      while( today <= endIdx ) {
-         sumX -= trailingX;
-         sumX2 -= trailingX * trailingX;
-         sumXY -= trailingX * trailingY;
-         sumY -= trailingY;
-         sumY2 -= trailingY * trailingY;
-         x = inReal0[today];
-         sumX += x;
-         sumX2 += x * x;
-         y = inReal1[today++];
-         sumXY += x * y;
-         sumY += y;
-         sumY2 += y * y;
-         trailingX = inReal0[trailingIdx];
-         trailingY = inReal1[trailingIdx++];
-         tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-         if( !(tempReal < 0.00000000000001) ) {
-            outReal[outIdx++] = (sumXY - sumX * sumY / optInTimePeriod) / Math.sqrt(tempReal);
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-      }
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
    RetCode correlInternal( int startIdx,
                            int endIdx,
                            float inReal0[],
@@ -260,88 +178,6 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx.value = startIdx;
-      trailingIdx = startIdx - lookbackTotal;
-      sumY2 = 0.0;
-      sumX2 = sumY2;
-      sumY = sumX2;
-      sumX = sumY;
-      sumXY = sumX;
-      for( today = trailingIdx; today <= startIdx; today += 1 ) {
-         x = (double)inReal0[today];
-         sumX += x;
-         sumX2 += x * x;
-         y = (double)inReal1[today];
-         sumXY += x * y;
-         sumY += y;
-         sumY2 += y * y;
-      }
-      trailingX = (double)inReal0[trailingIdx];
-      trailingY = (double)inReal1[trailingIdx++];
-      tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-      if( !(tempReal < 0.00000000000001) ) {
-         outReal[0] = (sumXY - sumX * sumY / optInTimePeriod) / Math.sqrt(tempReal);
-      } else {
-         outReal[0] = 0.0;
-      }
-      outIdx = 1;
-      while( today <= endIdx ) {
-         sumX -= trailingX;
-         sumX2 -= trailingX * trailingX;
-         sumXY -= trailingX * trailingY;
-         sumY -= trailingY;
-         sumY2 -= trailingY * trailingY;
-         x = (double)inReal0[today];
-         sumX += x;
-         sumX2 += x * x;
-         y = (double)inReal1[today++];
-         sumXY += x * y;
-         sumY += y;
-         sumY2 += y * y;
-         trailingX = (double)inReal0[trailingIdx];
-         trailingY = (double)inReal1[trailingIdx++];
-         tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-         if( !(tempReal < 0.00000000000001) ) {
-            outReal[outIdx++] = (sumXY - sumX * sumY / optInTimePeriod) / Math.sqrt(tempReal);
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-      }
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
-   RetCode correlUnguardedInternal( int startIdx,
-                                    int endIdx,
-                                    float inReal0[],
-                                    float inReal1[],
-                                    int optInTimePeriod,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outReal[] )
-   {
-      double sumXY = 0;
-      double sumX = 0;
-      double sumY = 0;
-      double sumX2 = 0;
-      double sumY2 = 0;
-      double x = 0;
-      double y = 0;
-      double trailingX = 0;
-      double trailingY = 0;
-      double tempReal = 0;
-      int lookbackTotal = 0;
-      int today = 0;
-      int trailingIdx = 0;
-      int outIdx = 0;
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -459,36 +295,6 @@
     * Pearson's correlation coefficient (r) between two input series over a
     * rolling window of optInTimePeriod bars. Measures how linearly the two
     * series move together. r near +1: strong positive co-movement; near -1:
-    * strong inverse; near 0: no linear relationship. — <b>unchecked</b> variant
-    * of {@link Core#correl}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange correlUnguarded( int startIdx,
-                                    int endIdx,
-                                    double inReal0[],
-                                    double inReal1[],
-                                    int optInTimePeriod,
-                                    double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      correlUnguardedInternal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Pearson's correlation coefficient (r) between two input series over a
-    * rolling window of optInTimePeriod bars. Measures how linearly the two
-    * series move together. r near +1: strong positive co-movement; near -1:
     * strong inverse; near 0: no linear relationship.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -540,37 +346,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("CORREL", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Pearson's correlation coefficient (r) between two input series over a
-    * rolling window of optInTimePeriod bars. Measures how linearly the two
-    * series move together. r near +1: strong positive co-movement; near -1:
-    * strong inverse; near 0: no linear relationship. — <b>unchecked</b> variant
-    * of {@link Core#correl}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange correlUnguarded( int startIdx,
-                                    int endIdx,
-                                    float inReal0[],
-                                    float inReal1[],
-                                    int optInTimePeriod,
-                                    double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      correlUnguardedInternal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

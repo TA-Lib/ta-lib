@@ -175,66 +175,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode VwmaUnguarded( int startIdx,
-                                   int endIdx,
-                                   double[] inReal,
-                                   double[] inVolume,
-                                   int optInTimePeriod,
-                                   out int outBegIdx,
-                                   out int outNBElement,
-                                   double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double sumPV = 0;
-      double sumV = 0;
-      double tempPV = 0;
-      double tempV = 0;
-      double tempReal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int lookbackTotal = 0;
-      lookbackTotal = (int)(optInTimePeriod - 1);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      sumPV = 0.0;
-      sumV = 0.0;
-      trailingIdx = startIdx - lookbackTotal;
-      i = trailingIdx;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            tempReal = inReal[i] * inVolume[i];
-            sumPV += tempReal;
-            sumV += inVolume[i];
-            i = i + 1;
-         }
-      }
-      outIdx = 0;
-      while( i <= endIdx ) {
-         tempReal = inReal[i] * inVolume[i];
-         sumPV += tempReal;
-         sumV += inVolume[i];
-         i = i + 1;
-         tempPV = sumPV;
-         tempV = sumV;
-         tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
-         sumPV -= tempReal;
-         sumV -= inVolume[trailingIdx];
-         outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
-         trailingIdx = trailingIdx + 1;
-         outIdx = outIdx + 1;
-      }
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode Vwma( int startIdx,
                           int endIdx,
                           float[] inReal,
@@ -266,66 +206,6 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = (int)(optInTimePeriod - 1);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      sumPV = 0.0;
-      sumV = 0.0;
-      trailingIdx = startIdx - lookbackTotal;
-      i = trailingIdx;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            tempReal = (double)inReal[i] * (double)inVolume[i];
-            sumPV += tempReal;
-            sumV += (double)inVolume[i];
-            i = i + 1;
-         }
-      }
-      outIdx = 0;
-      while( i <= endIdx ) {
-         tempReal = (double)inReal[i] * (double)inVolume[i];
-         sumPV += tempReal;
-         sumV += (double)inVolume[i];
-         i = i + 1;
-         tempPV = sumPV;
-         tempV = sumV;
-         tempReal = (double)inReal[trailingIdx] * (double)inVolume[trailingIdx];
-         sumPV -= tempReal;
-         sumV -= (double)inVolume[trailingIdx];
-         outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
-         trailingIdx = trailingIdx + 1;
-         outIdx = outIdx + 1;
-      }
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode VwmaUnguarded( int startIdx,
-                                   int endIdx,
-                                   float[] inReal,
-                                   float[] inVolume,
-                                   int optInTimePeriod,
-                                   out int outBegIdx,
-                                   out int outNBElement,
-                                   double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double sumPV = 0;
-      double sumV = 0;
-      double tempPV = 0;
-      double tempV = 0;
-      double tempReal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int lookbackTotal = 0;
       lookbackTotal = (int)(optInTimePeriod - 1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -433,50 +313,6 @@ public partial class Core
    /// it leads on high-volume moves and lags on low-volume drift, so the gap
    /// between the two lines measures how volume-confirmed a move is. It has no
    /// attributable inventor — charting-package folklore — and every published
-   /// definition agrees, so there is no competing variant. — <b>unchecked</b>
-   /// variant of <c>Vwma</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="inVolume">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange VwmaUnguarded( int startIdx,
-                                  int endIdx,
-                                  double[] inReal,
-                                  double[] inVolume,
-                                  int optInTimePeriod,
-                                  double[] outReal )
-   {
-      VwmaUnguarded(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Volume Weighted Moving Average: the mean price over a trailing window of
-   /// <c>optInTimePeriod</c> bars, each bar weighted by its own volume. Heavily
-   /// traded bars pull the average toward their price; quiet bars barely move
-   /// it. Read like any moving average — price above is strength, below is
-   /// weakness. Against a plain [<c>SMA</c>](/functions/sma) of the same window
-   /// it leads on high-volume moves and lags on low-volume drift, so the gap
-   /// between the two lines measures how volume-confirmed a move is. It has no
-   /// attributable inventor — charting-package folklore — and every published
    /// definition agrees, so there is no competing variant.
    /// </summary>
    /// <remarks>
@@ -530,53 +366,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("VWMA", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Volume Weighted Moving Average: the mean price over a trailing window of
-   /// <c>optInTimePeriod</c> bars, each bar weighted by its own volume. Heavily
-   /// traded bars pull the average toward their price; quiet bars barely move
-   /// it. Read like any moving average — price above is strength, below is
-   /// weakness. Against a plain [<c>SMA</c>](/functions/sma) of the same window
-   /// it leads on high-volume moves and lags on low-volume drift, so the gap
-   /// between the two lines measures how volume-confirmed a move is. It has no
-   /// attributable inventor — charting-package folklore — and every published
-   /// definition agrees, so there is no competing variant. — <b>unchecked</b>
-   /// variant of <c>Vwma</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="inVolume">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange VwmaUnguarded( int startIdx,
-                                  int endIdx,
-                                  float[] inReal,
-                                  float[] inVolume,
-                                  int optInTimePeriod,
-                                  double[] outReal )
-   {
-      VwmaUnguarded(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

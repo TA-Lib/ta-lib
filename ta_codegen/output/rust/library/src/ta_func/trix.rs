@@ -205,6 +205,10 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.trix_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut prevEMA1: f64 = 0.0_f64;
         let mut prevEMA2: f64 = 0.0_f64;
@@ -321,145 +325,6 @@ impl Core {
         }
         // Succeed. Indicate where the output starts relative to
         // the caller input.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::trix`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::trix`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::trix`].
-    #[inline]
-    pub fn trix_unguarded(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, trix_unguarded_fma, trix_unguarded_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
-        #[cfg(not(target_arch = "x86_64"))]
-        self.trix_unguarded_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
-    }
-    #[cfg(target_arch = "x86_64")]
-    #[target_feature(enable = "fma")]
-    fn trix_unguarded_fma(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        self.trix_unguarded_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
-    }
-    #[inline(always)]
-    fn trix_unguarded_impl(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut prevEMA1: f64 = 0.0_f64;
-        let mut prevEMA2: f64 = 0.0_f64;
-        let mut prevEMA3: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut optInK_1: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut lookbackEMA: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.trix_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        (*outNBElement) = 0;
-        (*outBegIdx) = 0;
-        lookbackEMA = self.ema_lookback(optInTimePeriod);
-        lookbackTotal = lookbackEMA * 3 + self.rocr_lookback(1);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            return RetCode::Success;
-        }
-        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
-        if self.compatibility == Compatibility::Default {
-            today = startIdx - lookbackTotal;
-            i = (optInTimePeriod) as usize;
-            tempReal = 0.0;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal += inReal[{ let _v = today; today += 1; _v }];
-            }
-            prevEMA1 = tempReal / ((optInTimePeriod) as f64);
-            while today <= startIdx - (lookbackEMA * 2 + 1) {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            }
-            tempReal = 0.0;
-            tempReal += prevEMA1;
-            i = (optInTimePeriod - 1) as usize;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-            }
-            prevEMA2 = tempReal / ((optInTimePeriod) as f64);
-        } else {
-            prevEMA1 = inReal[0];
-            today = 1;
-            while today <= startIdx - (lookbackEMA * 2 + 1) {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            }
-            prevEMA2 = prevEMA1;
-        }
-        while today <= startIdx - (lookbackEMA + 1) {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
-        }
-        if self.compatibility == Compatibility::Default {
-            tempReal = 0.0;
-            tempReal += prevEMA2;
-            i = (optInTimePeriod - 1) as usize;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-                prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-            }
-            prevEMA3 = tempReal / ((optInTimePeriod) as f64);
-        } else {
-            prevEMA3 = prevEMA2;
-        }
-        while today <= startIdx - 1 {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
-            prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
-        }
-        outIdx = 0;
-        while today <= endIdx {
-            tempReal = prevEMA3;
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
-            prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
-            if tempReal != 0.0 {
-                outReal[outIdx] = (prevEMA3 / tempReal - 1.0) * 100.0;
-                outIdx += 1;
-            } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
-            }
-        }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;

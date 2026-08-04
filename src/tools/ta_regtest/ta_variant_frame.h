@@ -35,11 +35,10 @@
 * Source of truth: ta_codegen/generator/src/backends/variant_frame.rs
 * (regenerate: cd ta_codegen/generator && cargo run -- generate)
 *
-* A uniform dispatcher over the four flavours every TA function ships:
-*   TA_<N>  TA_<N>_Unguarded  TA_S_<N>  TA_S_<N>_Unguarded
-* All four have identical arity, differing only in `double` vs `float`
-* input arrays and in whether the parameter-validation prologue is
-* present, so one signature per flavour covers every function.
+* A uniform dispatcher over the two flavours every TA function ships:
+*   TA_<N>   TA_S_<N>
+* Both have identical arity, differing only in `double` vs `float` input
+* arrays, so one signature per flavour covers every function.
 *
 * Used by src/tools/ta_regtest/ta_test_func/test_variants.c (issue #137).
 * Only regenerated when the `c` backend runs.
@@ -50,10 +49,6 @@
 
 #ifndef TA_FUNC_H
    #include "ta_func.h"
-#endif
-
-#ifndef TA_FUNC_UNGUARDED_H
-   #include "ta_func_unguarded.h"
 #endif
 
 /* Which test series feeds a given input slot. Price groups are already
@@ -90,20 +85,18 @@ typedef TA_RetCode (*TA_VFrameS)( int startIdx, int endIdx,
 typedef struct {
    const char          *name;         /* without the TA_ prefix */
    TA_VFrameD           guarded;      /* TA_<N>                */
-   TA_VFrameD           unguarded;    /* TA_<N>_Unguarded      */
    TA_VFrameS           single;       /* TA_S_<N>              */
-   TA_VFrameS           singleUnguarded; /* TA_S_<N>_Unguarded */
    int                  nbInput;      /* flattened array parameters */
    const TA_VInputKind *inputKind;
    int                  nbOptInput;
    const TA_VOptSpec   *optInput;     /* NULL when nbOptInput == 0 */
    int                  nbOutput;
    int                  outIsInteger; /* 1 = outputs are TA_Integer */
-   /* 1 when guarded and unguarded both delegate to a shared
-    * TA_<N>_Private body, making unguarded parity structurally true
-    * rather than tested. Derived from the definition having an
-    * explicit <name>_private() in ta_codegen/input/, so it can never
-    * go stale against a hand-maintained list. */
+   /* 1 when the guarded body delegates to a shared TA_<N>_Private
+    * rather than holding the algorithm inline. Derived from the
+    * definition having an explicit <name>_private() in
+    * ta_codegen/input/, so it can never go stale against a
+    * hand-maintained list. */
    int                  delegatesToPrivate;
 } TA_VariantEntry;
 
@@ -127,26 +120,6 @@ static TA_RetCode TA_ACCBANDS_VFrameD( int startIdx, int endIdx,
                outReal[2] /* outRealLowerBand */
                );
 }
-static TA_RetCode TA_ACCBANDS_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_ACCBANDS_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outRealUpperBand */,
-               outReal[1] /* outRealMiddleBand */,
-               outReal[2] /* outRealLowerBand */
-               );
-}
 static TA_RetCode TA_ACCBANDS_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -154,26 +127,6 @@ static TA_RetCode TA_ACCBANDS_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_ACCBANDS(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outRealUpperBand */,
-               outReal[1] /* outRealMiddleBand */,
-               outReal[2] /* outRealLowerBand */
-               );
-}
-static TA_RetCode TA_ACCBANDS_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_ACCBANDS_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -209,22 +162,6 @@ static TA_RetCode TA_ACOS_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ACOS_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_ACOS_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ACOS_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -233,22 +170,6 @@ static TA_RetCode TA_ACOS_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_ACOS(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ACOS_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_ACOS_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -279,25 +200,6 @@ static TA_RetCode TA_AD_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_AD_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_AD_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               in[3] /* inVolume */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_AD_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -306,25 +208,6 @@ static TA_RetCode TA_AD_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_AD(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               in[3] /* inVolume */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_AD_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_AD_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -356,23 +239,6 @@ static TA_RetCode TA_ADD_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ADD_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_ADD_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal0 */,
-               in[1] /* inReal1 */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ADD_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -381,23 +247,6 @@ static TA_RetCode TA_ADD_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_ADD(
-               startIdx,
-               endIdx,
-               in[0] /* inReal0 */,
-               in[1] /* inReal1 */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ADD_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_ADD_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal0 */,
@@ -430,26 +279,6 @@ static TA_RetCode TA_ADOSC_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ADOSC_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_ADOSC_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               in[3] /* inVolume */,
-               (int)optIn[0] /* optInFastPeriod */,
-               (int)optIn[1] /* optInSlowPeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ADOSC_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -457,26 +286,6 @@ static TA_RetCode TA_ADOSC_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_ADOSC(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               in[3] /* inVolume */,
-               (int)optIn[0] /* optInFastPeriod */,
-               (int)optIn[1] /* optInSlowPeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ADOSC_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_ADOSC_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -515,24 +324,6 @@ static TA_RetCode TA_ADX_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ADX_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_ADX_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ADX_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -540,24 +331,6 @@ static TA_RetCode TA_ADX_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_ADX(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ADX_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_ADX_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -593,24 +366,6 @@ static TA_RetCode TA_ADXR_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ADXR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_ADXR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ADXR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -618,24 +373,6 @@ static TA_RetCode TA_ADXR_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_ADXR(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ADXR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_ADXR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -671,24 +408,6 @@ static TA_RetCode TA_APO_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_APO_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_APO_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInFastPeriod */,
-               (int)optIn[1] /* optInSlowPeriod */,
-               (TA_MAType)(int)optIn[2] /* optInMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_APO_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -696,24 +415,6 @@ static TA_RetCode TA_APO_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_APO(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInFastPeriod */,
-               (int)optIn[1] /* optInSlowPeriod */,
-               (TA_MAType)(int)optIn[2] /* optInMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_APO_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_APO_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -751,24 +452,6 @@ static TA_RetCode TA_AROON_VFrameD( int startIdx, int endIdx,
                outReal[1] /* outAroonUp */
                );
 }
-static TA_RetCode TA_AROON_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_AROON_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outAroonDown */,
-               outReal[1] /* outAroonUp */
-               );
-}
 static TA_RetCode TA_AROON_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -776,24 +459,6 @@ static TA_RetCode TA_AROON_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_AROON(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outAroonDown */,
-               outReal[1] /* outAroonUp */
-               );
-}
-static TA_RetCode TA_AROON_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_AROON_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -828,23 +493,6 @@ static TA_RetCode TA_AROONOSC_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_AROONOSC_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_AROONOSC_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_AROONOSC_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -852,23 +500,6 @@ static TA_RetCode TA_AROONOSC_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_AROONOSC(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_AROONOSC_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_AROONOSC_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -901,22 +532,6 @@ static TA_RetCode TA_ASIN_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ASIN_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_ASIN_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ASIN_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -925,22 +540,6 @@ static TA_RetCode TA_ASIN_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_ASIN(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ASIN_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_ASIN_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -968,22 +567,6 @@ static TA_RetCode TA_ATAN_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ATAN_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_ATAN_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ATAN_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -992,22 +575,6 @@ static TA_RetCode TA_ATAN_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_ATAN(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ATAN_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_ATAN_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -1037,24 +604,6 @@ static TA_RetCode TA_ATR_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ATR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_ATR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ATR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -1062,24 +611,6 @@ static TA_RetCode TA_ATR_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_ATR(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ATR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_ATR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -1113,22 +644,6 @@ static TA_RetCode TA_AVGDEV_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_AVGDEV_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_AVGDEV_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_AVGDEV_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -1136,22 +651,6 @@ static TA_RetCode TA_AVGDEV_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_AVGDEV(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_AVGDEV_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_AVGDEV_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -1186,25 +685,6 @@ static TA_RetCode TA_AVGPRICE_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_AVGPRICE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_AVGPRICE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_AVGPRICE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -1213,25 +693,6 @@ static TA_RetCode TA_AVGPRICE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_AVGPRICE(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_AVGPRICE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_AVGPRICE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -1267,27 +728,6 @@ static TA_RetCode TA_BBANDS_VFrameD( int startIdx, int endIdx,
                outReal[2] /* outRealLowerBand */
                );
 }
-static TA_RetCode TA_BBANDS_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_BBANDS_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               optIn[1] /* optInNbDevUp */,
-               optIn[2] /* optInNbDevDn */,
-               (TA_MAType)(int)optIn[3] /* optInMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outRealUpperBand */,
-               outReal[1] /* outRealMiddleBand */,
-               outReal[2] /* outRealLowerBand */
-               );
-}
 static TA_RetCode TA_BBANDS_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -1295,27 +735,6 @@ static TA_RetCode TA_BBANDS_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_BBANDS(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               optIn[1] /* optInNbDevUp */,
-               optIn[2] /* optInNbDevDn */,
-               (TA_MAType)(int)optIn[3] /* optInMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outRealUpperBand */,
-               outReal[1] /* outRealMiddleBand */,
-               outReal[2] /* outRealLowerBand */
-               );
-}
-static TA_RetCode TA_BBANDS_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_BBANDS_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -1356,23 +775,6 @@ static TA_RetCode TA_BETA_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_BETA_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_BETA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal0 */,
-               in[1] /* inReal1 */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_BETA_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -1380,23 +782,6 @@ static TA_RetCode TA_BETA_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_BETA(
-               startIdx,
-               endIdx,
-               in[0] /* inReal0 */,
-               in[1] /* inReal1 */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_BETA_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_BETA_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal0 */,
@@ -1432,25 +817,6 @@ static TA_RetCode TA_BOP_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_BOP_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_BOP_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_BOP_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -1459,25 +825,6 @@ static TA_RetCode TA_BOP_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_BOP(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_BOP_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_BOP_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -1510,24 +857,6 @@ static TA_RetCode TA_CCI_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_CCI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_CCI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_CCI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -1535,24 +864,6 @@ static TA_RetCode TA_CCI_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_CCI(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_CCI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_CCI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -1589,25 +900,6 @@ static TA_RetCode TA_CDL2CROWS_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDL2CROWS_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDL2CROWS_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDL2CROWS_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -1616,25 +908,6 @@ static TA_RetCode TA_CDL2CROWS_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDL2CROWS(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDL2CROWS_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDL2CROWS_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -1668,25 +941,6 @@ static TA_RetCode TA_CDL3BLACKCROWS_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDL3BLACKCROWS_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDL3BLACKCROWS_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDL3BLACKCROWS_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -1695,25 +949,6 @@ static TA_RetCode TA_CDL3BLACKCROWS_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDL3BLACKCROWS(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDL3BLACKCROWS_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDL3BLACKCROWS_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -1747,25 +982,6 @@ static TA_RetCode TA_CDL3INSIDE_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDL3INSIDE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDL3INSIDE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDL3INSIDE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -1774,25 +990,6 @@ static TA_RetCode TA_CDL3INSIDE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDL3INSIDE(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDL3INSIDE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDL3INSIDE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -1826,25 +1023,6 @@ static TA_RetCode TA_CDL3LINESTRIKE_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDL3LINESTRIKE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDL3LINESTRIKE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDL3LINESTRIKE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -1853,25 +1031,6 @@ static TA_RetCode TA_CDL3LINESTRIKE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDL3LINESTRIKE(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDL3LINESTRIKE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDL3LINESTRIKE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -1905,25 +1064,6 @@ static TA_RetCode TA_CDL3OUTSIDE_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDL3OUTSIDE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDL3OUTSIDE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDL3OUTSIDE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -1932,25 +1072,6 @@ static TA_RetCode TA_CDL3OUTSIDE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDL3OUTSIDE(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDL3OUTSIDE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDL3OUTSIDE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -1984,25 +1105,6 @@ static TA_RetCode TA_CDL3STARSINSOUTH_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDL3STARSINSOUTH_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDL3STARSINSOUTH_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDL3STARSINSOUTH_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2011,25 +1113,6 @@ static TA_RetCode TA_CDL3STARSINSOUTH_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDL3STARSINSOUTH(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDL3STARSINSOUTH_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDL3STARSINSOUTH_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -2063,25 +1146,6 @@ static TA_RetCode TA_CDL3WHITESOLDIERS_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDL3WHITESOLDIERS_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDL3WHITESOLDIERS_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDL3WHITESOLDIERS_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2090,25 +1154,6 @@ static TA_RetCode TA_CDL3WHITESOLDIERS_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDL3WHITESOLDIERS(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDL3WHITESOLDIERS_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDL3WHITESOLDIERS_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -2142,25 +1187,6 @@ static TA_RetCode TA_CDLABANDONEDBABY_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLABANDONEDBABY_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_CDLABANDONEDBABY_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLABANDONEDBABY_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2168,25 +1194,6 @@ static TA_RetCode TA_CDLABANDONEDBABY_VFrameS( int startIdx, int endIdx,
 {
    (void)outReal;
    return TA_S_CDLABANDONEDBABY(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLABANDONEDBABY_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_S_CDLABANDONEDBABY_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -2224,25 +1231,6 @@ static TA_RetCode TA_CDLADVANCEBLOCK_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLADVANCEBLOCK_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLADVANCEBLOCK_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLADVANCEBLOCK_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2251,25 +1239,6 @@ static TA_RetCode TA_CDLADVANCEBLOCK_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLADVANCEBLOCK(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLADVANCEBLOCK_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLADVANCEBLOCK_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -2303,25 +1272,6 @@ static TA_RetCode TA_CDLBELTHOLD_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLBELTHOLD_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLBELTHOLD_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLBELTHOLD_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2330,25 +1280,6 @@ static TA_RetCode TA_CDLBELTHOLD_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLBELTHOLD(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLBELTHOLD_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLBELTHOLD_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -2382,25 +1313,6 @@ static TA_RetCode TA_CDLBREAKAWAY_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLBREAKAWAY_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLBREAKAWAY_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLBREAKAWAY_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2409,25 +1321,6 @@ static TA_RetCode TA_CDLBREAKAWAY_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLBREAKAWAY(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLBREAKAWAY_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLBREAKAWAY_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -2461,25 +1354,6 @@ static TA_RetCode TA_CDLCLOSINGMARUBOZU_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLCLOSINGMARUBOZU_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLCLOSINGMARUBOZU_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLCLOSINGMARUBOZU_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2488,25 +1362,6 @@ static TA_RetCode TA_CDLCLOSINGMARUBOZU_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLCLOSINGMARUBOZU(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLCLOSINGMARUBOZU_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLCLOSINGMARUBOZU_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -2540,25 +1395,6 @@ static TA_RetCode TA_CDLCONCEALBABYSWALL_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLCONCEALBABYSWALL_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLCONCEALBABYSWALL_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLCONCEALBABYSWALL_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2567,25 +1403,6 @@ static TA_RetCode TA_CDLCONCEALBABYSWALL_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLCONCEALBABYSWALL(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLCONCEALBABYSWALL_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLCONCEALBABYSWALL_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -2619,25 +1436,6 @@ static TA_RetCode TA_CDLCOUNTERATTACK_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLCOUNTERATTACK_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLCOUNTERATTACK_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLCOUNTERATTACK_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2646,25 +1444,6 @@ static TA_RetCode TA_CDLCOUNTERATTACK_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLCOUNTERATTACK(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLCOUNTERATTACK_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLCOUNTERATTACK_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -2698,25 +1477,6 @@ static TA_RetCode TA_CDLDARKCLOUDCOVER_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLDARKCLOUDCOVER_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_CDLDARKCLOUDCOVER_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLDARKCLOUDCOVER_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2724,25 +1484,6 @@ static TA_RetCode TA_CDLDARKCLOUDCOVER_VFrameS( int startIdx, int endIdx,
 {
    (void)outReal;
    return TA_S_CDLDARKCLOUDCOVER(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLDARKCLOUDCOVER_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_S_CDLDARKCLOUDCOVER_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -2780,25 +1521,6 @@ static TA_RetCode TA_CDLDOJI_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLDOJI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLDOJI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLDOJI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2807,25 +1529,6 @@ static TA_RetCode TA_CDLDOJI_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLDOJI(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLDOJI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLDOJI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -2859,25 +1562,6 @@ static TA_RetCode TA_CDLDOJISTAR_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLDOJISTAR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLDOJISTAR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLDOJISTAR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2886,25 +1570,6 @@ static TA_RetCode TA_CDLDOJISTAR_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLDOJISTAR(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLDOJISTAR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLDOJISTAR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -2938,25 +1603,6 @@ static TA_RetCode TA_CDLDRAGONFLYDOJI_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLDRAGONFLYDOJI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLDRAGONFLYDOJI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLDRAGONFLYDOJI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -2965,25 +1611,6 @@ static TA_RetCode TA_CDLDRAGONFLYDOJI_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLDRAGONFLYDOJI(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLDRAGONFLYDOJI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLDRAGONFLYDOJI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3017,25 +1644,6 @@ static TA_RetCode TA_CDLENGULFING_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLENGULFING_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLENGULFING_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLENGULFING_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3044,25 +1652,6 @@ static TA_RetCode TA_CDLENGULFING_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLENGULFING(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLENGULFING_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLENGULFING_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3096,25 +1685,6 @@ static TA_RetCode TA_CDLEVENINGDOJISTAR_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLEVENINGDOJISTAR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_CDLEVENINGDOJISTAR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLEVENINGDOJISTAR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3122,25 +1692,6 @@ static TA_RetCode TA_CDLEVENINGDOJISTAR_VFrameS( int startIdx, int endIdx,
 {
    (void)outReal;
    return TA_S_CDLEVENINGDOJISTAR(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLEVENINGDOJISTAR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_S_CDLEVENINGDOJISTAR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3178,25 +1729,6 @@ static TA_RetCode TA_CDLEVENINGSTAR_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLEVENINGSTAR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_CDLEVENINGSTAR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLEVENINGSTAR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3204,25 +1736,6 @@ static TA_RetCode TA_CDLEVENINGSTAR_VFrameS( int startIdx, int endIdx,
 {
    (void)outReal;
    return TA_S_CDLEVENINGSTAR(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLEVENINGSTAR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_S_CDLEVENINGSTAR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3260,25 +1773,6 @@ static TA_RetCode TA_CDLGAPSIDESIDEWHITE_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLGAPSIDESIDEWHITE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLGAPSIDESIDEWHITE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLGAPSIDESIDEWHITE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3287,25 +1781,6 @@ static TA_RetCode TA_CDLGAPSIDESIDEWHITE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLGAPSIDESIDEWHITE(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLGAPSIDESIDEWHITE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLGAPSIDESIDEWHITE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3339,25 +1814,6 @@ static TA_RetCode TA_CDLGRAVESTONEDOJI_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLGRAVESTONEDOJI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLGRAVESTONEDOJI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLGRAVESTONEDOJI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3366,25 +1822,6 @@ static TA_RetCode TA_CDLGRAVESTONEDOJI_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLGRAVESTONEDOJI(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLGRAVESTONEDOJI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLGRAVESTONEDOJI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3418,25 +1855,6 @@ static TA_RetCode TA_CDLHAMMER_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLHAMMER_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLHAMMER_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLHAMMER_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3445,25 +1863,6 @@ static TA_RetCode TA_CDLHAMMER_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLHAMMER(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLHAMMER_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLHAMMER_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3497,25 +1896,6 @@ static TA_RetCode TA_CDLHANGINGMAN_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLHANGINGMAN_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLHANGINGMAN_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLHANGINGMAN_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3524,25 +1904,6 @@ static TA_RetCode TA_CDLHANGINGMAN_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLHANGINGMAN(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLHANGINGMAN_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLHANGINGMAN_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3576,25 +1937,6 @@ static TA_RetCode TA_CDLHARAMI_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLHARAMI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLHARAMI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLHARAMI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3603,25 +1945,6 @@ static TA_RetCode TA_CDLHARAMI_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLHARAMI(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLHARAMI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLHARAMI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3655,25 +1978,6 @@ static TA_RetCode TA_CDLHARAMICROSS_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLHARAMICROSS_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLHARAMICROSS_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLHARAMICROSS_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3682,25 +1986,6 @@ static TA_RetCode TA_CDLHARAMICROSS_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLHARAMICROSS(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLHARAMICROSS_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLHARAMICROSS_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3734,25 +2019,6 @@ static TA_RetCode TA_CDLHIGHWAVE_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLHIGHWAVE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLHIGHWAVE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLHIGHWAVE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3761,25 +2027,6 @@ static TA_RetCode TA_CDLHIGHWAVE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLHIGHWAVE(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLHIGHWAVE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLHIGHWAVE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3813,25 +2060,6 @@ static TA_RetCode TA_CDLHIKKAKE_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLHIKKAKE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLHIKKAKE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLHIKKAKE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3840,25 +2068,6 @@ static TA_RetCode TA_CDLHIKKAKE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLHIKKAKE(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLHIKKAKE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLHIKKAKE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3892,25 +2101,6 @@ static TA_RetCode TA_CDLHIKKAKEMOD_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLHIKKAKEMOD_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLHIKKAKEMOD_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLHIKKAKEMOD_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3919,25 +2109,6 @@ static TA_RetCode TA_CDLHIKKAKEMOD_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLHIKKAKEMOD(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLHIKKAKEMOD_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLHIKKAKEMOD_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -3971,25 +2142,6 @@ static TA_RetCode TA_CDLHOMINGPIGEON_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLHOMINGPIGEON_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLHOMINGPIGEON_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLHOMINGPIGEON_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3998,25 +2150,6 @@ static TA_RetCode TA_CDLHOMINGPIGEON_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLHOMINGPIGEON(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLHOMINGPIGEON_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLHOMINGPIGEON_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -4050,25 +2183,6 @@ static TA_RetCode TA_CDLIDENTICAL3CROWS_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLIDENTICAL3CROWS_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLIDENTICAL3CROWS_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLIDENTICAL3CROWS_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -4077,25 +2191,6 @@ static TA_RetCode TA_CDLIDENTICAL3CROWS_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLIDENTICAL3CROWS(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLIDENTICAL3CROWS_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLIDENTICAL3CROWS_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -4129,25 +2224,6 @@ static TA_RetCode TA_CDLINNECK_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLINNECK_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLINNECK_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLINNECK_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -4156,25 +2232,6 @@ static TA_RetCode TA_CDLINNECK_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLINNECK(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLINNECK_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLINNECK_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -4208,25 +2265,6 @@ static TA_RetCode TA_CDLINVERTEDHAMMER_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLINVERTEDHAMMER_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLINVERTEDHAMMER_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLINVERTEDHAMMER_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -4235,25 +2273,6 @@ static TA_RetCode TA_CDLINVERTEDHAMMER_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLINVERTEDHAMMER(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLINVERTEDHAMMER_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLINVERTEDHAMMER_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -4287,25 +2306,6 @@ static TA_RetCode TA_CDLKICKING_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLKICKING_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLKICKING_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLKICKING_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -4314,25 +2314,6 @@ static TA_RetCode TA_CDLKICKING_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLKICKING(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLKICKING_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLKICKING_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -4366,25 +2347,6 @@ static TA_RetCode TA_CDLKICKINGBYLENGTH_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLKICKINGBYLENGTH_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLKICKINGBYLENGTH_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLKICKINGBYLENGTH_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -4393,25 +2355,6 @@ static TA_RetCode TA_CDLKICKINGBYLENGTH_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLKICKINGBYLENGTH(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLKICKINGBYLENGTH_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLKICKINGBYLENGTH_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -4445,25 +2388,6 @@ static TA_RetCode TA_CDLLADDERBOTTOM_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLLADDERBOTTOM_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLLADDERBOTTOM_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLLADDERBOTTOM_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -4472,25 +2396,6 @@ static TA_RetCode TA_CDLLADDERBOTTOM_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLLADDERBOTTOM(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLLADDERBOTTOM_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLLADDERBOTTOM_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -4524,25 +2429,6 @@ static TA_RetCode TA_CDLLONGLEGGEDDOJI_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLLONGLEGGEDDOJI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLLONGLEGGEDDOJI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLLONGLEGGEDDOJI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -4551,25 +2437,6 @@ static TA_RetCode TA_CDLLONGLEGGEDDOJI_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLLONGLEGGEDDOJI(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLLONGLEGGEDDOJI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLLONGLEGGEDDOJI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -4603,25 +2470,6 @@ static TA_RetCode TA_CDLLONGLINE_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLLONGLINE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLLONGLINE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLLONGLINE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -4630,25 +2478,6 @@ static TA_RetCode TA_CDLLONGLINE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLLONGLINE(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLLONGLINE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLLONGLINE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -4682,25 +2511,6 @@ static TA_RetCode TA_CDLMARUBOZU_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLMARUBOZU_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLMARUBOZU_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLMARUBOZU_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -4709,25 +2519,6 @@ static TA_RetCode TA_CDLMARUBOZU_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLMARUBOZU(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLMARUBOZU_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLMARUBOZU_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -4761,25 +2552,6 @@ static TA_RetCode TA_CDLMATCHINGLOW_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLMATCHINGLOW_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLMATCHINGLOW_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLMATCHINGLOW_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -4788,25 +2560,6 @@ static TA_RetCode TA_CDLMATCHINGLOW_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLMATCHINGLOW(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLMATCHINGLOW_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLMATCHINGLOW_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -4840,25 +2593,6 @@ static TA_RetCode TA_CDLMATHOLD_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLMATHOLD_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_CDLMATHOLD_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLMATHOLD_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -4866,25 +2600,6 @@ static TA_RetCode TA_CDLMATHOLD_VFrameS( int startIdx, int endIdx,
 {
    (void)outReal;
    return TA_S_CDLMATHOLD(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLMATHOLD_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_S_CDLMATHOLD_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -4922,25 +2637,6 @@ static TA_RetCode TA_CDLMORNINGDOJISTAR_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLMORNINGDOJISTAR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_CDLMORNINGDOJISTAR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLMORNINGDOJISTAR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -4948,25 +2644,6 @@ static TA_RetCode TA_CDLMORNINGDOJISTAR_VFrameS( int startIdx, int endIdx,
 {
    (void)outReal;
    return TA_S_CDLMORNINGDOJISTAR(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLMORNINGDOJISTAR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_S_CDLMORNINGDOJISTAR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5004,25 +2681,6 @@ static TA_RetCode TA_CDLMORNINGSTAR_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLMORNINGSTAR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_CDLMORNINGSTAR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLMORNINGSTAR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5030,25 +2688,6 @@ static TA_RetCode TA_CDLMORNINGSTAR_VFrameS( int startIdx, int endIdx,
 {
    (void)outReal;
    return TA_S_CDLMORNINGSTAR(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               optIn[0] /* optInPenetration */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLMORNINGSTAR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_S_CDLMORNINGSTAR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5086,25 +2725,6 @@ static TA_RetCode TA_CDLONNECK_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLONNECK_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLONNECK_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLONNECK_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5113,25 +2733,6 @@ static TA_RetCode TA_CDLONNECK_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLONNECK(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLONNECK_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLONNECK_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5165,25 +2766,6 @@ static TA_RetCode TA_CDLPIERCING_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLPIERCING_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLPIERCING_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLPIERCING_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5192,25 +2774,6 @@ static TA_RetCode TA_CDLPIERCING_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLPIERCING(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLPIERCING_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLPIERCING_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5244,25 +2807,6 @@ static TA_RetCode TA_CDLRICKSHAWMAN_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLRICKSHAWMAN_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLRICKSHAWMAN_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLRICKSHAWMAN_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5271,25 +2815,6 @@ static TA_RetCode TA_CDLRICKSHAWMAN_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLRICKSHAWMAN(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLRICKSHAWMAN_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLRICKSHAWMAN_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5323,25 +2848,6 @@ static TA_RetCode TA_CDLRISEFALL3METHODS_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLRISEFALL3METHODS_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLRISEFALL3METHODS_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLRISEFALL3METHODS_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5350,25 +2856,6 @@ static TA_RetCode TA_CDLRISEFALL3METHODS_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLRISEFALL3METHODS(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLRISEFALL3METHODS_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLRISEFALL3METHODS_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5402,25 +2889,6 @@ static TA_RetCode TA_CDLSEPARATINGLINES_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLSEPARATINGLINES_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLSEPARATINGLINES_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLSEPARATINGLINES_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5429,25 +2897,6 @@ static TA_RetCode TA_CDLSEPARATINGLINES_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLSEPARATINGLINES(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLSEPARATINGLINES_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLSEPARATINGLINES_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5481,25 +2930,6 @@ static TA_RetCode TA_CDLSHOOTINGSTAR_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLSHOOTINGSTAR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLSHOOTINGSTAR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLSHOOTINGSTAR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5508,25 +2938,6 @@ static TA_RetCode TA_CDLSHOOTINGSTAR_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLSHOOTINGSTAR(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLSHOOTINGSTAR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLSHOOTINGSTAR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5560,25 +2971,6 @@ static TA_RetCode TA_CDLSHORTLINE_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLSHORTLINE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLSHORTLINE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLSHORTLINE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5587,25 +2979,6 @@ static TA_RetCode TA_CDLSHORTLINE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLSHORTLINE(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLSHORTLINE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLSHORTLINE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5639,25 +3012,6 @@ static TA_RetCode TA_CDLSPINNINGTOP_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLSPINNINGTOP_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLSPINNINGTOP_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLSPINNINGTOP_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5666,25 +3020,6 @@ static TA_RetCode TA_CDLSPINNINGTOP_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLSPINNINGTOP(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLSPINNINGTOP_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLSPINNINGTOP_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5718,25 +3053,6 @@ static TA_RetCode TA_CDLSTALLEDPATTERN_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLSTALLEDPATTERN_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLSTALLEDPATTERN_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLSTALLEDPATTERN_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5745,25 +3061,6 @@ static TA_RetCode TA_CDLSTALLEDPATTERN_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLSTALLEDPATTERN(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLSTALLEDPATTERN_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLSTALLEDPATTERN_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5797,25 +3094,6 @@ static TA_RetCode TA_CDLSTICKSANDWICH_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLSTICKSANDWICH_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLSTICKSANDWICH_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLSTICKSANDWICH_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5824,25 +3102,6 @@ static TA_RetCode TA_CDLSTICKSANDWICH_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLSTICKSANDWICH(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLSTICKSANDWICH_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLSTICKSANDWICH_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5876,25 +3135,6 @@ static TA_RetCode TA_CDLTAKURI_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLTAKURI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLTAKURI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLTAKURI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5903,25 +3143,6 @@ static TA_RetCode TA_CDLTAKURI_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLTAKURI(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLTAKURI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLTAKURI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -5955,25 +3176,6 @@ static TA_RetCode TA_CDLTASUKIGAP_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLTASUKIGAP_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLTASUKIGAP_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLTASUKIGAP_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -5982,25 +3184,6 @@ static TA_RetCode TA_CDLTASUKIGAP_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLTASUKIGAP(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLTASUKIGAP_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLTASUKIGAP_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -6034,25 +3217,6 @@ static TA_RetCode TA_CDLTHRUSTING_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLTHRUSTING_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLTHRUSTING_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLTHRUSTING_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6061,25 +3225,6 @@ static TA_RetCode TA_CDLTHRUSTING_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLTHRUSTING(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLTHRUSTING_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLTHRUSTING_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -6113,25 +3258,6 @@ static TA_RetCode TA_CDLTRISTAR_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLTRISTAR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLTRISTAR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLTRISTAR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6140,25 +3266,6 @@ static TA_RetCode TA_CDLTRISTAR_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLTRISTAR(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLTRISTAR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLTRISTAR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -6192,25 +3299,6 @@ static TA_RetCode TA_CDLUNIQUE3RIVER_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLUNIQUE3RIVER_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLUNIQUE3RIVER_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLUNIQUE3RIVER_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6219,25 +3307,6 @@ static TA_RetCode TA_CDLUNIQUE3RIVER_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLUNIQUE3RIVER(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLUNIQUE3RIVER_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLUNIQUE3RIVER_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -6271,25 +3340,6 @@ static TA_RetCode TA_CDLUPSIDEGAP2CROWS_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLUPSIDEGAP2CROWS_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLUPSIDEGAP2CROWS_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLUPSIDEGAP2CROWS_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6298,25 +3348,6 @@ static TA_RetCode TA_CDLUPSIDEGAP2CROWS_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLUPSIDEGAP2CROWS(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLUPSIDEGAP2CROWS_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLUPSIDEGAP2CROWS_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -6350,25 +3381,6 @@ static TA_RetCode TA_CDLXSIDEGAP3METHODS_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_CDLXSIDEGAP3METHODS_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_CDLXSIDEGAP3METHODS_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_CDLXSIDEGAP3METHODS_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6377,25 +3389,6 @@ static TA_RetCode TA_CDLXSIDEGAP3METHODS_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_CDLXSIDEGAP3METHODS(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inHigh */,
-               in[2] /* inLow */,
-               in[3] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_CDLXSIDEGAP3METHODS_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_CDLXSIDEGAP3METHODS_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -6426,22 +3419,6 @@ static TA_RetCode TA_CEIL_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_CEIL_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_CEIL_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_CEIL_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6450,22 +3427,6 @@ static TA_RetCode TA_CEIL_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_CEIL(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_CEIL_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_CEIL_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -6496,25 +3457,6 @@ static TA_RetCode TA_CMF_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_CMF_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_CMF_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               in[3] /* inVolume */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_CMF_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6522,25 +3464,6 @@ static TA_RetCode TA_CMF_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_CMF(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               in[3] /* inVolume */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_CMF_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_CMF_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -6575,22 +3498,6 @@ static TA_RetCode TA_CMO_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_CMO_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_CMO_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_CMO_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6598,22 +3505,6 @@ static TA_RetCode TA_CMO_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_CMO(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_CMO_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_CMO_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -6645,22 +3536,6 @@ static TA_RetCode TA_CMOU_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_CMOU_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_CMOU_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_CMOU_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6668,22 +3543,6 @@ static TA_RetCode TA_CMOU_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_CMOU(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_CMOU_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_CMOU_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -6716,23 +3575,6 @@ static TA_RetCode TA_CORREL_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_CORREL_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_CORREL_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal0 */,
-               in[1] /* inReal1 */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_CORREL_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6740,23 +3582,6 @@ static TA_RetCode TA_CORREL_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_CORREL(
-               startIdx,
-               endIdx,
-               in[0] /* inReal0 */,
-               in[1] /* inReal1 */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_CORREL_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_CORREL_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal0 */,
@@ -6789,22 +3614,6 @@ static TA_RetCode TA_COS_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_COS_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_COS_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_COS_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6813,22 +3622,6 @@ static TA_RetCode TA_COS_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_COS(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_COS_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_COS_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -6856,22 +3649,6 @@ static TA_RetCode TA_COSH_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_COSH_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_COSH_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_COSH_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6880,22 +3657,6 @@ static TA_RetCode TA_COSH_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_COSH(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_COSH_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_COSH_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -6923,22 +3684,6 @@ static TA_RetCode TA_DEMA_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_DEMA_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_DEMA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_DEMA_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -6946,22 +3691,6 @@ static TA_RetCode TA_DEMA_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_DEMA(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_DEMA_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_DEMA_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -6994,23 +3723,6 @@ static TA_RetCode TA_DIV_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_DIV_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_DIV_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal0 */,
-               in[1] /* inReal1 */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_DIV_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7019,23 +3731,6 @@ static TA_RetCode TA_DIV_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_DIV(
-               startIdx,
-               endIdx,
-               in[0] /* inReal0 */,
-               in[1] /* inReal1 */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_DIV_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_DIV_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal0 */,
@@ -7066,24 +3761,6 @@ static TA_RetCode TA_DX_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_DX_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_DX_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_DX_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7091,24 +3768,6 @@ static TA_RetCode TA_DX_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_DX(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_DX_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_DX_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -7142,22 +3801,6 @@ static TA_RetCode TA_EMA_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_EMA_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_EMA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_EMA_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7165,22 +3808,6 @@ static TA_RetCode TA_EMA_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_EMA(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_EMA_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_EMA_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -7212,22 +3839,6 @@ static TA_RetCode TA_EXP_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_EXP_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_EXP_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_EXP_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7236,22 +3847,6 @@ static TA_RetCode TA_EXP_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_EXP(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_EXP_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_EXP_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -7279,22 +3874,6 @@ static TA_RetCode TA_FLOOR_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_FLOOR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_FLOOR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_FLOOR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7303,22 +3882,6 @@ static TA_RetCode TA_FLOOR_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_FLOOR(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_FLOOR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_FLOOR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -7346,22 +3909,6 @@ static TA_RetCode TA_HMA_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_HMA_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_HMA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_HMA_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7369,22 +3916,6 @@ static TA_RetCode TA_HMA_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_HMA(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_HMA_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_HMA_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -7416,22 +3947,6 @@ static TA_RetCode TA_HT_DCPERIOD_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_HT_DCPERIOD_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_HT_DCPERIOD_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_HT_DCPERIOD_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7440,22 +3955,6 @@ static TA_RetCode TA_HT_DCPERIOD_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_HT_DCPERIOD(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_HT_DCPERIOD_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_HT_DCPERIOD_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -7483,22 +3982,6 @@ static TA_RetCode TA_HT_DCPHASE_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_HT_DCPHASE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_HT_DCPHASE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_HT_DCPHASE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7507,22 +3990,6 @@ static TA_RetCode TA_HT_DCPHASE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_HT_DCPHASE(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_HT_DCPHASE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_HT_DCPHASE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -7551,23 +4018,6 @@ static TA_RetCode TA_HT_PHASOR_VFrameD( int startIdx, int endIdx,
                outReal[1] /* outQuadrature */
                );
 }
-static TA_RetCode TA_HT_PHASOR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_HT_PHASOR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outInPhase */,
-               outReal[1] /* outQuadrature */
-               );
-}
 static TA_RetCode TA_HT_PHASOR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7576,23 +4026,6 @@ static TA_RetCode TA_HT_PHASOR_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_HT_PHASOR(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outInPhase */,
-               outReal[1] /* outQuadrature */
-               );
-}
-static TA_RetCode TA_HT_PHASOR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_HT_PHASOR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -7622,23 +4055,6 @@ static TA_RetCode TA_HT_SINE_VFrameD( int startIdx, int endIdx,
                outReal[1] /* outLeadSine */
                );
 }
-static TA_RetCode TA_HT_SINE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_HT_SINE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outSine */,
-               outReal[1] /* outLeadSine */
-               );
-}
 static TA_RetCode TA_HT_SINE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7647,23 +4063,6 @@ static TA_RetCode TA_HT_SINE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_HT_SINE(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outSine */,
-               outReal[1] /* outLeadSine */
-               );
-}
-static TA_RetCode TA_HT_SINE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_HT_SINE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -7692,22 +4091,6 @@ static TA_RetCode TA_HT_TRENDLINE_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_HT_TRENDLINE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_HT_TRENDLINE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_HT_TRENDLINE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7716,22 +4099,6 @@ static TA_RetCode TA_HT_TRENDLINE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_HT_TRENDLINE(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_HT_TRENDLINE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_HT_TRENDLINE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -7759,22 +4126,6 @@ static TA_RetCode TA_HT_TRENDMODE_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_HT_TRENDMODE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_HT_TRENDMODE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_HT_TRENDMODE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7783,22 +4134,6 @@ static TA_RetCode TA_HT_TRENDMODE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outReal;
    return TA_S_HT_TRENDMODE(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_HT_TRENDMODE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outReal;
-   return TA_S_HT_TRENDMODE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -7827,23 +4162,6 @@ static TA_RetCode TA_IMI_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_IMI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_IMI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_IMI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7851,23 +4169,6 @@ static TA_RetCode TA_IMI_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_IMI(
-               startIdx,
-               endIdx,
-               in[0] /* inOpen */,
-               in[1] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_IMI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_IMI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inOpen */,
@@ -7900,22 +4201,6 @@ static TA_RetCode TA_KAMA_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_KAMA_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_KAMA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_KAMA_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7923,22 +4208,6 @@ static TA_RetCode TA_KAMA_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_KAMA(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_KAMA_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_KAMA_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -7970,22 +4239,6 @@ static TA_RetCode TA_LINEARREG_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_LINEARREG_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_LINEARREG_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_LINEARREG_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7993,22 +4246,6 @@ static TA_RetCode TA_LINEARREG_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_LINEARREG(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_LINEARREG_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_LINEARREG_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8040,22 +4277,6 @@ static TA_RetCode TA_LINEARREG_ANGLE_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_LINEARREG_ANGLE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_LINEARREG_ANGLE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_LINEARREG_ANGLE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8063,22 +4284,6 @@ static TA_RetCode TA_LINEARREG_ANGLE_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_LINEARREG_ANGLE(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_LINEARREG_ANGLE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_LINEARREG_ANGLE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8110,22 +4315,6 @@ static TA_RetCode TA_LINEARREG_INTERCEPT_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_LINEARREG_INTERCEPT_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_LINEARREG_INTERCEPT_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_LINEARREG_INTERCEPT_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8133,22 +4322,6 @@ static TA_RetCode TA_LINEARREG_INTERCEPT_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_LINEARREG_INTERCEPT(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_LINEARREG_INTERCEPT_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_LINEARREG_INTERCEPT_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8180,22 +4353,6 @@ static TA_RetCode TA_LINEARREG_SLOPE_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_LINEARREG_SLOPE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_LINEARREG_SLOPE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_LINEARREG_SLOPE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8203,22 +4360,6 @@ static TA_RetCode TA_LINEARREG_SLOPE_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_LINEARREG_SLOPE(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_LINEARREG_SLOPE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_LINEARREG_SLOPE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8250,22 +4391,6 @@ static TA_RetCode TA_LN_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_LN_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_LN_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_LN_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8274,22 +4399,6 @@ static TA_RetCode TA_LN_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_LN(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_LN_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_LN_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8317,22 +4426,6 @@ static TA_RetCode TA_LOG10_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_LOG10_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_LOG10_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_LOG10_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8341,22 +4434,6 @@ static TA_RetCode TA_LOG10_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_LOG10(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_LOG10_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_LOG10_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8385,23 +4462,6 @@ static TA_RetCode TA_MA_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_MA_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               (TA_MAType)(int)optIn[1] /* optInMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_MA_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8409,23 +4469,6 @@ static TA_RetCode TA_MA_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MA(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               (TA_MAType)(int)optIn[1] /* optInMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MA_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MA_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8463,26 +4506,6 @@ static TA_RetCode TA_MACD_VFrameD( int startIdx, int endIdx,
                outReal[2] /* outMACDHist */
                );
 }
-static TA_RetCode TA_MACD_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MACD_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInFastPeriod */,
-               (int)optIn[1] /* optInSlowPeriod */,
-               (int)optIn[2] /* optInSignalPeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outMACD */,
-               outReal[1] /* outMACDSignal */,
-               outReal[2] /* outMACDHist */
-               );
-}
 static TA_RetCode TA_MACD_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8490,26 +4513,6 @@ static TA_RetCode TA_MACD_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MACD(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInFastPeriod */,
-               (int)optIn[1] /* optInSlowPeriod */,
-               (int)optIn[2] /* optInSignalPeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outMACD */,
-               outReal[1] /* outMACDSignal */,
-               outReal[2] /* outMACDHist */
-               );
-}
-static TA_RetCode TA_MACD_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MACD_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8554,29 +4557,6 @@ static TA_RetCode TA_MACDEXT_VFrameD( int startIdx, int endIdx,
                outReal[2] /* outMACDHist */
                );
 }
-static TA_RetCode TA_MACDEXT_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MACDEXT_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInFastPeriod */,
-               (TA_MAType)(int)optIn[1] /* optInFastMAType */,
-               (int)optIn[2] /* optInSlowPeriod */,
-               (TA_MAType)(int)optIn[3] /* optInSlowMAType */,
-               (int)optIn[4] /* optInSignalPeriod */,
-               (TA_MAType)(int)optIn[5] /* optInSignalMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outMACD */,
-               outReal[1] /* outMACDSignal */,
-               outReal[2] /* outMACDHist */
-               );
-}
 static TA_RetCode TA_MACDEXT_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8584,29 +4564,6 @@ static TA_RetCode TA_MACDEXT_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MACDEXT(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInFastPeriod */,
-               (TA_MAType)(int)optIn[1] /* optInFastMAType */,
-               (int)optIn[2] /* optInSlowPeriod */,
-               (TA_MAType)(int)optIn[3] /* optInSlowMAType */,
-               (int)optIn[4] /* optInSignalPeriod */,
-               (TA_MAType)(int)optIn[5] /* optInSignalMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outMACD */,
-               outReal[1] /* outMACDSignal */,
-               outReal[2] /* outMACDHist */
-               );
-}
-static TA_RetCode TA_MACDEXT_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MACDEXT_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8652,24 +4609,6 @@ static TA_RetCode TA_MACDFIX_VFrameD( int startIdx, int endIdx,
                outReal[2] /* outMACDHist */
                );
 }
-static TA_RetCode TA_MACDFIX_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MACDFIX_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInSignalPeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outMACD */,
-               outReal[1] /* outMACDSignal */,
-               outReal[2] /* outMACDHist */
-               );
-}
 static TA_RetCode TA_MACDFIX_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8677,24 +4616,6 @@ static TA_RetCode TA_MACDFIX_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MACDFIX(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInSignalPeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outMACD */,
-               outReal[1] /* outMACDSignal */,
-               outReal[2] /* outMACDHist */
-               );
-}
-static TA_RetCode TA_MACDFIX_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MACDFIX_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8730,24 +4651,6 @@ static TA_RetCode TA_MAMA_VFrameD( int startIdx, int endIdx,
                outReal[1] /* outFAMA */
                );
 }
-static TA_RetCode TA_MAMA_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MAMA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               optIn[0] /* optInFastLimit */,
-               optIn[1] /* optInSlowLimit */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outMAMA */,
-               outReal[1] /* outFAMA */
-               );
-}
 static TA_RetCode TA_MAMA_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8755,24 +4658,6 @@ static TA_RetCode TA_MAMA_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MAMA(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               optIn[0] /* optInFastLimit */,
-               optIn[1] /* optInSlowLimit */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outMAMA */,
-               outReal[1] /* outFAMA */
-               );
-}
-static TA_RetCode TA_MAMA_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MAMA_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8810,25 +4695,6 @@ static TA_RetCode TA_MAVP_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_MAVP_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MAVP_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               in[1] /* inPeriods */,
-               (int)optIn[0] /* optInMinPeriod */,
-               (int)optIn[1] /* optInMaxPeriod */,
-               (TA_MAType)(int)optIn[2] /* optInMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_MAVP_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8836,25 +4702,6 @@ static TA_RetCode TA_MAVP_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MAVP(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               in[1] /* inPeriods */,
-               (int)optIn[0] /* optInMinPeriod */,
-               (int)optIn[1] /* optInMaxPeriod */,
-               (TA_MAType)(int)optIn[2] /* optInMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MAVP_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MAVP_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8891,22 +4738,6 @@ static TA_RetCode TA_MAX_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_MAX_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MAX_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_MAX_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8914,22 +4745,6 @@ static TA_RetCode TA_MAX_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MAX(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MAX_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MAX_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -8961,22 +4776,6 @@ static TA_RetCode TA_MAXINDEX_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_MAXINDEX_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_MAXINDEX_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_MAXINDEX_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8984,22 +4783,6 @@ static TA_RetCode TA_MAXINDEX_VFrameS( int startIdx, int endIdx,
 {
    (void)outReal;
    return TA_S_MAXINDEX(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_MAXINDEX_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_S_MAXINDEX_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -9032,23 +4815,6 @@ static TA_RetCode TA_MEDPRICE_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_MEDPRICE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_MEDPRICE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_MEDPRICE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9057,23 +4823,6 @@ static TA_RetCode TA_MEDPRICE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_MEDPRICE(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MEDPRICE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_MEDPRICE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -9105,25 +4854,6 @@ static TA_RetCode TA_MFI_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_MFI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MFI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               in[3] /* inVolume */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_MFI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9131,25 +4861,6 @@ static TA_RetCode TA_MFI_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MFI(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               in[3] /* inVolume */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MFI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MFI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -9184,22 +4895,6 @@ static TA_RetCode TA_MIDPOINT_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_MIDPOINT_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MIDPOINT_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_MIDPOINT_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9207,22 +4902,6 @@ static TA_RetCode TA_MIDPOINT_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MIDPOINT(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MIDPOINT_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MIDPOINT_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -9255,23 +4934,6 @@ static TA_RetCode TA_MIDPRICE_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_MIDPRICE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MIDPRICE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_MIDPRICE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9279,23 +4941,6 @@ static TA_RetCode TA_MIDPRICE_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MIDPRICE(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MIDPRICE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MIDPRICE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -9328,22 +4973,6 @@ static TA_RetCode TA_MIN_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_MIN_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MIN_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_MIN_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9351,22 +4980,6 @@ static TA_RetCode TA_MIN_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MIN(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MIN_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MIN_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -9398,22 +5011,6 @@ static TA_RetCode TA_MININDEX_VFrameD( int startIdx, int endIdx,
                outInteger[0] /* outInteger */
                );
 }
-static TA_RetCode TA_MININDEX_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_MININDEX_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
 static TA_RetCode TA_MININDEX_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9421,22 +5018,6 @@ static TA_RetCode TA_MININDEX_VFrameS( int startIdx, int endIdx,
 {
    (void)outReal;
    return TA_S_MININDEX(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outInteger */
-               );
-}
-static TA_RetCode TA_MININDEX_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_S_MININDEX_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -9469,23 +5050,6 @@ static TA_RetCode TA_MINMAX_VFrameD( int startIdx, int endIdx,
                outReal[1] /* outMax */
                );
 }
-static TA_RetCode TA_MINMAX_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MINMAX_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outMin */,
-               outReal[1] /* outMax */
-               );
-}
 static TA_RetCode TA_MINMAX_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9493,23 +5057,6 @@ static TA_RetCode TA_MINMAX_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MINMAX(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outMin */,
-               outReal[1] /* outMax */
-               );
-}
-static TA_RetCode TA_MINMAX_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MINMAX_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -9543,23 +5090,6 @@ static TA_RetCode TA_MINMAXINDEX_VFrameD( int startIdx, int endIdx,
                outInteger[1] /* outMaxIdx */
                );
 }
-static TA_RetCode TA_MINMAXINDEX_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_MINMAXINDEX_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outMinIdx */,
-               outInteger[1] /* outMaxIdx */
-               );
-}
 static TA_RetCode TA_MINMAXINDEX_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9567,23 +5097,6 @@ static TA_RetCode TA_MINMAXINDEX_VFrameS( int startIdx, int endIdx,
 {
    (void)outReal;
    return TA_S_MINMAXINDEX(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outInteger[0] /* outMinIdx */,
-               outInteger[1] /* outMaxIdx */
-               );
-}
-static TA_RetCode TA_MINMAXINDEX_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outReal;
-   return TA_S_MINMAXINDEX_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -9618,24 +5131,6 @@ static TA_RetCode TA_MINUS_DI_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_MINUS_DI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MINUS_DI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_MINUS_DI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9643,24 +5138,6 @@ static TA_RetCode TA_MINUS_DI_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MINUS_DI(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MINUS_DI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MINUS_DI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -9695,23 +5172,6 @@ static TA_RetCode TA_MINUS_DM_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_MINUS_DM_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MINUS_DM_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_MINUS_DM_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9719,23 +5179,6 @@ static TA_RetCode TA_MINUS_DM_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MINUS_DM(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MINUS_DM_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MINUS_DM_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -9768,22 +5211,6 @@ static TA_RetCode TA_MOM_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_MOM_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MOM_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_MOM_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9791,22 +5218,6 @@ static TA_RetCode TA_MOM_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_MOM(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MOM_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_MOM_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -9839,23 +5250,6 @@ static TA_RetCode TA_MULT_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_MULT_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_MULT_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal0 */,
-               in[1] /* inReal1 */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_MULT_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9864,23 +5258,6 @@ static TA_RetCode TA_MULT_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_MULT(
-               startIdx,
-               endIdx,
-               in[0] /* inReal0 */,
-               in[1] /* inReal1 */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MULT_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_MULT_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal0 */,
@@ -9911,24 +5288,6 @@ static TA_RetCode TA_NATR_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_NATR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_NATR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_NATR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9936,24 +5295,6 @@ static TA_RetCode TA_NATR_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_NATR(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_NATR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_NATR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -9988,23 +5329,6 @@ static TA_RetCode TA_NVI_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_NVI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_NVI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inClose */,
-               in[1] /* inVolume */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_NVI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10013,23 +5337,6 @@ static TA_RetCode TA_NVI_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_NVI(
-               startIdx,
-               endIdx,
-               in[0] /* inClose */,
-               in[1] /* inVolume */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_NVI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_NVI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inClose */,
@@ -10059,23 +5366,6 @@ static TA_RetCode TA_OBV_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_OBV_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_OBV_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               in[1] /* inVolume */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_OBV_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10084,23 +5374,6 @@ static TA_RetCode TA_OBV_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_OBV(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               in[1] /* inVolume */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_OBV_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_OBV_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -10131,24 +5404,6 @@ static TA_RetCode TA_PLUS_DI_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_PLUS_DI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_PLUS_DI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_PLUS_DI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10156,24 +5411,6 @@ static TA_RetCode TA_PLUS_DI_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_PLUS_DI(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_PLUS_DI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_PLUS_DI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -10208,23 +5445,6 @@ static TA_RetCode TA_PLUS_DM_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_PLUS_DM_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_PLUS_DM_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_PLUS_DM_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10232,23 +5452,6 @@ static TA_RetCode TA_PLUS_DM_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_PLUS_DM(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_PLUS_DM_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_PLUS_DM_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -10283,24 +5486,6 @@ static TA_RetCode TA_PPO_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_PPO_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_PPO_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInFastPeriod */,
-               (int)optIn[1] /* optInSlowPeriod */,
-               (TA_MAType)(int)optIn[2] /* optInMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_PPO_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10308,24 +5493,6 @@ static TA_RetCode TA_PPO_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_PPO(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInFastPeriod */,
-               (int)optIn[1] /* optInSlowPeriod */,
-               (TA_MAType)(int)optIn[2] /* optInMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_PPO_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_PPO_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -10362,23 +5529,6 @@ static TA_RetCode TA_PVI_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_PVI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_PVI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inClose */,
-               in[1] /* inVolume */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_PVI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10387,23 +5537,6 @@ static TA_RetCode TA_PVI_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_PVI(
-               startIdx,
-               endIdx,
-               in[0] /* inClose */,
-               in[1] /* inVolume */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_PVI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_PVI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inClose */,
@@ -10434,24 +5567,6 @@ static TA_RetCode TA_PVO_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_PVO_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_PVO_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inVolume */,
-               (int)optIn[0] /* optInFastPeriod */,
-               (int)optIn[1] /* optInSlowPeriod */,
-               (TA_MAType)(int)optIn[2] /* optInMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_PVO_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10459,24 +5574,6 @@ static TA_RetCode TA_PVO_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_PVO(
-               startIdx,
-               endIdx,
-               in[0] /* inVolume */,
-               (int)optIn[0] /* optInFastPeriod */,
-               (int)optIn[1] /* optInSlowPeriod */,
-               (TA_MAType)(int)optIn[2] /* optInMAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_PVO_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_PVO_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inVolume */,
@@ -10512,22 +5609,6 @@ static TA_RetCode TA_ROC_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ROC_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_ROC_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ROC_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10535,22 +5616,6 @@ static TA_RetCode TA_ROC_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_ROC(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ROC_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_ROC_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -10582,22 +5647,6 @@ static TA_RetCode TA_ROCP_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ROCP_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_ROCP_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ROCP_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10605,22 +5654,6 @@ static TA_RetCode TA_ROCP_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_ROCP(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ROCP_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_ROCP_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -10652,22 +5685,6 @@ static TA_RetCode TA_ROCR_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ROCR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_ROCR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ROCR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10675,22 +5692,6 @@ static TA_RetCode TA_ROCR_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_ROCR(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ROCR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_ROCR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -10722,22 +5723,6 @@ static TA_RetCode TA_ROCR100_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ROCR100_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_ROCR100_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ROCR100_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10745,22 +5730,6 @@ static TA_RetCode TA_ROCR100_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_ROCR100(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ROCR100_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_ROCR100_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -10792,22 +5761,6 @@ static TA_RetCode TA_RSI_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_RSI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_RSI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_RSI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10815,22 +5768,6 @@ static TA_RetCode TA_RSI_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_RSI(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_RSI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_RSI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -10864,24 +5801,6 @@ static TA_RetCode TA_SAR_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_SAR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_SAR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               optIn[0] /* optInAcceleration */,
-               optIn[1] /* optInMaximum */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_SAR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10889,24 +5808,6 @@ static TA_RetCode TA_SAR_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_SAR(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               optIn[0] /* optInAcceleration */,
-               optIn[1] /* optInMaximum */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_SAR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_SAR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -10949,30 +5850,6 @@ static TA_RetCode TA_SAREXT_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_SAREXT_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_SAREXT_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               optIn[0] /* optInStartValue */,
-               optIn[1] /* optInOffsetOnReverse */,
-               optIn[2] /* optInAccelerationInitLong */,
-               optIn[3] /* optInAccelerationLong */,
-               optIn[4] /* optInAccelerationMaxLong */,
-               optIn[5] /* optInAccelerationInitShort */,
-               optIn[6] /* optInAccelerationShort */,
-               optIn[7] /* optInAccelerationMaxShort */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_SAREXT_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10980,30 +5857,6 @@ static TA_RetCode TA_SAREXT_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_SAREXT(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               optIn[0] /* optInStartValue */,
-               optIn[1] /* optInOffsetOnReverse */,
-               optIn[2] /* optInAccelerationInitLong */,
-               optIn[3] /* optInAccelerationLong */,
-               optIn[4] /* optInAccelerationMaxLong */,
-               optIn[5] /* optInAccelerationInitShort */,
-               optIn[6] /* optInAccelerationShort */,
-               optIn[7] /* optInAccelerationMaxShort */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_SAREXT_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_SAREXT_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -11050,22 +5903,6 @@ static TA_RetCode TA_SIN_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_SIN_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_SIN_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_SIN_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11074,22 +5911,6 @@ static TA_RetCode TA_SIN_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_SIN(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_SIN_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_SIN_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -11117,22 +5938,6 @@ static TA_RetCode TA_SINH_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_SINH_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_SINH_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_SINH_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11141,22 +5946,6 @@ static TA_RetCode TA_SINH_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_SINH(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_SINH_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_SINH_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -11184,22 +5973,6 @@ static TA_RetCode TA_SMA_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_SMA_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_SMA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_SMA_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11207,22 +5980,6 @@ static TA_RetCode TA_SMA_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_SMA(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_SMA_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_SMA_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -11254,22 +6011,6 @@ static TA_RetCode TA_SQRT_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_SQRT_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_SQRT_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_SQRT_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11278,22 +6019,6 @@ static TA_RetCode TA_SQRT_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_SQRT(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_SQRT_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_SQRT_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -11322,23 +6047,6 @@ static TA_RetCode TA_STDDEV_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_STDDEV_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_STDDEV_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               optIn[1] /* optInNbDev */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_STDDEV_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11346,23 +6054,6 @@ static TA_RetCode TA_STDDEV_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_STDDEV(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               optIn[1] /* optInNbDev */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_STDDEV_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_STDDEV_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -11403,29 +6094,6 @@ static TA_RetCode TA_STOCH_VFrameD( int startIdx, int endIdx,
                outReal[1] /* outSlowD */
                );
 }
-static TA_RetCode TA_STOCH_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_STOCH_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInFastK_Period */,
-               (int)optIn[1] /* optInSlowK_Period */,
-               (TA_MAType)(int)optIn[2] /* optInSlowK_MAType */,
-               (int)optIn[3] /* optInSlowD_Period */,
-               (TA_MAType)(int)optIn[4] /* optInSlowD_MAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outSlowK */,
-               outReal[1] /* outSlowD */
-               );
-}
 static TA_RetCode TA_STOCH_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11433,29 +6101,6 @@ static TA_RetCode TA_STOCH_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_STOCH(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInFastK_Period */,
-               (int)optIn[1] /* optInSlowK_Period */,
-               (TA_MAType)(int)optIn[2] /* optInSlowK_MAType */,
-               (int)optIn[3] /* optInSlowD_Period */,
-               (TA_MAType)(int)optIn[4] /* optInSlowD_MAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outSlowK */,
-               outReal[1] /* outSlowD */
-               );
-}
-static TA_RetCode TA_STOCH_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_STOCH_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -11503,27 +6148,6 @@ static TA_RetCode TA_STOCHF_VFrameD( int startIdx, int endIdx,
                outReal[1] /* outFastD */
                );
 }
-static TA_RetCode TA_STOCHF_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_STOCHF_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInFastK_Period */,
-               (int)optIn[1] /* optInFastD_Period */,
-               (TA_MAType)(int)optIn[2] /* optInFastD_MAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outFastK */,
-               outReal[1] /* outFastD */
-               );
-}
 static TA_RetCode TA_STOCHF_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11531,27 +6155,6 @@ static TA_RetCode TA_STOCHF_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_STOCHF(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInFastK_Period */,
-               (int)optIn[1] /* optInFastD_Period */,
-               (TA_MAType)(int)optIn[2] /* optInFastD_MAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outFastK */,
-               outReal[1] /* outFastD */
-               );
-}
-static TA_RetCode TA_STOCHF_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_STOCHF_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -11594,26 +6197,6 @@ static TA_RetCode TA_STOCHRSI_VFrameD( int startIdx, int endIdx,
                outReal[1] /* outFastD */
                );
 }
-static TA_RetCode TA_STOCHRSI_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_STOCHRSI_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               (int)optIn[1] /* optInFastK_Period */,
-               (int)optIn[2] /* optInFastD_Period */,
-               (TA_MAType)(int)optIn[3] /* optInFastD_MAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outFastK */,
-               outReal[1] /* outFastD */
-               );
-}
 static TA_RetCode TA_STOCHRSI_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11621,26 +6204,6 @@ static TA_RetCode TA_STOCHRSI_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_STOCHRSI(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               (int)optIn[1] /* optInFastK_Period */,
-               (int)optIn[2] /* optInFastD_Period */,
-               (TA_MAType)(int)optIn[3] /* optInFastD_MAType */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outFastK */,
-               outReal[1] /* outFastD */
-               );
-}
-static TA_RetCode TA_STOCHRSI_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_STOCHRSI_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -11680,23 +6243,6 @@ static TA_RetCode TA_SUB_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_SUB_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_SUB_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal0 */,
-               in[1] /* inReal1 */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_SUB_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11705,23 +6251,6 @@ static TA_RetCode TA_SUB_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_SUB(
-               startIdx,
-               endIdx,
-               in[0] /* inReal0 */,
-               in[1] /* inReal1 */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_SUB_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_SUB_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal0 */,
@@ -11750,22 +6279,6 @@ static TA_RetCode TA_SUM_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_SUM_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_SUM_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_SUM_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11773,22 +6286,6 @@ static TA_RetCode TA_SUM_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_SUM(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_SUM_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_SUM_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -11821,23 +6318,6 @@ static TA_RetCode TA_T3_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_T3_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_T3_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               optIn[1] /* optInVFactor */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_T3_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11845,23 +6325,6 @@ static TA_RetCode TA_T3_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_T3(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               optIn[1] /* optInVFactor */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_T3_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_T3_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -11895,22 +6358,6 @@ static TA_RetCode TA_TAN_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_TAN_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_TAN_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_TAN_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11919,22 +6366,6 @@ static TA_RetCode TA_TAN_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_TAN(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_TAN_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_TAN_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -11962,22 +6393,6 @@ static TA_RetCode TA_TANH_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_TANH_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_TANH_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_TANH_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -11986,22 +6401,6 @@ static TA_RetCode TA_TANH_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_TANH(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_TANH_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_TANH_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -12029,22 +6428,6 @@ static TA_RetCode TA_TEMA_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_TEMA_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_TEMA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_TEMA_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -12052,22 +6435,6 @@ static TA_RetCode TA_TEMA_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_TEMA(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_TEMA_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_TEMA_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -12101,24 +6468,6 @@ static TA_RetCode TA_TRANGE_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_TRANGE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_TRANGE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_TRANGE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -12127,24 +6476,6 @@ static TA_RetCode TA_TRANGE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_TRANGE(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_TRANGE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_TRANGE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -12174,22 +6505,6 @@ static TA_RetCode TA_TRIMA_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_TRIMA_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_TRIMA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_TRIMA_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -12197,22 +6512,6 @@ static TA_RetCode TA_TRIMA_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_TRIMA(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_TRIMA_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_TRIMA_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -12244,22 +6543,6 @@ static TA_RetCode TA_TRIX_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_TRIX_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_TRIX_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_TRIX_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -12267,22 +6550,6 @@ static TA_RetCode TA_TRIX_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_TRIX(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_TRIX_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_TRIX_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -12314,22 +6581,6 @@ static TA_RetCode TA_TSF_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_TSF_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_TSF_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_TSF_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -12337,22 +6588,6 @@ static TA_RetCode TA_TSF_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_TSF(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_TSF_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_TSF_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -12386,24 +6621,6 @@ static TA_RetCode TA_TYPPRICE_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_TYPPRICE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_TYPPRICE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_TYPPRICE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -12412,24 +6629,6 @@ static TA_RetCode TA_TYPPRICE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_TYPPRICE(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_TYPPRICE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_TYPPRICE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -12463,26 +6662,6 @@ static TA_RetCode TA_ULTOSC_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_ULTOSC_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_ULTOSC_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod1 */,
-               (int)optIn[1] /* optInTimePeriod2 */,
-               (int)optIn[2] /* optInTimePeriod3 */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_ULTOSC_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -12490,26 +6669,6 @@ static TA_RetCode TA_ULTOSC_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_ULTOSC(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod1 */,
-               (int)optIn[1] /* optInTimePeriod2 */,
-               (int)optIn[2] /* optInTimePeriod3 */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_ULTOSC_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_ULTOSC_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -12548,23 +6707,6 @@ static TA_RetCode TA_VAR_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_VAR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_VAR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               optIn[1] /* optInNbDev */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_VAR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -12572,23 +6714,6 @@ static TA_RetCode TA_VAR_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_VAR(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               optIn[1] /* optInNbDev */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_VAR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_VAR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -12623,23 +6748,6 @@ static TA_RetCode TA_VWMA_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_VWMA_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_VWMA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               in[1] /* inVolume */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_VWMA_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -12647,23 +6755,6 @@ static TA_RetCode TA_VWMA_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_VWMA(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               in[1] /* inVolume */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_VWMA_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_VWMA_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inReal */,
@@ -12698,24 +6789,6 @@ static TA_RetCode TA_WCLPRICE_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_WCLPRICE_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_WCLPRICE_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_WCLPRICE_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -12724,24 +6797,6 @@ static TA_RetCode TA_WCLPRICE_VFrameS( int startIdx, int endIdx,
    (void)optIn;
    (void)outInteger;
    return TA_S_WCLPRICE(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_WCLPRICE_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)optIn;
-   (void)outInteger;
-   return TA_S_WCLPRICE_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -12773,24 +6828,6 @@ static TA_RetCode TA_WILLR_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_WILLR_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_WILLR_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_WILLR_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -12798,24 +6835,6 @@ static TA_RetCode TA_WILLR_VFrameS( int startIdx, int endIdx,
 {
    (void)outInteger;
    return TA_S_WILLR(
-               startIdx,
-               endIdx,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               in[2] /* inClose */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_WILLR_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_WILLR_Unguarded(
                startIdx,
                endIdx,
                in[0] /* inHigh */,
@@ -12849,22 +6868,6 @@ static TA_RetCode TA_WMA_VFrameD( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_WMA_VFrameDU( int startIdx, int endIdx,
-                  const double *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_WMA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 static TA_RetCode TA_WMA_VFrameS( int startIdx, int endIdx,
                   const float *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -12881,22 +6884,6 @@ static TA_RetCode TA_WMA_VFrameS( int startIdx, int endIdx,
                outReal[0] /* outReal */
                );
 }
-static TA_RetCode TA_WMA_VFrameSU( int startIdx, int endIdx,
-                  const float *const in[], const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_S_WMA_Unguarded(
-               startIdx,
-               endIdx,
-               in[0] /* inReal */,
-               (int)optIn[0] /* optInTimePeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
 
 static const TA_VInputKind TA_VIn_WMA[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_WMA[] = {
@@ -12904,341 +6891,341 @@ static const TA_VOptSpec TA_VOpt_WMA[] = {
 };
 
 static const TA_VariantEntry TA_VariantTable[] = {
-   { "ACCBANDS", TA_ACCBANDS_VFrameD, TA_ACCBANDS_VFrameDU, TA_ACCBANDS_VFrameS, TA_ACCBANDS_VFrameSU,
+   { "ACCBANDS", TA_ACCBANDS_VFrameD, TA_ACCBANDS_VFrameS,
      3, TA_VIn_ACCBANDS, 1, TA_VOpt_ACCBANDS, 3, 0, 0 },
-   { "ACOS", TA_ACOS_VFrameD, TA_ACOS_VFrameDU, TA_ACOS_VFrameS, TA_ACOS_VFrameSU,
+   { "ACOS", TA_ACOS_VFrameD, TA_ACOS_VFrameS,
      1, TA_VIn_ACOS, 0, NULL, 1, 0, 0 },
-   { "AD", TA_AD_VFrameD, TA_AD_VFrameDU, TA_AD_VFrameS, TA_AD_VFrameSU,
+   { "AD", TA_AD_VFrameD, TA_AD_VFrameS,
      4, TA_VIn_AD, 0, NULL, 1, 0, 0 },
-   { "ADD", TA_ADD_VFrameD, TA_ADD_VFrameDU, TA_ADD_VFrameS, TA_ADD_VFrameSU,
+   { "ADD", TA_ADD_VFrameD, TA_ADD_VFrameS,
      2, TA_VIn_ADD, 0, NULL, 1, 0, 0 },
-   { "ADOSC", TA_ADOSC_VFrameD, TA_ADOSC_VFrameDU, TA_ADOSC_VFrameS, TA_ADOSC_VFrameSU,
+   { "ADOSC", TA_ADOSC_VFrameD, TA_ADOSC_VFrameS,
      4, TA_VIn_ADOSC, 2, TA_VOpt_ADOSC, 1, 0, 0 },
-   { "ADX", TA_ADX_VFrameD, TA_ADX_VFrameDU, TA_ADX_VFrameS, TA_ADX_VFrameSU,
+   { "ADX", TA_ADX_VFrameD, TA_ADX_VFrameS,
      3, TA_VIn_ADX, 1, TA_VOpt_ADX, 1, 0, 0 },
-   { "ADXR", TA_ADXR_VFrameD, TA_ADXR_VFrameDU, TA_ADXR_VFrameS, TA_ADXR_VFrameSU,
+   { "ADXR", TA_ADXR_VFrameD, TA_ADXR_VFrameS,
      3, TA_VIn_ADXR, 1, TA_VOpt_ADXR, 1, 0, 0 },
-   { "APO", TA_APO_VFrameD, TA_APO_VFrameDU, TA_APO_VFrameS, TA_APO_VFrameSU,
+   { "APO", TA_APO_VFrameD, TA_APO_VFrameS,
      1, TA_VIn_APO, 3, TA_VOpt_APO, 1, 0, 0 },
-   { "AROON", TA_AROON_VFrameD, TA_AROON_VFrameDU, TA_AROON_VFrameS, TA_AROON_VFrameSU,
+   { "AROON", TA_AROON_VFrameD, TA_AROON_VFrameS,
      2, TA_VIn_AROON, 1, TA_VOpt_AROON, 2, 0, 0 },
-   { "AROONOSC", TA_AROONOSC_VFrameD, TA_AROONOSC_VFrameDU, TA_AROONOSC_VFrameS, TA_AROONOSC_VFrameSU,
+   { "AROONOSC", TA_AROONOSC_VFrameD, TA_AROONOSC_VFrameS,
      2, TA_VIn_AROONOSC, 1, TA_VOpt_AROONOSC, 1, 0, 0 },
-   { "ASIN", TA_ASIN_VFrameD, TA_ASIN_VFrameDU, TA_ASIN_VFrameS, TA_ASIN_VFrameSU,
+   { "ASIN", TA_ASIN_VFrameD, TA_ASIN_VFrameS,
      1, TA_VIn_ASIN, 0, NULL, 1, 0, 0 },
-   { "ATAN", TA_ATAN_VFrameD, TA_ATAN_VFrameDU, TA_ATAN_VFrameS, TA_ATAN_VFrameSU,
+   { "ATAN", TA_ATAN_VFrameD, TA_ATAN_VFrameS,
      1, TA_VIn_ATAN, 0, NULL, 1, 0, 0 },
-   { "ATR", TA_ATR_VFrameD, TA_ATR_VFrameDU, TA_ATR_VFrameS, TA_ATR_VFrameSU,
+   { "ATR", TA_ATR_VFrameD, TA_ATR_VFrameS,
      3, TA_VIn_ATR, 1, TA_VOpt_ATR, 1, 0, 0 },
-   { "AVGDEV", TA_AVGDEV_VFrameD, TA_AVGDEV_VFrameDU, TA_AVGDEV_VFrameS, TA_AVGDEV_VFrameSU,
+   { "AVGDEV", TA_AVGDEV_VFrameD, TA_AVGDEV_VFrameS,
      1, TA_VIn_AVGDEV, 1, TA_VOpt_AVGDEV, 1, 0, 0 },
-   { "AVGPRICE", TA_AVGPRICE_VFrameD, TA_AVGPRICE_VFrameDU, TA_AVGPRICE_VFrameS, TA_AVGPRICE_VFrameSU,
+   { "AVGPRICE", TA_AVGPRICE_VFrameD, TA_AVGPRICE_VFrameS,
      4, TA_VIn_AVGPRICE, 0, NULL, 1, 0, 0 },
-   { "BBANDS", TA_BBANDS_VFrameD, TA_BBANDS_VFrameDU, TA_BBANDS_VFrameS, TA_BBANDS_VFrameSU,
+   { "BBANDS", TA_BBANDS_VFrameD, TA_BBANDS_VFrameS,
      1, TA_VIn_BBANDS, 4, TA_VOpt_BBANDS, 3, 0, 0 },
-   { "BETA", TA_BETA_VFrameD, TA_BETA_VFrameDU, TA_BETA_VFrameS, TA_BETA_VFrameSU,
+   { "BETA", TA_BETA_VFrameD, TA_BETA_VFrameS,
      2, TA_VIn_BETA, 1, TA_VOpt_BETA, 1, 0, 0 },
-   { "BOP", TA_BOP_VFrameD, TA_BOP_VFrameDU, TA_BOP_VFrameS, TA_BOP_VFrameSU,
+   { "BOP", TA_BOP_VFrameD, TA_BOP_VFrameS,
      4, TA_VIn_BOP, 0, NULL, 1, 0, 0 },
-   { "CCI", TA_CCI_VFrameD, TA_CCI_VFrameDU, TA_CCI_VFrameS, TA_CCI_VFrameSU,
+   { "CCI", TA_CCI_VFrameD, TA_CCI_VFrameS,
      3, TA_VIn_CCI, 1, TA_VOpt_CCI, 1, 0, 0 },
-   { "CDL2CROWS", TA_CDL2CROWS_VFrameD, TA_CDL2CROWS_VFrameDU, TA_CDL2CROWS_VFrameS, TA_CDL2CROWS_VFrameSU,
+   { "CDL2CROWS", TA_CDL2CROWS_VFrameD, TA_CDL2CROWS_VFrameS,
      4, TA_VIn_CDL2CROWS, 0, NULL, 1, 1, 0 },
-   { "CDL3BLACKCROWS", TA_CDL3BLACKCROWS_VFrameD, TA_CDL3BLACKCROWS_VFrameDU, TA_CDL3BLACKCROWS_VFrameS, TA_CDL3BLACKCROWS_VFrameSU,
+   { "CDL3BLACKCROWS", TA_CDL3BLACKCROWS_VFrameD, TA_CDL3BLACKCROWS_VFrameS,
      4, TA_VIn_CDL3BLACKCROWS, 0, NULL, 1, 1, 0 },
-   { "CDL3INSIDE", TA_CDL3INSIDE_VFrameD, TA_CDL3INSIDE_VFrameDU, TA_CDL3INSIDE_VFrameS, TA_CDL3INSIDE_VFrameSU,
+   { "CDL3INSIDE", TA_CDL3INSIDE_VFrameD, TA_CDL3INSIDE_VFrameS,
      4, TA_VIn_CDL3INSIDE, 0, NULL, 1, 1, 0 },
-   { "CDL3LINESTRIKE", TA_CDL3LINESTRIKE_VFrameD, TA_CDL3LINESTRIKE_VFrameDU, TA_CDL3LINESTRIKE_VFrameS, TA_CDL3LINESTRIKE_VFrameSU,
+   { "CDL3LINESTRIKE", TA_CDL3LINESTRIKE_VFrameD, TA_CDL3LINESTRIKE_VFrameS,
      4, TA_VIn_CDL3LINESTRIKE, 0, NULL, 1, 1, 0 },
-   { "CDL3OUTSIDE", TA_CDL3OUTSIDE_VFrameD, TA_CDL3OUTSIDE_VFrameDU, TA_CDL3OUTSIDE_VFrameS, TA_CDL3OUTSIDE_VFrameSU,
+   { "CDL3OUTSIDE", TA_CDL3OUTSIDE_VFrameD, TA_CDL3OUTSIDE_VFrameS,
      4, TA_VIn_CDL3OUTSIDE, 0, NULL, 1, 1, 0 },
-   { "CDL3STARSINSOUTH", TA_CDL3STARSINSOUTH_VFrameD, TA_CDL3STARSINSOUTH_VFrameDU, TA_CDL3STARSINSOUTH_VFrameS, TA_CDL3STARSINSOUTH_VFrameSU,
+   { "CDL3STARSINSOUTH", TA_CDL3STARSINSOUTH_VFrameD, TA_CDL3STARSINSOUTH_VFrameS,
      4, TA_VIn_CDL3STARSINSOUTH, 0, NULL, 1, 1, 0 },
-   { "CDL3WHITESOLDIERS", TA_CDL3WHITESOLDIERS_VFrameD, TA_CDL3WHITESOLDIERS_VFrameDU, TA_CDL3WHITESOLDIERS_VFrameS, TA_CDL3WHITESOLDIERS_VFrameSU,
+   { "CDL3WHITESOLDIERS", TA_CDL3WHITESOLDIERS_VFrameD, TA_CDL3WHITESOLDIERS_VFrameS,
      4, TA_VIn_CDL3WHITESOLDIERS, 0, NULL, 1, 1, 0 },
-   { "CDLABANDONEDBABY", TA_CDLABANDONEDBABY_VFrameD, TA_CDLABANDONEDBABY_VFrameDU, TA_CDLABANDONEDBABY_VFrameS, TA_CDLABANDONEDBABY_VFrameSU,
+   { "CDLABANDONEDBABY", TA_CDLABANDONEDBABY_VFrameD, TA_CDLABANDONEDBABY_VFrameS,
      4, TA_VIn_CDLABANDONEDBABY, 1, TA_VOpt_CDLABANDONEDBABY, 1, 1, 0 },
-   { "CDLADVANCEBLOCK", TA_CDLADVANCEBLOCK_VFrameD, TA_CDLADVANCEBLOCK_VFrameDU, TA_CDLADVANCEBLOCK_VFrameS, TA_CDLADVANCEBLOCK_VFrameSU,
+   { "CDLADVANCEBLOCK", TA_CDLADVANCEBLOCK_VFrameD, TA_CDLADVANCEBLOCK_VFrameS,
      4, TA_VIn_CDLADVANCEBLOCK, 0, NULL, 1, 1, 0 },
-   { "CDLBELTHOLD", TA_CDLBELTHOLD_VFrameD, TA_CDLBELTHOLD_VFrameDU, TA_CDLBELTHOLD_VFrameS, TA_CDLBELTHOLD_VFrameSU,
+   { "CDLBELTHOLD", TA_CDLBELTHOLD_VFrameD, TA_CDLBELTHOLD_VFrameS,
      4, TA_VIn_CDLBELTHOLD, 0, NULL, 1, 1, 0 },
-   { "CDLBREAKAWAY", TA_CDLBREAKAWAY_VFrameD, TA_CDLBREAKAWAY_VFrameDU, TA_CDLBREAKAWAY_VFrameS, TA_CDLBREAKAWAY_VFrameSU,
+   { "CDLBREAKAWAY", TA_CDLBREAKAWAY_VFrameD, TA_CDLBREAKAWAY_VFrameS,
      4, TA_VIn_CDLBREAKAWAY, 0, NULL, 1, 1, 0 },
-   { "CDLCLOSINGMARUBOZU", TA_CDLCLOSINGMARUBOZU_VFrameD, TA_CDLCLOSINGMARUBOZU_VFrameDU, TA_CDLCLOSINGMARUBOZU_VFrameS, TA_CDLCLOSINGMARUBOZU_VFrameSU,
+   { "CDLCLOSINGMARUBOZU", TA_CDLCLOSINGMARUBOZU_VFrameD, TA_CDLCLOSINGMARUBOZU_VFrameS,
      4, TA_VIn_CDLCLOSINGMARUBOZU, 0, NULL, 1, 1, 0 },
-   { "CDLCONCEALBABYSWALL", TA_CDLCONCEALBABYSWALL_VFrameD, TA_CDLCONCEALBABYSWALL_VFrameDU, TA_CDLCONCEALBABYSWALL_VFrameS, TA_CDLCONCEALBABYSWALL_VFrameSU,
+   { "CDLCONCEALBABYSWALL", TA_CDLCONCEALBABYSWALL_VFrameD, TA_CDLCONCEALBABYSWALL_VFrameS,
      4, TA_VIn_CDLCONCEALBABYSWALL, 0, NULL, 1, 1, 0 },
-   { "CDLCOUNTERATTACK", TA_CDLCOUNTERATTACK_VFrameD, TA_CDLCOUNTERATTACK_VFrameDU, TA_CDLCOUNTERATTACK_VFrameS, TA_CDLCOUNTERATTACK_VFrameSU,
+   { "CDLCOUNTERATTACK", TA_CDLCOUNTERATTACK_VFrameD, TA_CDLCOUNTERATTACK_VFrameS,
      4, TA_VIn_CDLCOUNTERATTACK, 0, NULL, 1, 1, 0 },
-   { "CDLDARKCLOUDCOVER", TA_CDLDARKCLOUDCOVER_VFrameD, TA_CDLDARKCLOUDCOVER_VFrameDU, TA_CDLDARKCLOUDCOVER_VFrameS, TA_CDLDARKCLOUDCOVER_VFrameSU,
+   { "CDLDARKCLOUDCOVER", TA_CDLDARKCLOUDCOVER_VFrameD, TA_CDLDARKCLOUDCOVER_VFrameS,
      4, TA_VIn_CDLDARKCLOUDCOVER, 1, TA_VOpt_CDLDARKCLOUDCOVER, 1, 1, 0 },
-   { "CDLDOJI", TA_CDLDOJI_VFrameD, TA_CDLDOJI_VFrameDU, TA_CDLDOJI_VFrameS, TA_CDLDOJI_VFrameSU,
+   { "CDLDOJI", TA_CDLDOJI_VFrameD, TA_CDLDOJI_VFrameS,
      4, TA_VIn_CDLDOJI, 0, NULL, 1, 1, 0 },
-   { "CDLDOJISTAR", TA_CDLDOJISTAR_VFrameD, TA_CDLDOJISTAR_VFrameDU, TA_CDLDOJISTAR_VFrameS, TA_CDLDOJISTAR_VFrameSU,
+   { "CDLDOJISTAR", TA_CDLDOJISTAR_VFrameD, TA_CDLDOJISTAR_VFrameS,
      4, TA_VIn_CDLDOJISTAR, 0, NULL, 1, 1, 0 },
-   { "CDLDRAGONFLYDOJI", TA_CDLDRAGONFLYDOJI_VFrameD, TA_CDLDRAGONFLYDOJI_VFrameDU, TA_CDLDRAGONFLYDOJI_VFrameS, TA_CDLDRAGONFLYDOJI_VFrameSU,
+   { "CDLDRAGONFLYDOJI", TA_CDLDRAGONFLYDOJI_VFrameD, TA_CDLDRAGONFLYDOJI_VFrameS,
      4, TA_VIn_CDLDRAGONFLYDOJI, 0, NULL, 1, 1, 0 },
-   { "CDLENGULFING", TA_CDLENGULFING_VFrameD, TA_CDLENGULFING_VFrameDU, TA_CDLENGULFING_VFrameS, TA_CDLENGULFING_VFrameSU,
+   { "CDLENGULFING", TA_CDLENGULFING_VFrameD, TA_CDLENGULFING_VFrameS,
      4, TA_VIn_CDLENGULFING, 0, NULL, 1, 1, 0 },
-   { "CDLEVENINGDOJISTAR", TA_CDLEVENINGDOJISTAR_VFrameD, TA_CDLEVENINGDOJISTAR_VFrameDU, TA_CDLEVENINGDOJISTAR_VFrameS, TA_CDLEVENINGDOJISTAR_VFrameSU,
+   { "CDLEVENINGDOJISTAR", TA_CDLEVENINGDOJISTAR_VFrameD, TA_CDLEVENINGDOJISTAR_VFrameS,
      4, TA_VIn_CDLEVENINGDOJISTAR, 1, TA_VOpt_CDLEVENINGDOJISTAR, 1, 1, 0 },
-   { "CDLEVENINGSTAR", TA_CDLEVENINGSTAR_VFrameD, TA_CDLEVENINGSTAR_VFrameDU, TA_CDLEVENINGSTAR_VFrameS, TA_CDLEVENINGSTAR_VFrameSU,
+   { "CDLEVENINGSTAR", TA_CDLEVENINGSTAR_VFrameD, TA_CDLEVENINGSTAR_VFrameS,
      4, TA_VIn_CDLEVENINGSTAR, 1, TA_VOpt_CDLEVENINGSTAR, 1, 1, 0 },
-   { "CDLGAPSIDESIDEWHITE", TA_CDLGAPSIDESIDEWHITE_VFrameD, TA_CDLGAPSIDESIDEWHITE_VFrameDU, TA_CDLGAPSIDESIDEWHITE_VFrameS, TA_CDLGAPSIDESIDEWHITE_VFrameSU,
+   { "CDLGAPSIDESIDEWHITE", TA_CDLGAPSIDESIDEWHITE_VFrameD, TA_CDLGAPSIDESIDEWHITE_VFrameS,
      4, TA_VIn_CDLGAPSIDESIDEWHITE, 0, NULL, 1, 1, 0 },
-   { "CDLGRAVESTONEDOJI", TA_CDLGRAVESTONEDOJI_VFrameD, TA_CDLGRAVESTONEDOJI_VFrameDU, TA_CDLGRAVESTONEDOJI_VFrameS, TA_CDLGRAVESTONEDOJI_VFrameSU,
+   { "CDLGRAVESTONEDOJI", TA_CDLGRAVESTONEDOJI_VFrameD, TA_CDLGRAVESTONEDOJI_VFrameS,
      4, TA_VIn_CDLGRAVESTONEDOJI, 0, NULL, 1, 1, 0 },
-   { "CDLHAMMER", TA_CDLHAMMER_VFrameD, TA_CDLHAMMER_VFrameDU, TA_CDLHAMMER_VFrameS, TA_CDLHAMMER_VFrameSU,
+   { "CDLHAMMER", TA_CDLHAMMER_VFrameD, TA_CDLHAMMER_VFrameS,
      4, TA_VIn_CDLHAMMER, 0, NULL, 1, 1, 0 },
-   { "CDLHANGINGMAN", TA_CDLHANGINGMAN_VFrameD, TA_CDLHANGINGMAN_VFrameDU, TA_CDLHANGINGMAN_VFrameS, TA_CDLHANGINGMAN_VFrameSU,
+   { "CDLHANGINGMAN", TA_CDLHANGINGMAN_VFrameD, TA_CDLHANGINGMAN_VFrameS,
      4, TA_VIn_CDLHANGINGMAN, 0, NULL, 1, 1, 0 },
-   { "CDLHARAMI", TA_CDLHARAMI_VFrameD, TA_CDLHARAMI_VFrameDU, TA_CDLHARAMI_VFrameS, TA_CDLHARAMI_VFrameSU,
+   { "CDLHARAMI", TA_CDLHARAMI_VFrameD, TA_CDLHARAMI_VFrameS,
      4, TA_VIn_CDLHARAMI, 0, NULL, 1, 1, 0 },
-   { "CDLHARAMICROSS", TA_CDLHARAMICROSS_VFrameD, TA_CDLHARAMICROSS_VFrameDU, TA_CDLHARAMICROSS_VFrameS, TA_CDLHARAMICROSS_VFrameSU,
+   { "CDLHARAMICROSS", TA_CDLHARAMICROSS_VFrameD, TA_CDLHARAMICROSS_VFrameS,
      4, TA_VIn_CDLHARAMICROSS, 0, NULL, 1, 1, 0 },
-   { "CDLHIGHWAVE", TA_CDLHIGHWAVE_VFrameD, TA_CDLHIGHWAVE_VFrameDU, TA_CDLHIGHWAVE_VFrameS, TA_CDLHIGHWAVE_VFrameSU,
+   { "CDLHIGHWAVE", TA_CDLHIGHWAVE_VFrameD, TA_CDLHIGHWAVE_VFrameS,
      4, TA_VIn_CDLHIGHWAVE, 0, NULL, 1, 1, 0 },
-   { "CDLHIKKAKE", TA_CDLHIKKAKE_VFrameD, TA_CDLHIKKAKE_VFrameDU, TA_CDLHIKKAKE_VFrameS, TA_CDLHIKKAKE_VFrameSU,
+   { "CDLHIKKAKE", TA_CDLHIKKAKE_VFrameD, TA_CDLHIKKAKE_VFrameS,
      4, TA_VIn_CDLHIKKAKE, 0, NULL, 1, 1, 0 },
-   { "CDLHIKKAKEMOD", TA_CDLHIKKAKEMOD_VFrameD, TA_CDLHIKKAKEMOD_VFrameDU, TA_CDLHIKKAKEMOD_VFrameS, TA_CDLHIKKAKEMOD_VFrameSU,
+   { "CDLHIKKAKEMOD", TA_CDLHIKKAKEMOD_VFrameD, TA_CDLHIKKAKEMOD_VFrameS,
      4, TA_VIn_CDLHIKKAKEMOD, 0, NULL, 1, 1, 0 },
-   { "CDLHOMINGPIGEON", TA_CDLHOMINGPIGEON_VFrameD, TA_CDLHOMINGPIGEON_VFrameDU, TA_CDLHOMINGPIGEON_VFrameS, TA_CDLHOMINGPIGEON_VFrameSU,
+   { "CDLHOMINGPIGEON", TA_CDLHOMINGPIGEON_VFrameD, TA_CDLHOMINGPIGEON_VFrameS,
      4, TA_VIn_CDLHOMINGPIGEON, 0, NULL, 1, 1, 0 },
-   { "CDLIDENTICAL3CROWS", TA_CDLIDENTICAL3CROWS_VFrameD, TA_CDLIDENTICAL3CROWS_VFrameDU, TA_CDLIDENTICAL3CROWS_VFrameS, TA_CDLIDENTICAL3CROWS_VFrameSU,
+   { "CDLIDENTICAL3CROWS", TA_CDLIDENTICAL3CROWS_VFrameD, TA_CDLIDENTICAL3CROWS_VFrameS,
      4, TA_VIn_CDLIDENTICAL3CROWS, 0, NULL, 1, 1, 0 },
-   { "CDLINNECK", TA_CDLINNECK_VFrameD, TA_CDLINNECK_VFrameDU, TA_CDLINNECK_VFrameS, TA_CDLINNECK_VFrameSU,
+   { "CDLINNECK", TA_CDLINNECK_VFrameD, TA_CDLINNECK_VFrameS,
      4, TA_VIn_CDLINNECK, 0, NULL, 1, 1, 0 },
-   { "CDLINVERTEDHAMMER", TA_CDLINVERTEDHAMMER_VFrameD, TA_CDLINVERTEDHAMMER_VFrameDU, TA_CDLINVERTEDHAMMER_VFrameS, TA_CDLINVERTEDHAMMER_VFrameSU,
+   { "CDLINVERTEDHAMMER", TA_CDLINVERTEDHAMMER_VFrameD, TA_CDLINVERTEDHAMMER_VFrameS,
      4, TA_VIn_CDLINVERTEDHAMMER, 0, NULL, 1, 1, 0 },
-   { "CDLKICKING", TA_CDLKICKING_VFrameD, TA_CDLKICKING_VFrameDU, TA_CDLKICKING_VFrameS, TA_CDLKICKING_VFrameSU,
+   { "CDLKICKING", TA_CDLKICKING_VFrameD, TA_CDLKICKING_VFrameS,
      4, TA_VIn_CDLKICKING, 0, NULL, 1, 1, 0 },
-   { "CDLKICKINGBYLENGTH", TA_CDLKICKINGBYLENGTH_VFrameD, TA_CDLKICKINGBYLENGTH_VFrameDU, TA_CDLKICKINGBYLENGTH_VFrameS, TA_CDLKICKINGBYLENGTH_VFrameSU,
+   { "CDLKICKINGBYLENGTH", TA_CDLKICKINGBYLENGTH_VFrameD, TA_CDLKICKINGBYLENGTH_VFrameS,
      4, TA_VIn_CDLKICKINGBYLENGTH, 0, NULL, 1, 1, 0 },
-   { "CDLLADDERBOTTOM", TA_CDLLADDERBOTTOM_VFrameD, TA_CDLLADDERBOTTOM_VFrameDU, TA_CDLLADDERBOTTOM_VFrameS, TA_CDLLADDERBOTTOM_VFrameSU,
+   { "CDLLADDERBOTTOM", TA_CDLLADDERBOTTOM_VFrameD, TA_CDLLADDERBOTTOM_VFrameS,
      4, TA_VIn_CDLLADDERBOTTOM, 0, NULL, 1, 1, 0 },
-   { "CDLLONGLEGGEDDOJI", TA_CDLLONGLEGGEDDOJI_VFrameD, TA_CDLLONGLEGGEDDOJI_VFrameDU, TA_CDLLONGLEGGEDDOJI_VFrameS, TA_CDLLONGLEGGEDDOJI_VFrameSU,
+   { "CDLLONGLEGGEDDOJI", TA_CDLLONGLEGGEDDOJI_VFrameD, TA_CDLLONGLEGGEDDOJI_VFrameS,
      4, TA_VIn_CDLLONGLEGGEDDOJI, 0, NULL, 1, 1, 0 },
-   { "CDLLONGLINE", TA_CDLLONGLINE_VFrameD, TA_CDLLONGLINE_VFrameDU, TA_CDLLONGLINE_VFrameS, TA_CDLLONGLINE_VFrameSU,
+   { "CDLLONGLINE", TA_CDLLONGLINE_VFrameD, TA_CDLLONGLINE_VFrameS,
      4, TA_VIn_CDLLONGLINE, 0, NULL, 1, 1, 0 },
-   { "CDLMARUBOZU", TA_CDLMARUBOZU_VFrameD, TA_CDLMARUBOZU_VFrameDU, TA_CDLMARUBOZU_VFrameS, TA_CDLMARUBOZU_VFrameSU,
+   { "CDLMARUBOZU", TA_CDLMARUBOZU_VFrameD, TA_CDLMARUBOZU_VFrameS,
      4, TA_VIn_CDLMARUBOZU, 0, NULL, 1, 1, 0 },
-   { "CDLMATCHINGLOW", TA_CDLMATCHINGLOW_VFrameD, TA_CDLMATCHINGLOW_VFrameDU, TA_CDLMATCHINGLOW_VFrameS, TA_CDLMATCHINGLOW_VFrameSU,
+   { "CDLMATCHINGLOW", TA_CDLMATCHINGLOW_VFrameD, TA_CDLMATCHINGLOW_VFrameS,
      4, TA_VIn_CDLMATCHINGLOW, 0, NULL, 1, 1, 0 },
-   { "CDLMATHOLD", TA_CDLMATHOLD_VFrameD, TA_CDLMATHOLD_VFrameDU, TA_CDLMATHOLD_VFrameS, TA_CDLMATHOLD_VFrameSU,
+   { "CDLMATHOLD", TA_CDLMATHOLD_VFrameD, TA_CDLMATHOLD_VFrameS,
      4, TA_VIn_CDLMATHOLD, 1, TA_VOpt_CDLMATHOLD, 1, 1, 0 },
-   { "CDLMORNINGDOJISTAR", TA_CDLMORNINGDOJISTAR_VFrameD, TA_CDLMORNINGDOJISTAR_VFrameDU, TA_CDLMORNINGDOJISTAR_VFrameS, TA_CDLMORNINGDOJISTAR_VFrameSU,
+   { "CDLMORNINGDOJISTAR", TA_CDLMORNINGDOJISTAR_VFrameD, TA_CDLMORNINGDOJISTAR_VFrameS,
      4, TA_VIn_CDLMORNINGDOJISTAR, 1, TA_VOpt_CDLMORNINGDOJISTAR, 1, 1, 0 },
-   { "CDLMORNINGSTAR", TA_CDLMORNINGSTAR_VFrameD, TA_CDLMORNINGSTAR_VFrameDU, TA_CDLMORNINGSTAR_VFrameS, TA_CDLMORNINGSTAR_VFrameSU,
+   { "CDLMORNINGSTAR", TA_CDLMORNINGSTAR_VFrameD, TA_CDLMORNINGSTAR_VFrameS,
      4, TA_VIn_CDLMORNINGSTAR, 1, TA_VOpt_CDLMORNINGSTAR, 1, 1, 0 },
-   { "CDLONNECK", TA_CDLONNECK_VFrameD, TA_CDLONNECK_VFrameDU, TA_CDLONNECK_VFrameS, TA_CDLONNECK_VFrameSU,
+   { "CDLONNECK", TA_CDLONNECK_VFrameD, TA_CDLONNECK_VFrameS,
      4, TA_VIn_CDLONNECK, 0, NULL, 1, 1, 0 },
-   { "CDLPIERCING", TA_CDLPIERCING_VFrameD, TA_CDLPIERCING_VFrameDU, TA_CDLPIERCING_VFrameS, TA_CDLPIERCING_VFrameSU,
+   { "CDLPIERCING", TA_CDLPIERCING_VFrameD, TA_CDLPIERCING_VFrameS,
      4, TA_VIn_CDLPIERCING, 0, NULL, 1, 1, 0 },
-   { "CDLRICKSHAWMAN", TA_CDLRICKSHAWMAN_VFrameD, TA_CDLRICKSHAWMAN_VFrameDU, TA_CDLRICKSHAWMAN_VFrameS, TA_CDLRICKSHAWMAN_VFrameSU,
+   { "CDLRICKSHAWMAN", TA_CDLRICKSHAWMAN_VFrameD, TA_CDLRICKSHAWMAN_VFrameS,
      4, TA_VIn_CDLRICKSHAWMAN, 0, NULL, 1, 1, 0 },
-   { "CDLRISEFALL3METHODS", TA_CDLRISEFALL3METHODS_VFrameD, TA_CDLRISEFALL3METHODS_VFrameDU, TA_CDLRISEFALL3METHODS_VFrameS, TA_CDLRISEFALL3METHODS_VFrameSU,
+   { "CDLRISEFALL3METHODS", TA_CDLRISEFALL3METHODS_VFrameD, TA_CDLRISEFALL3METHODS_VFrameS,
      4, TA_VIn_CDLRISEFALL3METHODS, 0, NULL, 1, 1, 0 },
-   { "CDLSEPARATINGLINES", TA_CDLSEPARATINGLINES_VFrameD, TA_CDLSEPARATINGLINES_VFrameDU, TA_CDLSEPARATINGLINES_VFrameS, TA_CDLSEPARATINGLINES_VFrameSU,
+   { "CDLSEPARATINGLINES", TA_CDLSEPARATINGLINES_VFrameD, TA_CDLSEPARATINGLINES_VFrameS,
      4, TA_VIn_CDLSEPARATINGLINES, 0, NULL, 1, 1, 0 },
-   { "CDLSHOOTINGSTAR", TA_CDLSHOOTINGSTAR_VFrameD, TA_CDLSHOOTINGSTAR_VFrameDU, TA_CDLSHOOTINGSTAR_VFrameS, TA_CDLSHOOTINGSTAR_VFrameSU,
+   { "CDLSHOOTINGSTAR", TA_CDLSHOOTINGSTAR_VFrameD, TA_CDLSHOOTINGSTAR_VFrameS,
      4, TA_VIn_CDLSHOOTINGSTAR, 0, NULL, 1, 1, 0 },
-   { "CDLSHORTLINE", TA_CDLSHORTLINE_VFrameD, TA_CDLSHORTLINE_VFrameDU, TA_CDLSHORTLINE_VFrameS, TA_CDLSHORTLINE_VFrameSU,
+   { "CDLSHORTLINE", TA_CDLSHORTLINE_VFrameD, TA_CDLSHORTLINE_VFrameS,
      4, TA_VIn_CDLSHORTLINE, 0, NULL, 1, 1, 0 },
-   { "CDLSPINNINGTOP", TA_CDLSPINNINGTOP_VFrameD, TA_CDLSPINNINGTOP_VFrameDU, TA_CDLSPINNINGTOP_VFrameS, TA_CDLSPINNINGTOP_VFrameSU,
+   { "CDLSPINNINGTOP", TA_CDLSPINNINGTOP_VFrameD, TA_CDLSPINNINGTOP_VFrameS,
      4, TA_VIn_CDLSPINNINGTOP, 0, NULL, 1, 1, 0 },
-   { "CDLSTALLEDPATTERN", TA_CDLSTALLEDPATTERN_VFrameD, TA_CDLSTALLEDPATTERN_VFrameDU, TA_CDLSTALLEDPATTERN_VFrameS, TA_CDLSTALLEDPATTERN_VFrameSU,
+   { "CDLSTALLEDPATTERN", TA_CDLSTALLEDPATTERN_VFrameD, TA_CDLSTALLEDPATTERN_VFrameS,
      4, TA_VIn_CDLSTALLEDPATTERN, 0, NULL, 1, 1, 0 },
-   { "CDLSTICKSANDWICH", TA_CDLSTICKSANDWICH_VFrameD, TA_CDLSTICKSANDWICH_VFrameDU, TA_CDLSTICKSANDWICH_VFrameS, TA_CDLSTICKSANDWICH_VFrameSU,
+   { "CDLSTICKSANDWICH", TA_CDLSTICKSANDWICH_VFrameD, TA_CDLSTICKSANDWICH_VFrameS,
      4, TA_VIn_CDLSTICKSANDWICH, 0, NULL, 1, 1, 0 },
-   { "CDLTAKURI", TA_CDLTAKURI_VFrameD, TA_CDLTAKURI_VFrameDU, TA_CDLTAKURI_VFrameS, TA_CDLTAKURI_VFrameSU,
+   { "CDLTAKURI", TA_CDLTAKURI_VFrameD, TA_CDLTAKURI_VFrameS,
      4, TA_VIn_CDLTAKURI, 0, NULL, 1, 1, 0 },
-   { "CDLTASUKIGAP", TA_CDLTASUKIGAP_VFrameD, TA_CDLTASUKIGAP_VFrameDU, TA_CDLTASUKIGAP_VFrameS, TA_CDLTASUKIGAP_VFrameSU,
+   { "CDLTASUKIGAP", TA_CDLTASUKIGAP_VFrameD, TA_CDLTASUKIGAP_VFrameS,
      4, TA_VIn_CDLTASUKIGAP, 0, NULL, 1, 1, 0 },
-   { "CDLTHRUSTING", TA_CDLTHRUSTING_VFrameD, TA_CDLTHRUSTING_VFrameDU, TA_CDLTHRUSTING_VFrameS, TA_CDLTHRUSTING_VFrameSU,
+   { "CDLTHRUSTING", TA_CDLTHRUSTING_VFrameD, TA_CDLTHRUSTING_VFrameS,
      4, TA_VIn_CDLTHRUSTING, 0, NULL, 1, 1, 0 },
-   { "CDLTRISTAR", TA_CDLTRISTAR_VFrameD, TA_CDLTRISTAR_VFrameDU, TA_CDLTRISTAR_VFrameS, TA_CDLTRISTAR_VFrameSU,
+   { "CDLTRISTAR", TA_CDLTRISTAR_VFrameD, TA_CDLTRISTAR_VFrameS,
      4, TA_VIn_CDLTRISTAR, 0, NULL, 1, 1, 0 },
-   { "CDLUNIQUE3RIVER", TA_CDLUNIQUE3RIVER_VFrameD, TA_CDLUNIQUE3RIVER_VFrameDU, TA_CDLUNIQUE3RIVER_VFrameS, TA_CDLUNIQUE3RIVER_VFrameSU,
+   { "CDLUNIQUE3RIVER", TA_CDLUNIQUE3RIVER_VFrameD, TA_CDLUNIQUE3RIVER_VFrameS,
      4, TA_VIn_CDLUNIQUE3RIVER, 0, NULL, 1, 1, 0 },
-   { "CDLUPSIDEGAP2CROWS", TA_CDLUPSIDEGAP2CROWS_VFrameD, TA_CDLUPSIDEGAP2CROWS_VFrameDU, TA_CDLUPSIDEGAP2CROWS_VFrameS, TA_CDLUPSIDEGAP2CROWS_VFrameSU,
+   { "CDLUPSIDEGAP2CROWS", TA_CDLUPSIDEGAP2CROWS_VFrameD, TA_CDLUPSIDEGAP2CROWS_VFrameS,
      4, TA_VIn_CDLUPSIDEGAP2CROWS, 0, NULL, 1, 1, 0 },
-   { "CDLXSIDEGAP3METHODS", TA_CDLXSIDEGAP3METHODS_VFrameD, TA_CDLXSIDEGAP3METHODS_VFrameDU, TA_CDLXSIDEGAP3METHODS_VFrameS, TA_CDLXSIDEGAP3METHODS_VFrameSU,
+   { "CDLXSIDEGAP3METHODS", TA_CDLXSIDEGAP3METHODS_VFrameD, TA_CDLXSIDEGAP3METHODS_VFrameS,
      4, TA_VIn_CDLXSIDEGAP3METHODS, 0, NULL, 1, 1, 0 },
-   { "CEIL", TA_CEIL_VFrameD, TA_CEIL_VFrameDU, TA_CEIL_VFrameS, TA_CEIL_VFrameSU,
+   { "CEIL", TA_CEIL_VFrameD, TA_CEIL_VFrameS,
      1, TA_VIn_CEIL, 0, NULL, 1, 0, 0 },
-   { "CMF", TA_CMF_VFrameD, TA_CMF_VFrameDU, TA_CMF_VFrameS, TA_CMF_VFrameSU,
+   { "CMF", TA_CMF_VFrameD, TA_CMF_VFrameS,
      4, TA_VIn_CMF, 1, TA_VOpt_CMF, 1, 0, 0 },
-   { "CMO", TA_CMO_VFrameD, TA_CMO_VFrameDU, TA_CMO_VFrameS, TA_CMO_VFrameSU,
+   { "CMO", TA_CMO_VFrameD, TA_CMO_VFrameS,
      1, TA_VIn_CMO, 1, TA_VOpt_CMO, 1, 0, 0 },
-   { "CMOU", TA_CMOU_VFrameD, TA_CMOU_VFrameDU, TA_CMOU_VFrameS, TA_CMOU_VFrameSU,
+   { "CMOU", TA_CMOU_VFrameD, TA_CMOU_VFrameS,
      1, TA_VIn_CMOU, 1, TA_VOpt_CMOU, 1, 0, 0 },
-   { "CORREL", TA_CORREL_VFrameD, TA_CORREL_VFrameDU, TA_CORREL_VFrameS, TA_CORREL_VFrameSU,
+   { "CORREL", TA_CORREL_VFrameD, TA_CORREL_VFrameS,
      2, TA_VIn_CORREL, 1, TA_VOpt_CORREL, 1, 0, 0 },
-   { "COS", TA_COS_VFrameD, TA_COS_VFrameDU, TA_COS_VFrameS, TA_COS_VFrameSU,
+   { "COS", TA_COS_VFrameD, TA_COS_VFrameS,
      1, TA_VIn_COS, 0, NULL, 1, 0, 0 },
-   { "COSH", TA_COSH_VFrameD, TA_COSH_VFrameDU, TA_COSH_VFrameS, TA_COSH_VFrameSU,
+   { "COSH", TA_COSH_VFrameD, TA_COSH_VFrameS,
      1, TA_VIn_COSH, 0, NULL, 1, 0, 0 },
-   { "DEMA", TA_DEMA_VFrameD, TA_DEMA_VFrameDU, TA_DEMA_VFrameS, TA_DEMA_VFrameSU,
+   { "DEMA", TA_DEMA_VFrameD, TA_DEMA_VFrameS,
      1, TA_VIn_DEMA, 1, TA_VOpt_DEMA, 1, 0, 0 },
-   { "DIV", TA_DIV_VFrameD, TA_DIV_VFrameDU, TA_DIV_VFrameS, TA_DIV_VFrameSU,
+   { "DIV", TA_DIV_VFrameD, TA_DIV_VFrameS,
      2, TA_VIn_DIV, 0, NULL, 1, 0, 0 },
-   { "DX", TA_DX_VFrameD, TA_DX_VFrameDU, TA_DX_VFrameS, TA_DX_VFrameSU,
+   { "DX", TA_DX_VFrameD, TA_DX_VFrameS,
      3, TA_VIn_DX, 1, TA_VOpt_DX, 1, 0, 0 },
-   { "EMA", TA_EMA_VFrameD, TA_EMA_VFrameDU, TA_EMA_VFrameS, TA_EMA_VFrameSU,
+   { "EMA", TA_EMA_VFrameD, TA_EMA_VFrameS,
      1, TA_VIn_EMA, 1, TA_VOpt_EMA, 1, 0, 1 },
-   { "EXP", TA_EXP_VFrameD, TA_EXP_VFrameDU, TA_EXP_VFrameS, TA_EXP_VFrameSU,
+   { "EXP", TA_EXP_VFrameD, TA_EXP_VFrameS,
      1, TA_VIn_EXP, 0, NULL, 1, 0, 0 },
-   { "FLOOR", TA_FLOOR_VFrameD, TA_FLOOR_VFrameDU, TA_FLOOR_VFrameS, TA_FLOOR_VFrameSU,
+   { "FLOOR", TA_FLOOR_VFrameD, TA_FLOOR_VFrameS,
      1, TA_VIn_FLOOR, 0, NULL, 1, 0, 0 },
-   { "HMA", TA_HMA_VFrameD, TA_HMA_VFrameDU, TA_HMA_VFrameS, TA_HMA_VFrameSU,
+   { "HMA", TA_HMA_VFrameD, TA_HMA_VFrameS,
      1, TA_VIn_HMA, 1, TA_VOpt_HMA, 1, 0, 0 },
-   { "HT_DCPERIOD", TA_HT_DCPERIOD_VFrameD, TA_HT_DCPERIOD_VFrameDU, TA_HT_DCPERIOD_VFrameS, TA_HT_DCPERIOD_VFrameSU,
+   { "HT_DCPERIOD", TA_HT_DCPERIOD_VFrameD, TA_HT_DCPERIOD_VFrameS,
      1, TA_VIn_HT_DCPERIOD, 0, NULL, 1, 0, 0 },
-   { "HT_DCPHASE", TA_HT_DCPHASE_VFrameD, TA_HT_DCPHASE_VFrameDU, TA_HT_DCPHASE_VFrameS, TA_HT_DCPHASE_VFrameSU,
+   { "HT_DCPHASE", TA_HT_DCPHASE_VFrameD, TA_HT_DCPHASE_VFrameS,
      1, TA_VIn_HT_DCPHASE, 0, NULL, 1, 0, 0 },
-   { "HT_PHASOR", TA_HT_PHASOR_VFrameD, TA_HT_PHASOR_VFrameDU, TA_HT_PHASOR_VFrameS, TA_HT_PHASOR_VFrameSU,
+   { "HT_PHASOR", TA_HT_PHASOR_VFrameD, TA_HT_PHASOR_VFrameS,
      1, TA_VIn_HT_PHASOR, 0, NULL, 2, 0, 0 },
-   { "HT_SINE", TA_HT_SINE_VFrameD, TA_HT_SINE_VFrameDU, TA_HT_SINE_VFrameS, TA_HT_SINE_VFrameSU,
+   { "HT_SINE", TA_HT_SINE_VFrameD, TA_HT_SINE_VFrameS,
      1, TA_VIn_HT_SINE, 0, NULL, 2, 0, 0 },
-   { "HT_TRENDLINE", TA_HT_TRENDLINE_VFrameD, TA_HT_TRENDLINE_VFrameDU, TA_HT_TRENDLINE_VFrameS, TA_HT_TRENDLINE_VFrameSU,
+   { "HT_TRENDLINE", TA_HT_TRENDLINE_VFrameD, TA_HT_TRENDLINE_VFrameS,
      1, TA_VIn_HT_TRENDLINE, 0, NULL, 1, 0, 0 },
-   { "HT_TRENDMODE", TA_HT_TRENDMODE_VFrameD, TA_HT_TRENDMODE_VFrameDU, TA_HT_TRENDMODE_VFrameS, TA_HT_TRENDMODE_VFrameSU,
+   { "HT_TRENDMODE", TA_HT_TRENDMODE_VFrameD, TA_HT_TRENDMODE_VFrameS,
      1, TA_VIn_HT_TRENDMODE, 0, NULL, 1, 1, 0 },
-   { "IMI", TA_IMI_VFrameD, TA_IMI_VFrameDU, TA_IMI_VFrameS, TA_IMI_VFrameSU,
+   { "IMI", TA_IMI_VFrameD, TA_IMI_VFrameS,
      2, TA_VIn_IMI, 1, TA_VOpt_IMI, 1, 0, 0 },
-   { "KAMA", TA_KAMA_VFrameD, TA_KAMA_VFrameDU, TA_KAMA_VFrameS, TA_KAMA_VFrameSU,
+   { "KAMA", TA_KAMA_VFrameD, TA_KAMA_VFrameS,
      1, TA_VIn_KAMA, 1, TA_VOpt_KAMA, 1, 0, 0 },
-   { "LINEARREG", TA_LINEARREG_VFrameD, TA_LINEARREG_VFrameDU, TA_LINEARREG_VFrameS, TA_LINEARREG_VFrameSU,
+   { "LINEARREG", TA_LINEARREG_VFrameD, TA_LINEARREG_VFrameS,
      1, TA_VIn_LINEARREG, 1, TA_VOpt_LINEARREG, 1, 0, 0 },
-   { "LINEARREG_ANGLE", TA_LINEARREG_ANGLE_VFrameD, TA_LINEARREG_ANGLE_VFrameDU, TA_LINEARREG_ANGLE_VFrameS, TA_LINEARREG_ANGLE_VFrameSU,
+   { "LINEARREG_ANGLE", TA_LINEARREG_ANGLE_VFrameD, TA_LINEARREG_ANGLE_VFrameS,
      1, TA_VIn_LINEARREG_ANGLE, 1, TA_VOpt_LINEARREG_ANGLE, 1, 0, 0 },
-   { "LINEARREG_INTERCEPT", TA_LINEARREG_INTERCEPT_VFrameD, TA_LINEARREG_INTERCEPT_VFrameDU, TA_LINEARREG_INTERCEPT_VFrameS, TA_LINEARREG_INTERCEPT_VFrameSU,
+   { "LINEARREG_INTERCEPT", TA_LINEARREG_INTERCEPT_VFrameD, TA_LINEARREG_INTERCEPT_VFrameS,
      1, TA_VIn_LINEARREG_INTERCEPT, 1, TA_VOpt_LINEARREG_INTERCEPT, 1, 0, 0 },
-   { "LINEARREG_SLOPE", TA_LINEARREG_SLOPE_VFrameD, TA_LINEARREG_SLOPE_VFrameDU, TA_LINEARREG_SLOPE_VFrameS, TA_LINEARREG_SLOPE_VFrameSU,
+   { "LINEARREG_SLOPE", TA_LINEARREG_SLOPE_VFrameD, TA_LINEARREG_SLOPE_VFrameS,
      1, TA_VIn_LINEARREG_SLOPE, 1, TA_VOpt_LINEARREG_SLOPE, 1, 0, 0 },
-   { "LN", TA_LN_VFrameD, TA_LN_VFrameDU, TA_LN_VFrameS, TA_LN_VFrameSU,
+   { "LN", TA_LN_VFrameD, TA_LN_VFrameS,
      1, TA_VIn_LN, 0, NULL, 1, 0, 0 },
-   { "LOG10", TA_LOG10_VFrameD, TA_LOG10_VFrameDU, TA_LOG10_VFrameS, TA_LOG10_VFrameSU,
+   { "LOG10", TA_LOG10_VFrameD, TA_LOG10_VFrameS,
      1, TA_VIn_LOG10, 0, NULL, 1, 0, 0 },
-   { "MA", TA_MA_VFrameD, TA_MA_VFrameDU, TA_MA_VFrameS, TA_MA_VFrameSU,
+   { "MA", TA_MA_VFrameD, TA_MA_VFrameS,
      1, TA_VIn_MA, 2, TA_VOpt_MA, 1, 0, 0 },
-   { "MACD", TA_MACD_VFrameD, TA_MACD_VFrameDU, TA_MACD_VFrameS, TA_MACD_VFrameSU,
+   { "MACD", TA_MACD_VFrameD, TA_MACD_VFrameS,
      1, TA_VIn_MACD, 3, TA_VOpt_MACD, 3, 0, 0 },
-   { "MACDEXT", TA_MACDEXT_VFrameD, TA_MACDEXT_VFrameDU, TA_MACDEXT_VFrameS, TA_MACDEXT_VFrameSU,
+   { "MACDEXT", TA_MACDEXT_VFrameD, TA_MACDEXT_VFrameS,
      1, TA_VIn_MACDEXT, 6, TA_VOpt_MACDEXT, 3, 0, 0 },
-   { "MACDFIX", TA_MACDFIX_VFrameD, TA_MACDFIX_VFrameDU, TA_MACDFIX_VFrameS, TA_MACDFIX_VFrameSU,
+   { "MACDFIX", TA_MACDFIX_VFrameD, TA_MACDFIX_VFrameS,
      1, TA_VIn_MACDFIX, 1, TA_VOpt_MACDFIX, 3, 0, 0 },
-   { "MAMA", TA_MAMA_VFrameD, TA_MAMA_VFrameDU, TA_MAMA_VFrameS, TA_MAMA_VFrameSU,
+   { "MAMA", TA_MAMA_VFrameD, TA_MAMA_VFrameS,
      1, TA_VIn_MAMA, 2, TA_VOpt_MAMA, 2, 0, 0 },
-   { "MAVP", TA_MAVP_VFrameD, TA_MAVP_VFrameDU, TA_MAVP_VFrameS, TA_MAVP_VFrameSU,
+   { "MAVP", TA_MAVP_VFrameD, TA_MAVP_VFrameS,
      2, TA_VIn_MAVP, 3, TA_VOpt_MAVP, 1, 0, 0 },
-   { "MAX", TA_MAX_VFrameD, TA_MAX_VFrameDU, TA_MAX_VFrameS, TA_MAX_VFrameSU,
+   { "MAX", TA_MAX_VFrameD, TA_MAX_VFrameS,
      1, TA_VIn_MAX, 1, TA_VOpt_MAX, 1, 0, 0 },
-   { "MAXINDEX", TA_MAXINDEX_VFrameD, TA_MAXINDEX_VFrameDU, TA_MAXINDEX_VFrameS, TA_MAXINDEX_VFrameSU,
+   { "MAXINDEX", TA_MAXINDEX_VFrameD, TA_MAXINDEX_VFrameS,
      1, TA_VIn_MAXINDEX, 1, TA_VOpt_MAXINDEX, 1, 1, 0 },
-   { "MEDPRICE", TA_MEDPRICE_VFrameD, TA_MEDPRICE_VFrameDU, TA_MEDPRICE_VFrameS, TA_MEDPRICE_VFrameSU,
+   { "MEDPRICE", TA_MEDPRICE_VFrameD, TA_MEDPRICE_VFrameS,
      2, TA_VIn_MEDPRICE, 0, NULL, 1, 0, 0 },
-   { "MFI", TA_MFI_VFrameD, TA_MFI_VFrameDU, TA_MFI_VFrameS, TA_MFI_VFrameSU,
+   { "MFI", TA_MFI_VFrameD, TA_MFI_VFrameS,
      4, TA_VIn_MFI, 1, TA_VOpt_MFI, 1, 0, 0 },
-   { "MIDPOINT", TA_MIDPOINT_VFrameD, TA_MIDPOINT_VFrameDU, TA_MIDPOINT_VFrameS, TA_MIDPOINT_VFrameSU,
+   { "MIDPOINT", TA_MIDPOINT_VFrameD, TA_MIDPOINT_VFrameS,
      1, TA_VIn_MIDPOINT, 1, TA_VOpt_MIDPOINT, 1, 0, 0 },
-   { "MIDPRICE", TA_MIDPRICE_VFrameD, TA_MIDPRICE_VFrameDU, TA_MIDPRICE_VFrameS, TA_MIDPRICE_VFrameSU,
+   { "MIDPRICE", TA_MIDPRICE_VFrameD, TA_MIDPRICE_VFrameS,
      2, TA_VIn_MIDPRICE, 1, TA_VOpt_MIDPRICE, 1, 0, 0 },
-   { "MIN", TA_MIN_VFrameD, TA_MIN_VFrameDU, TA_MIN_VFrameS, TA_MIN_VFrameSU,
+   { "MIN", TA_MIN_VFrameD, TA_MIN_VFrameS,
      1, TA_VIn_MIN, 1, TA_VOpt_MIN, 1, 0, 0 },
-   { "MININDEX", TA_MININDEX_VFrameD, TA_MININDEX_VFrameDU, TA_MININDEX_VFrameS, TA_MININDEX_VFrameSU,
+   { "MININDEX", TA_MININDEX_VFrameD, TA_MININDEX_VFrameS,
      1, TA_VIn_MININDEX, 1, TA_VOpt_MININDEX, 1, 1, 0 },
-   { "MINMAX", TA_MINMAX_VFrameD, TA_MINMAX_VFrameDU, TA_MINMAX_VFrameS, TA_MINMAX_VFrameSU,
+   { "MINMAX", TA_MINMAX_VFrameD, TA_MINMAX_VFrameS,
      1, TA_VIn_MINMAX, 1, TA_VOpt_MINMAX, 2, 0, 0 },
-   { "MINMAXINDEX", TA_MINMAXINDEX_VFrameD, TA_MINMAXINDEX_VFrameDU, TA_MINMAXINDEX_VFrameS, TA_MINMAXINDEX_VFrameSU,
+   { "MINMAXINDEX", TA_MINMAXINDEX_VFrameD, TA_MINMAXINDEX_VFrameS,
      1, TA_VIn_MINMAXINDEX, 1, TA_VOpt_MINMAXINDEX, 2, 1, 0 },
-   { "MINUS_DI", TA_MINUS_DI_VFrameD, TA_MINUS_DI_VFrameDU, TA_MINUS_DI_VFrameS, TA_MINUS_DI_VFrameSU,
+   { "MINUS_DI", TA_MINUS_DI_VFrameD, TA_MINUS_DI_VFrameS,
      3, TA_VIn_MINUS_DI, 1, TA_VOpt_MINUS_DI, 1, 0, 0 },
-   { "MINUS_DM", TA_MINUS_DM_VFrameD, TA_MINUS_DM_VFrameDU, TA_MINUS_DM_VFrameS, TA_MINUS_DM_VFrameSU,
+   { "MINUS_DM", TA_MINUS_DM_VFrameD, TA_MINUS_DM_VFrameS,
      2, TA_VIn_MINUS_DM, 1, TA_VOpt_MINUS_DM, 1, 0, 0 },
-   { "MOM", TA_MOM_VFrameD, TA_MOM_VFrameDU, TA_MOM_VFrameS, TA_MOM_VFrameSU,
+   { "MOM", TA_MOM_VFrameD, TA_MOM_VFrameS,
      1, TA_VIn_MOM, 1, TA_VOpt_MOM, 1, 0, 0 },
-   { "MULT", TA_MULT_VFrameD, TA_MULT_VFrameDU, TA_MULT_VFrameS, TA_MULT_VFrameSU,
+   { "MULT", TA_MULT_VFrameD, TA_MULT_VFrameS,
      2, TA_VIn_MULT, 0, NULL, 1, 0, 0 },
-   { "NATR", TA_NATR_VFrameD, TA_NATR_VFrameDU, TA_NATR_VFrameS, TA_NATR_VFrameSU,
+   { "NATR", TA_NATR_VFrameD, TA_NATR_VFrameS,
      3, TA_VIn_NATR, 1, TA_VOpt_NATR, 1, 0, 0 },
-   { "NVI", TA_NVI_VFrameD, TA_NVI_VFrameDU, TA_NVI_VFrameS, TA_NVI_VFrameSU,
+   { "NVI", TA_NVI_VFrameD, TA_NVI_VFrameS,
      2, TA_VIn_NVI, 0, NULL, 1, 0, 0 },
-   { "OBV", TA_OBV_VFrameD, TA_OBV_VFrameDU, TA_OBV_VFrameS, TA_OBV_VFrameSU,
+   { "OBV", TA_OBV_VFrameD, TA_OBV_VFrameS,
      2, TA_VIn_OBV, 0, NULL, 1, 0, 0 },
-   { "PLUS_DI", TA_PLUS_DI_VFrameD, TA_PLUS_DI_VFrameDU, TA_PLUS_DI_VFrameS, TA_PLUS_DI_VFrameSU,
+   { "PLUS_DI", TA_PLUS_DI_VFrameD, TA_PLUS_DI_VFrameS,
      3, TA_VIn_PLUS_DI, 1, TA_VOpt_PLUS_DI, 1, 0, 0 },
-   { "PLUS_DM", TA_PLUS_DM_VFrameD, TA_PLUS_DM_VFrameDU, TA_PLUS_DM_VFrameS, TA_PLUS_DM_VFrameSU,
+   { "PLUS_DM", TA_PLUS_DM_VFrameD, TA_PLUS_DM_VFrameS,
      2, TA_VIn_PLUS_DM, 1, TA_VOpt_PLUS_DM, 1, 0, 0 },
-   { "PPO", TA_PPO_VFrameD, TA_PPO_VFrameDU, TA_PPO_VFrameS, TA_PPO_VFrameSU,
+   { "PPO", TA_PPO_VFrameD, TA_PPO_VFrameS,
      1, TA_VIn_PPO, 3, TA_VOpt_PPO, 1, 0, 0 },
-   { "PVI", TA_PVI_VFrameD, TA_PVI_VFrameDU, TA_PVI_VFrameS, TA_PVI_VFrameSU,
+   { "PVI", TA_PVI_VFrameD, TA_PVI_VFrameS,
      2, TA_VIn_PVI, 0, NULL, 1, 0, 0 },
-   { "PVO", TA_PVO_VFrameD, TA_PVO_VFrameDU, TA_PVO_VFrameS, TA_PVO_VFrameSU,
+   { "PVO", TA_PVO_VFrameD, TA_PVO_VFrameS,
      1, TA_VIn_PVO, 3, TA_VOpt_PVO, 1, 0, 0 },
-   { "ROC", TA_ROC_VFrameD, TA_ROC_VFrameDU, TA_ROC_VFrameS, TA_ROC_VFrameSU,
+   { "ROC", TA_ROC_VFrameD, TA_ROC_VFrameS,
      1, TA_VIn_ROC, 1, TA_VOpt_ROC, 1, 0, 0 },
-   { "ROCP", TA_ROCP_VFrameD, TA_ROCP_VFrameDU, TA_ROCP_VFrameS, TA_ROCP_VFrameSU,
+   { "ROCP", TA_ROCP_VFrameD, TA_ROCP_VFrameS,
      1, TA_VIn_ROCP, 1, TA_VOpt_ROCP, 1, 0, 0 },
-   { "ROCR", TA_ROCR_VFrameD, TA_ROCR_VFrameDU, TA_ROCR_VFrameS, TA_ROCR_VFrameSU,
+   { "ROCR", TA_ROCR_VFrameD, TA_ROCR_VFrameS,
      1, TA_VIn_ROCR, 1, TA_VOpt_ROCR, 1, 0, 0 },
-   { "ROCR100", TA_ROCR100_VFrameD, TA_ROCR100_VFrameDU, TA_ROCR100_VFrameS, TA_ROCR100_VFrameSU,
+   { "ROCR100", TA_ROCR100_VFrameD, TA_ROCR100_VFrameS,
      1, TA_VIn_ROCR100, 1, TA_VOpt_ROCR100, 1, 0, 0 },
-   { "RSI", TA_RSI_VFrameD, TA_RSI_VFrameDU, TA_RSI_VFrameS, TA_RSI_VFrameSU,
+   { "RSI", TA_RSI_VFrameD, TA_RSI_VFrameS,
      1, TA_VIn_RSI, 1, TA_VOpt_RSI, 1, 0, 0 },
-   { "SAR", TA_SAR_VFrameD, TA_SAR_VFrameDU, TA_SAR_VFrameS, TA_SAR_VFrameSU,
+   { "SAR", TA_SAR_VFrameD, TA_SAR_VFrameS,
      2, TA_VIn_SAR, 2, TA_VOpt_SAR, 1, 0, 0 },
-   { "SAREXT", TA_SAREXT_VFrameD, TA_SAREXT_VFrameDU, TA_SAREXT_VFrameS, TA_SAREXT_VFrameSU,
+   { "SAREXT", TA_SAREXT_VFrameD, TA_SAREXT_VFrameS,
      2, TA_VIn_SAREXT, 8, TA_VOpt_SAREXT, 1, 0, 0 },
-   { "SIN", TA_SIN_VFrameD, TA_SIN_VFrameDU, TA_SIN_VFrameS, TA_SIN_VFrameSU,
+   { "SIN", TA_SIN_VFrameD, TA_SIN_VFrameS,
      1, TA_VIn_SIN, 0, NULL, 1, 0, 0 },
-   { "SINH", TA_SINH_VFrameD, TA_SINH_VFrameDU, TA_SINH_VFrameS, TA_SINH_VFrameSU,
+   { "SINH", TA_SINH_VFrameD, TA_SINH_VFrameS,
      1, TA_VIn_SINH, 0, NULL, 1, 0, 0 },
-   { "SMA", TA_SMA_VFrameD, TA_SMA_VFrameDU, TA_SMA_VFrameS, TA_SMA_VFrameSU,
+   { "SMA", TA_SMA_VFrameD, TA_SMA_VFrameS,
      1, TA_VIn_SMA, 1, TA_VOpt_SMA, 1, 0, 0 },
-   { "SQRT", TA_SQRT_VFrameD, TA_SQRT_VFrameDU, TA_SQRT_VFrameS, TA_SQRT_VFrameSU,
+   { "SQRT", TA_SQRT_VFrameD, TA_SQRT_VFrameS,
      1, TA_VIn_SQRT, 0, NULL, 1, 0, 0 },
-   { "STDDEV", TA_STDDEV_VFrameD, TA_STDDEV_VFrameDU, TA_STDDEV_VFrameS, TA_STDDEV_VFrameSU,
+   { "STDDEV", TA_STDDEV_VFrameD, TA_STDDEV_VFrameS,
      1, TA_VIn_STDDEV, 2, TA_VOpt_STDDEV, 1, 0, 0 },
-   { "STOCH", TA_STOCH_VFrameD, TA_STOCH_VFrameDU, TA_STOCH_VFrameS, TA_STOCH_VFrameSU,
+   { "STOCH", TA_STOCH_VFrameD, TA_STOCH_VFrameS,
      3, TA_VIn_STOCH, 5, TA_VOpt_STOCH, 2, 0, 0 },
-   { "STOCHF", TA_STOCHF_VFrameD, TA_STOCHF_VFrameDU, TA_STOCHF_VFrameS, TA_STOCHF_VFrameSU,
+   { "STOCHF", TA_STOCHF_VFrameD, TA_STOCHF_VFrameS,
      3, TA_VIn_STOCHF, 3, TA_VOpt_STOCHF, 2, 0, 0 },
-   { "STOCHRSI", TA_STOCHRSI_VFrameD, TA_STOCHRSI_VFrameDU, TA_STOCHRSI_VFrameS, TA_STOCHRSI_VFrameSU,
+   { "STOCHRSI", TA_STOCHRSI_VFrameD, TA_STOCHRSI_VFrameS,
      1, TA_VIn_STOCHRSI, 4, TA_VOpt_STOCHRSI, 2, 0, 0 },
-   { "SUB", TA_SUB_VFrameD, TA_SUB_VFrameDU, TA_SUB_VFrameS, TA_SUB_VFrameSU,
+   { "SUB", TA_SUB_VFrameD, TA_SUB_VFrameS,
      2, TA_VIn_SUB, 0, NULL, 1, 0, 0 },
-   { "SUM", TA_SUM_VFrameD, TA_SUM_VFrameDU, TA_SUM_VFrameS, TA_SUM_VFrameSU,
+   { "SUM", TA_SUM_VFrameD, TA_SUM_VFrameS,
      1, TA_VIn_SUM, 1, TA_VOpt_SUM, 1, 0, 0 },
-   { "T3", TA_T3_VFrameD, TA_T3_VFrameDU, TA_T3_VFrameS, TA_T3_VFrameSU,
+   { "T3", TA_T3_VFrameD, TA_T3_VFrameS,
      1, TA_VIn_T3, 2, TA_VOpt_T3, 1, 0, 0 },
-   { "TAN", TA_TAN_VFrameD, TA_TAN_VFrameDU, TA_TAN_VFrameS, TA_TAN_VFrameSU,
+   { "TAN", TA_TAN_VFrameD, TA_TAN_VFrameS,
      1, TA_VIn_TAN, 0, NULL, 1, 0, 0 },
-   { "TANH", TA_TANH_VFrameD, TA_TANH_VFrameDU, TA_TANH_VFrameS, TA_TANH_VFrameSU,
+   { "TANH", TA_TANH_VFrameD, TA_TANH_VFrameS,
      1, TA_VIn_TANH, 0, NULL, 1, 0, 0 },
-   { "TEMA", TA_TEMA_VFrameD, TA_TEMA_VFrameDU, TA_TEMA_VFrameS, TA_TEMA_VFrameSU,
+   { "TEMA", TA_TEMA_VFrameD, TA_TEMA_VFrameS,
      1, TA_VIn_TEMA, 1, TA_VOpt_TEMA, 1, 0, 0 },
-   { "TRANGE", TA_TRANGE_VFrameD, TA_TRANGE_VFrameDU, TA_TRANGE_VFrameS, TA_TRANGE_VFrameSU,
+   { "TRANGE", TA_TRANGE_VFrameD, TA_TRANGE_VFrameS,
      3, TA_VIn_TRANGE, 0, NULL, 1, 0, 0 },
-   { "TRIMA", TA_TRIMA_VFrameD, TA_TRIMA_VFrameDU, TA_TRIMA_VFrameS, TA_TRIMA_VFrameSU,
+   { "TRIMA", TA_TRIMA_VFrameD, TA_TRIMA_VFrameS,
      1, TA_VIn_TRIMA, 1, TA_VOpt_TRIMA, 1, 0, 0 },
-   { "TRIX", TA_TRIX_VFrameD, TA_TRIX_VFrameDU, TA_TRIX_VFrameS, TA_TRIX_VFrameSU,
+   { "TRIX", TA_TRIX_VFrameD, TA_TRIX_VFrameS,
      1, TA_VIn_TRIX, 1, TA_VOpt_TRIX, 1, 0, 0 },
-   { "TSF", TA_TSF_VFrameD, TA_TSF_VFrameDU, TA_TSF_VFrameS, TA_TSF_VFrameSU,
+   { "TSF", TA_TSF_VFrameD, TA_TSF_VFrameS,
      1, TA_VIn_TSF, 1, TA_VOpt_TSF, 1, 0, 0 },
-   { "TYPPRICE", TA_TYPPRICE_VFrameD, TA_TYPPRICE_VFrameDU, TA_TYPPRICE_VFrameS, TA_TYPPRICE_VFrameSU,
+   { "TYPPRICE", TA_TYPPRICE_VFrameD, TA_TYPPRICE_VFrameS,
      3, TA_VIn_TYPPRICE, 0, NULL, 1, 0, 0 },
-   { "ULTOSC", TA_ULTOSC_VFrameD, TA_ULTOSC_VFrameDU, TA_ULTOSC_VFrameS, TA_ULTOSC_VFrameSU,
+   { "ULTOSC", TA_ULTOSC_VFrameD, TA_ULTOSC_VFrameS,
      3, TA_VIn_ULTOSC, 3, TA_VOpt_ULTOSC, 1, 0, 0 },
-   { "VAR", TA_VAR_VFrameD, TA_VAR_VFrameDU, TA_VAR_VFrameS, TA_VAR_VFrameSU,
+   { "VAR", TA_VAR_VFrameD, TA_VAR_VFrameS,
      1, TA_VIn_VAR, 2, TA_VOpt_VAR, 1, 0, 0 },
-   { "VWMA", TA_VWMA_VFrameD, TA_VWMA_VFrameDU, TA_VWMA_VFrameS, TA_VWMA_VFrameSU,
+   { "VWMA", TA_VWMA_VFrameD, TA_VWMA_VFrameS,
      2, TA_VIn_VWMA, 1, TA_VOpt_VWMA, 1, 0, 0 },
-   { "WCLPRICE", TA_WCLPRICE_VFrameD, TA_WCLPRICE_VFrameDU, TA_WCLPRICE_VFrameS, TA_WCLPRICE_VFrameSU,
+   { "WCLPRICE", TA_WCLPRICE_VFrameD, TA_WCLPRICE_VFrameS,
      3, TA_VIn_WCLPRICE, 0, NULL, 1, 0, 0 },
-   { "WILLR", TA_WILLR_VFrameD, TA_WILLR_VFrameDU, TA_WILLR_VFrameS, TA_WILLR_VFrameSU,
+   { "WILLR", TA_WILLR_VFrameD, TA_WILLR_VFrameS,
      3, TA_VIn_WILLR, 1, TA_VOpt_WILLR, 1, 0, 0 },
-   { "WMA", TA_WMA_VFrameD, TA_WMA_VFrameDU, TA_WMA_VFrameS, TA_WMA_VFrameSU,
+   { "WMA", TA_WMA_VFrameD, TA_WMA_VFrameS,
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, 0, 0 },
 };
 

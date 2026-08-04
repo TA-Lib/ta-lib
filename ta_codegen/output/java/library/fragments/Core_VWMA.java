@@ -129,64 +129,6 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode vwmaUnguardedInternal( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  double inVolume[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-   {
-      double sumPV = 0;
-      double sumV = 0;
-      double tempPV = 0;
-      double tempV = 0;
-      double tempReal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int lookbackTotal = 0;
-      lookbackTotal = (int)(optInTimePeriod - 1);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      sumPV = 0.0;
-      sumV = 0.0;
-      trailingIdx = startIdx - lookbackTotal;
-      i = trailingIdx;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            tempReal = inReal[i] * inVolume[i];
-            sumPV += tempReal;
-            sumV += inVolume[i];
-            i = i + 1;
-         }
-      }
-      outIdx = 0;
-      while( i <= endIdx ) {
-         tempReal = inReal[i] * inVolume[i];
-         sumPV += tempReal;
-         sumV += inVolume[i];
-         i = i + 1;
-         tempPV = sumPV;
-         tempV = sumV;
-         tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
-         sumPV -= tempReal;
-         sumV -= inVolume[trailingIdx];
-         outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
-         trailingIdx = trailingIdx + 1;
-         outIdx = outIdx + 1;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
    RetCode vwmaInternal( int startIdx,
                          int endIdx,
                          float inReal[],
@@ -216,64 +158,6 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = (int)(optInTimePeriod - 1);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      sumPV = 0.0;
-      sumV = 0.0;
-      trailingIdx = startIdx - lookbackTotal;
-      i = trailingIdx;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            tempReal = (double)inReal[i] * (double)inVolume[i];
-            sumPV += tempReal;
-            sumV += (double)inVolume[i];
-            i = i + 1;
-         }
-      }
-      outIdx = 0;
-      while( i <= endIdx ) {
-         tempReal = (double)inReal[i] * (double)inVolume[i];
-         sumPV += tempReal;
-         sumV += (double)inVolume[i];
-         i = i + 1;
-         tempPV = sumPV;
-         tempV = sumV;
-         tempReal = (double)inReal[trailingIdx] * (double)inVolume[trailingIdx];
-         sumPV -= tempReal;
-         sumV -= (double)inVolume[trailingIdx];
-         outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
-         trailingIdx = trailingIdx + 1;
-         outIdx = outIdx + 1;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode vwmaUnguardedInternal( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  float inVolume[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-   {
-      double sumPV = 0;
-      double sumV = 0;
-      double tempPV = 0;
-      double tempV = 0;
-      double tempReal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int lookbackTotal = 0;
       lookbackTotal = (int)(optInTimePeriod - 1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -385,41 +269,6 @@
     * it leads on high-volume moves and lags on low-volume drift, so the gap
     * between the two lines measures how volume-confirmed a move is. It has no
     * attributable inventor — charting-package folklore — and every published
-    * definition agrees, so there is no competing variant. — <b>unchecked</b>
-    * variant of {@link Core#vwma}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange vwmaUnguarded( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  double inVolume[],
-                                  int optInTimePeriod,
-                                  double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      vwmaUnguardedInternal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Volume Weighted Moving Average: the mean price over a trailing window of
-    * {@code optInTimePeriod} bars, each bar weighted by its own volume. Heavily
-    * traded bars pull the average toward their price; quiet bars barely move
-    * it. Read like any moving average — price above is strength, below is
-    * weakness. Against a plain [{@code SMA}](/functions/sma) of the same window
-    * it leads on high-volume moves and lags on low-volume drift, so the gap
-    * between the two lines measures how volume-confirmed a move is. It has no
-    * attributable inventor — charting-package folklore — and every published
     * definition agrees, so there is no competing variant.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -474,42 +323,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("VWMA", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Volume Weighted Moving Average: the mean price over a trailing window of
-    * {@code optInTimePeriod} bars, each bar weighted by its own volume. Heavily
-    * traded bars pull the average toward their price; quiet bars barely move
-    * it. Read like any moving average — price above is strength, below is
-    * weakness. Against a plain [{@code SMA}](/functions/sma) of the same window
-    * it leads on high-volume moves and lags on low-volume drift, so the gap
-    * between the two lines measures how volume-confirmed a move is. It has no
-    * attributable inventor — charting-package folklore — and every published
-    * definition agrees, so there is no competing variant. — <b>unchecked</b>
-    * variant of {@link Core#vwma}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange vwmaUnguarded( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  float inVolume[],
-                                  int optInTimePeriod,
-                                  double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      vwmaUnguardedInternal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

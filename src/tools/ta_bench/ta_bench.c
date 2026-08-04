@@ -284,9 +284,10 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
     long long ref_ns = 0;
     long long timings[16] = {0};
     long long t_max[16] = {0};
-    long long timings_ung[16] = {0};
+    /* #166 replaced the "ung" column with a per-language spread. See the
+     * header comment below for why the instrument is kept in this shape. */
     int has_timing[16] = {0};
-    int has_timing_ung[16] = {0};
+
 
     #define BENCH_PASSES 3
     for( int pass = 0; pass < BENCH_PASSES; pass++ ) {
@@ -310,13 +311,6 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
                     if( !has_timing[li] || ns > t_max[li] ) t_max[li] = ns;
                     has_timing[li] = 1;
                 }
-            }
-            const char *tu = json_find_field(ctx->respBuf, "timing_ns_unguarded", &len);
-            if( tu ) {
-                long long ns = strtoll(tu, NULL, 10);
-                if( ns > 0 && (!has_timing_ung[li] || ns < timings_ung[li]) )
-                    timings_ung[li] = ns;
-                has_timing_ung[li] = 1;
             }
         }
     }
@@ -342,7 +336,7 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( !LANGUAGES[li].active ) continue;
         int is_cref = (strcmp(LANGUAGES[li].name, "cref") == 0);
-        /* The header prints a value + "ung" column pair for every active
+        /* The header prints a value + "spr%" column pair for every active
          * non-cref language, so each row must emit both cells to stay
          * aligned — even when the server returned no timing at all. */
         if( !has_timing[li] ) {
@@ -355,12 +349,23 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
             const char *clr = (ratio > 1.10) ? "\033[31m" : (ratio < 0.90) ? "\033[32m" : "";
             const char *rst = (*clr) ? "\033[0m" : "";
             printf(" %s%10lld%s", clr, timings[li], rst);
-            /* Unguarded column (always emitted — see header alignment note) */
-            if( has_timing_ung[li] && timings_ung[li] > 0 ) {
-                double ratio_u = (ref_ns > 0) ? (double)timings_ung[li] / (double)ref_ns : 0.0;
-                const char *clr_u = (ratio_u > 1.10) ? "\033[31m" : (ratio_u < 0.90) ? "\033[32m" : "";
-                const char *rst_u = (*clr_u) ? "\033[0m" : "";
-                printf(" %s%10lld%s", clr_u, timings_ung[li], rst_u);
+            /* Spread column (always emitted — see header alignment note).
+             *
+             * #166 removed the unguarded variant and with it the old "ung"
+             * cell, whose value as an instrument was that both numbers came
+             * from the SAME run of the SAME binary on the SAME input: a large
+             * gap between them was necessarily binary layout, not thermal
+             * drift (precedent: MIDPRICE unguarded once read ~35% slower — a
+             * layout artifact caught by eyeballing the pair). This column
+             * keeps that property with one variant: it is this row's own
+             * (max-min)/min across the passes, so a row that swings while its
+             * neighbours are steady is the same signal, and a whole run that
+             * swings is visible without reading the footer. */
+            if( t_max[li] > 0 && timings[li] > 0 ) {
+                double spread = (double)(t_max[li] - timings[li]) / (double)timings[li];
+                const char *clr_s = (spread > 0.25) ? "\033[31m" : "";
+                const char *rst_s = (*clr_s) ? "\033[0m" : "";
+                printf(" %s%9.0f%%%s", clr_s, spread * 100.0, rst_s);
             } else {
                 printf(" %10s", "--");
             }
@@ -490,7 +495,7 @@ int main(int argc, char *argv[]) {
         if( !LANGUAGES[li].active ) continue;
         printf(" %10s", LANGUAGES[li].display);
         if( strcmp(LANGUAGES[li].name, "cref") != 0 )
-            printf(" %10s", "ung");
+            printf(" %10s", "spr%");
     }
     printf("\n");
     printf("%-20s", "--------");

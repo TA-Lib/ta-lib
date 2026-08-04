@@ -70,7 +70,7 @@ You are implementing a TA function for TA-Lib, following the steps above on beha
 - No logic in YAML, ever. No metadata in the `.c` file.
 - Never edit generated output: `src/ta_func/`, `src/ta_abstract/` and everything under `ta_codegen/output/` are overwritten on the next `generate`. Change `ta_codegen/input/` and regenerate.
 - `<name>.md` documents the original algebra of the indicator, never implementation artifacts — no zero-guards, epsilon comparisons or `period == 1` special cases in the formula.
-- In the `.c` input, call other TA functions by their bare lowercase name (`sma(...)`, `ema_lookback(...)`); the generator resolves each to the language's native symbol, routing compute calls to the unguarded variant.
+- In the `.c` input, call other TA functions by their bare lowercase name (`sma(...)`, `ema_lookback(...)`); the generator resolves each to the language's native symbol.
 - Enums, groups and other shared surfaces are generated; search the generator before hand-adding one anywhere.
 - If `generate` panics on a C construct, do not contort the algorithm to dodge the parser — match the style of a shipped input file, or raise it on the spec issue: parser extensions are generator changes and need maintainer sign-off.
 

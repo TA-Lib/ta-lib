@@ -186,67 +186,6 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode LinearRegInterceptUnguarded( int startIdx,
-                                                 int endIdx,
-                                                 double[] inReal,
-                                                 int optInTimePeriod,
-                                                 out int outBegIdx,
-                                                 out int outNBElement,
-                                                 double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int outIdx = 0;
-      int today = 0;
-      int lookbackTotal = 0;
-      int trailingIdx = 0;
-      double SumX = 0;
-      double SumXY = 0;
-      double SumY = 0;
-      double SumXSqr = 0;
-      double Divisor = 0;
-      double m = 0;
-      int i = 0;
-      double tempValue1 = 0;
-      double trailingValue = 0;
-      lookbackTotal = LinearRegInterceptLookback(optInTimePeriod);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      trailingIdx = startIdx - lookbackTotal;
-      SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-      SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
-      Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
-      SumXY = 0;
-      SumY = 0;
-      for( i = optInTimePeriod; i-- != 0;  ) {
-         tempValue1 = inReal[today - i];
-         SumY += tempValue1;
-         SumXY += (double)i * tempValue1;
-      }
-      m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-      trailingValue = inReal[trailingIdx++];
-      outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
-      today += 1;
-      while( today <= endIdx ) {
-         SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
-         SumY = SumY - trailingValue + inReal[today];
-         m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-         trailingValue = inReal[trailingIdx++];
-         outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
-         today += 1;
-      }
-      outBegIdx = startIdx;
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
    internal RetCode LinearRegIntercept( int startIdx,
                                         int endIdx,
                                         float[] inReal,
@@ -281,67 +220,6 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = LinearRegInterceptLookback(optInTimePeriod);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      trailingIdx = startIdx - lookbackTotal;
-      SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-      SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
-      Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
-      SumXY = 0;
-      SumY = 0;
-      for( i = optInTimePeriod; i-- != 0;  ) {
-         tempValue1 = (double)inReal[today - i];
-         SumY += tempValue1;
-         SumXY += (double)i * tempValue1;
-      }
-      m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-      trailingValue = (double)inReal[trailingIdx++];
-      outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
-      today += 1;
-      while( today <= endIdx ) {
-         SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
-         SumY = SumY - trailingValue + (double)inReal[today];
-         m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-         trailingValue = (double)inReal[trailingIdx++];
-         outReal[outIdx++] = (SumY - m * SumX) / (double)optInTimePeriod;
-         today += 1;
-      }
-      outBegIdx = startIdx;
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode LinearRegInterceptUnguarded( int startIdx,
-                                                 int endIdx,
-                                                 float[] inReal,
-                                                 int optInTimePeriod,
-                                                 out int outBegIdx,
-                                                 out int outNBElement,
-                                                 double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int outIdx = 0;
-      int today = 0;
-      int lookbackTotal = 0;
-      int trailingIdx = 0;
-      double SumX = 0;
-      double SumXY = 0;
-      double SumY = 0;
-      double SumXSqr = 0;
-      double Divisor = 0;
-      double m = 0;
-      int i = 0;
-      double tempValue1 = 0;
-      double trailingValue = 0;
       lookbackTotal = LinearRegInterceptLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -430,42 +308,6 @@ public partial class Core
    /// <summary>
    /// Returns the y-intercept (b) of the least-squares regression line fitted
    /// over the last optInTimePeriod values. Part of the linear-regression family
-   /// (LINEARREG, SLOPE, ANGLE, TSF). — <b>unchecked</b> variant of
-   /// <c>LinearRegIntercept</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange LinearRegInterceptUnguarded( int startIdx,
-                                                int endIdx,
-                                                double[] inReal,
-                                                int optInTimePeriod,
-                                                double[] outReal )
-   {
-      LinearRegInterceptUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Returns the y-intercept (b) of the least-squares regression line fitted
-   /// over the last optInTimePeriod values. Part of the linear-regression family
    /// (LINEARREG, SLOPE, ANGLE, TSF).
    /// </summary>
    /// <remarks>
@@ -514,45 +356,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("LINEARREG_INTERCEPT", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Returns the y-intercept (b) of the least-squares regression line fitted
-   /// over the last optInTimePeriod values. Part of the linear-regression family
-   /// (LINEARREG, SLOPE, ANGLE, TSF). — <b>unchecked</b> variant of
-   /// <c>LinearRegIntercept</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange LinearRegInterceptUnguarded( int startIdx,
-                                                int endIdx,
-                                                float[] inReal,
-                                                int optInTimePeriod,
-                                                double[] outReal )
-   {
-      LinearRegInterceptUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

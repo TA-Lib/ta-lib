@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -225,104 +225,6 @@ TA_LIB_API TA_RetCode TA_ACCBANDS( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_ACCBANDS_Unguarded( int    startIdx,
-                                             int    endIdx,
-                                             const double inHigh[],
-                                             const double inLow[],
-                                             const double inClose[],
-                                             int optInTimePeriod,
-                                             int          *outBegIdx,
-                                             int          *outNBElement,
-                                             double        outRealUpperBand[],
-                                             double        outRealMiddleBand[],
-                                             double        outRealLowerBand[] )
-{
-   double periodTotalUpper;
-   double periodTotalMiddle;
-   double periodTotalLower;
-   double tempUpper;
-   double tempMiddle;
-   double tempLower;
-   double tempReal;
-   int i;
-   int outIdx;
-   int trailingIdx;
-   int lookbackTotal;
-
-   lookbackTotal = TA_SMA_Lookback(optInTimePeriod);
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   periodTotalUpper = 0.0;
-   periodTotalMiddle = 0.0;
-   periodTotalLower = 0.0;
-   trailingIdx = startIdx - lookbackTotal;
-   i = trailingIdx;
-   while( i < startIdx )
-   {
-      tempReal = inHigh[i] + inLow[i];
-      if( !TA_IS_ZERO(tempReal) )
-      {
-         tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
-         periodTotalUpper += inHigh[i] * (1 + tempReal);
-         periodTotalLower += inLow[i] * (1 - tempReal);
-      } else 
-      {
-         periodTotalUpper += inHigh[i];
-         periodTotalLower += inLow[i];
-      }
-      periodTotalMiddle += inClose[i];
-      i = i + 1;
-   }
-   outIdx = 0;
-   while( i <= endIdx )
-   {
-      tempReal = inHigh[i] + inLow[i];
-      if( !TA_IS_ZERO(tempReal) )
-      {
-         tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
-         periodTotalUpper += inHigh[i] * (1 + tempReal);
-         periodTotalLower += inLow[i] * (1 - tempReal);
-      } else 
-      {
-         periodTotalUpper += inHigh[i];
-         periodTotalLower += inLow[i];
-      }
-      periodTotalMiddle += inClose[i];
-      i = i + 1;
-      tempUpper = periodTotalUpper;
-      tempMiddle = periodTotalMiddle;
-      tempLower = periodTotalLower;
-      tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
-      if( !TA_IS_ZERO(tempReal) )
-      {
-         tempReal = 4 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
-         periodTotalUpper -= inHigh[trailingIdx] * (1 + tempReal);
-         periodTotalLower -= inLow[trailingIdx] * (1 - tempReal);
-      } else 
-      {
-         periodTotalUpper -= inHigh[trailingIdx];
-         periodTotalLower -= inLow[trailingIdx];
-      }
-      periodTotalMiddle -= inClose[trailingIdx];
-      trailingIdx = trailingIdx + 1;
-      outRealUpperBand[outIdx] = tempUpper / (double)optInTimePeriod;
-      outRealMiddleBand[outIdx] = tempMiddle / (double)optInTimePeriod;
-      outRealLowerBand[outIdx] = tempLower / (double)optInTimePeriod;
-      outIdx = outIdx + 1;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_ACCBANDS( int    startIdx,
                           int    endIdx,
                           const float inHigh[],
@@ -370,104 +272,6 @@ TA_RetCode TA_S_ACCBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand )
       return TA_BAD_PARAM;
-
-   lookbackTotal = TA_SMA_Lookback(optInTimePeriod);
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   periodTotalUpper = 0.0;
-   periodTotalMiddle = 0.0;
-   periodTotalLower = 0.0;
-   trailingIdx = startIdx - lookbackTotal;
-   i = trailingIdx;
-   while( i < startIdx )
-   {
-      tempReal = (double)inHigh[i] + (double)inLow[i];
-      if( !TA_IS_ZERO(tempReal) )
-      {
-         tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
-         periodTotalUpper += (double)inHigh[i] * (1 + tempReal);
-         periodTotalLower += (double)inLow[i] * (1 - tempReal);
-      } else 
-      {
-         periodTotalUpper += (double)inHigh[i];
-         periodTotalLower += (double)inLow[i];
-      }
-      periodTotalMiddle += (double)inClose[i];
-      i = i + 1;
-   }
-   outIdx = 0;
-   while( i <= endIdx )
-   {
-      tempReal = (double)inHigh[i] + (double)inLow[i];
-      if( !TA_IS_ZERO(tempReal) )
-      {
-         tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
-         periodTotalUpper += (double)inHigh[i] * (1 + tempReal);
-         periodTotalLower += (double)inLow[i] * (1 - tempReal);
-      } else 
-      {
-         periodTotalUpper += (double)inHigh[i];
-         periodTotalLower += (double)inLow[i];
-      }
-      periodTotalMiddle += (double)inClose[i];
-      i = i + 1;
-      tempUpper = periodTotalUpper;
-      tempMiddle = periodTotalMiddle;
-      tempLower = periodTotalLower;
-      tempReal = (double)inHigh[trailingIdx] + (double)inLow[trailingIdx];
-      if( !TA_IS_ZERO(tempReal) )
-      {
-         tempReal = 4 * ((double)inHigh[trailingIdx] - (double)inLow[trailingIdx]) / tempReal;
-         periodTotalUpper -= (double)inHigh[trailingIdx] * (1 + tempReal);
-         periodTotalLower -= (double)inLow[trailingIdx] * (1 - tempReal);
-      } else 
-      {
-         periodTotalUpper -= (double)inHigh[trailingIdx];
-         periodTotalLower -= (double)inLow[trailingIdx];
-      }
-      periodTotalMiddle -= (double)inClose[trailingIdx];
-      trailingIdx = trailingIdx + 1;
-      outRealUpperBand[outIdx] = tempUpper / (double)optInTimePeriod;
-      outRealMiddleBand[outIdx] = tempMiddle / (double)optInTimePeriod;
-      outRealLowerBand[outIdx] = tempLower / (double)optInTimePeriod;
-      outIdx = outIdx + 1;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_ACCBANDS_Unguarded( int    startIdx,
-                                    int    endIdx,
-                                    const float inHigh[],
-                                    const float inLow[],
-                                    const float inClose[],
-                                    int optInTimePeriod,
-                                    int          *outBegIdx,
-                                    int          *outNBElement,
-                                    double        outRealUpperBand[],
-                                    double        outRealMiddleBand[],
-                                    double        outRealLowerBand[] )
-{
-   double periodTotalUpper;
-   double periodTotalMiddle;
-   double periodTotalLower;
-   double tempUpper;
-   double tempMiddle;
-   double tempLower;
-   double tempReal;
-   int i;
-   int outIdx;
-   int trailingIdx;
-   int lookbackTotal;
 
    lookbackTotal = TA_SMA_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )

@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -145,56 +145,6 @@ TA_LIB_API TA_RetCode TA_IMI( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_IMI_Unguarded( int    startIdx,
-                                        int    endIdx,
-                                        const double inOpen[],
-                                        const double inClose[],
-                                        int optInTimePeriod,
-                                        int          *outBegIdx,
-                                        int          *outNBElement,
-                                        double        outReal[] )
-{
-   int lookback;
-   int outIdx;
-
-   outIdx = 0;
-   lookback = TA_IMI_Lookback(optInTimePeriod);
-   if( startIdx < lookback )
-   {
-      startIdx = lookback;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   *outBegIdx= startIdx;
-   while( startIdx <= endIdx )
-   {
-      double upsum = 0.0;
-      double downsum = 0.0;
-      int i;
-      for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
-      {
-         double close = inClose[i];
-         double open = inOpen[i];
-         if( close > open )
-         {
-            upsum += close - open;
-         } else 
-         {
-            downsum += open - close;
-         }
-         outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
-      }
-      startIdx += 1;
-      outIdx += 1;
-   }
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_IMI( int    startIdx,
                      int    endIdx,
                      const float inOpen[],
@@ -222,56 +172,6 @@ TA_RetCode TA_S_IMI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   outIdx = 0;
-   lookback = TA_IMI_Lookback(optInTimePeriod);
-   if( startIdx < lookback )
-   {
-      startIdx = lookback;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   *outBegIdx= startIdx;
-   while( startIdx <= endIdx )
-   {
-      double upsum = 0.0;
-      double downsum = 0.0;
-      int i;
-      for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
-      {
-         double close = (double)inClose[i];
-         double open = (double)inOpen[i];
-         if( close > open )
-         {
-            upsum += close - open;
-         } else 
-         {
-            downsum += open - close;
-         }
-         outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
-      }
-      startIdx += 1;
-      outIdx += 1;
-   }
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_IMI_Unguarded( int    startIdx,
-                               int    endIdx,
-                               const float inOpen[],
-                               const float inClose[],
-                               int optInTimePeriod,
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] )
-{
-   int lookback;
-   int outIdx;
 
    outIdx = 0;
    lookback = TA_IMI_Lookback(optInTimePeriod);

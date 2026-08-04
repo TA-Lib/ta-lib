@@ -220,6 +220,10 @@ impl Core {
         if ((optInMAType) as i32) == (i32::MIN) {
             optInMAType = 0;
         }
+        let _assertLb = self.ma_lookback(optInTimePeriod, optInMAType);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut retCode: RetCode = RetCode::Success;
         let mut nbElement: usize = 0_usize;
@@ -267,83 +271,6 @@ impl Core {
             7 => {
                 // The optInTimePeriod is ignored. FAMA is a nullable output
                 // (issue #125): pass NULL to compute only the MAMA line into outReal.
-                retCode = self.mama(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]);
-            }
-            8 => {
-                retCode = self.t3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
-            }
-            9 => {
-                retCode = self.hma(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-            }
-            _ => {
-                retCode = RetCode::BadParam;
-            }
-        }
-        return retCode;
-    }
-    /// Unguarded variant of [`Core::ma`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::ma`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::ma`].
-    #[inline]
-    pub fn ma_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInTimePeriod: i32,
-        mut optInMAType: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut retCode: RetCode = RetCode::Success;
-        let mut nbElement: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut todayIdx: usize = 0_usize;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.ma_lookback(optInTimePeriod, optInMAType);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        if optInTimePeriod == 1 || ((optInMAType) as usize) == 10 {
-            nbElement = endIdx - startIdx + 1;
-            (*outNBElement) = nbElement;
-            // for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 )
-            todayIdx = startIdx;
-            outIdx = 0;
-            while outIdx < nbElement {
-                outReal[outIdx] = ((inReal[todayIdx]) as f64);
-                outIdx += 1;
-                todayIdx += 1;
-            }
-            (*outBegIdx) = startIdx;
-            return RetCode::Success;
-        }
-        match optInMAType {
-            0 => {
-                retCode = self.sma(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-            }
-            1 => {
-                retCode = self.ema(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-            }
-            2 => {
-                retCode = self.wma(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-            }
-            3 => {
-                retCode = self.dema(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-            }
-            4 => {
-                retCode = self.tema(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-            }
-            5 => {
-                retCode = self.trima(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-            }
-            6 => {
-                retCode = self.kama(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-            }
-            7 => {
                 retCode = self.mama(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]);
             }
             8 => {

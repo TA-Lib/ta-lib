@@ -61,7 +61,7 @@
  *     3. Deterministic edges that no fuzz shape reaches.
  *     4. Aliasing of the output over each of the four inputs.
  *     5. The generic start/end range sweep.
- *     6. The single-precision and unguarded entry points, which no other
+ *     6. The single-precision entry point, which no other
  *        test in the tree reaches.
  */
 
@@ -74,7 +74,6 @@
 #include "ta_test_func.h"
 #include "ta_utility.h"
 #include "server_verify.h"
-#include "ta_func_unguarded.h"
 
 /**** Local declarations. ****/
 #define OUT_CAP 300   /* > MAX_NB_TEST_ELEMENT and > nbBars */
@@ -599,11 +598,10 @@ static ErrorNumber test_cmf_range( const TA_History *history )
  * operators, and the --codegen float leg skips any function the frozen
  * ta_ref_serve predates -- which is every function added after the cutover.
  * A single-point check here was demonstrably weak: a sabotaged TA_S_CMF that
- * doubled its output on the period>50 branch passed the entire suite.
- * The unguarded variants are likewise reachable from no other test. */
+ * doubled its output on the period>50 branch passed the entire suite. */
 static ErrorNumber test_cmf_single( const TA_History *history )
 {
-   static TA_Real  outD[OUT_CAP], outS[OUT_CAP], outDU[OUT_CAP], outSU[OUT_CAP];
+   static TA_Real  outD[OUT_CAP], outS[OUT_CAP];
    static TA_Real  dHigh[OUT_CAP], dLow[OUT_CAP], dClose[OUT_CAP], dVolume[OUT_CAP];
    static float    fHigh[OUT_CAP], fLow[OUT_CAP], fClose[OUT_CAP], fVolume[OUT_CAP];
    TA_RetCode rcD, rcS;
@@ -661,44 +659,12 @@ static ErrorNumber test_cmf_single( const TA_History *history )
                return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
 
-         /* Unguarded variants: same algorithm minus the range checks, so on
-          * already-valid arguments they must be bit-identical to the guarded
-          * ones. No other test in the tree calls them. */
-         {
-            TA_Integer begDU, nbDU, begSU, nbSU;
-
-            TA_CMF_Unguarded  ( startIdx, nb - 1, dHigh, dLow, dClose, dVolume,
-                                period, &begDU, &nbDU, outDU );
-            TA_S_CMF_Unguarded( startIdx, nb - 1, fHigh, fLow, fClose, fVolume,
-                                period, &begSU, &nbSU, outSU );
-
-            if( begDU != begD || nbDU != nbD || begSU != begD || nbSU != nbD )
-            {
-               printf( "CMF unguarded Fail [period %d start %d]: shape guarded(%d,%d) "
-                       "unguarded(%d,%d) S_unguarded(%d,%d)\n",
-                       period, startIdx, begD, nbD, begDU, nbDU, begSU, nbSU );
-               return TA_TESTUTIL_TFRR_BAD_BEGIDX;
-            }
-            if( memcmp( outD, outDU, (size_t)nbD * sizeof(TA_Real) ) != 0 )
-            {
-               printf( "CMF unguarded Fail [period %d start %d]: TA_CMF_Unguarded differs "
-                       "from TA_CMF (must be bit-identical on valid arguments)\n",
-                       period, startIdx );
-               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-            }
-            if( memcmp( outD, outSU, (size_t)nbD * sizeof(TA_Real) ) != 0 )
-            {
-               printf( "CMF unguarded Fail [period %d start %d]: TA_S_CMF_Unguarded differs "
-                       "from TA_CMF\n", period, startIdx );
-               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-            }
-         }
       }
    }
 
-   /* The zero-volume guard exists in every emitted variant, but test_cmf_edges
-    * reaches only the guarded double one. Drive the same window through the
-    * single-precision and unguarded entry points too. */
+   /* The zero-volume guard exists in both emitted variants, but test_cmf_edges
+    * reaches only the double one. Drive the same window through the
+    * single-precision entry point too. */
    {
       static float  zh[20], zl[20], zc[20], zv[20];
       static TA_Real zout[OUT_CAP];

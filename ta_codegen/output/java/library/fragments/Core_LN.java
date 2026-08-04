@@ -47,22 +47,6 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode lnUnguardedInternal( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-   {
-      int outIdx = 0;
-      int i = 0;
-      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx] = Math.log(inReal[i]);
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
    RetCode lnInternal( int startIdx,
                        int endIdx,
                        float inReal[],
@@ -78,22 +62,6 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx] = Math.log((double)inReal[i]);
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode lnUnguardedInternal( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-   {
-      int outIdx = 0;
-      int i = 0;
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
          outReal[outIdx] = Math.log((double)inReal[i]);
       }
@@ -146,31 +114,6 @@
    }
    /**
     * Vector natural logarithm: applies the natural log (base e) elementwise to
-    * the input series. — <b>unchecked</b> variant of {@link Core#ln}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange lnUnguarded( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      lnUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Vector natural logarithm: applies the natural log (base e) elementwise to
     * the input series.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -213,32 +156,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("LN", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Vector natural logarithm: applies the natural log (base e) elementwise to
-    * the input series. — <b>unchecked</b> variant of {@link Core#ln}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange lnUnguarded( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      lnUnguardedInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

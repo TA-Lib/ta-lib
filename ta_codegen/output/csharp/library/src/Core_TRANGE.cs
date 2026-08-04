@@ -145,55 +145,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode TrueRangeUnguarded( int startIdx,
-                                        int endIdx,
-                                        double[] inHigh,
-                                        double[] inLow,
-                                        double[] inClose,
-                                        out int outBegIdx,
-                                        out int outNBElement,
-                                        double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int today = 0;
-      int outIdx = 0;
-      double val2 = 0;
-      double val3 = 0;
-      double greatest = 0;
-      double tempCY = 0;
-      double tempLT = 0;
-      double tempHT = 0;
-      if( startIdx < 1 ) {
-         startIdx = 1;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      while( today <= endIdx ) {
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
-         greatest = tempHT - tempLT;
-         val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
-         val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
-         outReal[outIdx++] = greatest;
-         today += 1;
-      }
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode TrueRange( int startIdx,
                                int endIdx,
                                float[] inHigh,
@@ -219,55 +170,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( startIdx < 1 ) {
-         startIdx = 1;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      while( today <= endIdx ) {
-         tempLT = (double)inLow[today];
-         tempHT = (double)inHigh[today];
-         tempCY = (double)inClose[today - 1];
-         greatest = tempHT - tempLT;
-         val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
-         val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
-         outReal[outIdx++] = greatest;
-         today += 1;
-      }
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode TrueRangeUnguarded( int startIdx,
-                                        int endIdx,
-                                        float[] inHigh,
-                                        float[] inLow,
-                                        float[] inClose,
-                                        out int outBegIdx,
-                                        out int outNBElement,
-                                        double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int today = 0;
-      int outIdx = 0;
-      double val2 = 0;
-      double val3 = 0;
-      double greatest = 0;
-      double tempCY = 0;
-      double tempLT = 0;
-      double tempHT = 0;
       if( startIdx < 1 ) {
          startIdx = 1;
       }
@@ -352,44 +254,6 @@ public partial class Core
    /// True Range: the greatest of today's high-low span and the two gaps between
    /// yesterday's close and today's high/low. Base volatility measure used to
    /// build ATR/NATR. Larger values mean wider or gappier bars (higher
-   /// volatility). — <b>unchecked</b> variant of <c>TrueRange</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange TrueRangeUnguarded( int startIdx,
-                                       int endIdx,
-                                       double[] inHigh,
-                                       double[] inLow,
-                                       double[] inClose,
-                                       double[] outReal )
-   {
-      TrueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// True Range: the greatest of today's high-low span and the two gaps between
-   /// yesterday's close and today's high/low. Base volatility measure used to
-   /// build ATR/NATR. Larger values mean wider or gappier bars (higher
    /// volatility).
    /// </summary>
    /// <remarks>
@@ -440,47 +304,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("TRANGE", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// True Range: the greatest of today's high-low span and the two gaps between
-   /// yesterday's close and today's high/low. Base volatility measure used to
-   /// build ATR/NATR. Larger values mean wider or gappier bars (higher
-   /// volatility). — <b>unchecked</b> variant of <c>TrueRange</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange TrueRangeUnguarded( int startIdx,
-                                       int endIdx,
-                                       float[] inHigh,
-                                       float[] inLow,
-                                       float[] inClose,
-                                       double[] outReal )
-   {
-      TrueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

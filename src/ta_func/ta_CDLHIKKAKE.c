@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -194,86 +194,6 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Unguarded( int    startIdx,
-                                               int    endIdx,
-                                               const double inOpen[],
-                                               const double inHigh[],
-                                               const double inLow[],
-                                               const double inClose[],
-                                               int          *outBegIdx,
-                                               int          *outNBElement,
-                                               int        outInteger[] )
-{
-   int i;
-   int outIdx;
-   int lookbackTotal;
-   int patternResult;
-   int cd;
-   double savedHigh;
-   double savedLow;
-
-   lookbackTotal = TA_CDLHIKKAKE_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   cd = 0;
-   patternResult = 0;
-   i = startIdx - 3;
-   while( i < startIdx )
-   {
-      if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) )
-      {
-         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-         savedHigh = inHigh[i - 1];
-         savedLow = inLow[i - 1];
-         cd = 4;
-      } else if( cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) )
-      {
-         cd = 0;
-      }
-      if( cd > 0 )
-      {
-         cd -= 1;
-      }
-      i += 1;
-   }
-   i = startIdx;
-   outIdx = 0;
-   do
-   {
-      if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) )
-      {
-         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-         savedHigh = inHigh[i - 1];
-         savedLow = inLow[i - 1];
-         cd = 4;
-         outInteger[outIdx++] = patternResult;
-      } else if( cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) )
-      {
-         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-         cd = 0;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      if( cd > 0 )
-      {
-         cd -= 1;
-      }
-      i += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
                             int    endIdx,
                             const float inOpen[],
@@ -307,86 +227,6 @@ TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
-
-   lookbackTotal = TA_CDLHIKKAKE_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   cd = 0;
-   patternResult = 0;
-   i = startIdx - 3;
-   while( i < startIdx )
-   {
-      if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) )
-      {
-         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-         savedHigh = (double)inHigh[i - 1];
-         savedLow = (double)inLow[i - 1];
-         cd = 4;
-      } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) )
-      {
-         cd = 0;
-      }
-      if( cd > 0 )
-      {
-         cd -= 1;
-      }
-      i += 1;
-   }
-   i = startIdx;
-   outIdx = 0;
-   do
-   {
-      if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) )
-      {
-         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-         savedHigh = (double)inHigh[i - 1];
-         savedLow = (double)inLow[i - 1];
-         cd = 4;
-         outInteger[outIdx++] = patternResult;
-      } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) )
-      {
-         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-         cd = 0;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      if( cd > 0 )
-      {
-         cd -= 1;
-      }
-      i += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_CDLHIKKAKE_Unguarded( int    startIdx,
-                                      int    endIdx,
-                                      const float inOpen[],
-                                      const float inHigh[],
-                                      const float inLow[],
-                                      const float inClose[],
-                                      int          *outBegIdx,
-                                      int          *outNBElement,
-                                      int        outInteger[] )
-{
-   int i;
-   int outIdx;
-   int lookbackTotal;
-   int patternResult;
-   int cd;
-   double savedHigh;
-   double savedLow;
 
    lookbackTotal = TA_CDLHIKKAKE_Lookback();
    if( startIdx < lookbackTotal )

@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -142,55 +142,6 @@ TA_LIB_API TA_RetCode TA_SUM( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_SUM_Unguarded( int    startIdx,
-                                        int    endIdx,
-                                        const double inReal[],
-                                        int optInTimePeriod,
-                                        int          *outBegIdx,
-                                        int          *outNBElement,
-                                        double        outReal[] )
-{
-   double periodTotal;
-   double tempReal;
-   int i;
-   int outIdx;
-   int trailingIdx;
-   int lookbackTotal;
-
-   lookbackTotal = optInTimePeriod - 1;
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   periodTotal = 0;
-   trailingIdx = startIdx - lookbackTotal;
-   i = trailingIdx;
-   if( optInTimePeriod > 1 )
-   {
-      while( i < startIdx )
-      {
-         periodTotal += inReal[i++];
-      }
-   }
-   outIdx = 0;
-   do
-   {
-      periodTotal += inReal[i++];
-      tempReal = periodTotal;
-      periodTotal -= inReal[trailingIdx++];
-      outReal[outIdx++] = tempReal;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_SUM( int    startIdx,
                      int    endIdx,
                      const float inReal[],
@@ -219,55 +170,6 @@ TA_RetCode TA_S_SUM( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   lookbackTotal = optInTimePeriod - 1;
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   periodTotal = 0;
-   trailingIdx = startIdx - lookbackTotal;
-   i = trailingIdx;
-   if( optInTimePeriod > 1 )
-   {
-      while( i < startIdx )
-      {
-         periodTotal += (double)inReal[i++];
-      }
-   }
-   outIdx = 0;
-   do
-   {
-      periodTotal += (double)inReal[i++];
-      tempReal = periodTotal;
-      periodTotal -= (double)inReal[trailingIdx++];
-      outReal[outIdx++] = tempReal;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_SUM_Unguarded( int    startIdx,
-                               int    endIdx,
-                               const float inReal[],
-                               int optInTimePeriod,
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] )
-{
-   double periodTotal;
-   double tempReal;
-   int i;
-   int outIdx;
-   int trailingIdx;
-   int lookbackTotal;
 
    lookbackTotal = optInTimePeriod - 1;
    if( startIdx < lookbackTotal )

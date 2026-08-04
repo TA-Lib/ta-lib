@@ -396,15 +396,11 @@ pub fn generate(
     // verbatim into BOTH the shipped Core and the JSON-RPC server's inline Core,
     // and the server calls these directly — so the harness's retCode ints and
     // output hashes are untouched by the public surface below.
-    out.push_str(&gen_func(func, false, false, enums, registry, helpers)); // double-precision guarded
-    out.push_str(&gen_func(func, false, true, enums, registry, helpers)); // double-precision logic (unguarded)
-    out.push_str(&gen_func(func, true, false, enums, registry, helpers)); // single-precision guarded
-    out.push_str(&gen_func(func, true, true, enums, registry, helpers)); // single-precision logic (unguarded)
+    out.push_str(&gen_func(func, false, enums, registry, helpers)); // double-precision guarded
+    out.push_str(&gen_func(func, true, enums, registry, helpers)); // single-precision guarded
     // Public surface: OutRange-returning wrappers over the cores above.
-    out.push_str(&gen_public_wrapper(func, false, false, enums, registry));
-    out.push_str(&gen_public_wrapper(func, false, true, enums, registry));
-    out.push_str(&gen_public_wrapper(func, true, false, enums, registry));
-    out.push_str(&gen_public_wrapper(func, true, true, enums, registry));
+    out.push_str(&gen_public_wrapper(func, false, enums, registry));
+    out.push_str(&gen_public_wrapper(func, true, enums, registry));
     // Streaming API section (only for YAML-declared streamable functions).
     if func.streaming {
         out.push_str(&super::java_stream::generate(func, enums, registry, helpers));
@@ -576,20 +572,14 @@ fn render_init_expr(expr: &Expr) -> String {
 /// same fragment text is spliced into the shipped `Core` and the JSON-RPC
 /// server's inline `Core`, and the server calls the cores, so the cross-language
 /// hash/retCode surface is unaffected by the public API above them.
-fn internal_core_name(base: &str, unguarded: bool) -> String {
-    if unguarded {
-        format!("{base}UnguardedInternal")
-    } else {
-        format!("{base}Internal")
-    }
+fn internal_core_name(base: &str) -> String {
+    format!("{base}Internal")
 }
 
 /// Emit the public, `OutRange`-returning wrapper over one internal core.
 ///
-/// Guarded wrappers translate the core's `RetCode` into the documented exception
-/// mapping; unguarded wrappers check nothing and never throw (the documented
-/// sharp edge, mirroring Rust's public unguarded tier). Both are thin: the
-/// numerics live entirely in the core.
+/// The wrapper translates the core's `RetCode` into the documented exception
+/// mapping. It is thin: the numerics live entirely in the core.
 ///
 /// **A short range is not an error.** A valid range shorter than the lookback
 /// returns `Success` with `outNBElement == 0`, which becomes an `OutRange` whose
@@ -597,17 +587,12 @@ fn internal_core_name(base: &str, unguarded: bool) -> String {
 fn gen_public_wrapper(
     func: &FuncDef,
     single_precision: bool,
-    unguarded: bool,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
 ) -> String {
     let base_name = to_java_method_name(&func.name, func.camel_case.as_deref());
-    let core = internal_core_name(&base_name, unguarded);
-    let public_name = if unguarded {
-        format!("{base_name}Unguarded")
-    } else {
-        base_name.clone()
-    };
+    let core = internal_core_name(&base_name);
+    let public_name = base_name.clone();
 
     // Parameters: same as the core minus the two MInteger out-params.
     let mut params: Vec<String> = vec!["int startIdx".to_string(), "int endIdx".to_string()];
@@ -643,13 +628,9 @@ fn gen_public_wrapper(
     }
 
     let mut out = String::new();
-    if unguarded {
-        out.push_str(&super::java_doc::unguarded_docs(func, &base_name, single_precision));
-    } else {
-        out.push_str(&super::java_doc::guarded_docs(
-            func, &base_name, single_precision, enums, registry,
-        ));
-    }
+    out.push_str(&super::java_doc::guarded_docs(
+        func, &base_name, single_precision, enums, registry,
+    ));
     let sig_prefix = format!("   public OutRange {public_name}( ");
     let indent = " ".repeat(sig_prefix.len());
     out.push_str(&sig_prefix);
@@ -662,13 +643,7 @@ fn gen_public_wrapper(
     out.push_str(" )\n   {\n");
     out.push_str("      MInteger outBegIdx = new MInteger();\n");
     out.push_str("      MInteger outNBElement = new MInteger();\n");
-    if unguarded {
-        // Checks nothing by contract, so there is no failure to report and the
-        // core's RetCode is discarded.
-        let _ = write!(out, "      {core}(");
-        out.push_str(&args.join(", "));
-        out.push_str(");\n");
-    } else {
+    {
         let _ = write!(out, "      RetCode retCode = {core}(");
         out.push_str(&args.join(", "));
         out.push_str(");\n");
@@ -690,7 +665,7 @@ fn gen_private(
 ) -> String {
     let base_name = to_java_method_name(&func.name, func.camel_case.as_deref());
     let name_override = format!("{base_name}Private");
-    gen_func_inner(func, false, true, Some(&name_override), enums, registry, helpers)
+    gen_func_inner(func, false, Some(&name_override), enums, registry, helpers)
 }
 
 /// Generate the Private method float overload (for Java method overloading).
@@ -704,25 +679,29 @@ fn gen_private_sp(
 ) -> String {
     let base_name = to_java_method_name(&func.name, func.camel_case.as_deref());
     let name_override = format!("{base_name}Private");
-    gen_func_inner(func, true, true, Some(&name_override), enums, registry, helpers)
+    gen_func_inner(func, true, Some(&name_override), enums, registry, helpers)
 }
 
 fn gen_func(
     func: &FuncDef,
     single_precision: bool,
-    logic: bool,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    gen_func_inner(func, single_precision, logic, None, enums, registry, helpers)
+    gen_func_inner(func, single_precision, None, enums, registry, helpers)
 }
 
+/// `name_override` distinguishes the two things this emits: `Some(..)` is the
+/// `Private` variant (no validation prologue, extra private params), `None` is the
+/// guarded internal core. Before #166 a separate `logic` flag also selected the
+/// `…UnguardedInternal` core; with that gone the flag was exactly
+/// `name_override.is_some()`, so it was removed rather than kept as a second name
+/// for the same condition.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 fn gen_func_inner(
     func: &FuncDef,
     single_precision: bool,
-    logic: bool,
     name_override: Option<&str>,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
@@ -732,10 +711,8 @@ fn gen_func_inner(
     let base_name = to_java_method_name(&func.name, func.camel_case.as_deref());
     let name = if let Some(n) = name_override {
         n.to_string()
-    } else if logic {
-        internal_core_name(&base_name, true)
     } else {
-        internal_core_name(&base_name, false)
+        internal_core_name(&base_name)
     };
 
     // Build parameter list
@@ -817,16 +794,15 @@ fn gen_func_inner(
         &func.private_body
     } else if func.has_explicit_private {
         &func.body
-    } else if logic {
-        &func.private_body
     } else {
         &func.body
     };
 
     // Carry source comments only in the double-precision implementation (guarded
-    // `xxx` and, for explicit-private functions, `xxxPrivate`). Strip them from
-    // every single-precision copy and the double logic/unguarded duplicate.
-    let keep_comments = !single_precision && (name_override.is_some() || !logic);
+    // `xxx` and, for explicit-private functions, `xxxPrivate`). Strip them from the
+    // single-precision copy. Before #166 this also had to exclude the double
+    // unguarded duplicate; with that core gone, precision is the only axis.
+    let keep_comments = !single_precision;
     let body_stripped;
     let body: &[Statement] = if keep_comments {
         body
@@ -924,8 +900,10 @@ fn gen_func_inner(
         out.push_str(&emit_java_unpacking(&candle_used, 6));
     }
 
-    // Validation (omitted for Logic/unguarded variant)
-    if !logic {
+    // Validation prologue. Omitted for the `Private` variant, whose callers are the
+    // guarded cores that have already validated (#166: this used to also be where
+    // the `…UnguardedInternal` core skipped it).
+    if name_override.is_none() {
         out.push_str("      if( startIdx < 0 ) {\n");
         out.push_str("         return RetCode.OutOfRangeStartIndex ;\n");
         out.push_str("      }\n");
@@ -2430,49 +2408,34 @@ mod tests {
     }
 
     #[test]
-    fn test_java_generates_unguarded_variant() {
+    fn test_java_generates_core_and_wrapper() {
         let func = load_sma();
         let enums = HashMap::new();
         let registry = make_registry();
         let output = generate(&func, &enums, &registry, &HelperRegistry::empty());
 
-        // Both internal cores are emitted, package-private (no `public`).
-        assert!(output.contains("   RetCode smaUnguardedInternal("), "Missing unguarded core");
+        // The internal core is emitted, package-private (no `public`).
         assert!(output.contains("   RetCode smaInternal("), "Missing guarded core");
+        assert!(!output.contains("Unguarded"), "the unguarded tier must be gone (#166)");
         assert!(
             !output.contains("public RetCode sma"),
             "cores must be package-private — RetCode never appears on the public surface"
         );
 
-        // The unguarded core skips validation; the guarded one performs it.
-        let logic_pos = output.find("RetCode smaUnguardedInternal( ").unwrap();
-        let logic_section = &output[logic_pos..];
-        let next_fn_pos = logic_section[1..]
-            .find("   RetCode ")
-            .map_or(logic_section.len(), |i| i + 1);
-        let logic_body = &logic_section[..next_fn_pos];
-        assert!(
-            !logic_body.contains("OutOfRangeStartIndex"),
-            "Unguarded core should not contain validation"
-        );
-
+        // The surviving core validates. Bounded to the double core's own body so
+        // a match inside the float overload cannot stand in for it.
         let guarded_pos = output.find("RetCode smaInternal( ").unwrap();
         let guarded_section = &output[guarded_pos..];
-        let guarded_end = guarded_section
-            .find("RetCode smaUnguardedInternal(")
-            .unwrap_or(guarded_section.len());
-        let guarded_body = &guarded_section[..guarded_end];
+        let guarded_end = guarded_section[1..]
+            .find("   RetCode ")
+            .map_or(guarded_section.len(), |i| i + 1);
         assert!(
-            guarded_body.contains("OutOfRangeStartIndex"),
+            guarded_section[..guarded_end].contains("OutOfRangeStartIndex"),
             "Guarded core should contain validation"
         );
 
         // The public surface is OutRange-returning wrappers over those cores.
         assert!(output.contains("   public OutRange sma( "), "Missing public sma wrapper");
-        assert!(
-            output.contains("   public OutRange smaUnguarded( "),
-            "Missing public smaUnguarded wrapper"
-        );
         assert!(
             output.contains("throw failure(\"SMA\", retCode);"),
             "guarded wrapper must map RetCode onto the documented exception"
