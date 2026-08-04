@@ -268,10 +268,13 @@ pub struct InputRow {
     ///
     /// Carried because a renderer that has to unfold the bundle back into
     /// argument positions (a dynamic-dispatch thunk) would otherwise re-derive
-    /// it from `FuncDef` — a second fold whose agreement with this row's
-    /// positions nothing checks. `java_metadata::dispatch_class` does exactly
-    /// that today and gets away with it only because every shipped bundle is
-    /// already declared in canonical order.
+    /// it from `FuncDef` — a second fold whose agreement with this row's own
+    /// slot numbering nothing checks. Both `java_metadata::dispatch_class` and
+    /// the C# thunks used to do that; they read this field now.
+    ///
+    /// Canonical OHLCV order is irrelevant to it: this is the DECLARATION
+    /// order, which is the order the generated signature takes the arrays in,
+    /// and `flags` carries the canonicalised bitmask separately.
     pub signature_components: Vec<PriceComponent>,
 }
 

@@ -1460,6 +1460,10 @@ fn build_csharp_library(root: &Path) -> bool {
 /// restore from NuGet, so a box can compile a TFM it cannot launch. It is
 /// printed loudly so the gap is visible in the log instead of reading as
 /// coverage — the same rule the compatibility skips in server_verify follow.
+///
+/// Skipping them ALL is a failure, though. The tolerance above is "the others
+/// still ran"; with the library on a single TFM there are no others, so one
+/// skip would mean the suite reported success having executed nothing.
 fn run_csharp_tests(lib_dir: &Path) -> bool {
     let test_dir = lib_dir.join("test");
     if !test_dir.exists() {
@@ -1491,6 +1495,7 @@ fn run_csharp_tests(lib_dir: &Path) -> bool {
         }
     }
 
+    let mut ran = 0;
     for tfm in &tfms {
         print!("  Running C# tests ({tfm})... ");
         let out = std::process::Command::new("dotnet")
@@ -1500,6 +1505,7 @@ fn run_csharp_tests(lib_dir: &Path) -> bool {
         match out {
             Ok(o) if o.status.success() => {
                 print!("{}", String::from_utf8_lossy(&o.stdout));
+                ran += 1;
             }
             Ok(o) => {
                 let combined = format!(
@@ -1524,6 +1530,16 @@ fn run_csharp_tests(lib_dir: &Path) -> bool {
                 return false;
             }
         }
+    }
+
+    // Skipping SOME target framework is a coverage gap worth tolerating (the
+    // others still ran). Skipping them ALL means the suite reported success
+    // having executed nothing, which is the failure mode every gate in this
+    // tree exists to prevent — and with the library on a single TFM, one skip
+    // is all of them.
+    if ran == 0 {
+        println!("  Running C# tests... FAILED (no target framework could be run — nothing was tested)");
+        return false;
     }
     true
 }
