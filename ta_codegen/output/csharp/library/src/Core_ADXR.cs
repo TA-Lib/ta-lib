@@ -146,7 +146,7 @@ public partial class Core
       /* Compute ADX over a range that starts (period-1) bars earlier, so each
        * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
        */
-      retCode = AdxUnguarded(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
+      retCode = Adx(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -189,7 +189,7 @@ public partial class Core
          return RetCode.Success ;
       }
       adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
-      retCode = AdxUnguarded(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
+      retCode = Adx(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -239,7 +239,7 @@ public partial class Core
          return RetCode.Success ;
       }
       adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
-      retCode = AdxUnguarded(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
+      retCode = Adx(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -278,7 +278,7 @@ public partial class Core
          return RetCode.Success ;
       }
       adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
-      retCode = AdxUnguarded(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
+      retCode = Adx(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }

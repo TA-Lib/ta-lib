@@ -375,7 +375,7 @@ impl Core {
         }
         // Fast-K calculation completed. This K calculation is returned
         // to the caller. It is smoothed to become Fast-D.
-        retCode = self.ma_unguarded(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastD);
+        retCode = self.ma(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastD);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -528,7 +528,7 @@ impl Core {
             trailingIdx += 1;
             today += 1;
         }
-        retCode = self.ma_unguarded(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastD);
+        retCode = self.ma(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastD);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -856,7 +856,7 @@ impl Core {
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInFastD_Period, optInFastD_MAType)?;
-        retCode = self.ma_unguarded(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..]);
+        retCode = self.ma(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..]);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -1151,7 +1151,7 @@ impl Core {
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInFastD_Period, optInFastD_MAType)?;
-        retCode = self.ma_unguarded(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..]);
+        retCode = self.ma(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..]);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }

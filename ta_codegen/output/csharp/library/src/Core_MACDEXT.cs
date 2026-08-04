@@ -190,7 +190,7 @@ public partial class Core
        * recursion.
        */
       if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
-         return MacdUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+         return Macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist) ;
       }
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
@@ -238,14 +238,14 @@ public partial class Core
        * will start at the requested 'startIdx'.
        */
       tempInteger = startIdx - lookbackSignal;
-      retCode = MovingAverageUnguarded(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
+      retCode = MovingAverage(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
       /* Calculate the fast MA. */
-      retCode = MovingAverageUnguarded(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
+      retCode = MovingAverage(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -267,7 +267,7 @@ public partial class Core
        */
       Array.Copy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
       /* Calculate the signal/trigger line. */
-      retCode = MovingAverageUnguarded(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
+      retCode = MovingAverage(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -313,7 +313,7 @@ public partial class Core
       int i = 0;
       MAType tempMAType;
       if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
-         return MacdUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+         return Macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist) ;
       }
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
@@ -342,13 +342,13 @@ public partial class Core
       fastMABuffer = new double[(int)(tempInteger * 1)];
       slowMABuffer = new double[(int)(tempInteger * 1)];
       tempInteger = startIdx - lookbackSignal;
-      retCode = MovingAverageUnguarded(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
+      retCode = MovingAverage(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
-      retCode = MovingAverageUnguarded(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
+      retCode = MovingAverage(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -363,7 +363,7 @@ public partial class Core
          fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
       }
       Array.Copy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      retCode = MovingAverageUnguarded(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
+      retCode = MovingAverage(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -440,7 +440,7 @@ public partial class Core
          return RetCode.BadParam ;
       }
       if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
-         return MacdUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+         return Macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist) ;
       }
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
@@ -469,13 +469,13 @@ public partial class Core
       fastMABuffer = new double[(int)(tempInteger * 1)];
       slowMABuffer = new double[(int)(tempInteger * 1)];
       tempInteger = startIdx - lookbackSignal;
-      retCode = MovingAverageUnguarded(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
+      retCode = MovingAverage(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
-      retCode = MovingAverageUnguarded(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
+      retCode = MovingAverage(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -490,7 +490,7 @@ public partial class Core
          fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
       }
       Array.Copy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      retCode = MovingAverageUnguarded(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
+      retCode = MovingAverage(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -534,7 +534,7 @@ public partial class Core
       int i = 0;
       MAType tempMAType;
       if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
-         return MacdUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+         return Macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist) ;
       }
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
@@ -563,13 +563,13 @@ public partial class Core
       fastMABuffer = new double[(int)(tempInteger * 1)];
       slowMABuffer = new double[(int)(tempInteger * 1)];
       tempInteger = startIdx - lookbackSignal;
-      retCode = MovingAverageUnguarded(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
+      retCode = MovingAverage(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
-      retCode = MovingAverageUnguarded(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
+      retCode = MovingAverage(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -584,7 +584,7 @@ public partial class Core
          fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
       }
       Array.Copy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      retCode = MovingAverageUnguarded(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
+      retCode = MovingAverage(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;

@@ -198,7 +198,7 @@ public partial class Core
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = MinusDMUnguarded(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
+      retCode = MinusDM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -384,7 +384,7 @@ public partial class Core
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = MinusDMUnguarded(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
+      retCode = MinusDM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -546,7 +546,7 @@ public partial class Core
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = MinusDMUnguarded(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
+      retCode = MinusDM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -692,7 +692,7 @@ public partial class Core
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = MinusDMUnguarded(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
+      retCode = MinusDM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {

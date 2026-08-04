@@ -407,7 +407,7 @@ impl Core {
         // to the caller. It is always smoothed and then return.
         // Some documentation will refer to the smoothed version as being
         // "K-Slow", but often this end up to be shorten to "K".
-        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma_unguarded(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
+        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -418,7 +418,7 @@ impl Core {
         }
         // Calculate the %D which is simply a moving average of
         // the already smoothed %K.
-        retCode = self.ma_unguarded(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+        retCode = self.ma(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the
         //  caller buffer because more input data then the
@@ -567,7 +567,7 @@ impl Core {
             trailingIdx += 1;
             today += 1;
         }
-        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma_unguarded(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
+        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -575,7 +575,7 @@ impl Core {
             (*outNBElement) = 0;
             return retCode;
         }
-        retCode = self.ma_unguarded(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+        retCode = self.ma(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
         {
             let _n = (((((*outNBElement) as usize)) as usize) * 1) as usize;
             let _di = (0) as usize;
@@ -912,7 +912,7 @@ impl Core {
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInSlowK_Period, optInSlowK_MAType)?;
-        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma_unguarded(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
+        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -926,7 +926,7 @@ impl Core {
         // Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub1, _) = self.ma_open_internal(&tempBuffer[..((((*outNBElement) as usize) - 1) as usize) + 1], ((0) as usize), optInSlowD_Period, optInSlowD_MAType)?;
-        retCode = self.ma_unguarded(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..]);
+        retCode = self.ma(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..]);
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the
         //  caller buffer because more input data then the
@@ -1228,7 +1228,7 @@ impl Core {
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInSlowK_Period, optInSlowK_MAType)?;
-        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma_unguarded(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
+        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -1242,7 +1242,7 @@ impl Core {
         // Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub1, _) = self.ma_open_internal(&tempBuffer[..((((*outNBElement) as usize) - 1) as usize) + 1], ((0) as usize), optInSlowD_Period, optInSlowD_MAType)?;
-        retCode = self.ma_unguarded(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..]);
+        retCode = self.ma(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..]);
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the
         //  caller buffer because more input data then the

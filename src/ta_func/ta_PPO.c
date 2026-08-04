@@ -134,14 +134,14 @@ TA_LIB_API TA_RetCode TA_PPO( int    startIdx,
       optInFastPeriod = tempInteger;
    }
    /* Calculate the fast MA into the tempBuffer. */
-   retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
+   retCode = TA_MA(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(tempBuffer);
       return retCode;
    }
    /* Calculate the slow MA into the output. */
-   retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,outBegIdx,outNBElement,outReal);
+   retCode = TA_MA(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,outBegIdx,outNBElement,outReal);
    if( retCode != TA_SUCCESS )
    {
       free(tempBuffer);
@@ -198,13 +198,13 @@ TA_LIB_API TA_RetCode TA_PPO_Unguarded( int    startIdx,
       optInSlowPeriod = optInFastPeriod;
       optInFastPeriod = tempInteger;
    }
-   retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
+   retCode = TA_MA(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,outBegIdx,outNBElement,outReal);
+   retCode = TA_MA(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,outBegIdx,outNBElement,outReal);
    if( retCode != TA_SUCCESS )
    {
       free(tempBuffer);
@@ -276,13 +276,13 @@ TA_RetCode TA_S_PPO( int    startIdx,
       optInSlowPeriod = optInFastPeriod;
       optInFastPeriod = tempInteger;
    }
-   retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
+   retCode = TA_S_MA(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,outBegIdx,outNBElement,outReal);
+   retCode = TA_S_MA(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,outBegIdx,outNBElement,outReal);
    if( retCode != TA_SUCCESS )
    {
       free(tempBuffer);
@@ -334,13 +334,13 @@ TA_RetCode TA_S_PPO_Unguarded( int    startIdx,
       optInSlowPeriod = optInFastPeriod;
       optInFastPeriod = tempInteger;
    }
-   retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
+   retCode = TA_S_MA(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
    if( retCode != TA_SUCCESS )
    {
       free(tempBuffer);
       return retCode;
    }
-   retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,outBegIdx,outNBElement,outReal);
+   retCode = TA_S_MA(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,outBegIdx,outNBElement,outReal);
    if( retCode != TA_SUCCESS )
    {
       free(tempBuffer);
@@ -487,7 +487,7 @@ TA_RetCode TA_PPO_OpenInternal( struct TA_PPO_Stream **stream, const double inRe
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
+      retCode = TA_MA(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
       if( retCode != TA_SUCCESS )
       {
          free(tempBuffer);
@@ -506,7 +506,7 @@ TA_RetCode TA_PPO_OpenInternal( struct TA_PPO_Stream **stream, const double inRe
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,&dummyBegIdx,&dummyNBElement,sc_outReal);
+      retCode = TA_MA(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,&dummyBegIdx,&dummyNBElement,sc_outReal);
       if( retCode != TA_SUCCESS )
       {
          free(tempBuffer);
@@ -638,7 +638,7 @@ TA_LIB_API TA_RetCode TA_PPO_OpenAndFill( TA_PPO_Stream **stream, const double i
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
+      retCode = TA_MA(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
       if( retCode != TA_SUCCESS )
       {
          free(tempBuffer);
@@ -657,7 +657,7 @@ TA_LIB_API TA_RetCode TA_PPO_OpenAndFill( TA_PPO_Stream **stream, const double i
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,&dummyBegIdx,&dummyNBElement,sc_outReal);
+      retCode = TA_MA(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,&dummyBegIdx,&dummyNBElement,sc_outReal);
       if( retCode != TA_SUCCESS )
       {
          free(tempBuffer);

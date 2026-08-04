@@ -188,7 +188,7 @@ impl Core {
         let mut retCode: RetCode = RetCode::Success;
         let mut tempReal: f64 = 0.0_f64;
         // Calculate the variance.
-        retCode = self.var_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+        retCode = self.var(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -248,7 +248,7 @@ impl Core {
         let _assertLb = self.stddev_lookback(optInTimePeriod, optInNbDev);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        retCode = self.var_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+        retCode = self.var(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -371,7 +371,7 @@ impl Core {
         // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.var_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.var_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        retCode = self.var(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -476,7 +476,7 @@ impl Core {
         // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.var_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.var_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        retCode = self.var(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }

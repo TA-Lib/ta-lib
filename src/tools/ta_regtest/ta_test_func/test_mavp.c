@@ -426,29 +426,30 @@ static ErrorNumber mvUnguardedBoundCheck( void )
    }
 
    /* Same huge period on every bar: the spread is 0, so relative indexing
-    * makes this a two-int table and an ordinary success — the absolute
-    * indexing it replaced would have asked for ~8GB here. */
+    * makes this a two-int table — the absolute indexing it replaced would
+    * have asked for ~8GB here. That sizing expression is what #145 is about,
+    * and it is still what this leg exercises: the bound at ta_MAVP.c:271 and
+    * the malloc at :289 both run BEFORE the first internal MA call at :309.
+    *
+    * Issue #166 changed only what happens after them. MAVP's internal
+    * composition now targets the GUARDED TA_MA, which range-rejects
+    * optInTimePeriod=2147483646 (ma.yaml caps it at 100000) — so an
+    * off-contract unguarded call carrying a near-INT_MAX period now surfaces
+    * a clean TA_BAD_PARAM instead of an identity copy. No in-contract caller
+    * can reach this: mavp.yaml caps both periods at 100000, which is why the
+    * in-contract control below is untouched. */
    for( i = 0; i < MV_DATA_SIZE; i++ )
       mvPeriods[i] = (TA_Real)huge;
    outBegIdx = outNbElement = -1;
    retCode = TA_MAVP_Unguarded( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
                                 huge, huge, TA_MAType_DISABLED,
                                 &outBegIdx, &outNbElement, mvOut );
-   if( retCode != TA_SUCCESS || outBegIdx != 0 || outNbElement != MV_DATA_SIZE )
+   if( retCode != TA_BAD_PARAM || outBegIdx != 0 || outNbElement != 0 )
    {
       printf( "\nFail: MAVP unguarded narrow huge band: rc=%d beg=%d nb=%d,"
-              " expected the identity copy over %d bars\n",
-              (int)retCode, (int)outBegIdx, (int)outNbElement, MV_DATA_SIZE );
+              " expected a clean TA_BAD_PARAM from the guarded internal MA\n",
+              (int)retCode, (int)outBegIdx, (int)outNbElement );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
-   }
-   for( i = 0; i < MV_DATA_SIZE; i++ )
-   {
-      if( !( mvOut[i] == mvInplace[i] ) )
-      {
-         printf( "\nFail: MAVP unguarded narrow huge band [%d]: got %.17g,"
-                 " expected %.17g\n", i, mvOut[i], mvInplace[i] );
-         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
-      }
    }
 
    /* Control: the same path at in-contract periods is untouched. The bound is

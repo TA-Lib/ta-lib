@@ -153,7 +153,7 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -337,7 +337,7 @@
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -497,7 +497,7 @@
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -641,7 +641,7 @@
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -1237,7 +1237,7 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -1497,7 +1497,7 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {

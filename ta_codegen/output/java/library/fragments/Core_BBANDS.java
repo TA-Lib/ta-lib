@@ -284,7 +284,7 @@
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Calculate the middle band moving average. */
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
@@ -292,7 +292,7 @@
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)outBegIdx.value;
       /* Calculate the Standard Deviation into tempBuffer2. */
-      retCode = stdDevUnguardedInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
+      retCode = stdDevInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement.value = 0;
          return retCode ;
@@ -478,13 +478,13 @@
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
       }
       maBegIdx = (int)outBegIdx.value;
-      retCode = stdDevUnguardedInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
+      retCode = stdDevInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement.value = 0;
          return retCode ;
@@ -684,13 +684,13 @@
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
       }
       maBegIdx = (int)outBegIdx.value;
-      retCode = stdDevUnguardedInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
+      retCode = stdDevInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement.value = 0;
          return retCode ;
@@ -866,13 +866,13 @@
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
       }
       maBegIdx = (int)outBegIdx.value;
-      retCode = stdDevUnguardedInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
+      retCode = stdDevInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement.value = 0;
          return retCode ;
@@ -1314,7 +1314,7 @@
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, optInMAType);
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
@@ -1325,7 +1325,7 @@
       /* Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       StdDevStream sub1 = stdDevOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), (int)outBegIdx.value, optInTimePeriod, 1.0);
-      retCode = stdDevUnguardedInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
+      retCode = stdDevInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement.value = 0;
          return retCode ;
@@ -1424,7 +1424,7 @@
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, optInMAType);
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
@@ -1435,7 +1435,7 @@
       /* Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       StdDevStream sub1 = stdDevOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), (int)outBegIdx.value, optInTimePeriod, 1.0);
-      retCode = stdDevUnguardedInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
+      retCode = stdDevInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement.value = 0;
          return retCode ;

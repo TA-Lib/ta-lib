@@ -193,13 +193,13 @@ public partial class Core
       outBegIdx = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
       tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      retCode = RsiUnguarded(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
+      retCode = Rsi(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
       if( retCode != RetCode.Success || outNbElement1 == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
-      retCode = StochFUnguarded(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
+      retCode = StochF(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -244,13 +244,13 @@ public partial class Core
       outBegIdx = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
       tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      retCode = RsiUnguarded(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
+      retCode = Rsi(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
       if( retCode != RetCode.Success || outNbElement1 == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
-      retCode = StochFUnguarded(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
+      retCode = StochF(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -322,13 +322,13 @@ public partial class Core
       outBegIdx = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
       tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      retCode = RsiUnguarded(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
+      retCode = Rsi(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
       if( retCode != RetCode.Success || outNbElement1 == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
-      retCode = StochFUnguarded(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
+      retCode = StochF(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -373,13 +373,13 @@ public partial class Core
       outBegIdx = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
       tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      retCode = RsiUnguarded(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
+      retCode = Rsi(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
       if( retCode != RetCode.Success || outNbElement1 == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
-      retCode = StochFUnguarded(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
+      retCode = StochF(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;

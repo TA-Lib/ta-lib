@@ -175,37 +175,37 @@ public partial class Core
       switch( optInMAType )
       {
       case MAType.Sma:
-         retCode = SmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Sma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Ema:
-         retCode = EmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Ema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Wma:
-         retCode = WmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Wma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Dema:
-         retCode = DemaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Dema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Tema:
-         retCode = TemaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Tema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Trima:
-         retCode = TrimaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Trima(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Kama:
-         retCode = KamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Kama(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Mama:
          /* The optInTimePeriod is ignored. FAMA is a nullable output
           * (issue #125): pass NULL to compute only the MAMA line into outReal.
           */
-         retCode = MamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         retCode = Mama(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case MAType.T3:
-         retCode = T3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
+         retCode = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Hma:
-         retCode = HmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Hma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       default:
          retCode = RetCode.BadParam;
@@ -240,34 +240,34 @@ public partial class Core
       switch( optInMAType )
       {
       case MAType.Sma:
-         retCode = SmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Sma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Ema:
-         retCode = EmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Ema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Wma:
-         retCode = WmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Wma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Dema:
-         retCode = DemaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Dema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Tema:
-         retCode = TemaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Tema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Trima:
-         retCode = TrimaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Trima(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Kama:
-         retCode = KamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Kama(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Mama:
-         retCode = MamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         retCode = Mama(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case MAType.T3:
-         retCode = T3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
+         retCode = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Hma:
-         retCode = HmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Hma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       default:
          retCode = RetCode.BadParam;
@@ -316,34 +316,34 @@ public partial class Core
       switch( optInMAType )
       {
       case MAType.Sma:
-         retCode = SmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Sma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Ema:
-         retCode = EmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Ema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Wma:
-         retCode = WmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Wma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Dema:
-         retCode = DemaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Dema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Tema:
-         retCode = TemaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Tema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Trima:
-         retCode = TrimaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Trima(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Kama:
-         retCode = KamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Kama(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Mama:
-         retCode = MamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         retCode = Mama(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case MAType.T3:
-         retCode = T3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
+         retCode = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Hma:
-         retCode = HmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Hma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       default:
          retCode = RetCode.BadParam;
@@ -378,34 +378,34 @@ public partial class Core
       switch( optInMAType )
       {
       case MAType.Sma:
-         retCode = SmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Sma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Ema:
-         retCode = EmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Ema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Wma:
-         retCode = WmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Wma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Dema:
-         retCode = DemaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Dema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Tema:
-         retCode = TemaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Tema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Trima:
-         retCode = TrimaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Trima(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Kama:
-         retCode = KamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Kama(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Mama:
-         retCode = MamaUnguarded(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         retCode = Mama(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case MAType.T3:
-         retCode = T3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
+         retCode = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
          break;
       case MAType.Hma:
-         retCode = HmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         retCode = Hma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       default:
          retCode = RetCode.BadParam;

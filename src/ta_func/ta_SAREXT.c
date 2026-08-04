@@ -285,7 +285,7 @@ TA_LIB_API TA_RetCode TA_SAREXT( int    startIdx,
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = TA_MINUS_DM_Unguarded(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
+      retCode = TA_MINUS_DM(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
       if( ep_temp[0] > 0 )
       {
          isLong = 0;
@@ -556,7 +556,7 @@ TA_LIB_API TA_RetCode TA_SAREXT_Unguarded( int    startIdx,
    }
    if( optInStartValue == 0 )
    {
-      retCode = TA_MINUS_DM_Unguarded(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
+      retCode = TA_MINUS_DM(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
       if( ep_temp[0] > 0 )
       {
          isLong = 0;
@@ -826,7 +826,7 @@ TA_RetCode TA_S_SAREXT( int    startIdx,
    }
    if( optInStartValue == 0 )
    {
-      retCode = TA_S_MINUS_DM_Unguarded(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
+      retCode = TA_S_MINUS_DM(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
       if( ep_temp[0] > 0 )
       {
          isLong = 0;
@@ -1052,7 +1052,7 @@ TA_RetCode TA_S_SAREXT_Unguarded( int    startIdx,
    }
    if( optInStartValue == 0 )
    {
-      retCode = TA_S_MINUS_DM_Unguarded(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
+      retCode = TA_S_MINUS_DM(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
       if( ep_temp[0] > 0 )
       {
          isLong = 0;
@@ -1559,7 +1559,7 @@ TA_RetCode TA_SAREXT_OpenInternal( struct TA_SAREXT_Stream **stream, const doubl
           * (ep is just used as a temp buffer here, the name
           *  of the parameter is not significant).
           */
-         retCode = TA_MINUS_DM_Unguarded(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
+         retCode = TA_MINUS_DM(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
          if( ep_temp[0] > 0 )
          {
             isLong = 0;
@@ -1969,7 +1969,7 @@ TA_LIB_API TA_RetCode TA_SAREXT_OpenAndFill( TA_SAREXT_Stream **stream, const do
           * (ep is just used as a temp buffer here, the name
           *  of the parameter is not significant).
           */
-         retCode = TA_MINUS_DM_Unguarded(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
+         retCode = TA_MINUS_DM(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
          if( ep_temp[0] > 0 )
          {
             isLong = 0;

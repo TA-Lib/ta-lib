@@ -148,12 +148,12 @@ public partial class Core
          optInFastPeriod = tempInteger;
       }
       /* Calculate the fast MA into the tempBuffer. */
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
       /* Calculate the slow MA into the output. */
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -193,11 +193,11 @@ public partial class Core
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -251,11 +251,11 @@ public partial class Core
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -290,11 +290,11 @@ public partial class Core
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }

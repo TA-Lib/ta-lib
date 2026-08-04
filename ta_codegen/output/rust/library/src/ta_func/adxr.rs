@@ -222,7 +222,7 @@ impl Core {
         adx = vec![0.0_f64; ((endIdx - startIdx + ((optInTimePeriod) as usize)) * 1) as usize];
         // Compute ADX over a range that starts (period-1) bars earlier, so each
         // ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
-        retCode = self.adx_unguarded((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
+        retCode = self.adx((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -280,7 +280,7 @@ impl Core {
             return RetCode::Success;
         }
         adx = vec![0.0_f64; ((endIdx - startIdx + ((optInTimePeriod) as usize)) * 1) as usize];
-        retCode = self.adx_unguarded((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
+        retCode = self.adx((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -400,7 +400,7 @@ impl Core {
         // Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.adx_open_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod)?;
-        retCode = self.adx_unguarded((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
+        retCode = self.adx((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -526,7 +526,7 @@ impl Core {
         // Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.adx_open_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod)?;
-        retCode = self.adx_unguarded((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
+        retCode = self.adx((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }

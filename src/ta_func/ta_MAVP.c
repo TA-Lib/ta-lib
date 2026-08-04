@@ -306,7 +306,7 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       /* Single distinct period: one MA pass, written straight into the
        * destination buffer. Nothing to group or copy.
        */
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
+      retCode = TA_MA(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
       if( retCode != TA_SUCCESS )
       {
          free(localOutputArray);
@@ -372,7 +372,7 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
             firstOccurrence = sortedIdx[bucketStart];
             lastOccurrence = sortedIdx[bucketEnd - 1];
             /* Calculation of the MA required. */
-            retCode = TA_MA_Unguarded(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
+            retCode = TA_MA(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
             if( retCode != TA_SUCCESS )
             {
                free(localOutputArray);
@@ -578,7 +578,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Unguarded( int    startIdx,
    }
    if( minUsed == maxUsed )
    {
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
+      retCode = TA_MA(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
       if( retCode != TA_SUCCESS )
       {
          free(localOutputArray);
@@ -622,7 +622,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Unguarded( int    startIdx,
          {
             firstOccurrence = sortedIdx[bucketStart];
             lastOccurrence = sortedIdx[bucketEnd - 1];
-            retCode = TA_MA_Unguarded(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
+            retCode = TA_MA(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
             if( retCode != TA_SUCCESS )
             {
                free(localOutputArray);
@@ -844,7 +844,7 @@ TA_RetCode TA_S_MAVP( int    startIdx,
    }
    if( minUsed == maxUsed )
    {
-      retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
+      retCode = TA_S_MA(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
       if( retCode != TA_SUCCESS )
       {
          free(localOutputArray);
@@ -888,7 +888,7 @@ TA_RetCode TA_S_MAVP( int    startIdx,
          {
             firstOccurrence = sortedIdx[bucketStart];
             lastOccurrence = sortedIdx[bucketEnd - 1];
-            retCode = TA_S_MA_Unguarded(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
+            retCode = TA_S_MA(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
             if( retCode != TA_SUCCESS )
             {
                free(localOutputArray);
@@ -1088,7 +1088,7 @@ TA_RetCode TA_S_MAVP_Unguarded( int    startIdx,
    }
    if( minUsed == maxUsed )
    {
-      retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
+      retCode = TA_S_MA(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
       if( retCode != TA_SUCCESS )
       {
          free(localOutputArray);
@@ -1132,7 +1132,7 @@ TA_RetCode TA_S_MAVP_Unguarded( int    startIdx,
          {
             firstOccurrence = sortedIdx[bucketStart];
             lastOccurrence = sortedIdx[bucketEnd - 1];
-            retCode = TA_S_MA_Unguarded(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
+            retCode = TA_S_MA(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
             if( retCode != TA_SUCCESS )
             {
                free(localOutputArray);

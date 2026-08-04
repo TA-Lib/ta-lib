@@ -2047,7 +2047,7 @@ mod tests {
             let base = to_csharp_method_name(&fd.name, fd.camel_case.as_deref());
             assert_eq!(
                 registry.resolve_call(&key, Lang::CSharp),
-                format!("{base}Unguarded"),
+                base,
                 "cross-call target for `{key}` disagrees with the emitted method name"
             );
             assert_eq!(
@@ -2128,7 +2128,7 @@ mod tests {
             "&localBegIdx must lower to an `out` argument"
         );
         assert!(
-            output.contains("MovingAverageUnguarded(startIdx, endIdx, inReal, minUsed"),
+            output.contains("MovingAverage(startIdx, endIdx, inReal, minUsed"),
             "cross-call must resolve through the registry's C# naming"
         );
         assert!(

@@ -271,7 +271,7 @@
        * Some documentation will refer to the smoothed version as being
        * "K-Slow", but often this end up to be shorten to "K".
        */
-      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -283,7 +283,7 @@
       /* Calculate the %D which is simply a moving average of
        * the already smoothed %K.
        */
-      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+      retCode = movingAverageInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -412,7 +412,7 @@
          trailingIdx += 1;
          today += 1;
       }
-      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -420,7 +420,7 @@
          outNBElement.value = 0;
          return retCode ;
       }
-      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+      retCode = movingAverageInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -560,7 +560,7 @@
          trailingIdx += 1;
          today += 1;
       }
-      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -568,7 +568,7 @@
          outNBElement.value = 0;
          return retCode ;
       }
-      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+      retCode = movingAverageInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -684,7 +684,7 @@
          trailingIdx += 1;
          today += 1;
       }
-      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -692,7 +692,7 @@
          outNBElement.value = 0;
          return retCode ;
       }
-      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+      retCode = movingAverageInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -1341,7 +1341,7 @@
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInSlowK_Period, optInSlowK_MAType);
-      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -1356,7 +1356,7 @@
       /* Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub1 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, ((int)outNBElement.value - 1) + 1), 0, optInSlowD_Period, optInSlowD_MAType);
-      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
+      retCode = movingAverageInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -1614,7 +1614,7 @@
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInSlowK_Period, optInSlowK_MAType);
-      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -1629,7 +1629,7 @@
       /* Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub1 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, ((int)outNBElement.value - 1) + 1), 0, optInSlowD_Period, optInSlowD_MAType);
-      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
+      retCode = movingAverageInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the

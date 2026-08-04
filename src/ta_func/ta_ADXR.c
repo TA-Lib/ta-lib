@@ -148,7 +148,7 @@ TA_LIB_API TA_RetCode TA_ADXR( int    startIdx,
    /* Compute ADX over a range that starts (period-1) bars earlier, so each
     * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
     */
-   retCode = TA_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
+   retCode = TA_ADX(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
    if( retCode != TA_SUCCESS )
    {
       free(adx);
@@ -201,7 +201,7 @@ TA_LIB_API TA_RetCode TA_ADXR_Unguarded( int    startIdx,
    {
       return TA_ALLOC_ERR;
    }
-   retCode = TA_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
+   retCode = TA_ADX(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
    if( retCode != TA_SUCCESS )
    {
       free(adx);
@@ -268,7 +268,7 @@ TA_RetCode TA_S_ADXR( int    startIdx,
    {
       return TA_ALLOC_ERR;
    }
-   retCode = TA_S_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
+   retCode = TA_S_ADX(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
    if( retCode != TA_SUCCESS )
    {
       free(adx);
@@ -317,7 +317,7 @@ TA_RetCode TA_S_ADXR_Unguarded( int    startIdx,
    {
       return TA_ALLOC_ERR;
    }
-   retCode = TA_S_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
+   retCode = TA_S_ADX(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
    if( retCode != TA_SUCCESS )
    {
       free(adx);
@@ -459,7 +459,7 @@ TA_RetCode TA_ADXR_OpenInternal( struct TA_ADXR_Stream **stream, const double in
             return subRc;
          }
       }
-      retCode = TA_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,&dummyBegIdx,&dummyNBElement,adx);
+      retCode = TA_ADX(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,&dummyBegIdx,&dummyNBElement,adx);
       if( retCode != TA_SUCCESS )
       {
          free(adx);
@@ -602,7 +602,7 @@ TA_LIB_API TA_RetCode TA_ADXR_OpenAndFill( TA_ADXR_Stream **stream, const double
             return subRc;
          }
       }
-      retCode = TA_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,&dummyBegIdx,&dummyNBElement,adx);
+      retCode = TA_ADX(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,&dummyBegIdx,&dummyNBElement,adx);
       if( retCode != TA_SUCCESS )
       {
          free(adx);

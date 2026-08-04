@@ -220,12 +220,12 @@ impl Core {
             optInFastPeriod = (tempInteger) as i32;
         }
         // Calculate the fast MA into the tempBuffer.
-        retCode = self.ma_unguarded(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        retCode = self.ma(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
         // Calculate the slow MA into the output.
-        retCode = self.ma_unguarded(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+        retCode = self.ma(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -284,11 +284,11 @@ impl Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = (tempInteger) as i32;
         }
-        retCode = self.ma_unguarded(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        retCode = self.ma(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
-        retCode = self.ma_unguarded(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+        retCode = self.ma(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -411,7 +411,7 @@ impl Core {
         // Sub-stream 0: ma over `inVolume`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.ma_open_internal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
-        retCode = self.ma_unguarded(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        retCode = self.ma(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -419,7 +419,7 @@ impl Core {
         // Sub-stream 1: ma over `inVolume`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub1, _) = self.ma_open_internal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
-        retCode = self.ma_unguarded(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        retCode = self.ma(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -533,7 +533,7 @@ impl Core {
         // Sub-stream 0: ma over `inVolume`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.ma_open_internal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
-        retCode = self.ma_unguarded(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        retCode = self.ma(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -541,7 +541,7 @@ impl Core {
         // Sub-stream 1: ma over `inVolume`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub1, _) = self.ma_open_internal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
-        retCode = self.ma_unguarded(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        retCode = self.ma(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }

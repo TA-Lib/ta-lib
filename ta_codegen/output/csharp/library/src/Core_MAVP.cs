@@ -270,7 +270,7 @@ public partial class Core
          /* Single distinct period: one MA pass, written straight into the
           * destination buffer. Nothing to group or copy.
           */
-         retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
+         retCode = MovingAverage(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
          if( retCode != RetCode.Success ) {
             if( (finalIsAllocated) != 0 ) {
             }
@@ -322,7 +322,7 @@ public partial class Core
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
                /* Calculation of the MA required. */
-               retCode = MovingAverageUnguarded(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
+               retCode = MovingAverage(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
                if( retCode != RetCode.Success ) {
                   if( (finalIsAllocated) != 0 ) {
                   }
@@ -458,7 +458,7 @@ public partial class Core
       }
       bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
       if( minUsed == maxUsed ) {
-         retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
+         retCode = MovingAverage(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
          if( retCode != RetCode.Success ) {
             if( (finalIsAllocated) != 0 ) {
             }
@@ -488,7 +488,7 @@ public partial class Core
             if( bucketEnd > bucketStart ) {
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
-               retCode = MovingAverageUnguarded(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
+               retCode = MovingAverage(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
                if( retCode != RetCode.Success ) {
                   if( (finalIsAllocated) != 0 ) {
                   }
@@ -632,7 +632,7 @@ public partial class Core
       }
       bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
       if( minUsed == maxUsed ) {
-         retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
+         retCode = MovingAverage(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
          if( retCode != RetCode.Success ) {
             if( (finalIsAllocated) != 0 ) {
             }
@@ -662,7 +662,7 @@ public partial class Core
             if( bucketEnd > bucketStart ) {
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
-               retCode = MovingAverageUnguarded(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
+               retCode = MovingAverage(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
                if( retCode != RetCode.Success ) {
                   if( (finalIsAllocated) != 0 ) {
                   }
@@ -787,7 +787,7 @@ public partial class Core
       }
       bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
       if( minUsed == maxUsed ) {
-         retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
+         retCode = MovingAverage(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
          if( retCode != RetCode.Success ) {
             if( (finalIsAllocated) != 0 ) {
             }
@@ -817,7 +817,7 @@ public partial class Core
             if( bucketEnd > bucketStart ) {
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
-               retCode = MovingAverageUnguarded(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
+               retCode = MovingAverage(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
                if( retCode != RetCode.Success ) {
                   if( (finalIsAllocated) != 0 ) {
                   }
