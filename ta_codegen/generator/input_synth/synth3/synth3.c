@@ -140,7 +140,7 @@ TA_RetCode synth3( int    startIdx,
          hits += 4;
       if( slot < ring[head] + 1 )               /* mirror: compound on the right */
          hits += 8;
-      if( ring[head] * 2 < slot )               /* multiply */
+      if( ring[head] * 2 < slot )               /* * */
          hits += 16;
       if( ring[head] << 1 < slot )              /* shift, non-negative operand */
          hits += 32;
@@ -148,6 +148,16 @@ TA_RetCode synth3( int    startIdx,
          hits += 64;
       if( ring[head] + 1 <= slot )              /* `<=` parses bare; typing must still fire */
          hits += 128;
+
+      /*  */
+      /* A comment whose content reduces to NOTHING used to abort `generate`
+       * outright: `block_comment` indexed `lines[1..]` on an empty slice. The
+       * two spellings are the empty comment above and the bare `*` labelling
+       * the multiply case, whose lone asterisk is eaten as a continuation
+       * prefix. Both are ordinary C. They live in a fixture rather than only
+       * in a unit test because the crash is a `generate` abort, and this is
+       * the gate that runs `generate` for all four languages.
+       */
 
       /* Signed target, unsigned right-hand side — the same ladder arm `k +=
        * slot` uses. Folding rather than bit-packing keeps the output
