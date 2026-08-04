@@ -824,7 +824,15 @@ jobs:
           (cd ta_codegen/generator && cargo run --release -- generate-servers)
           status="$(git status --porcelain)"
           if [ -n "$status" ]; then
-            echo "::error::ta_codegen output is out of date. Run 'scripts/build.py generate' and commit the regenerated files."
+            echo "::error::ta_codegen output is out of date. Regenerate with the command that owns the drifted path (see log) and commit."
+            echo "Three separate generators feed this gate. 'scripts/build.py generate'"
+            echo "writes NEITHER the servers NOR the benches, so it alone cannot"
+            echo "reproduce or fix a drift in those:"
+            echo "  src/ta_func/**, ta_codegen/output/**  -> scripts/build.py generate"
+            echo "  **/TaCodegenServe.*                   -> scripts/build.py servers"
+            echo "                                           (no JDK/.NET needed just to write them:"
+            echo "                                            cd ta_codegen/generator && cargo run --release -- generate-servers)"
+            echo "  ta_bench_cg.c, ta_bench_stream.c      -> cd ta_codegen/generator && cargo run --release -- generate-bench --backend=c"
             echo "$status"
             echo "----- git diff -----"
             git --no-pager diff
