@@ -1186,12 +1186,18 @@ fn gen_opt_param_validation(opt: &OptInput, pad: &str, is_lookback: bool) -> Str
 /// Core of the optional-parameter default-substitution + range check, with the
 /// failure statement supplied by the caller (batch returns a bare `RetCode`,
 /// the stream tier returns `Err(RetCode::BadParam)`).
+///
+/// `enum:` params share the `Integer` arm, exactly as they do in `backends::c`:
+/// the Rust surface types them `i32`, so `i32::MIN` is a value a caller can pass
+/// and the substitution is the only thing that maps it to the documented default
+/// (issue #162). They declare no `range:` (see `doc_meta::RangeMeta`), so in
+/// practice only the substitution half is emitted for them.
 pub(crate) fn gen_opt_param_validation_with(opt: &OptInput, pad: &str, err_return: &str) -> String {
     let mut out = String::new();
     let name = &opt.name;
 
     match &opt.param_type {
-        ParamType::Integer => {
+        ParamType::Integer | ParamType::Enum(_) => {
             if let Some(default) = opt.default {
                 out.push_str(&format!("{pad}if (({name}) as i32) == (i32::MIN) {{\n"));
                 #[allow(clippy::cast_possible_truncation)]
@@ -1228,10 +1234,9 @@ pub(crate) fn gen_opt_param_validation_with(opt: &OptInput, pad: &str, err_retur
                 out.push_str(&format!("{pad}}}\n"));
             }
         }
-        // Enum optional params declare no `range:` in the YAML (see `doc_meta::RangeMeta`),
-        // so there is no bound to check. Price params expand to arrays validated
-        // separately; no scalar validation applies.
-        ParamType::Enum(_) | ParamType::Price(_) => {}
+        // Price params expand to arrays validated separately; no scalar
+        // validation applies.
+        ParamType::Price(_) => {}
     }
 
     out

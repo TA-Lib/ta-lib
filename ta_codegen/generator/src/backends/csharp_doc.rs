@@ -250,6 +250,10 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
             let values: Vec<String> = m.values.iter().map(|(v, n)| format!("{v}={n}")).collect();
             meta.push(format!("values: {}", values.join(", ")));
         }
+        // Unlike Java's, a C# enum is an `int` with names, so the sentinel IS
+        // expressible here and the typed API resolves it (issue #162). Same
+        // clause, same position, as the period parameter beside it.
+        meta.push("<c>int.MinValue</c> selects the default".to_string());
     } else {
         if let Some(d) = &m.default {
             meta.push(format!("default {d}"));

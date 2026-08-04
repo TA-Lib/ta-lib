@@ -112,6 +112,9 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return usize::MAX;
         }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 0;
+        }
         let mut maLookback: usize = 0_usize;
         let mut stddevLookback: usize = 0_usize;
         // A band value needs BOTH the middle-band moving average and the standard
@@ -292,6 +295,9 @@ impl Core {
             optInNbDevDn = 2e0;
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return RetCode::BadParam;
+        }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 0;
         }
         if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
             return RetCode::BadParam;
@@ -832,6 +838,9 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 0;
+        }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
@@ -998,6 +1007,9 @@ impl Core {
             optInNbDevDn = 2e0;
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return Err(RetCode::BadParam);
+        }
+        if ((optInMAType) as i32) == (i32::MIN) {
+            optInMAType = 0;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;

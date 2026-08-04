@@ -99,10 +99,16 @@ impl Core {
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
             return usize::MAX;
         }
+        if ((optInSlowK_MAType) as i32) == (i32::MIN) {
+            optInSlowK_MAType = 0;
+        }
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
             optInSlowD_Period = 3;
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return usize::MAX;
+        }
+        if ((optInSlowD_MAType) as i32) == (i32::MIN) {
+            optInSlowD_MAType = 0;
         }
         let mut retValue: usize = 0_usize;
         // Account for the initial data needed for Fast-K.
@@ -229,10 +235,16 @@ impl Core {
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        if ((optInSlowK_MAType) as i32) == (i32::MIN) {
+            optInSlowK_MAType = 0;
+        }
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
             optInSlowD_Period = 3;
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return RetCode::BadParam;
+        }
+        if ((optInSlowD_MAType) as i32) == (i32::MIN) {
+            optInSlowD_MAType = 0;
         }
         if outSlowK.as_ptr() == outSlowD.as_ptr() {
             return RetCode::BadParam;
@@ -716,10 +728,16 @@ impl Core {
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        if ((optInSlowK_MAType) as i32) == (i32::MIN) {
+            optInSlowK_MAType = 0;
+        }
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
             optInSlowD_Period = 3;
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
+        }
+        if ((optInSlowD_MAType) as i32) == (i32::MIN) {
+            optInSlowD_MAType = 0;
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;
@@ -1032,10 +1050,16 @@ impl Core {
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        if ((optInSlowK_MAType) as i32) == (i32::MIN) {
+            optInSlowK_MAType = 0;
+        }
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
             optInSlowD_Period = 3;
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
+        }
+        if ((optInSlowD_MAType) as i32) == (i32::MIN) {
+            optInSlowD_MAType = 0;
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;

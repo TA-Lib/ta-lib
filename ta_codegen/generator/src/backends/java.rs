@@ -433,14 +433,14 @@ pub(crate) fn java_type_str(var_type: &VarType) -> &'static str {
 /// functions fail with `RetCode.BadParam`, lookback functions fail with `-1`
 /// (the classic lookback bad-param contract).
 ///
-/// Enum params (e.g. MAType) get no range check, and here the type system
-/// genuinely is the reason: a Java enum reference cannot hold an arbitrary int,
-/// so there is no out-of-range value to reject. That is NOT the same as saying
-/// they need no handling — the `TA_INTEGER_DEFAULT` sentinel substitution C
-/// emits (`if( (int)optInMAType == (int)0x80000000 ) optInMAType = 0;`) has no
-/// Java counterpart either, so "use the documented default" is simply
-/// inexpressible for an enum param. Backend-wide gap, tracked in
-/// ta_codegen/generator/CLAUDE.md under "Known Code Quality Issues".
+/// Enum params (e.g. MAType) are the one place Java needs neither half of this
+/// prologue, and the type system genuinely is the reason: a Java enum reference
+/// cannot hold an arbitrary int, so there is no out-of-range value to reject and
+/// no `TA_INTEGER_DEFAULT` to substitute. `Integer.MIN_VALUE` is not a `MAType`
+/// and cannot be made into one, so "use the documented default" is discharged by
+/// the signature rather than by a check. C, Rust and C# all surface that
+/// parameter as an integer instead, so all three must substitute — see
+/// `backends::csharp::emit_opt_param_validation` (issue #162).
 // Integer optional-param defaults/ranges are `f64` in the IR; the integer-valued
 // casts to `i32` for literal emission are exact, not truncating.
 #[allow(clippy::cast_possible_truncation)]

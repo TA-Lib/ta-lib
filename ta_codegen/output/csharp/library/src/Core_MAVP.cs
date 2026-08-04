@@ -75,7 +75,8 @@ public partial class Core
    /// <param name="optInMaxPeriod">Upper clamp for the per-bar period (default 30; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int MovingAverageVariablePeriodLookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
@@ -88,6 +89,9 @@ public partial class Core
          optInMaxPeriod = 30;
       } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
          return -1;
+      }
+      if( (int)optInMAType == int.MinValue ) {
+         optInMAType = MAType.Sma;
       }
       return MovingAverageLookback(optInMaxPeriod, optInMAType) ;
 
@@ -141,6 +145,9 @@ public partial class Core
          optInMaxPeriod = 30;
       } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( (int)optInMAType == int.MinValue ) {
+         optInMAType = MAType.Sma;
       }
       /* An inverted period window (min above max) is an invalid parameter
        * combination: the per-bar clamp below would push a period above
@@ -560,6 +567,9 @@ public partial class Core
       } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( (int)optInMAType == int.MinValue ) {
+         optInMAType = MAType.Sma;
+      }
       if( optInMinPeriod > optInMaxPeriod ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -867,7 +877,8 @@ public partial class Core
    /// <param name="optInMaxPeriod">Upper clamp for the per-bar period (default 30; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">variable-period moving average. Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -972,7 +983,8 @@ public partial class Core
    /// <param name="optInMaxPeriod">Upper clamp for the per-bar period (default 30; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">variable-period moving average. Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,

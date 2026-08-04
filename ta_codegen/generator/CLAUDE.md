@@ -303,9 +303,6 @@ on `attempt to subtract with overflow`.
 ### Known Code Quality Issues (non-blocking)
 
 1. **`collect_for_loop_vars`** doesn't recurse into nested structures
-2. **`gen_opt_param_validation`** skips `enum:` optional params — no `i32::MIN`
-   substitution, so `Core::ma(.., i32::MIN)` falls through the `match` instead of
-   selecting SMA (Real is done, #148; enums declare no `range:`)
 
 ## Linting
 
