@@ -3755,7 +3755,24 @@ fn expr_is_i32_typed_ctx(expr: &Expr, ctx: &RustRenderCtx) -> bool {
     }
     match expr {
         Expr::Var(name) => ctx.sentinel_vars.contains(name),
-        Expr::BinOp(left, BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div, right) => {
+        // The same operator set `expr_is_i32_typed` folds over. It used to stop
+        // at the four arithmetic ones, so `lag & 3` — a signed local masked by a
+        // literal — was typed by nothing, and a usize target took no cast from
+        // the assign ladder while `head = lag` took one. Issue #165.
+        Expr::BinOp(
+            left,
+            BinOp::Add
+                | BinOp::Sub
+                | BinOp::Mul
+                | BinOp::Div
+                | BinOp::Mod
+                | BinOp::Shl
+                | BinOp::Shr
+                | BinOp::BitwiseAnd
+                | BinOp::BitwiseOr
+                | BinOp::BitwiseXor,
+            right,
+        ) => {
             let l_i32 = expr_is_i32_typed_ctx(left, ctx)
                 || matches!(left.as_ref(), Expr::IntLiteral(_));
             let r_i32 = expr_is_i32_typed_ctx(right, ctx)

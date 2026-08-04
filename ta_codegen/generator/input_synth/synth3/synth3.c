@@ -10,6 +10,7 @@
  *  -------------------------------------------------------------------
  *  080326 MF,CC Creation (synthetic gate: integer local typing, #158)
  *  080426 MF,CC Int-array element typing and cast placement (#159, #163)
+ *  080426 MF,CC Signed locals inside expressions (#165)
  *
  * SYNTHETIC GATE FUNCTION - never shipped (see input_synth/README.md).
  * Regression driver for issue #158: an integer local must be typed by its
@@ -20,7 +21,9 @@
  * lookback body carries the same shape, because that context used to be
  * rendered with no type information whatsoever.
  *
- * It also drives the two sibling defects in the same emitter (#159, #163):
+ * It also drives #165 — a SIGNED local (one `collect_signed_int_vars` elected
+ * i32) inside an expression rather than standing alone — and the two sibling
+ * defects in the same emitter (#159, #163):
  * an int-ARRAY element compared against the unsigned index domain. #163 is
  * the typing half — arithmetic over such an element had no cast at all and
  * did not compile — and #159 is the spelling half, because the cast this
@@ -79,11 +82,6 @@ TA_RetCode synth3( int    startIdx,
    slot = optInTimePeriod;
    slot += optInTimePeriod;
 
-   /* Subscript derived from the unsigned index domain: a signed local here
-    * (`head = lag & 3`) is a SEPARATE emitter gap — see #165 — and would make
-    * this fixture red for a reason unrelated to what it tests. */
-   head = slot & 3;
-
    /* Written before every read below, but seeded anyway so no slot is ever
     * read uninitialised if this body is restructured. */
    ring[0] = 0;
@@ -129,6 +127,11 @@ TA_RetCode synth3( int    startIdx,
        * not an integer PARAMETER, so `ring[head] + optInTimePeriod` was the
        * one that still did not compile.
        */
+      /* #165A: a usize subscript assigned a BinOp over a SIGNED local. The
+       * single-variable form `head = lag;` always took its cast; the masked
+       * form took none, because the ctx-aware i32 predicate folded over the
+       * four arithmetic operators only. */
+      head = lag & 3;
       ring[head] = lag & 7;
 
       hits = 0;
@@ -159,13 +162,13 @@ TA_RetCode synth3( int    startIdx,
        * the gate that runs `generate` for all four languages.
        */
 
-      /* Signed target, unsigned right-hand side — the same ladder arm `k +=
-       * slot` uses. Folding rather than bit-packing keeps the output
-       * sensitive to every comparison above without mixing an i32 local and
-       * a usize local in one bitwise expression (#165). */
-      k += hits;
-
-      outInteger[outIdx] = k & 65535;
+      /* #165B: an i32 local and a usize local in one bitwise expression.
+       * `k` is elected signed (it is compared `< 0` above), `hits` is not, so
+       * this used to emit `i32 | usize`. It is reconciled by the SAME sentinel
+       * arm that #165A unlocked, not by a second rule — which is why the two
+       * halves of that issue had one fix. Packing rather than folding also
+       * keeps k and hits independently visible in the output. */
+      outInteger[outIdx] = (k & 65535) | (hits << 16);
       outIdx++;
    }
 

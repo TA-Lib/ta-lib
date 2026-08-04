@@ -8674,3 +8674,92 @@ TA_RetCode max( int    startIdx,
         );
     }
 }
+
+/// Issue #165: a local that `collect_signed_int_vars` elected i32 (#160) must
+/// stay recognisably i32 *inside an expression*, not only when it stands alone.
+///
+/// `expr_is_i32_typed_ctx` folded over the four arithmetic operators only, so
+/// `head = lag;` took its `as usize` from the assign ladder while
+/// `head = lag & 3;` took none and did not compile. The same omission left an
+/// i32 local and a usize local unreconciled on either side of a bitwise
+/// operator (`k & 65535 | hits << 16` → `i32 | usize`) — one gap, two symptoms,
+/// which is why widening that operator set fixes both.
+#[test]
+fn signed_locals_stay_i32_inside_expressions() {
+    let source = r#"
+int max_lookback( int optInTimePeriod )
+{
+   return (optInTimePeriod-1);
+}
+
+TA_RetCode max( int    startIdx,
+                int    endIdx,
+                const double inReal[],
+                int    optInTimePeriod,
+                int   *outBegIdx,
+                int   *outNBElement,
+                double outReal[] )
+{
+   int outIdx, today, trailingIdx;
+   int ring[4];
+   int head, hits, lag, kk;
+   double barVal;
+
+   outIdx = 0;
+   today = startIdx;
+   trailingIdx = startIdx;
+
+   while( today <= endIdx )
+   {
+      barVal = inReal[today];
+      if( !(barVal > 0.0) || !(barVal < 1000000.0) )
+         barVal = 0.0;
+      lag = (int)barVal;
+      kk = 0 - optInTimePeriod;
+      if( kk < 0 )
+         kk += optInTimePeriod;
+
+      head = lag & 3;
+      ring[head] = lag & 7;
+      hits = 0;
+      if( ring[head] < trailingIdx )
+         hits += 1;
+      kk += (kk & 65535) | (hits << 16);
+
+      outReal[outIdx] = barVal;
+      outIdx++;
+      trailingIdx++;
+      today++;
+   }
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("max", source);
+    let out = generate_all(&func, &enums);
+
+    // A: usize target, masked signed local on the right.
+    assert!(
+        out.rust.contains("head = (lag & 3) as usize;"),
+        "Rust missing the `as usize` on a masked signed local:\n{}",
+        out.rust
+    );
+    // B: the usize half is brought into the i32 domain by the sentinel arm.
+    assert!(
+        out.rust.contains("((hits << 16) as i32)"),
+        "Rust left an i32 local and a usize local unreconciled across `|`:\n{}",
+        out.rust
+    );
+    // The plain form was always right and must not have moved.
+    assert!(
+        out.rust.contains("ring[head] = (lag & 7) as i32;"),
+        "Rust changed the int-array store:\n{}",
+        out.rust
+    );
+    check_rust_cast_parens(&out.rust, "max/#165");
+
+    // C and Java have no cast to place here.
+    assert!(out.c.contains("head = lag & 3;"), "C changed:\n{}", out.c);
+    assert!(out.java.contains("head = lag & 3;"), "Java changed:\n{}", out.java);
+}
