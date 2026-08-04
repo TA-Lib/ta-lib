@@ -9,6 +9,7 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  080326 MF,CC Creation (synthetic gate: integer local typing, #158)
+ *  080426 MF,CC Int-array element typing and cast placement (#159, #163)
  *
  * SYNTHETIC GATE FUNCTION - never shipped (see input_synth/README.md).
  * Regression driver for issue #158: an integer local must be typed by its
@@ -19,8 +20,25 @@
  * lookback body carries the same shape, because that context used to be
  * rendered with no type information whatsoever.
  *
+ * It also drives the two sibling defects in the same emitter (#159, #163):
+ * an int-ARRAY element compared against the unsigned index domain. #163 is
+ * the typing half — arithmetic over such an element had no cast at all and
+ * did not compile — and #159 is the spelling half, because the cast this
+ * produces lands immediately left of a `<`, which Rust cannot parse unless
+ * the whole cast is parenthesised. ULTOSC is the only shipped function with
+ * a local int array and it never puts one in mixed arithmetic, so nothing
+ * else in the corpus reaches either path.
+ *
  * Every value here is bar-local, so the function is not path-dependent and
  * batch and streaming agree bar for bar.
+ *
+ * EVERY int-array intermediate below is held non-negative on purpose. C
+ * compares `ring[head] - 1 < slot` in the signed domain and Rust widens the
+ * i32 to usize, so a negative intermediate wraps and the two disagree by
+ * construction. That is a documented limitation of the emitter's
+ * index-domain convention, not something this fixture may depend on: a
+ * single subtraction that can reach -1 would make this gate red for a
+ * reason unrelated to what it is testing.
  */
 
 int synth3_lookback(int optInTimePeriod)
@@ -52,13 +70,26 @@ TA_RetCode synth3( int    startIdx,
                    int   *outNBElement,
                    int    outInteger[] )
 {
-   int outIdx, i, k, slot, lag;
+   int outIdx, i, k, slot, lag, head, hits;
+   int ring[4];
    double barVal;
 
    /* Unsigned index domain: never negative, so it stays usize in Rust and
     * the i32 parameter has to be cast INTO it. */
    slot = optInTimePeriod;
    slot += optInTimePeriod;
+
+   /* Subscript derived from the unsigned index domain: a signed local here
+    * (`head = lag & 3`) is a SEPARATE emitter gap — see #165 — and would make
+    * this fixture red for a reason unrelated to what it tests. */
+   head = slot & 3;
+
+   /* Written before every read below, but seeded anyway so no slot is ever
+    * read uninitialised if this body is restructured. */
+   ring[0] = 0;
+   ring[1] = 0;
+   ring[2] = 0;
+   ring[3] = 0;
 
    outIdx = 0;
    for( i = startIdx; i <= endIdx; i++ )
@@ -86,6 +117,43 @@ TA_RetCode synth3( int    startIdx,
 
       /* Signed target, signed right-hand side: no cast. */
       k += lag;
+
+      /* #159 / #163: an int-ARRAY element against the unsigned index domain.
+       * `slot` is 2*optInTimePeriod and the stored value is in [0,7], so at
+       * the low end of the parameter range every comparison below straddles
+       * rather than answering the same way on every bar.
+       *
+       * Both operand positions and every arithmetic operator the predicate
+       * accepts are covered, because the first cut of #163 fired on some and
+       * not others: it accepted an integer LITERAL as the other operand but
+       * not an integer PARAMETER, so `ring[head] + optInTimePeriod` was the
+       * one that still did not compile.
+       */
+      ring[head] = lag & 7;
+
+      hits = 0;
+      if( ring[head] < slot )                   /* bare subscript (#159) */
+         hits += 1;
+      if( ring[head] + 1 < slot )               /* + literal */
+         hits += 2;
+      if( ring[head] + optInTimePeriod < slot ) /* + integer PARAMETER */
+         hits += 4;
+      if( slot < ring[head] + 1 )               /* mirror: compound on the right */
+         hits += 8;
+      if( ring[head] * 2 < slot )               /* multiply */
+         hits += 16;
+      if( ring[head] << 1 < slot )              /* shift, non-negative operand */
+         hits += 32;
+      if( (ring[head] | 1) < slot )             /* bitwise */
+         hits += 64;
+      if( ring[head] + 1 <= slot )              /* `<=` parses bare; typing must still fire */
+         hits += 128;
+
+      /* Signed target, unsigned right-hand side — the same ladder arm `k +=
+       * slot` uses. Folding rather than bit-packing keeps the output
+       * sensitive to every comparison above without mixing an i32 local and
+       * a usize local in one bitwise expression (#165). */
+      k += hits;
 
       outInteger[outIdx] = k & 65535;
       outIdx++;
