@@ -128936,9 +128936,9 @@ class Core {
      *                calls no longer corrupt the input the ma() passes re-read.
      *  072626 MF,CC  #143. Group outputs by clamped period (counting sort) and
      *                bound each ma() pass at its period's last use.
-     *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
      *  072726 MF,CC  #145. Index the bucket table relative to the smallest period
      *                used, and bound it so an off-contract period cannot overflow.
+     *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
      */
 
        /**
