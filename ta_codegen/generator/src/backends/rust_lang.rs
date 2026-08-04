@@ -93,7 +93,11 @@ impl RustRenderCtx {
         }
     }
 
-    pub fn for_lookback() -> Self {
+    /// A context that classifies nothing. Only useful as a starting point the
+    /// caller fills in — every renderer that sees real input builds its sets
+    /// from the body (issue #158). `is_lookback` starts `true`; callers using
+    /// this as a blank body context clear it.
+    pub fn empty() -> Self {
         RustRenderCtx {
             bounds_asserts: false,
             index_vars: std::collections::HashSet::new(),
@@ -105,9 +109,58 @@ impl RustRenderCtx {
             is_lookback: true,
             sentinel_vars: std::collections::HashSet::new(),
             result_error_returns: false,
-            // Populated by the caller (which has `enums`); lookback bodies never
-            // reference MA-type constants, but keep it consistent with batch.
             matype_map: std::collections::HashMap::new(),
+        }
+    }
+
+    /// Context for a `LookbackExpr::Code` body.
+    ///
+    /// Issue #158: this used to be built empty, so every local in a lookback
+    /// body fell through to the naming heuristics — `expr_is_float_typed`
+    /// hard-codes `k` as a Real name (EMA's k factor), so `int k; k +=
+    /// optInTimePeriod;` in a lookback rendered an `as f64` RHS onto a `usize`
+    /// declaration and did not compile, while the same code named `j` did. The
+    /// declared IR type decides, exactly as it does for batch bodies.
+    pub fn for_lookback(body: &[Statement]) -> Self {
+        let mut index_vars = std::collections::HashSet::new();
+        let mut real_vars = std::collections::HashSet::new();
+        let mut vec_vars = std::collections::HashSet::new();
+        let mut real_array_vars = std::collections::HashSet::new();
+        let mut int_vec_vars = std::collections::HashSet::new();
+        collect_var_types(
+            body,
+            &mut index_vars,
+            &mut real_vars,
+            &mut vec_vars,
+            &mut real_array_vars,
+            &mut int_vec_vars,
+        );
+        // Same signed-local pipeline as the batch ctx, so a lookback local that
+        // participates in signed arithmetic is declared i32 and used as i32
+        // (`render_lookback_code` honours `sentinel_vars` in its decl emitter).
+        let mut sentinel_vars = std::collections::HashSet::new();
+        collect_sentinel_vars(body, &mut sentinel_vars);
+        collect_signed_int_vars(body, &index_vars, &real_vars, &mut sentinel_vars);
+        // The signed election is only sound alongside #160's rejection of the
+        // cast shapes this backend cannot render sign-faithfully. Batch bodies
+        // have run this since b8619ed6b; opting the lookback tier into the
+        // election without it would let a nested `(int)` of a negative double
+        // through here alone.
+        reject_unsupported_negative_casts(body, &real_vars, "lookback");
+        for sv in &sentinel_vars {
+            index_vars.remove(sv);
+        }
+        RustRenderCtx {
+            index_vars,
+            real_vars,
+            vec_vars,
+            real_array_vars,
+            int_vec_vars,
+            sentinel_vars,
+            // `matype_map` is populated by the caller (which has `enums`);
+            // lookback bodies never reference MA-type constants, but keep it
+            // consistent with batch.
+            ..RustRenderCtx::empty()
         }
     }
 }
@@ -2179,7 +2232,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
         );
         // Canonicalize accumulator recurrences so all backends fuse the same
         // product regardless of operand order (cross-language / batch-vs-stream).
-        let new_value = if fma::EMIT_FMA {
+        let new_value = if fma::EMIT_FMA && !self.ctx.is_lookback {
             fma::canonicalize_accumulator_add(target, &new_value)
         } else {
             new_value
@@ -2224,33 +2277,62 @@ impl StatementEmitter for RustStmt<'_, '_> {
                             let target_str =
                                 render_assign_target(target, self.ctx, self.opt_real_params, self.registry, self.helpers);
                             let rhs_str = render_expr(right, self.ctx, self.opt_real_params, self.registry, self.helpers);
-                            // Check if the target is T-typed (Real variable)
-                            let target_is_real = self.ctx.real_vars.contains(tname)
-                                || (!self.ctx.index_vars.contains(tname)
-                                    && !self.ctx.sentinel_vars.contains(tname)
-                                    && !is_likely_index_var(tname)
-                                    && !is_i32_opt_in_param(tname)
-                                    && !tname.ends_with("_avgPeriod")
-                                    && !tname.ends_with("_rangeType"));
-                            // Cast integer RHS in compound assignments to f64-typed variables
-                            let rhs_wrapped = if target_is_real {
-                                if expr_is_untyped_integer(right) || expr_is_i32_typed(right)
-                                    || (expr_is_known_usize_ctx(right, self.ctx) && !expr_is_float_typed_ctx(right, Some(self.ctx)))
-                                {
-                                    format!("(({rhs_str}) as f64)")
-                                } else {
-                                    rhs_str
+                            // Issue #158: the target's Rust type is classified
+                            // POSITIVELY (declared IR type first, naming
+                            // heuristics only for names no declaration covers).
+                            // It used to be a negative test — "not recognised as
+                            // index-ish, therefore f64" — which put an `as f64`
+                            // RHS on an integer local whose name happened not to
+                            // be on the hard-coded list.
+                            let target_ty = scalar_target_ty(tname, self.ctx, self.opt_real_params, self.helpers);
+                            let rhs_wrapped = match target_ty {
+                                ScalarTy::F64 => {
+                                    // `_ctx` and `renders_usize` rather than the
+                                    // bare predicates: a sentinel local and a
+                                    // usize⊕i32 BinOp both reach an f64 target
+                                    // as integers, and both used to arrive uncast.
+                                    if expr_is_untyped_integer(right)
+                                        || expr_is_i32_typed_ctx(right, self.ctx)
+                                        || (compound_rhs_renders_usize(right, self.ctx)
+                                            && !expr_is_float_typed_ctx(right, Some(self.ctx)))
+                                    {
+                                        format!("(({rhs_str}) as f64)")
+                                    } else {
+                                        rhs_str
+                                    }
                                 }
-                            } else if !target_is_real
-                                && (self.ctx.index_vars.contains(tname) || is_likely_index_var(tname))
-                                && !self.ctx.sentinel_vars.contains(tname)
-                                && expr_is_i32_typed_ctx(right, self.ctx)
-                            {
-                                // usize target, i32-typed RHS (incl. sentinel
-                                // locals, runtime-non-negative here): as usize
-                                format!("({rhs_str}) as usize")
-                            } else {
-                                rhs_str
+                                ScalarTy::Usize if expr_is_i32_typed_ctx(right, self.ctx) => {
+                                    // usize target, i32-typed RHS (incl. sentinel
+                                    // locals, runtime-non-negative here): as usize
+                                    format!("({rhs_str}) as usize")
+                                }
+                                ScalarTy::I32 => {
+                                    // The third branch issue #158 was missing.
+                                    // Bare only where bare compiles: an untyped
+                                    // literal, or an RHS that is i32-typed AND
+                                    // actually renders that way — `(int)d` is
+                                    // i32-typed but renders `d as usize`.
+                                    // A float RHS is deliberately left bare: the
+                                    // crate build's E0277 is a better answer than
+                                    // a silent `as i32` narrowing of a double.
+                                    let bare = expr_is_untyped_integer(right)
+                                        || expr_is_float_typed_ctx(right, Some(self.ctx))
+                                        // The index domain never narrows to i32
+                                        // (the runtime gates cap at 100k bars,
+                                        // the API does not), so `k += endIdx -
+                                        // startIdx` stays bare and fails to
+                                        // compile rather than truncating above
+                                        // 2^31. Same policy as the float arm.
+                                        || expr_mentions_index_domain(right)
+                                        || (expr_is_i32_typed_ctx(right, self.ctx)
+                                            && !compound_rhs_renders_usize(right, self.ctx));
+                                    if bare {
+                                        rhs_str
+                                    } else {
+                                        format!("({rhs_str}) as i32")
+                                    }
+                                }
+                                ScalarTy::Usize => rhs_str,
                             };
                             out.push_str(&format!(
                                 "{pad}{target_str} {op_str} {rhs_wrapped};\n"
@@ -2291,6 +2373,12 @@ impl StatementEmitter for RustStmt<'_, '_> {
                 && !matches!(new_value, Expr::IntLiteral(_))
                 && !is_negative_one(&new_value)
                 && (expr_is_known_usize_ctx(&new_value, self.ctx)
+                    || expr_binop_renders_as_usize(&new_value, self.ctx)
+                    || expr_renders_as_usize_despite_i32(&new_value, self.ctx)
+                    // A `*_lookback()` call returns usize. This gate was an
+                    // allowlist of variable shapes, so `lb = sma_lookback(p);`
+                    // into a signed local emitted bare and failed E0308.
+                    || expr_returns_usize(&new_value)
                     || matches!(new_value, Expr::Var(ref v) if self.ctx.index_vars.contains(v) || is_likely_index_var(v)))
         } else {
             false
@@ -3221,7 +3309,13 @@ fn render_binop(
     // fmadd (1 FP op) vs fmul+fadd (2 FP ops), IEEE-754 correctly-rounded so it
     // matches the C `fma()` / Java `Math.fma` the other backends emit at the same
     // sites (site selection lives in `fma::fuse_operands`, shared by all backends).
-    if fma::EMIT_FMA {
+    // Never in a lookback body: C, Java and C# all pass `fma: None` there
+    // ("pure integer index arithmetic", c.rs), so fusing only in Rust would
+    // give one backend a different lookback — an outBegIdx/length divergence,
+    // not a tolerance one. Before issue #158 the lookback ctx was empty, so
+    // `real_vars` was too and the detector could never fire; populating it is
+    // what made this reachable.
+    if fma::EMIT_FMA && !ctx.is_lookback {
         if let Some((a, b, c)) = fma::fuse_operands(left, op, right, &ctx.fma_view()) {
             let a_str = render_expr(a, ctx, opt_real_params, registry, helpers);
             let b_str = render_expr(b, ctx, opt_real_params, registry, helpers);
@@ -3780,6 +3874,12 @@ fn render_lookback_code(
     let empty_output_names: Vec<String> = Vec::new();
     let empty_opt_real_params: Vec<String> = Vec::new();
 
+    // Issue #158: the declaration emitter and the use-site classifier must be
+    // driven by the same context, or a local is declared one type and assigned
+    // as another.
+    let mut lookback_ctx = RustRenderCtx::for_lookback(stmts);
+    lookback_ctx.matype_map = build_matype_map(enums);
+
     for stmt in stmts {
         if let Statement::VarDecl { var_type, name, .. } = stmt {
             let total_assigns = count_assignments(name, stmts);
@@ -3798,9 +3898,12 @@ fn render_lookback_code(
                     ));
                 }
                 _ => {
+                    let is_sentinel = lookback_ctx.sentinel_vars.contains(name);
                     let rust_type = match var_type {
                         VarType::Real => "f64",
-                        VarType::Integer | VarType::Index => "usize",
+                        VarType::Integer | VarType::Index => {
+                            if is_sentinel { "i32" } else { "usize" }
+                        }
                         VarType::RetCodeType => "RetCode",
                         VarType::RealPointer => "Vec<f64>",
                         VarType::IntPointer => "Vec<i32>",
@@ -3809,7 +3912,9 @@ fn render_lookback_code(
                     // Always initialize — lookback is always concrete (non-generic)
                     let default_val = match var_type {
                         VarType::Real => "0.0_f64",
-                        VarType::Integer | VarType::Index => "0_usize",
+                        VarType::Integer | VarType::Index => {
+                            if is_sentinel { "0i32" } else { "0_usize" }
+                        }
                         VarType::RetCodeType => "RetCode::Success",
                         VarType::RealPointer | VarType::IntPointer => "Vec::new()",
                         VarType::RealArray(_) | VarType::IntArray(_) => unreachable!(),
@@ -3830,8 +3935,6 @@ fn render_lookback_code(
         out.push_str(&emit_rust_unpacking(&candle_used, 8));
     }
 
-    let mut lookback_ctx = RustRenderCtx::for_lookback();
-    lookback_ctx.matype_map = build_matype_map(enums);
     let inline_counter = Cell::new(0);
     for stmt in stmts {
         if matches!(stmt, Statement::VarDecl { .. }) {
@@ -5170,6 +5273,171 @@ fn is_int_array_var(name: &str) -> bool {
     matches!(strip_state_prefix(name),
         "periods" | "usedFlag" | "sortedPeriods"
     )
+}
+
+/// Does this expression *render* as `usize`?
+///
+/// Not "is it i32 in the C" — issue #158's compound arm has to match what the
+/// expression emitter actually produced. `(int)d` is `expr_is_i32_typed`, but
+/// [`RustExpr::cast`] renders it `d as usize` when `d` is already usize; and a
+/// `usize ⊕ i32` BinOp renders usize because the BinOp handler casts the i32
+/// side up. Both reach a compound assignment as `usize` text.
+fn compound_rhs_renders_usize(expr: &Expr, ctx: &RustRenderCtx) -> bool {
+    expr_is_known_usize_ctx(expr, ctx)
+        || expr_binop_renders_as_usize(expr, ctx)
+        || expr_renders_as_usize_despite_i32(expr, ctx)
+}
+
+/// Does this expression's VALUE carry `startIdx`/`endIdx` — the caller-supplied
+/// bar range, which is `usize` and must never be truncated to `i32`?
+///
+/// Subscript positions do not count: `inPeriods[startIdx + i]` produces an
+/// array element, not an index, and MAVP casts exactly that to i32.
+fn expr_mentions_index_domain(expr: &Expr) -> bool {
+    match expr {
+        Expr::Var(n) | Expr::PointerDeref(n) => {
+            matches!(strip_state_prefix(n), "startIdx" | "endIdx")
+        }
+        Expr::BinOp(l, _, r) => {
+            expr_mentions_index_domain(l) || expr_mentions_index_domain(r)
+        }
+        Expr::Ternary(_, a, b) => {
+            expr_mentions_index_domain(a) || expr_mentions_index_domain(b)
+        }
+        Expr::Cast(_, inner)
+        | Expr::PostIncrement(inner)
+        | Expr::PostDecrement(inner)
+        | Expr::PreIncrement(inner)
+        | Expr::PreDecrement(inner) => expr_mentions_index_domain(inner),
+        // Everything else, including `ArrayAccess` — its subscript is an index
+        // but its value is an element, so the walk deliberately stops here.
+        _ => false,
+    }
+}
+
+/// The Rust scalar type a named assignment target renders as.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum ScalarTy {
+    F64,
+    Usize,
+    I32,
+}
+
+/// Classify a scalar assignment target POSITIVELY — issue #158.
+///
+/// Order is the point. The declared IR type wins over every naming heuristic:
+/// `real_vars` / `index_vars` come straight from the `VarDecl`s via
+/// [`collect_var_types`], and `sentinel_vars` from [`collect_signed_int_vars`],
+/// so a local is classified as whatever the declaration emitter declared it.
+/// The heuristics below them only cover names no `VarDecl` describes — the
+/// function's own parameters, helper-inlined temporaries, and the streaming
+/// tier's `sp.`-qualified state fields.
+fn scalar_target_ty(
+    name: &str,
+    ctx: &RustRenderCtx,
+    opt_real_params: &[String],
+    helpers: &HelperRegistry,
+) -> ScalarTy {
+    // 1. Declared type.
+    if ctx.real_vars.contains(name) {
+        return ScalarTy::F64;
+    }
+    if ctx.sentinel_vars.contains(name) {
+        return ScalarTy::I32;
+    }
+    if ctx.index_vars.contains(name) {
+        return ScalarTy::Usize;
+    }
+    // 2. Names carried by the signature rather than a declaration. The YAML
+    //    Real params go FIRST: `is_i32_opt_in_param` is a negative allowlist
+    //    ("starts with optIn and is not one of these known Real names"), so it
+    //    calls an unlisted Real param i32.
+    let base = strip_state_prefix(name);
+    if opt_real_params.iter().any(|p| p == base) {
+        return ScalarTy::F64;
+    }
+    if is_i32_opt_in_param(name) || base.ends_with("_avgPeriod") || base.ends_with("_rangeType") {
+        return ScalarTy::I32;
+    }
+    // 3. A helper-inlined temporary: the inliner renames the helper's own
+    //    local `range` to `range_0`, so it has no VarDecl in THIS body. The
+    //    helper declared it — that is still a declaration, just one file over.
+    if let Some(t) = helper_local_ty(base, helpers) {
+        return t;
+    }
+    // 4. Last resort, and only ever to say "index", never to say "Real".
+    if is_likely_index_var(name) {
+        return ScalarTy::Usize;
+    }
+    // 5. Nothing knows this name. Keep the historical f64 answer rather than
+    //    refusing to generate: every wrong verdict here is a *type* error the
+    //    crate build catches, never a silently wrong number, so a hard failure
+    //    would trade a loud compile error for a louder one while being able to
+    //    block a build over a name the classifier simply has not met. What
+    //    issue #158 required — that a DECLARED integer can never be called
+    //    Real by its name — is settled by steps 1-3 above.
+    ScalarTy::F64
+}
+
+/// The declared type of a helper's own local or parameter, matched through the
+/// inliner's `<name>_<n>` renaming.
+///
+/// All matches must agree: `HelperRegistry::iter` is `HashMap` order, so a name
+/// two helpers declare differently must not resolve by whichever came first.
+fn helper_local_ty(base: &str, helpers: &HelperRegistry) -> Option<ScalarTy> {
+    // Strip the inliner's numeric suffix, if any.
+    let stem = base
+        .rsplit_once('_')
+        .filter(|(_, n)| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
+        .map_or(base, |(s, _)| s);
+    let mut found: Option<ScalarTy> = None;
+    for h in helpers.iter() {
+        let declared = h
+            .params
+            .iter()
+            .find(|p| p.name == stem)
+            .map(|p| &p.var_type)
+            .or_else(|| helper_decl_ty(&h.body, stem));
+        let Some(t) = declared else { continue };
+        let scalar = match t {
+            VarType::Real => ScalarTy::F64,
+            VarType::Integer | VarType::Index => ScalarTy::Usize,
+            // Arrays/pointers/RetCode are never scalar compound targets.
+            _ => return None,
+        };
+        match found {
+            Some(prev) if prev != scalar => return None,
+            _ => found = Some(scalar),
+        }
+    }
+    found
+}
+
+fn helper_decl_ty<'a>(body: &'a [Statement], name: &str) -> Option<&'a VarType> {
+    for stmt in body {
+        match stmt {
+            Statement::VarDecl { var_type, name: n, .. } if n == name => return Some(var_type),
+            Statement::If { then_body, else_body, .. } => {
+                if let Some(t) = helper_decl_ty(then_body, name) {
+                    return Some(t);
+                }
+                if let Some(t) = helper_decl_ty(else_body, name) {
+                    return Some(t);
+                }
+            }
+            Statement::While { body: b, .. }
+            | Statement::DoWhile { body: b, .. }
+            | Statement::For { body: b, .. }
+            | Statement::ForC { body: b, .. }
+            | Statement::Block { body: b } => {
+                if let Some(t) = helper_decl_ty(b, name) {
+                    return Some(t);
+                }
+            }
+            _ => {}
+        }
+    }
+    None
 }
 
 /// Helper functions that return int (not double/T).
