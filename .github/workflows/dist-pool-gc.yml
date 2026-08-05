@@ -1,0 +1,60 @@
+# Garbage-collect the dist/ content-addressed asset pool.
+#
+# The pool (a long-lived published pre-release, tag 'ci-build-pool') accumulates
+# one asset per distinct package build. Once no live branch references a build --
+# typically after a version bump, since package.py's delete_other_versions()
+# prunes digests for older versions -- the asset is dead weight.
+#
+# This deletes ASSETS ONLY. It must never delete or recreate the pool release
+# itself: publishing a release notifies every watcher subscribed to Releases, so
+# a delete/recreate cycle would turn a one-time notification into weekly spam.
+#
+# More info: scripts/utilities/dist_pool.py
+
+name: dist pool GC
+
+on:
+  schedule:
+    - cron: "0 9 * * 0" # Sundays, 09:00 UTC
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what would be deleted, without deleting"
+        type: boolean
+        default: true
+
+# Deleting release assets requires write.
+permissions:
+  contents: write
+
+jobs:
+  gc:
+    runs-on: ubuntu-latest
+
+    steps:
+      # fetch-depth: 0 fetches all branches, which this needs: the live reference
+      # set is the union of dist/digests/ on origin/dev AND origin/main. A shallow
+      # checkout would leave one of them unreadable, and the script then aborts
+      # rather than delete on partial information.
+      - name: Checkout (all branches)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      # A manual dispatch defaults to --dry-run so the effect can be reviewed
+      # before anything is removed. The scheduled run performs the real GC.
+      - name: Collect unreferenced pool assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          python3 scripts/dist-pool.py gc \
+            --refs=origin/dev,origin/main \
+            --grace-days=14 \
+            ${{ inputs.dry_run && '--dry-run' || '' }}

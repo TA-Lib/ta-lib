@@ -250,6 +250,27 @@ def upload_if_absent(local_path: str, asset_file_name: str,
     raise PoolError(f"Upload of {name} failed: HTTP {status} {res}")
 
 
+def delete_asset(asset: dict) -> None:
+    """Remove one asset from the pool. Used only by garbage collection."""
+    status, res = _api(f"/repos/{POOL_REPO}/releases/assets/{asset['id']}",
+                       method="DELETE", expect=(204,))
+    if status not in (204, 200):
+        raise PoolError(f"Could not delete {asset['name']}: HTTP {status} {res}")
+    print(f"Deleted {asset['name']} ({asset.get('size')} bytes)")
+
+
+def asset_age_days(asset: dict) -> float:
+    """Age of a pool asset in days, from its created_at timestamp."""
+    from datetime import datetime, timezone
+    created = asset.get("created_at")
+    if not created:
+        # No timestamp means we cannot prove the asset is old enough to be safe
+        # to delete. Report it as brand new so GC leaves it alone.
+        return 0.0
+    dt = datetime.strptime(created, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - dt).total_seconds() / 86400.0
+
+
 def resolve(sha256: str, asset_file_name: str,
             assets: dict[str, dict] | None = None) -> dict:
     """Find a pool asset by content hash. Raises if absent -- never returns None.

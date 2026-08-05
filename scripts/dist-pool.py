@@ -24,7 +24,9 @@ their own with package.py.
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -32,6 +34,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utilities.common import verify_git_repo
 from utilities.dist_pool import (
     PoolError,
+    asset_age_days,
+    delete_asset,
     download_and_verify,
     get_or_create_pool_release,
     list_pool_assets,
@@ -143,6 +147,83 @@ def cmd_pull(root_dir: str, dry_run: bool, allow_missing: bool = False) -> int:
     return 1 if failures else 0
 
 
+def _referenced_on_ref(ref: str) -> set[str]:
+    """Every package_sha256 referenced by dist/digests/ on a git ref.
+
+    Raises on ANY failure. GC must never guess at this set -- see cmd_gc.
+    """
+    listing = subprocess.run(
+        ["git", "ls-tree", "--name-only", ref, "dist/digests/"],
+        capture_output=True, text=True, check=True,
+    ).stdout.split()
+    if not listing:
+        raise RuntimeError(f"{ref} has no dist/digests/ entries")
+
+    out: set[str] = set()
+    for path in listing:
+        if not path.endswith(".digest"):
+            continue
+        blob = subprocess.run(["git", "show", f"{ref}:{path}"],
+                              capture_output=True, text=True, check=True).stdout
+        sha = json.loads(blob).get("package_sha256", "")
+        if sha and sha not in ("Disabled", "Unknown"):
+            out.add(sha)
+    return out
+
+
+def cmd_gc(root_dir: str, dry_run: bool, grace_days: float, refs: list[str]) -> int:
+    """Delete pool assets no live branch references.
+
+    Two failure modes this deliberately guards against:
+
+    1. FAIL-CLOSED. If any ref cannot be read, abort without deleting anything.
+       A partially-computed reference set looks exactly like "most assets are
+       unreferenced", and acting on it would wipe the pool.
+
+    2. GRACE PERIOD. A nightly uploads an asset and only afterwards pushes the
+       digest naming it. In that window the asset is genuinely unreferenced but
+       about to be referenced. Deleting it leaves a permanently dangling digest
+       that no rebuild repairs, so anything younger than --grace-days is skipped.
+    """
+    referenced: set[str] = set()
+    for ref in refs:
+        try:
+            got = _referenced_on_ref(ref)
+        except Exception as e:  # noqa: BLE001 - deliberately fail closed
+            print(f"Error: could not read digests from {ref}: {e}")
+            print("Aborting without deleting anything: an incomplete reference set "
+                  "is indistinguishable from an empty pool.")
+            return 1
+        print(f"Info: {ref} references {len(got)} package(s)")
+        referenced |= got
+
+    if not referenced:
+        print("Error: no references found across any ref -- refusing to delete.")
+        return 1
+
+    assets = list_pool_assets()
+    kept, deleted, young = 0, 0, 0
+    for name, a in sorted(assets.items()):
+        sha = name.split("__", 1)[0]
+        if sha in referenced:
+            kept += 1
+            continue
+        age = asset_age_days(a)
+        if age < grace_days:
+            print(f"Skip (age {age:.1f}d < {grace_days}d grace): {name}")
+            young += 1
+            continue
+        if dry_run:
+            print(f"[dry-run] would delete (age {age:.1f}d): {name}")
+        else:
+            delete_asset(a)
+        deleted += 1
+
+    print(f"\nreferenced-kept={kept}  within-grace={young}  "
+          f"{'would-delete' if dry_run else 'deleted'}={deleted}")
+    return 0
+
+
 def cmd_verify(root_dir: str, dry_run: bool) -> int:
     refs = _referenced(root_dir)
     if not refs:
@@ -175,9 +256,16 @@ def cmd_verify(root_dir: str, dry_run: bool) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=["push", "pull", "verify"])
+    ap.add_argument("command", choices=["push", "pull", "verify", "gc"])
     ap.add_argument("--dry-run", action="store_true",
                     help="Show what would happen without any network call.")
+    ap.add_argument("--grace-days", type=float, default=14.0,
+                    help="gc only: never delete an asset younger than this. Covers the "
+                         "window where a nightly has uploaded a package but not yet "
+                         "pushed the digest that references it.")
+    ap.add_argument("--refs", default="origin/dev,origin/main",
+                    help="gc only: comma-separated git refs whose dist/digests/ define "
+                         "the live reference set.")
     ap.add_argument("--allow-missing", action="store_true",
                     help="pull only: treat a package missing from the pool as a warning "
                          "instead of an error. For the nightlies, where package.py can "
@@ -190,6 +278,9 @@ def main() -> int:
             return cmd_pull(root_dir, args.dry_run, allow_missing=args.allow_missing)
         if args.command == "push":
             return cmd_push(root_dir, args.dry_run)
+        if args.command == "gc":
+            return cmd_gc(root_dir, args.dry_run, args.grace_days,
+                          [r.strip() for r in args.refs.split(",") if r.strip()])
         return cmd_verify(root_dir, args.dry_run)
     except PoolError as e:
         print(f"Error: {e}")
