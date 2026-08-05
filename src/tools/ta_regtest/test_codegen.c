@@ -18,8 +18,12 @@
 int g_hideGuarded = 0;
 
 /* Float legs that actually compared values, i.e. where the server acknowledged
- * "use_float". Asserted non-zero so the leg cannot pass by never running. */
+ * "use_float". Asserted non-zero so the leg cannot pass by never running —
+ * but only when a language that HAS a float surface was tested. Rust is
+ * concrete f64 and has none, so a Rust-only run legitimately compares zero
+ * (that is what the dev nightly's debug-profile job does). */
 static long g_floatLegCompared = 0;
+static int  g_floatCapableLangTested = 0;
 #include <limits.h>
 #ifdef __APPLE__
 #include <mach/mach_time.h>
@@ -1487,6 +1491,8 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * it did, a k-factor defect sat in all three float surfaces and only C's was
      * reachable by any gate.
      */
+    if( strcmp(ctx->lang->name, "rust") != 0 )
+        g_floatCapableLangTested = 1;
     if( params.codegenError == TA_TEST_PASS && strcmp(ctx->lang->name, "rust") != 0 )
         run_float_leg(&params);
 
@@ -6052,7 +6058,7 @@ ErrorNumber test_codegen(const TA_History *history,
      * entry point against its own double one, and a server that silently ignored
      * "use_float" would compare the double result with itself and pass. The
      * acknowledgment is checked per call; this is the run-level floor. */
-    if( g_floatLegCompared == 0 )
+    if( g_floatCapableLangTested && g_floatLegCompared == 0 )
     {
         printf("\nCODEGEN FAILED: the float leg compared nothing — no server "
                "acknowledged use_float on any function\n");
@@ -6060,8 +6066,12 @@ ErrorNumber test_codegen(const TA_History *history,
     }
 
     printf("\n=============================================\n");
-    printf("All %d language(s) passed codegen verification (float leg: %ld "
-           "acknowledged comparison(s))\n", langsTested, g_floatLegCompared);
+    if( g_floatCapableLangTested )
+        printf("All %d language(s) passed codegen verification (float leg: %ld "
+               "acknowledged comparison(s))\n", langsTested, g_floatLegCompared);
+    else
+        printf("All %d language(s) passed codegen verification (no float leg: "
+               "Rust has no single-precision surface)\n", langsTested);
     printf("=============================================\n");
 
     /* Write report files */
