@@ -1,5 +1,6 @@
 ---
 title: Java Core API
+description: "The io.github.talib Java library: a native port with no JNI, indicators as methods on a Core instance over double arrays, bit-identical to the C library."
 toc: false
 ---
 

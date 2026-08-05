@@ -68,6 +68,13 @@ export default hopeTheme({
   plugins: {
     git: false,
 
+    // Self-referencing canonical on every page: the string is used as a prefix
+    // and the page path is appended. Needed before the per-language API pages
+    // land, so near-identical siblings each declare themselves as the original.
+    seo: {
+      canonical: "https://ta-lib.org",
+    },
+
     icon: {
       assets: "iconify",
     },

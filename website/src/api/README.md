@@ -1,9 +1,9 @@
 ---
 title: C/C++ Core API
+description: "Calling TA-Lib from C/C++: initialization, the batch calling pattern, sizing outputs with the lookback, return codes, the abstraction layer and thread safety."
 toc: false
 ---
 
-# C/C++ Core API Documentation #
 <p><a href="#intro">1.0 Introduction</a></p>
 
 <p><a href="#build">2.0 How to add TA-Lib to your app</a></p>
@@ -13,7 +13,8 @@ toc: false
 <blockquote>
 <p><a href="#init">3.1 Initialize and Shutdown</a><br>
 <a href="#direct_call">3.2 Batch Processing</a><br>
-<a href="#output_size">3.3 Output Size</a><br></p>
+<a href="#output_size">3.3 Output Size</a><br>
+<a href="#retcode">3.4 Return Codes</a><br></p>
 </blockquote>
 
 <p><a href="#advanced">4.0 Advanced Features</a></p>
@@ -25,7 +26,7 @@ toc: false
 <a href="#multithreading">4.5 High-performance Multi-threading</a></p>
 </blockquote>
 
-<h2 id="intro">1.0 Introduction</h2>
+## 1.0 Introduction {#intro}
 
 <p>The <b>Core API</b> provides:</p>
 <ul>
@@ -37,7 +38,7 @@ toc: false
 <p>To process a live feed one bar at a time instead, see the companion <a href="/api/stream/">C/C++ Streaming API</a>.</p>
 <p>You must first <a href="/install/">install TA-Lib</a>, which will provide all the shared/static libraries and headers needed to compile and link your program.</p>
 
-<h2 id="build">2.0 How to add TA-Lib to your app</h2>
+## 2.0 How to add TA-Lib to your app {#build}
 
 <p>In your source code, add <b>#include &quot;ta_libc.h&quot;</b> and link to the library named "ta-lib".</p>
 
@@ -66,29 +67,30 @@ For [homebrew](https://formulae.brew.sh/formula/ta-lib), use <b>brew --prefix ta
 
 For Windows, look into <b>C:\Program Files\TA-Lib</b> for 64-bit and <b>C:\Program Files (x86)\TA-Lib</b> for 32-bit.
 
-
-<h2 id="ta_func">3.0 Calling into TA-Lib</h2>
+## 3.0 Calling into TA-Lib {#ta_func}
 
 <p>All of TA-Lib's public functions are declared in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include">the include/*.h headers</a>.</p>
 
-<h3 id="init">3.1 Initialize and Shutdown</h3>
+### 3.1 Initialize and Shutdown {#init}
+
 <pre>TA_RetCode TA_Initialize( void );
 TA_RetCode TA_Shutdown( void );</pre>
 <p><b>TA_Initialize</b> must be called once (and only once), from a single thread, prior to any other API function. After it returns TA_SUCCESS, you can start processing your data in three ways: <a href="#direct_call">batch processing</a>, the <a href="/api/stream/">streaming API</a> or through the <a href="#abstract">abstraction layer</a>.</p>
 <p><b>TA_Shutdown</b> releases the resources acquired by TA_Initialize. Call it single-threaded, typically from the last remaining thread just before your application exits.</p>
 
-<h3 id="direct_call">3.2 Batch Processing</h3>
+### 3.2 Batch Processing {#direct_call}
+
 <p>Every function follows the same simple pattern: it reads its inputs from arrays you pass in and writes its results to buffers you allocate.</p>
 <p>A function never writes more elements than you request, so the buffers only need to cover the startIdx-to-endIdx range.</p>
 <p>As an example, let's walk through TA_MA, a function to calculate a moving average.</p>
-<pre>TA_RetCode TA_MA(&nbsp;<span style="background-color: #66FFFF; color: #000">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; startIdx,</span>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #66FFFF; color: #000">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; endIdx,</span>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #00FF00; color: #000">const double&nbsp;inReal[],</span>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #C0C0C0; color: #000">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;optInTimePeriod,</span>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #C0C0C0; color: #000">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;optInMAType,</span>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #FFFF00; color: #000">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*outBegIdx,</span>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #FFFF00; color: #000">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;*outNBElement,</span>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background-color: #FFFF00; color: #000">double&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; outReal[]</span>&nbsp;&nbsp;&nbsp;)
+<pre>TA_RetCode TA_MA( <span style="background-color: #66FFFF; color: #000">int          startIdx,</span>
+                  <span style="background-color: #66FFFF; color: #000">int          endIdx,</span>
+                  <span style="background-color: #00FF00; color: #000">const double inReal[],</span>
+                  <span style="background-color: #C0C0C0; color: #000">int          optInTimePeriod,</span>
+                  <span style="background-color: #C0C0C0; color: #000">int          optInMAType,</span>
+                  <span style="background-color: #FFFF00; color: #000">int         *outBegIdx,</span>
+                  <span style="background-color: #FFFF00; color: #000">int         *outNBElement,</span>
+                  <span style="background-color: #FFFF00; color: #000">double       outReal[]</span>   )
 </pre>
 
 <p>All TA functions use the same calling pattern, divided into four groups:</p>
@@ -149,7 +151,9 @@ retCode = TA_MA( <span style="background-color: #66FFFF; color: #000">0</span>, 
                  <span style="background-color: #C0C0C0; color: #000">30</span>, <span style="background-color: #C0C0C0; color: #000">TA_MAType_SMA</span>,
                  <span style="background-color: #FFFF00; color: #000">&amp;outBeg</span>, <span style="background-color: #FFFF00; color: #000">&amp;outNBElement</span>, <span style="background-color: #FFFF00; color: #000">&amp;buffer[0]</span> );</pre>
 <p>Of course, the input is overwritten, but this avoids allocating a temporary buffer. All TA functions support this.</p>
-<h3 id="output_size">3.3 Output Size</h3>
+
+### 3.3 Output Size {#output_size}
+
 <p>
 It is important that the output array is large enough. Here are three ways to determine the allocation size; all of them work for every TA function:</p>
 
@@ -159,14 +163,46 @@ It is important that the output array is large enough. Here are three ways to de
 | Range Matching   | allocationSize = endIdx - startIdx + 1; <br> **Pros**: Easy to implement. <br> **Cons**: Allocation slightly larger than needed. Example: with startIdx = 0, a 30-period SMA wastes 29 elements because of the lookback. |
 | Exact Allocation | lookback = TA_XXXX_Lookback( ... ) ; <br> temp = max( lookback, startIdx ); <br> if( temp > endIdx ) <br> &nbsp;&nbsp; allocationSize = 0; // No output <br> else <br> &nbsp;&nbsp; allocationSize = endIdx - temp + 1; <br> **Pros**: Allocates exactly what is needed. <br> **Cons**: Slightly more complex. |
 
-
 <p>Each TA function has a matching TA_XXXX_Lookback function. Example: for TA_SMA,
 it is TA_SMA_Lookback.</p>
 <p>The lookback is the number of input elements consumed before the first output can be calculated. Example: a simple moving average (SMA) of period 10 has a lookback of 9.</p>
 
-<h2 id="advanced">4.0 Advanced Features</h2>
+### 3.4 Return Codes {#retcode}
 
-<h3 id="abstract">4.1 Abstraction Layer</h3>
+<p>Every TA function returns a <b>TA_RetCode</b>. <b>TA_SUCCESS</b> (zero) means the call completed and wrote its outputs; on anything else, treat outBegIdx and outNBElement as undefined and the output buffers as untouched.</p>
+<p>The codes a caller normally encounters:</p>
+
+| Code | Meaning |
+|------|---------|
+| `TA_SUCCESS` | No error. |
+| `TA_LIB_NOT_INITIALIZE` | [TA_Initialize](#init) was not called, or did not succeed. |
+| `TA_BAD_PARAM` | A parameter is out of range, or a required pointer is NULL. |
+| `TA_ALLOC_ERR` | Allocation failed, most likely out of memory. |
+
+<p>The full list is the TA_RetCode enumeration in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_defs.h">ta_defs.h</a>. Rather than mapping the codes yourself, <b>TA_SetRetCodeInfo</b> turns any of them - including one this version of the library does not know - into a printable name and description:</p>
+
+```c
+TA_RetCodeInfo info;
+
+if( retCode != TA_SUCCESS )
+{
+   TA_SetRetCodeInfo( retCode, &info );
+   printf( "Error %d(%s): %s\n", retCode, info.enumStr, info.infoStr );
+}
+```
+
+<p>which prints, for example:</p>
+
+```
+Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
+```
+
+<p>The <a href="#output_size">TA_XXXX_Lookback</a> functions are the exception to the pattern: they return an int rather than a TA_RetCode, and answer <b>-1</b> when a parameter is out of range. Check for that before using the value as an allocation size.</p>
+
+## 4.0 Advanced Features {#advanced}
+
+### 4.1 Abstraction Layer {#abstract}
+
 <p>Instead of hard-coding calls to specific TA functions, an app can drive them all dynamically through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a> — looking functions up by name at runtime. For any function it reports the inputs it takes, its optional parameters with their valid ranges, and the outputs it produces — so you can call a function whose signature was unknown at compile time.</p>
 <p>This is what you want when the function or its parameters are not fixed in your code. Typical uses:</p>
 <ul>
@@ -177,16 +213,20 @@ it is TA_SMA_Lookback.</p>
 </ul>
 <p>If you only need a handful of specific functions, calling them directly — with <a href="#direct_call">batch processing</a> or the <a href="/api/stream/">streaming API</a> — is simpler.</p>
 
-<h3 id="numerical_stability">4.2 Numerical Stability</h3>
+### 4.2 Numerical Stability {#numerical_stability}
+
 <a id="unstable_period"></a>
 <p>Take one bar and compute an indicator for it twice: once with a year of history before it, once with a decade. Do you get the same value? For many functions, always — they read a fixed number of bars and ignore everything older. Others are recursive, so their earliest values depend on how much history precedes them, converging as more bars are supplied — the Exponential Moving Average is the classic example. A few accumulate from the very first bar and never converge at all.</p>
 <p>Each function's documentation specifies which of the four <a href="/functions/stability">numerical-stability categories</a> applies to it.</p>
 <p>See the <a href="/api/unstable-period/">Unstable Period</a> page for how to configure this.</p>
-<h3 id="candle_settings">4.3 Candlestick Settings</h3>
+
+### 4.3 Candlestick Settings {#candle_settings}
+
 <p>The candlestick pattern functions (<b>TA_CDL*</b>) judge each candle against tunable thresholds — is its body "long", its shadow "short", two candles "near". These thresholds are global settings: change them once, from a single thread, before any concurrent calls (see <a href="#multithreading">multi-threading</a>).</p>
 <p>See the <a href="/api/candle-settings/">Candlestick Settings</a> page for the API, the setting types and their defaults.</p>
 
-<h3 id="input_type">4.4 Input Type: float vs. double</h3>
+### 4.4 Input Type: float vs. double {#input_type}
+
 <p>Each TA function has two implementations: one accepts input arrays of double, the other of float. The float version carries the &quot;TA_S_&quot; prefix, e.g. TA_S_MA is the float equivalent of TA_MA.</p>
 <pre>TA_RetCode TA_MA( int          startIdx,
                   int          endIdx,
@@ -211,7 +251,7 @@ it is TA_SMA_Lookback.</p>
 <p>Some apps already hold their price data as float. The TA_S_XXXX functions consume such arrays directly (no conversion copy needed) while keeping every intermediate calculation in double.
 </p>
 
-<h3 id="multithreading">4.5 High-performance Multi-threading</h3>
+### 4.5 High-performance Multi-threading {#multithreading}
 
 <p>TA-Lib is multi-thread safe where it matters most for performance: calling the TA functions themselves (TA_SMA, TA_RSI, ...).</p>
 

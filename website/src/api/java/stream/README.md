@@ -1,5 +1,6 @@
 ---
 title: Java Streaming API
+description: "Java streaming API for live feeds: a stream handle carries indicator state from bar to bar at O(1) per update, bit-identical to the batch calls."
 toc: false
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: Unstable Period
+description: "TA_SetUnstablePeriod controls how many warm-up bars TA-Lib discards from recursive indicators such as EMA, RSI and ADX before reporting their output."
 toc: false
 ---
 

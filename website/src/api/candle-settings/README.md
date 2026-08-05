@@ -1,5 +1,6 @@
 ---
 title: Candlestick Settings
+description: "TA_SetCandleSettings tunes the thresholds the TA_CDL* pattern functions judge candles against - body length, shadows, near-equal candles - and their defaults."
 toc: false
 ---
 

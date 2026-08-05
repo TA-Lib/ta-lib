@@ -1,5 +1,6 @@
 ---
 title: FAQ
+description: "Answers about TA-Lib: whether it is still maintained, licensing, supported platforms, and how it compares to other technical analysis libraries."
 ---
 
 # FAQ

@@ -1,5 +1,6 @@
 ---
 title: Contribute a TA Function
+description: "How to contribute a new TA function to TA-Lib: agree the spec in the open, implement it in ta_codegen, and prove it against golden values from an oracle."
 ---
 
 # How to Contribute a New TA Function

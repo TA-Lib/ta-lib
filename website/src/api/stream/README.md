@@ -1,5 +1,6 @@
 ---
 title: C/C++ Streaming API
+description: "The TA-Lib C/C++ streaming API for live feeds: open a stream once, feed one bar at a time at O(1) per bar, with values bit-identical to the batch functions."
 toc: false
 ---
 
