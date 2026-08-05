@@ -140,7 +140,6 @@ fn lookback_callees(func: &FuncDef, known: &HashSet<String>) -> (BTreeSet<String
             .filter_map(|raw| {
                 let base = raw
                     .strip_suffix("_lookback")
-                    .or_else(|| raw.strip_suffix("_unguarded"))
                     .or_else(|| raw.strip_suffix("_private"))
                     .unwrap_or(raw);
                 known.contains(base).then(|| base.to_string())

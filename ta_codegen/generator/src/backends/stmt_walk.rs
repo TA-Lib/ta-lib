@@ -261,7 +261,7 @@ pub(crate) fn block_comment(lines: &[String], indent: usize) -> String {
 /// Recursively drop [`Statement::Comment`] nodes from a statement tree. Used to
 /// keep the carried source comments in only the primary (double-precision,
 /// guarded) function variant, so they are not duplicated across the single-
-/// precision (`TA_S_*`) and unguarded/logic/private variants which share the
+/// precision (`TA_S_*`) and `_private` variants which share the
 /// same body.
 pub(crate) fn strip_comments(stmts: &[Statement]) -> Vec<Statement> {
     stmts

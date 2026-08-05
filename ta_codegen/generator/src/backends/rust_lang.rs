@@ -18,10 +18,10 @@ use super::stmt_walk::StatementEmitter;
 /// Controls how the Rust renderer emits code.
 #[derive(Clone)]
 pub struct RustRenderCtx {
-    /// If true, emit a pre-loop bounds-assert preamble at the top of the body (the
-    /// `_unguarded`/`_private` variants). The asserts give LLVM the proof it needs to
-    /// elide the per-access bounds checks on the safe `[]` indexing that follows — the
-    /// generated code never uses `unsafe`. See `gen_unguarded_or_private_func`.
+    /// If true, emit a pre-loop bounds-assert preamble at the top of the body. The
+    /// asserts give LLVM the proof it needs to elide the per-access bounds checks on
+    /// the safe `[]` indexing that follows — the generated code never uses `unsafe`.
+    /// See `emit_bounds_asserts`.
     pub bounds_asserts: bool,
     /// Variable names declared as `VarType::Integer` or `VarType::Index` (usize in Rust).
     /// Used by type inference in expression rendering.
@@ -420,7 +420,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         &snake,
     ));
 
-    // Build a temporary FuncDef with private_body for the unguarded/private variants
+    // Build a temporary FuncDef with private_body for the `_private` variant
     let mut body_func = func.clone();
     body_func.body.clone_from(&func.private_body);
 
@@ -745,7 +745,7 @@ fn gen_guarded_func(
             matype_map: build_matype_map(enums),
         };
 
-        // Use the same full rendering as gen_unguarded_func
+        // Use the same full rendering as the `_private` body
         let g_for_loop_vars = collect_for_loop_vars(&func.body);
         let g_var_inits: std::collections::HashMap<String, &Expr> = func
             .body
@@ -765,7 +765,7 @@ fn gen_guarded_func(
             .collect();
         let g_inline_counter = std::cell::Cell::new(0);
 
-        // Variable declarations (same pattern as gen_unguarded_func)
+        // Variable declarations (same pattern as the `_private` body)
         for stmt in &func.body {
             if let Statement::CircBuf(CircBuf::Prolog {
                 id,
@@ -2150,7 +2150,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
                 );
                 let mut s = String::new();
                 // Parity with the pre-cutover reference's CIRCBUF_INIT _RUST guard;
-                // also prevents the `(sz as usize) - 1` underflow on the unguarded path.
+                // also prevents the `(sz as usize) - 1` underflow.
                 let alloc_fail = if self.ctx.result_error_returns {
                     "return Err(RetCode::AllocErr);"
                 } else {
@@ -3252,9 +3252,9 @@ impl ExprEmitter for RustExpr<'_> {
     fn array_access(&self, name: &str, idx: &Expr) -> String {
         let idx_rendered =
             render_index_expr(idx, self.ctx, self.opt_real_params, self.registry, self.helpers);
-        // Always safe `[]` indexing. In the `_unguarded`/`_private` variants the
-        // bounds-assert preamble lets LLVM elide the per-access checks, so this is
-        // as fast as the old raw-pointer path while keeping the crate `unsafe`-free.
+        // Always safe `[]` indexing. The bounds-assert preamble lets LLVM elide the
+        // per-access checks, so this is as fast as a raw-pointer path while keeping
+        // the crate `unsafe`-free.
         format!("{name}[{idx_rendered}]")
     }
 
@@ -4365,8 +4365,7 @@ fn render_func_call(
         )
     } else if registry.contains(fname) || fname.ends_with("_private") {
         // Cross-indicator call: use registry to resolve the function name.
-        // Bare names (ema) → ema_unguarded (skip validation).
-        // Private names (ema_private) → ema_private (generic, handles both f32/f64).
+        // Bare names (ema) → ema. Private names (ema_private) → ema_private.
         let resolved = registry.resolve_call(fname, crate::registry::Lang::Rust);
         let (rendered_args, aliased) = render_cross_indicator_args(args, ctx, opt_real_params, registry, helpers);
         wrap_cross_indicator_call(format!("self.{}({})", resolved, rendered_args.join(", ")), &aliased)
@@ -4566,7 +4565,7 @@ fn render_cross_indicator_arg(
                 }
                 rendered
             // Non-startIdx/endIdx, non-output position: if a usize variable is passed
-            // where an i32 param is expected (e.g., curPeriod to ma_unguarded), cast to i32
+            // where an i32 param is expected (e.g., curPeriod to ma), cast to i32
             } else if position > 1 && !is_output_position {
                 if let Expr::Var(name) = arg {
                     if (ctx.index_vars.contains(name) || is_likely_index_var(name))

@@ -7,9 +7,9 @@
 //! here it is spliced between the `GENCODE SECTION 1` markers, preserving the
 //! hand-written scaffolding (license, immutable fields, builder entry points,
 //! candle/unstable-period accessors) outside them. Each indicator contributes a
-//! public lookback, the package-private `xxxInternal` / `xxxUnguardedInternal`
-//! cores (and, where applicable, `xxxPrivate`), plus the public
-//! `OutRange`-returning `xxx` / `xxxUnguarded` wrappers over them.
+//! public lookback, the package-private `xxxInternal` core (and, where
+//! applicable, `xxxPrivate`), plus the public `OutRange`-returning `xxx`
+//! wrapper over it.
 
 use std::collections::HashMap;
 use std::path::Path;

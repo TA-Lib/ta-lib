@@ -46,11 +46,11 @@ fn load_sma() -> ir::FuncDef {
 
     let mut func_def = parser::yaml::parse_yaml(&yaml_path);
     let parsed = parser::c_source::parse_c_source(&c_path);
-    let guarded = parsed.functions.iter().find(|f| !f.name.ends_with("_unguarded"))
+    let guarded = parsed.functions.first()
         .expect("C source must contain at least one function");
     func_def.body = guarded.body.clone();
     func_def.lookback = Some(ir::LookbackExpr::Code(parsed.lookback_body));
-    // Auto-generate unguarded (copy guarded body — SMA has no extra params)
+    // SMA declares no _private, so the private body is a copy of the body.
     func_def.private_body = func_def.body.clone();
     func_def
 }

@@ -62,7 +62,7 @@ for dir in ../../ta_codegen/input/*/; do
     c_file="../../src/ta_func/ta_${UPPER}.c"
     [ -s "$c_file" ] || continue
 
-    for variant in "TA_${UPPER}_Unguarded" "TA_${UPPER}_Lookback" "TA_${UPPER}"; do
+    for variant in "TA_${UPPER}_Lookback" "TA_${UPPER}"; do
         if grep -q "$variant" "$c_file"; then
             pass "ta_${UPPER}.c contains $variant"
         else
