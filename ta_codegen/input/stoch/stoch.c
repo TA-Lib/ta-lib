@@ -154,6 +154,10 @@ TA_RetCode stoch(int startIdx, int endIdx,
    {
       bufferIsAllocated = 1;
       tempBuffer = malloc((endIdx-today+1) * sizeof(double));
+      if( !tempBuffer )
+      {
+         return TA_ALLOC_ERR;
+      }
    }
 
    /* Do the K calculation */
