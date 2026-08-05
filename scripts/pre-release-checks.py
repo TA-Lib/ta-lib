@@ -84,8 +84,8 @@ if __name__ == "__main__":
         if not pdigest.are_all_tests_passed():
             print(f"Error: [{asset}] has failing or unknown test results in its digest.")
             exit(1)
-        if pdigest.package_md5 not in ("Disabled", "Unknown") and pdigest.package_md5 != pdigest.calculate_md5():
-            print(f"Error: [{asset}] md5 does not match its digest record (file modified after packaging?).")
+        if pdigest.package_sha256 not in ("Disabled", "Unknown") and pdigest.package_sha256 != pdigest.calculate_sha256():
+            print(f"Error: [{asset}] sha256 does not match its digest record (file modified after packaging?).")
             exit(1)
 
     # Verify CHANGELOG.md exists and there is a top entry matching the VERSION file.

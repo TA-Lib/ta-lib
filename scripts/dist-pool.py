@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+"""CI entry point for the dist/ content-addressed asset pool.
+
+  dist-pool.py push     Upload every locally-built dist/ package into the pool.
+                        Runs AFTER package.py + test-dist.py, so the digests it reads
+                        already carry the real package_sha256.
+
+  dist-pool.py pull     Download the packages referenced by dist/digests/ into dist/.
+                        Runs BEFORE package.py, so is_build_skipping_allowed() and
+                        test-dist.py find the binaries they expect on disk. Without this
+                        a fresh checkout has no binaries, the skip is denied, and main
+                        rebuilds instead of reusing the artifact dev tested.
+
+  dist-pool.py verify   Check that every sha256 referenced by dist/digests/ resolves in
+                        the pool. Changes nothing. This is the go/no-go gate before the
+                        binaries stop being committed to git.
+
+This is CI-internal. It is deliberately NOT a supported way for users or developers to
+obtain packages: the pool is garbage-collected, so an old checkout's digests will point at
+content that no longer exists. Users install from versioned releases; developers build
+their own with package.py.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from utilities.common import verify_git_repo
+from utilities.dist_pool import (
+    PoolError,
+    download_and_verify,
+    get_or_create_pool_release,
+    list_pool_assets,
+    pool_asset_name,
+    resolve,
+    sha256_of,
+    upload_if_absent,
+)
+from utilities.files import path_join
+from utilities.package_digest import PackageDigest
+
+
+def _referenced(root_dir: str) -> list[tuple[str, str]]:
+    """[(asset_file_name, sha256)] for every digest naming real pool content.
+
+    Skips "Disabled" (github-* pseudo-assets track a branch, not a file) and "Unknown"
+    (a digest written before its package was built, or before package_sha256 existed).
+    """
+    digests_dir = path_join(root_dir, "dist", "digests")
+    if not os.path.isdir(digests_dir):
+        print(f"Error: missing {digests_dir}")
+        sys.exit(1)
+
+    out: list[tuple[str, str]] = []
+    for entry in sorted(os.listdir(digests_dir)):
+        if not entry.endswith(".digest"):
+            continue
+        asset_file_name = entry[: -len(".digest")]
+        pd = PackageDigest.read(root_dir, asset_file_name)
+        if pd.package_sha256 in ("Disabled", "Unknown"):
+            print(f"Info: skipping {asset_file_name} (package_sha256={pd.package_sha256})")
+            continue
+        out.append((asset_file_name, pd.package_sha256))
+    return out
+
+
+def cmd_push(root_dir: str, dry_run: bool) -> int:
+    refs = _referenced(root_dir)
+    if not refs:
+        print("Error: no digest references a built package -- nothing to push.")
+        return 1
+
+    rel = None if dry_run else get_or_create_pool_release()
+    failures = 0
+    for asset_file_name, sha in refs:
+        local = path_join(root_dir, "dist", asset_file_name)
+        if not os.path.exists(local):
+            print(f"Error: {asset_file_name} referenced by its digest but not in dist/")
+            failures += 1
+            continue
+        # The digest is authoritative. If the file on disk hashes differently it was
+        # modified after packaging, and uploading it would put content in the pool that
+        # no digest describes.
+        local_sha = sha256_of(local)
+        if local_sha != sha:
+            print(f"Error: {asset_file_name} hashes to {local_sha} but its digest says "
+                  f"{sha} (file modified after packaging?)")
+            failures += 1
+            continue
+        if dry_run:
+            print(f"[dry-run] would upload {pool_asset_name(sha, asset_file_name)}")
+            continue
+        try:
+            upload_if_absent(local, asset_file_name, sha256=sha, release=rel)
+        except PoolError as e:
+            print(f"Error: {e}")
+            failures += 1
+
+    return 1 if failures else 0
+
+
+def cmd_pull(root_dir: str, dry_run: bool) -> int:
+    refs = _referenced(root_dir)
+    if not refs:
+        print("Info: no digest references pool content -- nothing to pull.")
+        return 0
+
+    assets = None if dry_run else list_pool_assets()
+    failures = 0
+    for asset_file_name, sha in refs:
+        dest = path_join(root_dir, "dist", asset_file_name)
+        # Already present and correct (a local build, or a previous pull) -- leave it.
+        if os.path.exists(dest) and sha256_of(dest) == sha:
+            print(f"Info: {asset_file_name} already present and matches digest")
+            continue
+        if dry_run:
+            print(f"[dry-run] would fetch {pool_asset_name(sha, asset_file_name)}")
+            continue
+        try:
+            download_and_verify(sha, asset_file_name, dest, assets=assets)
+        except PoolError as e:
+            print(f"Error: {e}")
+            failures += 1
+
+    return 1 if failures else 0
+
+
+def cmd_verify(root_dir: str, dry_run: bool) -> int:
+    refs = _referenced(root_dir)
+    if not refs:
+        print("Error: no digest references a built package -- nothing to verify.")
+        return 1
+
+    if dry_run:
+        for asset_file_name, sha in refs:
+            print(f"[dry-run] would resolve {pool_asset_name(sha, asset_file_name)}")
+        return 0
+
+    assets = list_pool_assets()
+    missing = []
+    for asset_file_name, sha in refs:
+        try:
+            a = resolve(sha, asset_file_name, assets)
+            print(f"OK   {asset_file_name}  {sha[:16]}...  ({a.get('size')} bytes)")
+        except PoolError:
+            print(f"MISS {asset_file_name}  {sha[:16]}...")
+            missing.append(asset_file_name)
+
+    if missing:
+        print(f"\nError: {len(missing)} referenced asset(s) missing from the pool: "
+              f"{', '.join(missing)}")
+        return 1
+    print(f"\nAll {len(refs)} referenced assets present in the pool.")
+    return 0
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("command", choices=["push", "pull", "verify"])
+    ap.add_argument("--dry-run", action="store_true",
+                    help="Show what would happen without any network call.")
+    args = ap.parse_args()
+
+    root_dir = verify_git_repo()
+    handler = {"push": cmd_push, "pull": cmd_pull, "verify": cmd_verify}[args.command]
+    try:
+        return handler(root_dir, args.dry_run)
+    except PoolError as e:
+        print(f"Error: {e}")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

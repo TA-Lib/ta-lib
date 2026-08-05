@@ -6,14 +6,18 @@ import sys
 
 from utilities.files import path_join
 
-def _calculate_md5(filepath: str) -> str:
-    # Calculate md5 of a binary file (do not use for text file because
+def _calculate_sha256(filepath: str) -> str:
+    # Calculate sha256 of a binary file (do not use for text file because
     # of portability issue for line endings)
-    hash_md5 = hashlib.md5()
+    #
+    # sha256 (not md5) because this hash is the key of the content-addressed
+    # asset pool: it names the asset and is what proves a downloaded package is
+    # byte-identical to the one that was built and tested.
+    hash_sha256 = hashlib.sha256()
     with open(filepath, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
+            hash_sha256.update(chunk)
+    return hash_sha256.hexdigest()
 
 def _digests_path(root_dir: str) -> str:
     return path_join(root_dir, "dist", "digests")
@@ -30,7 +34,7 @@ class PackageDigest:
 
     built_success: str = "False"    # "True" or "False"
 
-    package_md5: str = "Disabled"     # "Disabled", "Unknown" or "hash_of_package"
+    package_sha256: str = "Disabled"  # "Disabled", "Unknown" or "hash_of_package"
     ta_regtest_pass: str = "Disabled" # "Disabled", "Unknown", "True" or "False"
     dist_test_pass: str = "Disabled"  # "Disabled", ""Unknown", True" or "False"
 
@@ -54,11 +58,11 @@ class PackageDigest:
         # assume it is tracking a package in dist/
         if self.asset_file_name.startswith("github-"):
             # github-* tracks the state of a repo branch.
-            self._disable_package_md5()
+            self._disable_package_sha256()
             self._disable_dist_test()
             self._enable_ta_regtest()
         else:
-            self._enable_package_md5()
+            self._enable_package_sha256()
             self._enable_dist_test()
             # ta_regtest must work for src.tar.gz (needed for homebrew maintainer).
             if self.asset_file_name.endswith("-src.tar.gz"):
@@ -79,7 +83,13 @@ class PackageDigest:
             sources_digest=data.get("sources_digest", ""),
             builder_id=data.get("builder_id", ""),
             built_success=data.get("built_success", ""),
-            package_md5=data.get("package_md5", ""),
+            # Defaults to "Unknown", NOT "": a digest written before package_sha256
+            # existed must land on the "needs back-fill" state that
+            # update_package_digest() knows how to repair. An empty string is
+            # neither "Disabled" nor "Unknown", so _enable_package_sha256() would
+            # not fix it (it only promotes "Disabled") and the mismatch would be
+            # reported as a fatal packaging error.
+            package_sha256=data.get("package_sha256", "Unknown"),
             ta_regtest_pass=data.get("ta_regtest_pass", ""),
             dist_test_pass=data.get("dist_test_pass", ""),
         )
@@ -113,16 +123,16 @@ class PackageDigest:
             "sources_digest": self.sources_digest,
             "builder_id": self.builder_id,
             "built_success": self.built_success,
-            "package_md5": self.package_md5,
+            "package_sha256": self.package_sha256,
             "ta_regtest_pass": self.ta_regtest_pass,
             "dist_test_pass": self.dist_test_pass,
         }
 
-    def calculate_md5(self) -> str:
-        if self.package_md5 == "Disabled":
+    def calculate_sha256(self) -> str:
+        if self.package_sha256 == "Disabled":
             return "Disabled"
         package_file_path = path_join(self.root_dir, "dist", self.asset_file_name)
-        return _calculate_md5(package_file_path)
+        return _calculate_sha256(package_file_path)
 
     def clear_tests(self):
         if self.ta_regtest_pass != "Disabled":
@@ -138,12 +148,12 @@ class PackageDigest:
             return False
         return True
 
-    def _enable_package_md5(self):
-        if self.package_md5 == "Disabled":
-            self.package_md5 = "Unknown"
+    def _enable_package_sha256(self):
+        if self.package_sha256 == "Disabled":
+            self.package_sha256 = "Unknown"
 
-    def _disable_package_md5(self):
-        self.package_md5 = "Disabled"
+    def _disable_package_sha256(self):
+        self.package_sha256 = "Disabled"
 
     def _enable_ta_regtest(self):
         if self.ta_regtest_pass == "Disabled":

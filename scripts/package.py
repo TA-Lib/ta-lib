@@ -449,13 +449,16 @@ def is_build_skipping_allowed(root_dir: str, asset_file_name: str, version: str,
 
     try:
         pdigest = PackageDigest.read_or_create(root_dir, asset_file_name, sources_digest, builder_id )
-        if pdigest.built_success and pdigest.sources_digest == sources_digest:
-            # Double-check that the dist/ binaries still matches the MD5.
-            local_asset_md5 = pdigest.calculate_md5()
-            if local_asset_md5 == "Disabled":
-                print("Error: MD5 unexpectadly disabled for digest file.")
+        # built_success is a string, so 'if pdigest.built_success' was always true
+        # ("False" is a non-empty string). Compare explicitly, otherwise a digest
+        # recording a FAILED build still qualifies for the skip.
+        if pdigest.built_success == "True" and pdigest.sources_digest == sources_digest:
+            # Double-check that the dist/ binaries still matches the sha256.
+            local_asset_sha256 = pdigest.calculate_sha256()
+            if local_asset_sha256 == "Disabled":
+                print("Error: sha256 unexpectadly disabled for digest file.")
                 sys.exit(1)
-            if local_asset_md5 == pdigest.package_md5 and pdigest.are_all_tests_passed():
+            if local_asset_sha256 == pdigest.package_sha256 and pdigest.are_all_tests_passed():
 
                 if os.getenv('GITHUB_ACTIONS') == 'true':
                     if is_nightly_github_action():
@@ -646,7 +649,7 @@ def update_package_digest(root_dir: str, results: dict, sources_digest: str, bui
     #    {
     #      ....
     #      "sources_digest": "some_digest_value",
-    #      "package_md5": "some_md5_value",
+    #      "package_sha256": "some_sha256_value",
     #      "built_success": "True".
     #      "ta_regtest_pass": "True",
     #      "dist_test_pass": "False"
@@ -667,7 +670,7 @@ def update_package_digest(root_dir: str, results: dict, sources_digest: str, bui
     # Make a copy of the digest to detect changes.
     pdigest_copy = copy.deepcopy(pdigest)
     fatal_error = False
-    current_md5 = "Disabled"
+    current_sha256 = "Disabled"
 
     if pdigest_copy.built_success == "False" or results.get("build_valid",False) == False:
         # If the previous digest or current results indicates the build was not successful, then
@@ -685,7 +688,7 @@ def update_package_digest(root_dir: str, results: dict, sources_digest: str, bui
         if "dist_test_pass" in results:
             pdigest.dist_test_pass = "True" if results["dist_test_pass"] else "False"
 
-    if pdigest.package_md5 != "Disabled":
+    if pdigest.package_sha256 != "Disabled":
         asset_file_path = path_join(root_dir, "dist", asset_file_name)
         if not os.path.exists(asset_file_path):
             # The package was processed but dist does not exists!
@@ -693,16 +696,17 @@ def update_package_digest(root_dir: str, results: dict, sources_digest: str, bui
             fatal_error = True
         else:
             # The dist package file exists.
-            current_md5 = pdigest.calculate_md5()
+            current_sha256 = pdigest.calculate_sha256()
 
             if results.get("build_valid",False):
                 pdigest.built_success = "True"
 
-                if pdigest.package_md5 == "Unknown":
-                    # It is a new package digest file, so just update it.
-                    pdigest.package_md5 = current_md5
+                if pdigest.package_sha256 == "Unknown":
+                    # It is a new package digest file (or one written before
+                    # package_sha256 existed), so just update it.
+                    pdigest.package_sha256 = current_sha256
 
-                if current_md5 != pdigest.package_md5 or pdigest.sources_digest != sources_digest:
+                if current_sha256 != pdigest.package_sha256 or pdigest.sources_digest != sources_digest:
                     if not results.get("copied",False):
                         # The package is different, but not successfully copied? Likely a bug.
                         print(f"Error: {asset_file_name} unexpectadly not copied to dist.")
@@ -710,7 +714,7 @@ def update_package_digest(root_dir: str, results: dict, sources_digest: str, bui
                     else:
                         # The package was built and different than before...
                         print("Success: ", asset_file_name, "digest updating.")
-                        pdigest.package_md5 = current_md5
+                        pdigest.package_sha256 = current_sha256
                         pdigest.sources_digest = sources_digest
             else:
                 # The package was not successfully rebuilt.
@@ -726,7 +730,7 @@ def update_package_digest(root_dir: str, results: dict, sources_digest: str, bui
 
     # Double check with some simple rules:
     #   - tests should never be "pass" if the build was not successful.
-    #   - If a digest says the build was successful, then the md5 and sources_digest should always match.
+    #   - If a digest says the build was successful, then the sha256 and sources_digest should always match.
     if not results.get("build_valid",False):
         if pdigest.dist_test_pass == "True":
             print(f"Warning: {asset_file_name} digest says dist test pass, but build was not successful.")
@@ -741,8 +745,8 @@ def update_package_digest(root_dir: str, results: dict, sources_digest: str, bui
             print(f"Error: {asset_file_name} digest says built was successful, but sources_digest different!")
             fatal_error = True
 
-        if pdigest.package_md5 != current_md5:
-            print(f"Error: {asset_file_name} digest says built was successful, but md5 different!")
+        if pdigest.package_sha256 != current_sha256:
+            print(f"Error: {asset_file_name} digest says built was successful, but sha256 different!")
             fatal_error = True
 
     if fatal_error:
