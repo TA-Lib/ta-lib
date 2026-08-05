@@ -1,3 +1,5 @@
+// Crate docs = README.md verbatim (single source for crates.io + docs.rs;
+// see README.md for the actual text).
 #![doc = include_str!("../README.md")]
 
 /// Dispatch one indicator call to its hardware-FMA clone when the CPU supports

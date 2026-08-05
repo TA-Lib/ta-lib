@@ -1,10 +1,11 @@
 [package]
 name = "ta-lib-dispatch"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.86"
 description = "Runtime CPU-feature dispatch macro for the ta-lib crate (internal support crate)."
 license = "BSD-3-Clause"
+homepage = "https://ta-lib.org"
 repository = "https://github.com/TA-Lib/ta-lib"
 documentation = "https://docs.rs/ta-lib-dispatch"
 readme = "README.md"

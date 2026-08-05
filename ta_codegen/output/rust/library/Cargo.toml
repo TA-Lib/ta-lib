@@ -21,4 +21,4 @@ path = "src/lib.rs"
 # internal contract, so a published ta-lib must never float onto a newer
 # dispatch release. Publish order when releasing to crates.io: dispatch
 # first, then ta-lib (cargo strips `path` and resolves by version).
-ta-lib-dispatch = { path = "../dispatch", version = "=0.1.0" }
+ta-lib-dispatch = { path = "../dispatch", version = "=0.1.1" }
