@@ -13,7 +13,7 @@
 //! than by three parallel derivations.
 #![allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 
-use super::abstract_rows::{rows, FuncRow, InputRow, OptDomain, OptRow, OutputRow};
+use super::abstract_rows::{rows, FuncRow, InputKind, InputRow, OptDomain, OptRow, OutputKind, OutputRow};
 use crate::ir::{EnumDef, FuncDef};
 use std::collections::HashMap;
 use std::fmt::Write as _;
@@ -239,6 +239,578 @@ fn emit_api(o: &mut String, sorted: &[FuncRow]) {
     o.push_str("pub fn for_each_func<F: FnMut(&'static FuncInfo)>(mut f: F) { for fi in FUNCS.iter() { f(fi); } }\n\n");
     o.push_str("/// All function groups (no allocation, unlike C's `TA_GroupTableAlloc`).\n");
     o.push_str("#[inline] pub fn groups() -> &'static [Group] { Group::ALL }\n");
+
+    emit_binder(o, sorted);
+}
+
+
+/// The hand-written half of the binder: the holder, its setters and the sealed
+/// `OptValue` trait. The two dispatch matches are generated after it.
+const BINDER_SCAFFOLDING: &str = r#"
+use crate::{Core, RetCode};
+
+/// Where a call's output starts and how much of it there is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OutRange {
+    /// Index of the first computed value, relative to the input series.
+    pub beg_idx: usize,
+    /// How many values were written.
+    pub nb_element: usize,
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for i32 {}
+    impl Sealed for f64 {}
+}
+
+/// A value bindable to an optional parameter.
+///
+/// Rust has no overloading, so this is how `set_opt` accepts either an `i32` or an
+/// `f64` under one name — resolved at compile time, and sealed so the set of
+/// bindable types stays the generator's to decide.
+pub trait OptValue: sealed::Sealed {
+    /// Bind `self` to optional parameter `index` of `holder`.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the index is out of range or the parameter's
+    /// domain does not take this type.
+    fn bind(self, holder: &mut ParamHolder<'_>, index: usize) -> Result<(), RetCode>;
+}
+
+impl OptValue for i32 {
+    fn bind(self, holder: &mut ParamHolder<'_>, index: usize) -> Result<(), RetCode> {
+        let info = holder.func.info().opt_inputs.get(index).ok_or(RetCode::BadParam)?;
+        match info.domain {
+            OptDomain::IntegerRange { .. } | OptDomain::IntegerList { .. } => {
+                holder.int_opt[index] = self;
+                Ok(())
+            }
+            _ => Err(RetCode::BadParam),
+        }
+    }
+}
+
+impl OptValue for f64 {
+    fn bind(self, holder: &mut ParamHolder<'_>, index: usize) -> Result<(), RetCode> {
+        let info = holder.func.info().opt_inputs.get(index).ok_or(RetCode::BadParam)?;
+        match info.domain {
+            OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+                holder.real_opt[index] = self;
+                Ok(())
+            }
+            _ => Err(RetCode::BadParam),
+        }
+    }
+}
+
+/// Binds a function's arguments at run time, then calls it — the counterpart of
+/// C's `TA_ParamHolder` + `TA_CallFunc`, of Java's `ParamHolder` and of C#'s
+/// `FunctionCall`.
+///
+/// Borrows rather than owns, so binding costs nothing and the caller keeps its
+/// buffers. That is what makes two outputs sharing one buffer — the aliasing every
+/// other backend rejects at run time (issue #108) — a compile error here.
+///
+/// ```no_run
+/// use ta_lib::{Core, abstract_api::{self, FuncId}};
+/// let core = Core::new();
+/// let close = vec![1.0f64; 64];
+/// let mut out = vec![0.0f64; 64];
+/// let mut call = FuncId::Sma.new_call(&core);
+/// call.set_input(0, &close)?;
+/// call.set_opt(0, 30_i32)?;
+/// call.set_output(0, &mut out)?;
+/// let range = call.call(0, close.len() - 1)?;
+/// # Ok::<(), ta_lib::RetCode>(())
+/// ```
+pub struct ParamHolder<'a> {
+    func: FuncId,
+    core: &'a Core,
+    real_in: [Option<&'a [f64]>; MAX_INPUTS],
+    int_in: [Option<&'a [i32]>; MAX_INPUTS],
+    price: [[Option<&'a [f64]>; 6]; MAX_INPUTS],
+    real_opt: [f64; MAX_OPT_INPUTS],
+    int_opt: [i32; MAX_OPT_INPUTS],
+    real_out: [Option<&'a mut [f64]>; MAX_OUTPUTS],
+    int_out: [Option<&'a mut [i32]>; MAX_OUTPUTS],
+}
+
+impl FuncId {
+    /// Begin a call to this function with arguments bound at run time.
+    #[must_use]
+    pub fn new_call(self, core: &Core) -> ParamHolder<'_> {
+        ParamHolder {
+            func: self,
+            core,
+            real_in: [None; MAX_INPUTS],
+            int_in: [None; MAX_INPUTS],
+            price: [[None; 6]; MAX_INPUTS],
+            // Unset optional parameters carry the cross-language default
+            // sentinel, exactly as an omitted argument does in C. Every generated
+            // function maps it to that parameter's documented default (#162), so
+            // "left unset" and "explicitly the default" are one code path.
+            real_opt: [-4e37; MAX_OPT_INPUTS],
+            int_opt: [i32::MIN; MAX_OPT_INPUTS],
+            real_out: [const { None }; MAX_OUTPUTS],
+            int_out: [const { None }; MAX_OUTPUTS],
+        }
+    }
+}
+
+impl<'a> ParamHolder<'a> {
+    /// The function this call runs.
+    #[must_use]
+    pub fn info(&self) -> &'static FuncInfo { self.func.info() }
+
+    fn check_input(&self, slot: usize, want: InputType) -> Result<(), RetCode> {
+        let info = self.func.info().inputs.get(slot).ok_or(RetCode::BadParam)?;
+        if info.kind == want { Ok(()) } else { Err(RetCode::BadParam) }
+    }
+
+    /// Bind a real input series.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the slot is out of range or is not a real input.
+    pub fn set_input(&mut self, slot: usize, series: &'a [f64]) -> Result<&mut Self, RetCode> {
+        self.check_input(slot, InputType::Real)?;
+        self.real_in[slot] = Some(series);
+        Ok(self)
+    }
+
+    /// Bind an integer input series.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the slot is out of range or is not an integer input.
+    pub fn set_int_input(&mut self, slot: usize, series: &'a [i32]) -> Result<&mut Self, RetCode> {
+        self.check_input(slot, InputType::Integer)?;
+        self.int_in[slot] = Some(series);
+        Ok(self)
+    }
+
+    /// Bind a price bundle. Components the function does not consume are accepted
+    /// and ignored, matching C's `SET_PARAM_INFO` and the Java and C# binders.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the slot is out of range, is not a price input, or
+    /// a component the function *does* consume was left `None`.
+    pub fn set_price_input(
+        &mut self,
+        slot: usize,
+        open: Option<&'a [f64]>,
+        high: Option<&'a [f64]>,
+        low: Option<&'a [f64]>,
+        close: Option<&'a [f64]>,
+        volume: Option<&'a [f64]>,
+        open_interest: Option<&'a [f64]>,
+    ) -> Result<&mut Self, RetCode> {
+        self.check_input(slot, InputType::Price)?;
+        let flags = self.func.info().inputs[slot].flags;
+        let given = [open, high, low, close, volume, open_interest];
+        for (i, series) in given.into_iter().enumerate() {
+            if flags.0 & (1u32 << i) != 0 && series.is_none() {
+                return Err(RetCode::BadParam);
+            }
+            self.price[slot][i] = series;
+        }
+        Ok(self)
+    }
+
+    /// Bind an optional parameter. Takes an `i32` or an `f64`; see [`OptValue`].
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the index is out of range or the value's type does
+    /// not match the parameter's domain.
+    pub fn set_opt<V: OptValue>(&mut self, index: usize, value: V) -> Result<&mut Self, RetCode> {
+        value.bind(self, index)?;
+        Ok(self)
+    }
+
+    /// Bind a real output buffer.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the index is out of range or is not a real output.
+    pub fn set_output(&mut self, index: usize, out: &'a mut [f64]) -> Result<&mut Self, RetCode> {
+        let info = self.func.info().outputs.get(index).ok_or(RetCode::BadParam)?;
+        if info.kind != OutputType::Real { return Err(RetCode::BadParam); }
+        self.real_out[index] = Some(out);
+        Ok(self)
+    }
+
+    /// Bind an integer output buffer.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the index is out of range or is not an integer output.
+    pub fn set_int_output(&mut self, index: usize, out: &'a mut [i32]) -> Result<&mut Self, RetCode> {
+        let info = self.func.info().outputs.get(index).ok_or(RetCode::BadParam)?;
+        if info.kind != OutputType::Integer { return Err(RetCode::BadParam); }
+        self.int_out[index] = Some(out);
+        Ok(self)
+    }
+"#;
+
+/// A `#[cfg(test)]` module exercising the binder over every function.
+///
+/// Written generically against the registry rather than per function, so it
+/// cannot drift from the corpus: it enumerates `FUNCS`, binds whatever each row
+/// declares, and asserts the contract. Run with `cargo test --lib -p ta-lib`.
+const BINDER_TESTS: &str = r#"
+#[cfg(test)]
+mod binder_tests {
+    use super::*;
+    use crate::Core;
+
+    const N: usize = 160;
+
+    fn series(phase: f64) -> Vec<f64> {
+        (0..N).map(|i| {
+            let x = i as f64;
+            100.0 + 8.0 * (x / 9.0 + phase).sin() + 0.4 * (x / 3.0 + phase).cos()
+        }).collect()
+    }
+
+    /// Binds every declared input and output of `f`, leaving optional parameters
+    /// unset unless `opts` says otherwise.
+    fn drive(core: &Core, f: &'static FuncInfo,
+             opts: &dyn Fn(&mut ParamHolder<'_>),
+             close: &[f64], high: &[f64], low: &[f64], vol: &[f64],
+             ints: &[i32],
+             rout: &mut [Vec<f64>], iout: &mut [Vec<i32>]) -> Result<OutRange, RetCode> {
+        let mut h = f.id.new_call(core);
+        for (slot, inp) in f.inputs.iter().enumerate() {
+            match inp.kind {
+                InputType::Price => {
+                    h.set_price_input(slot, Some(close), Some(high), Some(low),
+                                      Some(close), Some(vol), Some(vol)).unwrap();
+                }
+                InputType::Real => { h.set_input(slot, close).unwrap(); }
+                InputType::Integer => { h.set_int_input(slot, ints).unwrap(); }
+            }
+        }
+        opts(&mut h);
+        for (k, buf) in rout.iter_mut().enumerate() {
+            if f.outputs[k].kind == OutputType::Real { h.set_output(k, buf).unwrap(); }
+        }
+        for (k, buf) in iout.iter_mut().enumerate() {
+            if f.outputs[k].kind == OutputType::Integer { h.set_int_output(k, buf).unwrap(); }
+        }
+        h.call(0, N - 1)
+    }
+
+    fn bufs(f: &'static FuncInfo) -> (Vec<Vec<f64>>, Vec<Vec<i32>>) {
+        (vec![vec![0.0; N]; f.outputs.len()], vec![vec![0; N]; f.outputs.len()])
+    }
+
+    /// Every function is reachable through the binder, and the range it reports
+    /// starts exactly at the lookback the binder computes. `lookback()` is a
+    /// SECOND mapping from opt slots to arguments, so pitting it against the one
+    /// `call()` uses is what catches a transposed slot.
+    #[test]
+    fn every_function_binds_calls_and_agrees_with_its_lookback() {
+        let core = Core::new();
+        let close = series(0.0);
+        let high: Vec<f64> = close.iter().map(|v| v + 2.0).collect();
+        let low: Vec<f64> = close.iter().map(|v| v - 2.0).collect();
+        let vol: Vec<f64> = (0..N).map(|i| 1.0e6 + i as f64).collect();
+        let ints: Vec<i32> = (0..N as i32).collect();
+
+        let mut covered = 0;
+        for f in FUNCS.iter() {
+            let (mut r, mut i) = bufs(f);
+            // Distinct, in-range periods: with every slot carrying the same
+            // number a transposition is undetectable.
+            let set = |h: &mut ParamHolder<'_>| {
+                for (k, o) in f.opt_inputs.iter().enumerate() {
+                    if let OptDomain::IntegerRange { min, max, .. } = o.domain {
+                        let v = (min + 2 + k as i32).min(max);
+                        h.set_opt(k, v).unwrap();
+                    }
+                }
+            };
+            let lb = {
+                let mut probe = f.id.new_call(&core);
+                set(&mut probe);
+                probe.lookback().expect("lookback")
+            };
+            let range = drive(&core, f, &set, &close, &high, &low, &vol, &ints, &mut r, &mut i)
+                .unwrap_or_else(|e| panic!("{} failed: {e:?}", f.name));
+            assert_eq!(range.beg_idx, lb, "{}: outBegIdx must be the lookback", f.name);
+            covered += 1;
+        }
+        assert_eq!(covered, FUNCS.len());
+    }
+
+    /// An unset optional parameter and its explicitly-bound documented default are
+    /// the same call — the sentinel contract, from the binder's side (issue #162).
+    #[test]
+    fn unset_matches_the_documented_default() {
+        let core = Core::new();
+        let close = series(0.0);
+        let high: Vec<f64> = close.iter().map(|v| v + 2.0).collect();
+        let low: Vec<f64> = close.iter().map(|v| v - 2.0).collect();
+        let vol: Vec<f64> = (0..N).map(|i| 1.0e6 + i as f64).collect();
+        let ints: Vec<i32> = (0..N as i32).collect();
+
+        let mut covered = 0;
+        for f in FUNCS.iter() {
+            if f.opt_inputs.is_empty() { continue; }
+            let (mut ru, mut iu) = bufs(f);
+            let (mut re, mut ie) = bufs(f);
+            let unset = |_: &mut ParamHolder<'_>| {};
+            let explicit = |h: &mut ParamHolder<'_>| {
+                for (k, o) in f.opt_inputs.iter().enumerate() {
+                    match o.domain {
+                        OptDomain::IntegerRange { default, .. } => { h.set_opt(k, default).unwrap(); }
+                        OptDomain::IntegerList { default, .. } => {
+                            h.set_opt(k, i32::try_from(default).unwrap()).unwrap();
+                        }
+                        OptDomain::RealRange { default, .. }
+                        | OptDomain::RealList { default, .. } => { h.set_opt(k, default).unwrap(); }
+                    }
+                }
+            };
+            let a = drive(&core, f, &unset, &close, &high, &low, &vol, &ints, &mut ru, &mut iu);
+            let b = drive(&core, f, &explicit, &close, &high, &low, &vol, &ints, &mut re, &mut ie);
+            assert_eq!(a, b, "{}: unset must equal the explicit default", f.name);
+            if let Ok(r) = a {
+                for k in 0..f.outputs.len() {
+                    if f.outputs[k].kind == OutputType::Real {
+                        assert_eq!(ru[k][..r.nb_element], re[k][..r.nb_element],
+                                   "{} output {k}", f.name);
+                    } else {
+                        assert_eq!(iu[k][..r.nb_element], ie[k][..r.nb_element],
+                                   "{} output {k}", f.name);
+                    }
+                }
+            }
+            covered += 1;
+        }
+        // 79 of the 168 declare an optional parameter; floor it so the
+        // discriminating half cannot quietly shrink.
+        assert!(covered >= 75, "covered {covered} functions with optional parameters");
+    }
+
+    /// The bind-time check C cannot perform: its setters take a bare pointer, so an
+    /// undersized output is an out-of-bounds write there. A slice carries its length.
+    #[test]
+    fn an_undersized_output_is_rejected_not_written_past() {
+        let core = Core::new();
+        let close = series(0.0);
+        let mut tiny = vec![0.0; 4];
+        let mut h = FuncId::Sma.new_call(&core);
+        h.set_input(0, &close).unwrap();
+        h.set_opt(0, 30_i32).unwrap();
+        h.set_output(0, &mut tiny).unwrap();
+        assert_eq!(h.call(0, N - 1), Err(RetCode::BadParam));
+    }
+
+    /// Type mismatches and out-of-range indices are refused rather than silently bound.
+    #[test]
+    fn the_setters_refuse_what_does_not_belong() {
+        let core = Core::new();
+        let close = series(0.0);
+        let mut out = vec![0.0; N];
+        let mut h = FuncId::Sma.new_call(&core);
+        assert_eq!(h.set_input(9, &close).err(), Some(RetCode::BadParam));
+        assert_eq!(h.set_opt(0, 1.5_f64).err(), Some(RetCode::BadParam));
+        assert_eq!(h.set_opt(9, 30_i32).err(), Some(RetCode::BadParam));
+        let mut wrong_kind = [0i32; 4];
+        assert_eq!(h.set_int_output(0, &mut wrong_kind).err(), Some(RetCode::BadParam));
+        h.set_output(0, &mut out).unwrap();
+        assert_eq!(h.call(0, N - 1).err(), Some(RetCode::BadParam)); // input still unbound
+    }
+}
+"#;
+
+/// Emit the dynamic-binding tier: `ParamHolder`, the sealed `OptValue` trait, and
+/// the generated `call` / `lookback` dispatch.
+///
+/// Rust shipped the introspection half of `ta_abstract` and none of the
+/// invocation half, so a caller could discover that MA takes an `optInMAType` and
+/// then had to hand-write a 168-arm `match` to actually call it — which is the
+/// work this layer exists to remove (issue #164). C, Java and C# all have it.
+///
+/// The holder is the right shape here even though it is C's: the use case is
+/// inherently runtime-dynamic, and typestate or const generics — the tempting
+/// Rust answers — would demand compile-time knowledge of exactly what this layer
+/// exists to discover at run time. What Rust does buy over C:
+///
+/// * **Slices, not pointers.** `TA_SetInputParamRealPtr` takes a bare
+///   `const double*` with no length, which is why no backend can check output
+///   capacity at bind time. Here the length rides along, so an undersized output
+///   is a `RetCode::BadParam` instead of an out-of-bounds write.
+/// * **A sealed `OptValue` trait instead of overloads.** One `set_opt` accepting
+///   `i32` or `f64`, resolved at compile time — the Rust spelling of the
+///   overloading C could not afford.
+/// * **`Result`, not out-params.**
+/// * **Output aliasing is a compile error.** Binding one buffer to two outputs is
+///   the #108 rejection every other backend implements as a runtime check; two
+///   `&mut` to the same slice simply do not coexist.
+fn emit_binder(o: &mut String, sorted: &[FuncRow]) {
+    let widest_input = sorted.iter().map(|f| f.inputs.len()).max().unwrap_or(1).max(1);
+    let widest_opt = sorted.iter().map(|f| f.opt_inputs.len()).max().unwrap_or(1).max(1);
+    let widest_output = sorted.iter().map(|f| f.outputs.len()).max().unwrap_or(1).max(1);
+
+    let _ = writeln!(
+        o,
+        "\n/// Widest input arity in the corpus — the holder's slots are sized from it.\npub const MAX_INPUTS: usize = {widest_input};\n\
+         /// Widest optional-parameter arity in the corpus.\npub const MAX_OPT_INPUTS: usize = {widest_opt};\n\
+         /// Widest output arity in the corpus.\npub const MAX_OUTPUTS: usize = {widest_output};\n"
+    );
+
+    o.push_str(BINDER_SCAFFOLDING);
+
+    // ---- lookback dispatch -------------------------------------------------
+    o.push_str(
+        "    /// The first index at which this function produces output, for the\n\
+         \x20   /// optional parameters bound so far. Inputs and outputs need not be\n\
+         \x20   /// bound — which is what makes it useful for sizing them.\n\
+         \x20   ///\n\
+         \x20   /// # Errors\n\
+         \x20   /// [`RetCode::BadParam`] if a bound optional parameter is out of range.\n\
+         \x20   pub fn lookback(&self) -> Result<usize, RetCode> {\n\
+         \x20       let lb = match self.func {\n",
+    );
+    for f in sorted {
+        let snake = f.name.to_lowercase();
+        let args = opt_args(f);
+        let _ = writeln!(
+            o,
+            "            FuncId::{} => self.core.{snake}_lookback({args}),",
+            pascal_ident(&f.name)
+        );
+    }
+    o.push_str(
+        "        };\n\
+         \x20       // The generated lookbacks report a rejected parameter as usize::MAX.\n\
+         \x20       if lb == usize::MAX { Err(RetCode::BadParam) } else { Ok(lb) }\n\
+         \x20   }\n\n",
+    );
+
+    // ---- call dispatch -----------------------------------------------------
+    o.push_str(
+        "    /// Run the function over `[start_idx, end_idx]`.\n\
+         \x20   ///\n\
+         \x20   /// Unbound optional parameters carry the cross-language default\n\
+         \x20   /// sentinel, which every generated function maps to its documented\n\
+         \x20   /// default — so leaving one unset and passing its default explicitly\n\
+         \x20   /// are the same call (issue #162).\n\
+         \x20   ///\n\
+         \x20   /// # Errors\n\
+         \x20   /// [`RetCode::BadParam`] if a required input or output was never bound,\n\
+         \x20   /// if an output is too short for the range, or if the function rejects\n\
+         \x20   /// its parameters.\n\
+         \x20   pub fn call(&mut self, start_idx: usize, end_idx: usize) -> Result<OutRange, RetCode> {\n\
+         \x20       if end_idx < start_idx { return Err(RetCode::OutOfRangeEndIndex); }\n\
+         \x20       // C cannot do this: TA_SetOutputParamRealPtr takes a bare pointer, so\n\
+         \x20       // no backend checks capacity and an undersized buffer is an\n\
+         \x20       // out-of-bounds write. A slice carries its length.\n\
+         \x20       let need = end_idx - start_idx + 1;\n\
+         \x20       let mut beg: usize = 0;\n\
+         \x20       let mut nb: usize = 0;\n\
+         \x20       let rc = match self.func {\n",
+    );
+    for f in sorted {
+        emit_call_arm(o, f);
+    }
+    o.push_str(
+        "        };\n\
+         \x20       if rc == RetCode::Success { Ok(OutRange { beg_idx: beg, nb_element: nb }) } else { Err(rc) }\n\
+         \x20   }\n}\n",
+    );
+
+    o.push_str(BINDER_TESTS);
+}
+
+/// The optional-parameter argument list for one function, in declaration order.
+fn opt_args(f: &FuncRow) -> String {
+    f.opt_inputs
+        .iter()
+        .enumerate()
+        .map(|(i, opt)| match &opt.domain {
+            OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+                format!("self.real_opt[{i}]")
+            }
+            _ => format!("self.int_opt[{i}]"),
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+/// One `call` match arm. Inputs are read by value (the slices are `Copy` out of
+/// their `Option`), outputs are `take`n so the borrow checker sees no overlap
+/// with `&self`, reborrowed into the call, and put straight back — so a holder
+/// stays reusable, as C's does.
+fn emit_call_arm(o: &mut String, f: &FuncRow) {
+    let snake = f.name.to_lowercase();
+    let _ = writeln!(o, "            FuncId::{} => {{", pascal_ident(&f.name));
+
+    let mut args: Vec<String> = vec!["start_idx".into(), "end_idx".into()];
+    for (slot, inp) in f.inputs.iter().enumerate() {
+        match inp.kind {
+            InputKind::Price => {
+                for c in &inp.signature_components {
+                    let idx = *c as usize;
+                    let _ = writeln!(
+                        o,
+                        "                let i{slot}_{idx} = self.price[{slot}][{idx}].ok_or(RetCode::BadParam)?;"
+                    );
+                    args.push(format!("i{slot}_{idx}"));
+                }
+            }
+            InputKind::Real => {
+                let _ = writeln!(
+                    o,
+                    "                let i{slot} = self.real_in[{slot}].ok_or(RetCode::BadParam)?;"
+                );
+                args.push(format!("i{slot}"));
+            }
+            InputKind::Integer => {
+                let _ = writeln!(
+                    o,
+                    "                let i{slot} = self.int_in[{slot}].ok_or(RetCode::BadParam)?;"
+                );
+                args.push(format!("i{slot}"));
+            }
+        }
+    }
+
+    for (i, opt) in f.opt_inputs.iter().enumerate() {
+        args.push(match &opt.domain {
+            OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+                format!("self.real_opt[{i}]")
+            }
+            _ => format!("self.int_opt[{i}]"),
+        });
+    }
+    args.push("&mut beg".into());
+    args.push("&mut nb".into());
+
+    for (k, out) in f.outputs.iter().enumerate() {
+        let (arr, ty) = match out.kind {
+            OutputKind::Integer => ("int_out", "i32"),
+            OutputKind::Real => ("real_out", "f64"),
+        };
+        let _ = writeln!(
+            o,
+            "                let mut o{k} = self.{arr}[{k}].take().ok_or(RetCode::BadParam)?;"
+        );
+        let _ = writeln!(
+            o,
+            "                if o{k}.len() < need {{ self.{arr}[{k}] = Some(o{k}); return Err(RetCode::BadParam); }} // {ty}"
+        );
+        args.push(format!("&mut *o{k}"));
+    }
+
+    let _ = writeln!(o, "                let rc = self.core.{snake}({});", args.join(", "));
+    for (k, out) in f.outputs.iter().enumerate() {
+        let arr = match out.kind {
+            OutputKind::Integer => "int_out",
+            OutputKind::Real => "real_out",
+        };
+        let _ = writeln!(o, "                self.{arr}[{k}] = Some(o{k});");
+    }
+    o.push_str("                rc\n            }\n");
 }
 
 // --- name → identifier / variant helpers ---

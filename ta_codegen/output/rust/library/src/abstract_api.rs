@@ -2601,6 +2601,2240 @@ pub fn for_each_func<F: FnMut(&'static FuncInfo)>(mut f: F) { for fi in FUNCS.it
 /// All function groups (no allocation, unlike C's `TA_GroupTableAlloc`).
 #[inline] pub fn groups() -> &'static [Group] { Group::ALL }
 
+/// Widest input arity in the corpus — the holder's slots are sized from it.
+pub const MAX_INPUTS: usize = 2;
+/// Widest optional-parameter arity in the corpus.
+pub const MAX_OPT_INPUTS: usize = 8;
+/// Widest output arity in the corpus.
+pub const MAX_OUTPUTS: usize = 3;
+
+
+use crate::{Core, RetCode};
+
+/// Where a call's output starts and how much of it there is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OutRange {
+    /// Index of the first computed value, relative to the input series.
+    pub beg_idx: usize,
+    /// How many values were written.
+    pub nb_element: usize,
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for i32 {}
+    impl Sealed for f64 {}
+}
+
+/// A value bindable to an optional parameter.
+///
+/// Rust has no overloading, so this is how `set_opt` accepts either an `i32` or an
+/// `f64` under one name — resolved at compile time, and sealed so the set of
+/// bindable types stays the generator's to decide.
+pub trait OptValue: sealed::Sealed {
+    /// Bind `self` to optional parameter `index` of `holder`.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the index is out of range or the parameter's
+    /// domain does not take this type.
+    fn bind(self, holder: &mut ParamHolder<'_>, index: usize) -> Result<(), RetCode>;
+}
+
+impl OptValue for i32 {
+    fn bind(self, holder: &mut ParamHolder<'_>, index: usize) -> Result<(), RetCode> {
+        let info = holder.func.info().opt_inputs.get(index).ok_or(RetCode::BadParam)?;
+        match info.domain {
+            OptDomain::IntegerRange { .. } | OptDomain::IntegerList { .. } => {
+                holder.int_opt[index] = self;
+                Ok(())
+            }
+            _ => Err(RetCode::BadParam),
+        }
+    }
+}
+
+impl OptValue for f64 {
+    fn bind(self, holder: &mut ParamHolder<'_>, index: usize) -> Result<(), RetCode> {
+        let info = holder.func.info().opt_inputs.get(index).ok_or(RetCode::BadParam)?;
+        match info.domain {
+            OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+                holder.real_opt[index] = self;
+                Ok(())
+            }
+            _ => Err(RetCode::BadParam),
+        }
+    }
+}
+
+/// Binds a function's arguments at run time, then calls it — the counterpart of
+/// C's `TA_ParamHolder` + `TA_CallFunc`, of Java's `ParamHolder` and of C#'s
+/// `FunctionCall`.
+///
+/// Borrows rather than owns, so binding costs nothing and the caller keeps its
+/// buffers. That is what makes two outputs sharing one buffer — the aliasing every
+/// other backend rejects at run time (issue #108) — a compile error here.
+///
+/// ```no_run
+/// use ta_lib::{Core, abstract_api::{self, FuncId}};
+/// let core = Core::new();
+/// let close = vec![1.0f64; 64];
+/// let mut out = vec![0.0f64; 64];
+/// let mut call = FuncId::Sma.new_call(&core);
+/// call.set_input(0, &close)?;
+/// call.set_opt(0, 30_i32)?;
+/// call.set_output(0, &mut out)?;
+/// let range = call.call(0, close.len() - 1)?;
+/// # Ok::<(), ta_lib::RetCode>(())
+/// ```
+pub struct ParamHolder<'a> {
+    func: FuncId,
+    core: &'a Core,
+    real_in: [Option<&'a [f64]>; MAX_INPUTS],
+    int_in: [Option<&'a [i32]>; MAX_INPUTS],
+    price: [[Option<&'a [f64]>; 6]; MAX_INPUTS],
+    real_opt: [f64; MAX_OPT_INPUTS],
+    int_opt: [i32; MAX_OPT_INPUTS],
+    real_out: [Option<&'a mut [f64]>; MAX_OUTPUTS],
+    int_out: [Option<&'a mut [i32]>; MAX_OUTPUTS],
+}
+
+impl FuncId {
+    /// Begin a call to this function with arguments bound at run time.
+    #[must_use]
+    pub fn new_call(self, core: &Core) -> ParamHolder<'_> {
+        ParamHolder {
+            func: self,
+            core,
+            real_in: [None; MAX_INPUTS],
+            int_in: [None; MAX_INPUTS],
+            price: [[None; 6]; MAX_INPUTS],
+            // Unset optional parameters carry the cross-language default
+            // sentinel, exactly as an omitted argument does in C. Every generated
+            // function maps it to that parameter's documented default (#162), so
+            // "left unset" and "explicitly the default" are one code path.
+            real_opt: [-4e37; MAX_OPT_INPUTS],
+            int_opt: [i32::MIN; MAX_OPT_INPUTS],
+            real_out: [const { None }; MAX_OUTPUTS],
+            int_out: [const { None }; MAX_OUTPUTS],
+        }
+    }
+}
+
+impl<'a> ParamHolder<'a> {
+    /// The function this call runs.
+    #[must_use]
+    pub fn info(&self) -> &'static FuncInfo { self.func.info() }
+
+    fn check_input(&self, slot: usize, want: InputType) -> Result<(), RetCode> {
+        let info = self.func.info().inputs.get(slot).ok_or(RetCode::BadParam)?;
+        if info.kind == want { Ok(()) } else { Err(RetCode::BadParam) }
+    }
+
+    /// Bind a real input series.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the slot is out of range or is not a real input.
+    pub fn set_input(&mut self, slot: usize, series: &'a [f64]) -> Result<&mut Self, RetCode> {
+        self.check_input(slot, InputType::Real)?;
+        self.real_in[slot] = Some(series);
+        Ok(self)
+    }
+
+    /// Bind an integer input series.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the slot is out of range or is not an integer input.
+    pub fn set_int_input(&mut self, slot: usize, series: &'a [i32]) -> Result<&mut Self, RetCode> {
+        self.check_input(slot, InputType::Integer)?;
+        self.int_in[slot] = Some(series);
+        Ok(self)
+    }
+
+    /// Bind a price bundle. Components the function does not consume are accepted
+    /// and ignored, matching C's `SET_PARAM_INFO` and the Java and C# binders.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the slot is out of range, is not a price input, or
+    /// a component the function *does* consume was left `None`.
+    pub fn set_price_input(
+        &mut self,
+        slot: usize,
+        open: Option<&'a [f64]>,
+        high: Option<&'a [f64]>,
+        low: Option<&'a [f64]>,
+        close: Option<&'a [f64]>,
+        volume: Option<&'a [f64]>,
+        open_interest: Option<&'a [f64]>,
+    ) -> Result<&mut Self, RetCode> {
+        self.check_input(slot, InputType::Price)?;
+        let flags = self.func.info().inputs[slot].flags;
+        let given = [open, high, low, close, volume, open_interest];
+        for (i, series) in given.into_iter().enumerate() {
+            if flags.0 & (1u32 << i) != 0 && series.is_none() {
+                return Err(RetCode::BadParam);
+            }
+            self.price[slot][i] = series;
+        }
+        Ok(self)
+    }
+
+    /// Bind an optional parameter. Takes an `i32` or an `f64`; see [`OptValue`].
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the index is out of range or the value's type does
+    /// not match the parameter's domain.
+    pub fn set_opt<V: OptValue>(&mut self, index: usize, value: V) -> Result<&mut Self, RetCode> {
+        value.bind(self, index)?;
+        Ok(self)
+    }
+
+    /// Bind a real output buffer.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the index is out of range or is not a real output.
+    pub fn set_output(&mut self, index: usize, out: &'a mut [f64]) -> Result<&mut Self, RetCode> {
+        let info = self.func.info().outputs.get(index).ok_or(RetCode::BadParam)?;
+        if info.kind != OutputType::Real { return Err(RetCode::BadParam); }
+        self.real_out[index] = Some(out);
+        Ok(self)
+    }
+
+    /// Bind an integer output buffer.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if the index is out of range or is not an integer output.
+    pub fn set_int_output(&mut self, index: usize, out: &'a mut [i32]) -> Result<&mut Self, RetCode> {
+        let info = self.func.info().outputs.get(index).ok_or(RetCode::BadParam)?;
+        if info.kind != OutputType::Integer { return Err(RetCode::BadParam); }
+        self.int_out[index] = Some(out);
+        Ok(self)
+    }
+    /// The first index at which this function produces output, for the
+    /// optional parameters bound so far. Inputs and outputs need not be
+    /// bound — which is what makes it useful for sizing them.
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if a bound optional parameter is out of range.
+    pub fn lookback(&self) -> Result<usize, RetCode> {
+        let lb = match self.func {
+            FuncId::Accbands => self.core.accbands_lookback(self.int_opt[0]),
+            FuncId::Acos => self.core.acos_lookback(),
+            FuncId::Ad => self.core.ad_lookback(),
+            FuncId::Add => self.core.add_lookback(),
+            FuncId::Adosc => self.core.adosc_lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::Adx => self.core.adx_lookback(self.int_opt[0]),
+            FuncId::Adxr => self.core.adxr_lookback(self.int_opt[0]),
+            FuncId::Apo => self.core.apo_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::Aroon => self.core.aroon_lookback(self.int_opt[0]),
+            FuncId::Aroonosc => self.core.aroonosc_lookback(self.int_opt[0]),
+            FuncId::Asin => self.core.asin_lookback(),
+            FuncId::Atan => self.core.atan_lookback(),
+            FuncId::Atr => self.core.atr_lookback(self.int_opt[0]),
+            FuncId::Avgdev => self.core.avgdev_lookback(self.int_opt[0]),
+            FuncId::Avgprice => self.core.avgprice_lookback(),
+            FuncId::Bbands => self.core.bbands_lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2], self.int_opt[3]),
+            FuncId::Beta => self.core.beta_lookback(self.int_opt[0]),
+            FuncId::Bop => self.core.bop_lookback(),
+            FuncId::Cci => self.core.cci_lookback(self.int_opt[0]),
+            FuncId::Cdl2crows => self.core.cdl2crows_lookback(),
+            FuncId::Cdl3blackcrows => self.core.cdl3blackcrows_lookback(),
+            FuncId::Cdl3inside => self.core.cdl3inside_lookback(),
+            FuncId::Cdl3linestrike => self.core.cdl3linestrike_lookback(),
+            FuncId::Cdl3outside => self.core.cdl3outside_lookback(),
+            FuncId::Cdl3starsinsouth => self.core.cdl3starsinsouth_lookback(),
+            FuncId::Cdl3whitesoldiers => self.core.cdl3whitesoldiers_lookback(),
+            FuncId::Cdlabandonedbaby => self.core.cdlabandonedbaby_lookback(self.real_opt[0]),
+            FuncId::Cdladvanceblock => self.core.cdladvanceblock_lookback(),
+            FuncId::Cdlbelthold => self.core.cdlbelthold_lookback(),
+            FuncId::Cdlbreakaway => self.core.cdlbreakaway_lookback(),
+            FuncId::Cdlclosingmarubozu => self.core.cdlclosingmarubozu_lookback(),
+            FuncId::Cdlconcealbabyswall => self.core.cdlconcealbabyswall_lookback(),
+            FuncId::Cdlcounterattack => self.core.cdlcounterattack_lookback(),
+            FuncId::Cdldarkcloudcover => self.core.cdldarkcloudcover_lookback(self.real_opt[0]),
+            FuncId::Cdldoji => self.core.cdldoji_lookback(),
+            FuncId::Cdldojistar => self.core.cdldojistar_lookback(),
+            FuncId::Cdldragonflydoji => self.core.cdldragonflydoji_lookback(),
+            FuncId::Cdlengulfing => self.core.cdlengulfing_lookback(),
+            FuncId::Cdleveningdojistar => self.core.cdleveningdojistar_lookback(self.real_opt[0]),
+            FuncId::Cdleveningstar => self.core.cdleveningstar_lookback(self.real_opt[0]),
+            FuncId::Cdlgapsidesidewhite => self.core.cdlgapsidesidewhite_lookback(),
+            FuncId::Cdlgravestonedoji => self.core.cdlgravestonedoji_lookback(),
+            FuncId::Cdlhammer => self.core.cdlhammer_lookback(),
+            FuncId::Cdlhangingman => self.core.cdlhangingman_lookback(),
+            FuncId::Cdlharami => self.core.cdlharami_lookback(),
+            FuncId::Cdlharamicross => self.core.cdlharamicross_lookback(),
+            FuncId::Cdlhighwave => self.core.cdlhighwave_lookback(),
+            FuncId::Cdlhikkake => self.core.cdlhikkake_lookback(),
+            FuncId::Cdlhikkakemod => self.core.cdlhikkakemod_lookback(),
+            FuncId::Cdlhomingpigeon => self.core.cdlhomingpigeon_lookback(),
+            FuncId::Cdlidentical3crows => self.core.cdlidentical3crows_lookback(),
+            FuncId::Cdlinneck => self.core.cdlinneck_lookback(),
+            FuncId::Cdlinvertedhammer => self.core.cdlinvertedhammer_lookback(),
+            FuncId::Cdlkicking => self.core.cdlkicking_lookback(),
+            FuncId::Cdlkickingbylength => self.core.cdlkickingbylength_lookback(),
+            FuncId::Cdlladderbottom => self.core.cdlladderbottom_lookback(),
+            FuncId::Cdllongleggeddoji => self.core.cdllongleggeddoji_lookback(),
+            FuncId::Cdllongline => self.core.cdllongline_lookback(),
+            FuncId::Cdlmarubozu => self.core.cdlmarubozu_lookback(),
+            FuncId::Cdlmatchinglow => self.core.cdlmatchinglow_lookback(),
+            FuncId::Cdlmathold => self.core.cdlmathold_lookback(self.real_opt[0]),
+            FuncId::Cdlmorningdojistar => self.core.cdlmorningdojistar_lookback(self.real_opt[0]),
+            FuncId::Cdlmorningstar => self.core.cdlmorningstar_lookback(self.real_opt[0]),
+            FuncId::Cdlonneck => self.core.cdlonneck_lookback(),
+            FuncId::Cdlpiercing => self.core.cdlpiercing_lookback(),
+            FuncId::Cdlrickshawman => self.core.cdlrickshawman_lookback(),
+            FuncId::Cdlrisefall3methods => self.core.cdlrisefall3methods_lookback(),
+            FuncId::Cdlseparatinglines => self.core.cdlseparatinglines_lookback(),
+            FuncId::Cdlshootingstar => self.core.cdlshootingstar_lookback(),
+            FuncId::Cdlshortline => self.core.cdlshortline_lookback(),
+            FuncId::Cdlspinningtop => self.core.cdlspinningtop_lookback(),
+            FuncId::Cdlstalledpattern => self.core.cdlstalledpattern_lookback(),
+            FuncId::Cdlsticksandwich => self.core.cdlsticksandwich_lookback(),
+            FuncId::Cdltakuri => self.core.cdltakuri_lookback(),
+            FuncId::Cdltasukigap => self.core.cdltasukigap_lookback(),
+            FuncId::Cdlthrusting => self.core.cdlthrusting_lookback(),
+            FuncId::Cdltristar => self.core.cdltristar_lookback(),
+            FuncId::Cdlunique3river => self.core.cdlunique3river_lookback(),
+            FuncId::Cdlupsidegap2crows => self.core.cdlupsidegap2crows_lookback(),
+            FuncId::Cdlxsidegap3methods => self.core.cdlxsidegap3methods_lookback(),
+            FuncId::Ceil => self.core.ceil_lookback(),
+            FuncId::Cmf => self.core.cmf_lookback(self.int_opt[0]),
+            FuncId::Cmo => self.core.cmo_lookback(self.int_opt[0]),
+            FuncId::Cmou => self.core.cmou_lookback(self.int_opt[0]),
+            FuncId::Correl => self.core.correl_lookback(self.int_opt[0]),
+            FuncId::Cos => self.core.cos_lookback(),
+            FuncId::Cosh => self.core.cosh_lookback(),
+            FuncId::Dema => self.core.dema_lookback(self.int_opt[0]),
+            FuncId::Div => self.core.div_lookback(),
+            FuncId::Dx => self.core.dx_lookback(self.int_opt[0]),
+            FuncId::Ema => self.core.ema_lookback(self.int_opt[0]),
+            FuncId::Exp => self.core.exp_lookback(),
+            FuncId::Floor => self.core.floor_lookback(),
+            FuncId::Hma => self.core.hma_lookback(self.int_opt[0]),
+            FuncId::HtDcperiod => self.core.ht_dcperiod_lookback(),
+            FuncId::HtDcphase => self.core.ht_dcphase_lookback(),
+            FuncId::HtPhasor => self.core.ht_phasor_lookback(),
+            FuncId::HtSine => self.core.ht_sine_lookback(),
+            FuncId::HtTrendline => self.core.ht_trendline_lookback(),
+            FuncId::HtTrendmode => self.core.ht_trendmode_lookback(),
+            FuncId::Imi => self.core.imi_lookback(self.int_opt[0]),
+            FuncId::Kama => self.core.kama_lookback(self.int_opt[0]),
+            FuncId::Linearreg => self.core.linearreg_lookback(self.int_opt[0]),
+            FuncId::LinearregAngle => self.core.linearreg_angle_lookback(self.int_opt[0]),
+            FuncId::LinearregIntercept => self.core.linearreg_intercept_lookback(self.int_opt[0]),
+            FuncId::LinearregSlope => self.core.linearreg_slope_lookback(self.int_opt[0]),
+            FuncId::Ln => self.core.ln_lookback(),
+            FuncId::Log10 => self.core.log10_lookback(),
+            FuncId::Ma => self.core.ma_lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::Macd => self.core.macd_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::Macdext => self.core.macdext_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5]),
+            FuncId::Macdfix => self.core.macdfix_lookback(self.int_opt[0]),
+            FuncId::Mama => self.core.mama_lookback(self.real_opt[0], self.real_opt[1]),
+            FuncId::Mavp => self.core.mavp_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::Max => self.core.max_lookback(self.int_opt[0]),
+            FuncId::Maxindex => self.core.maxindex_lookback(self.int_opt[0]),
+            FuncId::Medprice => self.core.medprice_lookback(),
+            FuncId::Mfi => self.core.mfi_lookback(self.int_opt[0]),
+            FuncId::Midpoint => self.core.midpoint_lookback(self.int_opt[0]),
+            FuncId::Midprice => self.core.midprice_lookback(self.int_opt[0]),
+            FuncId::Min => self.core.min_lookback(self.int_opt[0]),
+            FuncId::Minindex => self.core.minindex_lookback(self.int_opt[0]),
+            FuncId::Minmax => self.core.minmax_lookback(self.int_opt[0]),
+            FuncId::Minmaxindex => self.core.minmaxindex_lookback(self.int_opt[0]),
+            FuncId::MinusDi => self.core.minus_di_lookback(self.int_opt[0]),
+            FuncId::MinusDm => self.core.minus_dm_lookback(self.int_opt[0]),
+            FuncId::Mom => self.core.mom_lookback(self.int_opt[0]),
+            FuncId::Mult => self.core.mult_lookback(),
+            FuncId::Natr => self.core.natr_lookback(self.int_opt[0]),
+            FuncId::Nvi => self.core.nvi_lookback(),
+            FuncId::Obv => self.core.obv_lookback(),
+            FuncId::PlusDi => self.core.plus_di_lookback(self.int_opt[0]),
+            FuncId::PlusDm => self.core.plus_dm_lookback(self.int_opt[0]),
+            FuncId::Ppo => self.core.ppo_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::Pvi => self.core.pvi_lookback(),
+            FuncId::Pvo => self.core.pvo_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::Roc => self.core.roc_lookback(self.int_opt[0]),
+            FuncId::Rocp => self.core.rocp_lookback(self.int_opt[0]),
+            FuncId::Rocr => self.core.rocr_lookback(self.int_opt[0]),
+            FuncId::Rocr100 => self.core.rocr100_lookback(self.int_opt[0]),
+            FuncId::Rsi => self.core.rsi_lookback(self.int_opt[0]),
+            FuncId::Sar => self.core.sar_lookback(self.real_opt[0], self.real_opt[1]),
+            FuncId::Sarext => self.core.sarext_lookback(self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7]),
+            FuncId::Sin => self.core.sin_lookback(),
+            FuncId::Sinh => self.core.sinh_lookback(),
+            FuncId::Sma => self.core.sma_lookback(self.int_opt[0]),
+            FuncId::Sqrt => self.core.sqrt_lookback(),
+            FuncId::Stddev => self.core.stddev_lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::Stoch => self.core.stoch_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4]),
+            FuncId::Stochf => self.core.stochf_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::Stochrsi => self.core.stochrsi_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3]),
+            FuncId::Sub => self.core.sub_lookback(),
+            FuncId::Sum => self.core.sum_lookback(self.int_opt[0]),
+            FuncId::T3 => self.core.t3_lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::Tan => self.core.tan_lookback(),
+            FuncId::Tanh => self.core.tanh_lookback(),
+            FuncId::Tema => self.core.tema_lookback(self.int_opt[0]),
+            FuncId::Trange => self.core.trange_lookback(),
+            FuncId::Trima => self.core.trima_lookback(self.int_opt[0]),
+            FuncId::Trix => self.core.trix_lookback(self.int_opt[0]),
+            FuncId::Tsf => self.core.tsf_lookback(self.int_opt[0]),
+            FuncId::Typprice => self.core.typprice_lookback(),
+            FuncId::Ultosc => self.core.ultosc_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::Var => self.core.var_lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::Vwma => self.core.vwma_lookback(self.int_opt[0]),
+            FuncId::Wclprice => self.core.wclprice_lookback(),
+            FuncId::Willr => self.core.willr_lookback(self.int_opt[0]),
+            FuncId::Wma => self.core.wma_lookback(self.int_opt[0]),
+        };
+        // The generated lookbacks report a rejected parameter as usize::MAX.
+        if lb == usize::MAX { Err(RetCode::BadParam) } else { Ok(lb) }
+    }
+
+    /// Run the function over `[start_idx, end_idx]`.
+    ///
+    /// Unbound optional parameters carry the cross-language default
+    /// sentinel, which every generated function maps to its documented
+    /// default — so leaving one unset and passing its default explicitly
+    /// are the same call (issue #162).
+    ///
+    /// # Errors
+    /// [`RetCode::BadParam`] if a required input or output was never bound,
+    /// if an output is too short for the range, or if the function rejects
+    /// its parameters.
+    pub fn call(&mut self, start_idx: usize, end_idx: usize) -> Result<OutRange, RetCode> {
+        if end_idx < start_idx { return Err(RetCode::OutOfRangeEndIndex); }
+        // C cannot do this: TA_SetOutputParamRealPtr takes a bare pointer, so
+        // no backend checks capacity and an undersized buffer is an
+        // out-of-bounds write. A slice carries its length.
+        let need = end_idx - start_idx + 1;
+        let mut beg: usize = 0;
+        let mut nb: usize = 0;
+        let rc = match self.func {
+            FuncId::Accbands => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.accbands(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
+                rc
+            }
+            FuncId::Acos => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.acos(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Ad => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.ad(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Add => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.add(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Adosc => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.adosc(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], self.int_opt[1], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Adx => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.adx(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Adxr => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.adxr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Apo => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.apo(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Aroon => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.aroon(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                rc
+            }
+            FuncId::Aroonosc => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.aroonosc(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Asin => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.asin(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Atan => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.atan(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Atr => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.atr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Avgdev => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.avgdev(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Avgprice => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.avgprice(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Bbands => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.bbands(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], self.int_opt[3], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
+                rc
+            }
+            FuncId::Beta => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.beta(start_idx, end_idx, i0, i1, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Bop => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.bop(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cci => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.cci(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdl2crows => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdl2crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdl3blackcrows => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdl3blackcrows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdl3inside => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdl3inside(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdl3linestrike => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdl3linestrike(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdl3outside => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdl3outside(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdl3starsinsouth => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdl3starsinsouth(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdl3whitesoldiers => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdl3whitesoldiers(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlabandonedbaby => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlabandonedbaby(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdladvanceblock => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdladvanceblock(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlbelthold => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlbelthold(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlbreakaway => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlbreakaway(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlclosingmarubozu => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlclosingmarubozu(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlconcealbabyswall => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlconcealbabyswall(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlcounterattack => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlcounterattack(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdldarkcloudcover => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdldarkcloudcover(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdldoji => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdldoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdldojistar => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdldojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdldragonflydoji => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdldragonflydoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlengulfing => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlengulfing(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdleveningdojistar => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdleveningdojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdleveningstar => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdleveningstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlgapsidesidewhite => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlgapsidesidewhite(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlgravestonedoji => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlgravestonedoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlhammer => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlhammer(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlhangingman => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlhangingman(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlharami => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlharami(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlharamicross => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlharamicross(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlhighwave => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlhighwave(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlhikkake => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlhikkake(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlhikkakemod => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlhikkakemod(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlhomingpigeon => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlhomingpigeon(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlidentical3crows => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlidentical3crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlinneck => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlinneck(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlinvertedhammer => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlinvertedhammer(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlkicking => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlkicking(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlkickingbylength => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlkickingbylength(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlladderbottom => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlladderbottom(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdllongleggeddoji => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdllongleggeddoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdllongline => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdllongline(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlmarubozu => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlmarubozu(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlmatchinglow => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlmatchinglow(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlmathold => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlmathold(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlmorningdojistar => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlmorningdojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlmorningstar => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlmorningstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlonneck => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlonneck(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlpiercing => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlpiercing(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlrickshawman => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlrickshawman(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlrisefall3methods => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlrisefall3methods(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlseparatinglines => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlseparatinglines(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlshootingstar => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlshootingstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlshortline => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlshortline(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlspinningtop => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlspinningtop(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlstalledpattern => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlstalledpattern(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlsticksandwich => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlsticksandwich(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdltakuri => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdltakuri(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdltasukigap => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdltasukigap(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlthrusting => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlthrusting(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdltristar => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdltristar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlunique3river => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlunique3river(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlupsidegap2crows => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlupsidegap2crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cdlxsidegap3methods => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.cdlxsidegap3methods(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Ceil => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.ceil(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cmf => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.cmf(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cmo => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.cmo(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cmou => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.cmou(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Correl => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.correl(start_idx, end_idx, i0, i1, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cos => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.cos(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Cosh => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.cosh(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Dema => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.dema(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Div => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.div(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Dx => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.dx(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Ema => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.ema(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Exp => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.exp(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Floor => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.floor(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Hma => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.hma(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::HtDcperiod => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.ht_dcperiod(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::HtDcphase => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.ht_dcphase(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::HtPhasor => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.ht_phasor(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                rc
+            }
+            FuncId::HtSine => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.ht_sine(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                rc
+            }
+            FuncId::HtTrendline => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.ht_trendline(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::HtTrendmode => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.ht_trendmode(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Imi => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.imi(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Kama => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.kama(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Linearreg => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.linearreg(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::LinearregAngle => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.linearreg_angle(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::LinearregIntercept => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.linearreg_intercept(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::LinearregSlope => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.linearreg_slope(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Ln => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.ln(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Log10 => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.log10(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Ma => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.ma(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Macd => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.macd(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
+                rc
+            }
+            FuncId::Macdext => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.macdext(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
+                rc
+            }
+            FuncId::Macdfix => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.macdfix(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
+                rc
+            }
+            FuncId::Mama => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.mama(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                rc
+            }
+            FuncId::Mavp => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.mavp(start_idx, end_idx, i0, i1, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Max => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.max(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Maxindex => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.maxindex(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Medprice => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.medprice(start_idx, end_idx, i0_1, i0_2, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Mfi => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.mfi(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Midpoint => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.midpoint(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Midprice => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.midprice(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Min => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.min(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Minindex => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.minindex(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.int_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Minmax => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.minmax(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                rc
+            }
+            FuncId::Minmaxindex => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
+                let mut o1 = self.int_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.int_out[1] = Some(o1); return Err(RetCode::BadParam); } // i32
+                let rc = self.core.minmaxindex(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                self.int_out[0] = Some(o0);
+                self.int_out[1] = Some(o1);
+                rc
+            }
+            FuncId::MinusDi => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.minus_di(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::MinusDm => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.minus_dm(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Mom => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.mom(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Mult => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.mult(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Natr => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.natr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Nvi => {
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.nvi(start_idx, end_idx, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Obv => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let i1_4 = self.price[1][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.obv(start_idx, end_idx, i0, i1_4, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::PlusDi => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.plus_di(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::PlusDm => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.plus_dm(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Ppo => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.ppo(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Pvi => {
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.pvi(start_idx, end_idx, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Pvo => {
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.pvo(start_idx, end_idx, i0_4, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Roc => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.roc(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Rocp => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.rocp(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Rocr => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.rocr(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Rocr100 => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.rocr100(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Rsi => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.rsi(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Sar => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.sar(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Sarext => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.sarext(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Sin => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.sin(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Sinh => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.sinh(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Sma => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.sma(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Sqrt => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.sqrt(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Stddev => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.stddev(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Stoch => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.stoch(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                rc
+            }
+            FuncId::Stochf => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.stochf(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                rc
+            }
+            FuncId::Stochrsi => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.stochrsi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                rc
+            }
+            FuncId::Sub => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.sub(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Sum => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.sum(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::T3 => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.t3(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Tan => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.tan(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Tanh => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.tanh(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Tema => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.tema(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Trange => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.trange(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Trima => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.trima(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Trix => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.trix(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Tsf => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.tsf(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Typprice => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.typprice(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Ultosc => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.ultosc(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Var => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.var(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Vwma => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let i1_4 = self.price[1][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.vwma(start_idx, end_idx, i0, i1_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Wclprice => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.wclprice(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Willr => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.willr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::Wma => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.wma(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+        };
+        if rc == RetCode::Success { Ok(OutRange { beg_idx: beg, nb_element: nb }) } else { Err(rc) }
+    }
+}
+
+#[cfg(test)]
+mod binder_tests {
+    use super::*;
+    use crate::Core;
+
+    const N: usize = 160;
+
+    fn series(phase: f64) -> Vec<f64> {
+        (0..N).map(|i| {
+            let x = i as f64;
+            100.0 + 8.0 * (x / 9.0 + phase).sin() + 0.4 * (x / 3.0 + phase).cos()
+        }).collect()
+    }
+
+    /// Binds every declared input and output of `f`, leaving optional parameters
+    /// unset unless `opts` says otherwise.
+    fn drive(core: &Core, f: &'static FuncInfo,
+             opts: &dyn Fn(&mut ParamHolder<'_>),
+             close: &[f64], high: &[f64], low: &[f64], vol: &[f64],
+             ints: &[i32],
+             rout: &mut [Vec<f64>], iout: &mut [Vec<i32>]) -> Result<OutRange, RetCode> {
+        let mut h = f.id.new_call(core);
+        for (slot, inp) in f.inputs.iter().enumerate() {
+            match inp.kind {
+                InputType::Price => {
+                    h.set_price_input(slot, Some(close), Some(high), Some(low),
+                                      Some(close), Some(vol), Some(vol)).unwrap();
+                }
+                InputType::Real => { h.set_input(slot, close).unwrap(); }
+                InputType::Integer => { h.set_int_input(slot, ints).unwrap(); }
+            }
+        }
+        opts(&mut h);
+        for (k, buf) in rout.iter_mut().enumerate() {
+            if f.outputs[k].kind == OutputType::Real { h.set_output(k, buf).unwrap(); }
+        }
+        for (k, buf) in iout.iter_mut().enumerate() {
+            if f.outputs[k].kind == OutputType::Integer { h.set_int_output(k, buf).unwrap(); }
+        }
+        h.call(0, N - 1)
+    }
+
+    fn bufs(f: &'static FuncInfo) -> (Vec<Vec<f64>>, Vec<Vec<i32>>) {
+        (vec![vec![0.0; N]; f.outputs.len()], vec![vec![0; N]; f.outputs.len()])
+    }
+
+    /// Every function is reachable through the binder, and the range it reports
+    /// starts exactly at the lookback the binder computes. `lookback()` is a
+    /// SECOND mapping from opt slots to arguments, so pitting it against the one
+    /// `call()` uses is what catches a transposed slot.
+    #[test]
+    fn every_function_binds_calls_and_agrees_with_its_lookback() {
+        let core = Core::new();
+        let close = series(0.0);
+        let high: Vec<f64> = close.iter().map(|v| v + 2.0).collect();
+        let low: Vec<f64> = close.iter().map(|v| v - 2.0).collect();
+        let vol: Vec<f64> = (0..N).map(|i| 1.0e6 + i as f64).collect();
+        let ints: Vec<i32> = (0..N as i32).collect();
+
+        let mut covered = 0;
+        for f in FUNCS.iter() {
+            let (mut r, mut i) = bufs(f);
+            // Distinct, in-range periods: with every slot carrying the same
+            // number a transposition is undetectable.
+            let set = |h: &mut ParamHolder<'_>| {
+                for (k, o) in f.opt_inputs.iter().enumerate() {
+                    if let OptDomain::IntegerRange { min, max, .. } = o.domain {
+                        let v = (min + 2 + k as i32).min(max);
+                        h.set_opt(k, v).unwrap();
+                    }
+                }
+            };
+            let lb = {
+                let mut probe = f.id.new_call(&core);
+                set(&mut probe);
+                probe.lookback().expect("lookback")
+            };
+            let range = drive(&core, f, &set, &close, &high, &low, &vol, &ints, &mut r, &mut i)
+                .unwrap_or_else(|e| panic!("{} failed: {e:?}", f.name));
+            assert_eq!(range.beg_idx, lb, "{}: outBegIdx must be the lookback", f.name);
+            covered += 1;
+        }
+        assert_eq!(covered, FUNCS.len());
+    }
+
+    /// An unset optional parameter and its explicitly-bound documented default are
+    /// the same call — the sentinel contract, from the binder's side (issue #162).
+    #[test]
+    fn unset_matches_the_documented_default() {
+        let core = Core::new();
+        let close = series(0.0);
+        let high: Vec<f64> = close.iter().map(|v| v + 2.0).collect();
+        let low: Vec<f64> = close.iter().map(|v| v - 2.0).collect();
+        let vol: Vec<f64> = (0..N).map(|i| 1.0e6 + i as f64).collect();
+        let ints: Vec<i32> = (0..N as i32).collect();
+
+        let mut covered = 0;
+        for f in FUNCS.iter() {
+            if f.opt_inputs.is_empty() { continue; }
+            let (mut ru, mut iu) = bufs(f);
+            let (mut re, mut ie) = bufs(f);
+            let unset = |_: &mut ParamHolder<'_>| {};
+            let explicit = |h: &mut ParamHolder<'_>| {
+                for (k, o) in f.opt_inputs.iter().enumerate() {
+                    match o.domain {
+                        OptDomain::IntegerRange { default, .. } => { h.set_opt(k, default).unwrap(); }
+                        OptDomain::IntegerList { default, .. } => {
+                            h.set_opt(k, i32::try_from(default).unwrap()).unwrap();
+                        }
+                        OptDomain::RealRange { default, .. }
+                        | OptDomain::RealList { default, .. } => { h.set_opt(k, default).unwrap(); }
+                    }
+                }
+            };
+            let a = drive(&core, f, &unset, &close, &high, &low, &vol, &ints, &mut ru, &mut iu);
+            let b = drive(&core, f, &explicit, &close, &high, &low, &vol, &ints, &mut re, &mut ie);
+            assert_eq!(a, b, "{}: unset must equal the explicit default", f.name);
+            if let Ok(r) = a {
+                for k in 0..f.outputs.len() {
+                    if f.outputs[k].kind == OutputType::Real {
+                        assert_eq!(ru[k][..r.nb_element], re[k][..r.nb_element],
+                                   "{} output {k}", f.name);
+                    } else {
+                        assert_eq!(iu[k][..r.nb_element], ie[k][..r.nb_element],
+                                   "{} output {k}", f.name);
+                    }
+                }
+            }
+            covered += 1;
+        }
+        // 79 of the 168 declare an optional parameter; floor it so the
+        // discriminating half cannot quietly shrink.
+        assert!(covered >= 75, "covered {covered} functions with optional parameters");
+    }
+
+    /// The bind-time check C cannot perform: its setters take a bare pointer, so an
+    /// undersized output is an out-of-bounds write there. A slice carries its length.
+    #[test]
+    fn an_undersized_output_is_rejected_not_written_past() {
+        let core = Core::new();
+        let close = series(0.0);
+        let mut tiny = vec![0.0; 4];
+        let mut h = FuncId::Sma.new_call(&core);
+        h.set_input(0, &close).unwrap();
+        h.set_opt(0, 30_i32).unwrap();
+        h.set_output(0, &mut tiny).unwrap();
+        assert_eq!(h.call(0, N - 1), Err(RetCode::BadParam));
+    }
+
+    /// Type mismatches and out-of-range indices are refused rather than silently bound.
+    #[test]
+    fn the_setters_refuse_what_does_not_belong() {
+        let core = Core::new();
+        let close = series(0.0);
+        let mut out = vec![0.0; N];
+        let mut h = FuncId::Sma.new_call(&core);
+        assert_eq!(h.set_input(9, &close).err(), Some(RetCode::BadParam));
+        assert_eq!(h.set_opt(0, 1.5_f64).err(), Some(RetCode::BadParam));
+        assert_eq!(h.set_opt(9, 30_i32).err(), Some(RetCode::BadParam));
+        let mut wrong_kind = [0i32; 4];
+        assert_eq!(h.set_int_output(0, &mut wrong_kind).err(), Some(RetCode::BadParam));
+        h.set_output(0, &mut out).unwrap();
+        assert_eq!(h.call(0, N - 1).err(), Some(RetCode::BadParam)); // input still unbound
+    }
+}
+
 /// Rust analog of C's `TA_FunctionDescriptionXML()` — the full machine-readable XML
 /// description of every function. Byte-identical to the generated `ta_func_api.xml`
 /// (embedded via `include_str!`), which C's `TA_FunctionDescriptionXML` also bakes.
