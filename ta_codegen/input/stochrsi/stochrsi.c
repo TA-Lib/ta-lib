@@ -91,6 +91,12 @@ TA_RetCode stochrsi(int startIdx, int endIdx,
    tempArraySize = (endIdx - startIdx) + 1 + lookbackSTOCHF;
 
    double *tempRSIBuffer = malloc((tempArraySize) * sizeof(double));
+   if( !tempRSIBuffer )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_ALLOC_ERR;
+   }
 
    retCode = rsi(startIdx-lookbackSTOCHF,
       endIdx,

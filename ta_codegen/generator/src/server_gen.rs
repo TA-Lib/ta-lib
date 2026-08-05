@@ -1691,6 +1691,7 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
         // answers this too — giving S-vs-S comparison against the reference.
         // Mirrors the double flow: guarded first, then (outside ta_ref_serve)
         // the S variant over the same buffers.
+        s.push_str("        int usedFloat = 0;\n");
         s.push_str("        if( json_find_int(json, \"use_float\") ) {\n");
         for (j, _name) in input_names.iter().enumerate() {
             s.push_str(&format!(
@@ -1721,6 +1722,7 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
             s.push_str(");\n");
         };
         emit_s_call(&mut s, "");
+        s.push_str("            usedFloat = 1;\n");
         s.push_str("        }\n");
 
         // Build response with correct key names and serialisers per output type.
@@ -1754,7 +1756,7 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
             }
         }
         s.push_str("        }\n");
-        s.push_str("        pos = json_appendf(resp, resp_size, pos, \"}\");\n");
+        s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"used_float\\\":%d}\", usedFloat);\n");
 
         s.push_str("    }\n");
     }
@@ -2436,6 +2438,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // of the same core, over the same output buffers, so the response carries
         // the single-precision result. Mirrors the C server's TA_S_ leg. Without
         // it the 168 shipped float overloads have no value verification at all.
+        s.push_str("        int usedFloat = 0;\n");
         s.push_str("        if (jsonInt(json, \"use_float\") != 0) {\n");
         for name in &input_names {
             s.push_str(&format!(
@@ -2456,6 +2459,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str(&format!(", outArr{k}"));
         }
         s.push_str(");\n");
+        s.push_str("            usedFloat = 1;\n");
         s.push_str("        }\n");
 
         // want_hash mode (server_verify / issue #115): digest of the GUARDED
@@ -2503,6 +2507,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 ));
             }
         }
+        s.push_str("        sb.append(\",\\\"used_float\\\":\").append(usedFloat);\n");
         s.push_str("        sb.append(\",\\\"timing_ns\\\":\").append(elapsedNs);\n");
         s.push_str("        sb.append(\"}\");\n");
         s.push_str("        return sb.toString();\n");
@@ -3053,6 +3058,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             for k in 0..outputs.len() {
                 f_args.push_str(&format!(", outArr{k}"));
             }
+            s.push_str("        int usedFloat = 0;\n");
             s.push_str("        if (GetInt(p, \"use_float\", 0) != 0) {\n");
             for name in &input_names {
                 s.push_str(&format!(
@@ -3061,6 +3067,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
                 ));
             }
             s.push_str(&format!("            rc = core.{base}({f_args});\n"));
+            s.push_str("            usedFloat = 1;\n");
             s.push_str("        }\n");
         }
 
@@ -3104,6 +3111,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             }
         }
         s.push_str("        }\n");
+        s.push_str("        sb.Append($\",\\\"used_float\\\":{usedFloat}\");\n");
         s.push_str("        sb.Append($\",\\\"timing_ns\\\":{elapsedNs}\");\n");
         s.push_str("        sb.Append(\"}\");\n");
         s.push_str("        return sb.ToString();\n");

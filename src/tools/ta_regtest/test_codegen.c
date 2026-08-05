@@ -16,6 +16,10 @@
 
 /* Display flag set by ta_regtest.c --no-guarded */
 int g_hideGuarded = 0;
+
+/* Float legs that actually compared values, i.e. where the server acknowledged
+ * "use_float". Asserted non-zero so the leg cannot pass by never running. */
+static long g_floatLegCompared = 0;
 #include <limits.h>
 #ifdef __APPLE__
 #include <mach/mach_time.h>
@@ -757,16 +761,23 @@ static void compare_codegen_output_generic(
             double threshold;
             if( p->widenFloatInputs )
             {
-                /* Float leg (TA_S_* single precision): the codegen widens float
-                 * inputs to double, so ~1e-6-relative single-significand noise is
-                 * expected. Unchanged. */
+                /* Float leg: BOTH sides are the same server on the same
+                 * float-widened inputs — its single-precision entry point vs its
+                 * own double one — so equal computation must give equal doubles
+                 * and the only spread is the transport (<1e-11 through %.15g;
+                 * Java and C# serialise shortest-round-trip, i.e. exactly).
+                 *
+                 * The old 1e-6 here dated from when this leg compared against the
+                 * frozen single-precision reference, which computed IN float.
+                 * That rationale is gone, and 1e-6 is useless against the defect
+                 * this leg exists for: one arithmetic op left in float is ~6e-8
+                 * relative (float's own resolution is 2^-23 = 1.19e-7), i.e.
+                 * BELOW the threshold. Use the same 1e-9 the double leg proved
+                 * holds through this transport.
+                 *
+                 * epsilonScale is still honoured so a caller can widen it. */
                 double scale = (p->epsilonScale > 0.0) ? p->epsilonScale : 1.0;
-                threshold = CODEGEN_EPSILON * scale;
-                if( fabs(cVal) > 1.0 )
-                {
-                    double relThreshold = fabs(cVal) * 1e-6 * scale;
-                    if( relThreshold > threshold ) threshold = relThreshold;
-                }
+                threshold = CODEGEN_EPSILON_DOUBLE * fmax(1.0, fabs(cVal)) * scale;
             }
             else
             {
@@ -1773,15 +1784,35 @@ static void run_float_leg(CodegenRangeTestParam *p)
     {
         parse_ref_baseline(p);
 
-        /* Single-precision variant on the same inputs — must match bit-for-bit. */
+        /* Single-precision variant on the same inputs. */
         p->useFloat = 1;
         build_json_request(p, 0, p->nbBars - 1);
         if( codegen_pipe_call(p->cp, p->requestBuf, p->responseBuf,
                               JSON_BUF_SIZE) != TA_TEST_PASS )
             p->codegenError = TA_CODEGEN_RETCODE_MISMATCH;
         else
-            for( unsigned int o = 0; o < p->funcInfo->nbOutput; o++ )
-                compare_codegen_output_generic(p, o);
+        {
+            /* The server must SAY it took the float path. Without this the leg
+             * fails open: a server that ignores "use_float" returns the double
+             * result twice, and every comparison below passes trivially — which
+             * is indistinguishable from "the float surface is verified". Every
+             * sibling gate in this file carries a floor like this. */
+            int len = 0;
+            const char *ack = json_find_field(p->responseBuf, "used_float", &len);
+            if( !ack || strtol(ack, NULL, 10) != 1 )
+            {
+                printf("CODEGEN FLOAT LEG NOT TAKEN [TA_%s]: server did not acknowledge "
+                       "use_float — the leg would have passed while comparing the double "
+                       "result against itself\n", p->funcInfo->name);
+                p->codegenError = TA_CODEGEN_OUTPUT_MISMATCH;
+            }
+            else
+            {
+                g_floatLegCompared++;
+                for( unsigned int o = 0; o < p->funcInfo->nbOutput; o++ )
+                    compare_codegen_output_generic(p, o);
+            }
+        }
         if( p->codegenError != TA_TEST_PASS )
             printf("  (mismatch above is the FLOAT (TA_S_) leg: TA_S_ vs TA_ on widened inputs)\n");
     }
@@ -5995,8 +6026,20 @@ ErrorNumber test_codegen(const TA_History *history,
 
     print_timing_table(languageFilter);
 
+    /* Non-vacuity for the float leg: it compares a language's single-precision
+     * entry point against its own double one, and a server that silently ignored
+     * "use_float" would compare the double result with itself and pass. The
+     * acknowledgment is checked per call; this is the run-level floor. */
+    if( g_floatLegCompared == 0 )
+    {
+        printf("\nCODEGEN FAILED: the float leg compared nothing — no server "
+               "acknowledged use_float on any function\n");
+        return TA_CODEGEN_OUTPUT_MISMATCH;
+    }
+
     printf("\n=============================================\n");
-    printf("All %d language(s) passed codegen verification\n", langsTested);
+    printf("All %d language(s) passed codegen verification (float leg: %ld "
+           "acknowledged comparison(s))\n", langsTested, g_floatLegCompared);
     printf("=============================================\n");
 
     /* Write report files */

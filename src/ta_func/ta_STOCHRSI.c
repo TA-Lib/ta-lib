@@ -173,6 +173,12 @@ TA_LIB_API TA_RetCode TA_STOCHRSI( int    startIdx,
    *outBegIdx= startIdx;
    tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
    tempRSIBuffer = malloc(tempArraySize * sizeof(double));
+   if( !tempRSIBuffer )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_ALLOC_ERR;
+   }
    retCode = TA_RSI(startIdx - lookbackSTOCHF,endIdx,inReal,optInTimePeriod,&outBegIdx1,&outNbElement1,tempRSIBuffer);
    if( retCode != TA_SUCCESS || outNbElement1 == 0 )
    {
@@ -258,6 +264,12 @@ TA_RetCode TA_S_STOCHRSI( int    startIdx,
    *outBegIdx= startIdx;
    tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
    tempRSIBuffer = malloc(tempArraySize * sizeof(double));
+   if( !tempRSIBuffer )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_ALLOC_ERR;
+   }
    retCode = TA_S_RSI(startIdx - lookbackSTOCHF,endIdx,inReal,optInTimePeriod,&outBegIdx1,&outNbElement1,tempRSIBuffer);
    if( retCode != TA_SUCCESS || outNbElement1 == 0 )
    {
@@ -414,6 +426,13 @@ TA_RetCode TA_STOCHRSI_OpenInternal( struct TA_STOCHRSI_Stream **stream, const d
       tempRSIBuffer = malloc(tempArraySize * sizeof(double));
       if( !tempRSIBuffer )
       {
+         TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
+         return TA_ALLOC_ERR;
+      }
+      if( !tempRSIBuffer )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
          TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
          return TA_ALLOC_ERR;
       }
@@ -586,6 +605,13 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_OpenAndFill( TA_STOCHRSI_Stream **stream, cons
       tempRSIBuffer = malloc(tempArraySize * sizeof(double));
       if( !tempRSIBuffer )
       {
+         TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
+         return TA_ALLOC_ERR;
+      }
+      if( !tempRSIBuffer )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
          TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
          return TA_ALLOC_ERR;
       }

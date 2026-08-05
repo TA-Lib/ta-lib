@@ -149179,6 +149179,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -149193,6 +149194,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149211,6 +149213,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -149242,6 +149245,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -149249,6 +149253,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149263,6 +149268,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -149309,6 +149315,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -149325,6 +149332,7 @@ public class TaCodegenServe {
                 f_inClose,
                 f_inVolume,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149339,6 +149347,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -149375,6 +149384,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal0 = new float[inReal0.length];
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
@@ -149385,6 +149395,7 @@ public class TaCodegenServe {
                 f_inReal0,
                 f_inReal1,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149399,6 +149410,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -149449,6 +149461,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -149467,6 +149480,7 @@ public class TaCodegenServe {
                 optInFastPeriod,
                 optInSlowPeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149481,6 +149495,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -149525,6 +149540,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -149539,6 +149555,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149553,6 +149570,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -149596,6 +149614,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -149610,6 +149629,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149624,6 +149644,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -149661,6 +149682,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -149671,6 +149693,7 @@ public class TaCodegenServe {
                 optInSlowPeriod,
                 optInMAType,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149685,6 +149708,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -149724,6 +149748,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -149735,6 +149760,7 @@ public class TaCodegenServe {
                 f_inLow,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0, outArr1);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149751,6 +149777,7 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -149789,6 +149816,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -149800,6 +149828,7 @@ public class TaCodegenServe {
                 f_inLow,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149814,6 +149843,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -149845,6 +149875,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -149852,6 +149883,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149866,6 +149898,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -149897,6 +149930,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -149904,6 +149938,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149918,6 +149953,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -149962,6 +149998,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -149976,6 +150013,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -149990,6 +150028,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150023,6 +150062,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -150031,6 +150071,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150045,6 +150086,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150091,6 +150133,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -150107,6 +150150,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150121,6 +150165,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150162,6 +150207,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -150173,6 +150219,7 @@ public class TaCodegenServe {
                 optInNbDevDn,
                 optInMAType,
                 outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150191,6 +150238,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150229,6 +150277,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal0 = new float[inReal0.length];
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
@@ -150240,6 +150289,7 @@ public class TaCodegenServe {
                 f_inReal1,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150254,6 +150304,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150300,6 +150351,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -150316,6 +150368,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150330,6 +150383,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150373,6 +150427,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -150387,6 +150442,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150401,6 +150457,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150447,6 +150504,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -150463,6 +150521,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150477,6 +150536,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150523,6 +150583,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -150539,6 +150600,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150553,6 +150615,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150599,6 +150662,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -150615,6 +150679,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150629,6 +150694,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150675,6 +150741,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -150691,6 +150758,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150705,6 +150773,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150751,6 +150820,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -150767,6 +150837,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150781,6 +150852,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150827,6 +150899,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -150843,6 +150916,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150857,6 +150931,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150903,6 +150978,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -150919,6 +150995,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -150933,6 +151010,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -150981,6 +151059,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -150998,6 +151077,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInPenetration,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151012,6 +151092,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151058,6 +151139,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151074,6 +151156,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151088,6 +151171,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151134,6 +151218,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151150,6 +151235,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151164,6 +151250,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151210,6 +151297,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151226,6 +151314,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151240,6 +151329,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151286,6 +151376,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151302,6 +151393,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151316,6 +151408,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151362,6 +151455,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151378,6 +151472,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151392,6 +151487,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151438,6 +151534,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151454,6 +151551,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151468,6 +151566,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151516,6 +151615,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151533,6 +151633,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInPenetration,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151547,6 +151648,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151593,6 +151695,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151609,6 +151712,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151623,6 +151727,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151669,6 +151774,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151685,6 +151791,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151699,6 +151806,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151745,6 +151853,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151761,6 +151870,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151775,6 +151885,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151821,6 +151932,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151837,6 +151949,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151851,6 +151964,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151899,6 +152013,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151916,6 +152031,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInPenetration,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -151930,6 +152046,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -151978,6 +152095,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -151995,6 +152113,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInPenetration,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152009,6 +152128,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152055,6 +152175,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152071,6 +152192,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152085,6 +152207,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152131,6 +152254,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152147,6 +152271,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152161,6 +152286,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152207,6 +152333,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152223,6 +152350,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152237,6 +152365,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152283,6 +152412,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152299,6 +152429,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152313,6 +152444,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152359,6 +152491,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152375,6 +152508,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152389,6 +152523,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152435,6 +152570,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152451,6 +152587,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152465,6 +152602,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152511,6 +152649,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152527,6 +152666,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152541,6 +152681,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152587,6 +152728,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152603,6 +152745,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152617,6 +152760,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152663,6 +152807,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152679,6 +152824,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152693,6 +152839,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152739,6 +152886,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152755,6 +152903,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152769,6 +152918,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152815,6 +152965,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152831,6 +152982,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152845,6 +152997,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152891,6 +153044,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152907,6 +153061,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152921,6 +153076,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -152967,6 +153123,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -152983,6 +153140,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -152997,6 +153155,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153043,6 +153202,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153059,6 +153219,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153073,6 +153234,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153119,6 +153281,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153135,6 +153298,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153149,6 +153313,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153195,6 +153360,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153211,6 +153377,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153225,6 +153392,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153271,6 +153439,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153287,6 +153456,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153301,6 +153471,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153347,6 +153518,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153363,6 +153535,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153377,6 +153550,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153423,6 +153597,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153439,6 +153614,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153453,6 +153629,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153499,6 +153676,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153515,6 +153693,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153529,6 +153708,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153577,6 +153757,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153594,6 +153775,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInPenetration,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153608,6 +153790,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153656,6 +153839,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153673,6 +153857,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInPenetration,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153687,6 +153872,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153735,6 +153921,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153752,6 +153939,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInPenetration,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153766,6 +153954,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153812,6 +154001,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153828,6 +154018,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153842,6 +154033,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153888,6 +154080,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153904,6 +154097,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153918,6 +154112,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -153964,6 +154159,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -153980,6 +154176,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -153994,6 +154191,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154040,6 +154238,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154056,6 +154255,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154070,6 +154270,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154116,6 +154317,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154132,6 +154334,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154146,6 +154349,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154192,6 +154396,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154208,6 +154413,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154222,6 +154428,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154268,6 +154475,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154284,6 +154492,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154298,6 +154507,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154344,6 +154554,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154360,6 +154571,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154374,6 +154586,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154420,6 +154633,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154436,6 +154650,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154450,6 +154665,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154496,6 +154712,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154512,6 +154729,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154526,6 +154744,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154572,6 +154791,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154588,6 +154808,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154602,6 +154823,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154648,6 +154870,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154664,6 +154887,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154678,6 +154902,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154724,6 +154949,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154740,6 +154966,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154754,6 +154981,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154800,6 +155028,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154816,6 +155045,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154830,6 +155060,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154876,6 +155107,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154892,6 +155124,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154906,6 +155139,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -154952,6 +155186,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -154968,6 +155203,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -154982,6 +155218,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155028,6 +155265,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -155044,6 +155282,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155058,6 +155297,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155089,6 +155329,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -155096,6 +155337,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155110,6 +155352,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155158,6 +155401,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -155175,6 +155419,7 @@ public class TaCodegenServe {
                 f_inVolume,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155189,6 +155434,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155223,6 +155469,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -155231,6 +155478,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155245,6 +155493,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155278,6 +155527,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -155286,6 +155536,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155300,6 +155551,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155338,6 +155590,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal0 = new float[inReal0.length];
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
@@ -155349,6 +155602,7 @@ public class TaCodegenServe {
                 f_inReal1,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155363,6 +155617,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155394,6 +155649,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -155401,6 +155657,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155415,6 +155672,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155446,6 +155704,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -155453,6 +155712,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155467,6 +155727,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155500,6 +155761,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -155508,6 +155770,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155522,6 +155785,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155558,6 +155822,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal0 = new float[inReal0.length];
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
@@ -155568,6 +155833,7 @@ public class TaCodegenServe {
                 f_inReal0,
                 f_inReal1,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155582,6 +155848,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155626,6 +155893,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -155640,6 +155908,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155654,6 +155923,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155688,6 +155958,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -155696,6 +155967,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155710,6 +155982,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155741,6 +156014,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -155748,6 +156022,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155762,6 +156037,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155793,6 +156069,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -155800,6 +156077,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155814,6 +156092,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155847,6 +156126,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -155855,6 +156135,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155869,6 +156150,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155901,6 +156183,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -155908,6 +156191,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155922,6 +156206,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -155954,6 +156239,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -155961,6 +156247,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -155975,6 +156262,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156008,6 +156296,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156015,6 +156304,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0, outArr1);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156031,6 +156321,7 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156064,6 +156355,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156071,6 +156363,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0, outArr1);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156087,6 +156380,7 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156119,6 +156413,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156126,6 +156421,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156140,6 +156436,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156172,6 +156469,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156179,6 +156477,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156193,6 +156492,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156231,6 +156531,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inOpen = new float[inOpen.length];
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
@@ -156242,6 +156543,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156256,6 +156558,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156290,6 +156593,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156298,6 +156602,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156312,6 +156617,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156345,6 +156651,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156353,6 +156660,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156367,6 +156675,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156400,6 +156709,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156408,6 +156718,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156422,6 +156733,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156455,6 +156767,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156463,6 +156776,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156477,6 +156791,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156510,6 +156825,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156518,6 +156834,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156532,6 +156849,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156563,6 +156881,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156570,6 +156889,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156584,6 +156904,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156615,6 +156936,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156622,6 +156944,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156636,6 +156959,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156671,6 +156995,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156680,6 +157005,7 @@ public class TaCodegenServe {
                 optInTimePeriod,
                 optInMAType,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156694,6 +157020,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156733,6 +157060,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156743,6 +157071,7 @@ public class TaCodegenServe {
                 optInSlowPeriod,
                 optInSignalPeriod,
                 outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156761,6 +157090,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156806,6 +157136,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156819,6 +157150,7 @@ public class TaCodegenServe {
                 optInSignalPeriod,
                 optInSignalMAType,
                 outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156837,6 +157169,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156872,6 +157205,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156880,6 +157214,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInSignalPeriod,
                 outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156898,6 +157233,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -156935,6 +157271,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -156944,6 +157281,7 @@ public class TaCodegenServe {
                 optInFastLimit,
                 optInSlowLimit,
                 outBegIdx, outNBElement, outArr0, outArr1);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -156960,6 +157298,7 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157002,6 +157341,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal0 = new float[inReal0.length];
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
@@ -157015,6 +157355,7 @@ public class TaCodegenServe {
                 optInMaxPeriod,
                 optInMAType,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157029,6 +157370,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157062,6 +157404,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -157070,6 +157413,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157084,6 +157428,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157117,6 +157462,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -157125,6 +157471,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157139,6 +157486,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157175,6 +157523,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -157185,6 +157534,7 @@ public class TaCodegenServe {
                 f_inHigh,
                 f_inLow,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157199,6 +157549,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157247,6 +157598,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -157264,6 +157616,7 @@ public class TaCodegenServe {
                 f_inVolume,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157278,6 +157631,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157311,6 +157665,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -157319,6 +157674,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157333,6 +157689,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157371,6 +157728,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -157382,6 +157740,7 @@ public class TaCodegenServe {
                 f_inLow,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157396,6 +157755,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157429,6 +157789,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -157437,6 +157798,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157451,6 +157813,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157484,6 +157847,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -157492,6 +157856,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157506,6 +157871,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157540,6 +157906,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -157548,6 +157915,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0, outArr1);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157564,6 +157932,7 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157598,6 +157967,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -157606,6 +157976,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0, outArr1);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157622,6 +157993,7 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outInteger1\":").append(intArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157666,6 +158038,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -157680,6 +158053,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157694,6 +158068,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157733,6 +158108,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -157744,6 +158120,7 @@ public class TaCodegenServe {
                 f_inLow,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157758,6 +158135,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157791,6 +158169,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -157799,6 +158178,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157813,6 +158193,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157849,6 +158230,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal0 = new float[inReal0.length];
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
@@ -157859,6 +158241,7 @@ public class TaCodegenServe {
                 f_inReal0,
                 f_inReal1,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157873,6 +158256,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157917,6 +158301,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -157931,6 +158316,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -157945,6 +158331,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -157981,6 +158368,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
@@ -157991,6 +158379,7 @@ public class TaCodegenServe {
                 f_inClose,
                 f_inVolume,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158005,6 +158394,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158041,6 +158431,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -158051,6 +158442,7 @@ public class TaCodegenServe {
                 f_inReal,
                 f_inVolume,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158065,6 +158457,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158109,6 +158502,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -158123,6 +158517,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158137,6 +158532,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158176,6 +158572,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -158187,6 +158584,7 @@ public class TaCodegenServe {
                 f_inLow,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158201,6 +158599,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158238,6 +158637,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -158248,6 +158648,7 @@ public class TaCodegenServe {
                 optInSlowPeriod,
                 optInMAType,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158262,6 +158663,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158298,6 +158700,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
@@ -158308,6 +158711,7 @@ public class TaCodegenServe {
                 f_inClose,
                 f_inVolume,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158322,6 +158726,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158359,6 +158764,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
@@ -158369,6 +158775,7 @@ public class TaCodegenServe {
                 optInSlowPeriod,
                 optInMAType,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158383,6 +158790,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158416,6 +158824,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -158424,6 +158833,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158438,6 +158848,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158471,6 +158882,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -158479,6 +158891,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158493,6 +158906,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158526,6 +158940,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -158534,6 +158949,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158548,6 +158964,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158581,6 +158998,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -158589,6 +159007,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158603,6 +159022,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158637,6 +159057,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -158645,6 +159066,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158659,6 +159081,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158699,6 +159122,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -158711,6 +159135,7 @@ public class TaCodegenServe {
                 optInAcceleration,
                 optInMaximum,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158725,6 +159150,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158777,6 +159203,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -158795,6 +159222,7 @@ public class TaCodegenServe {
                 optInAccelerationShort,
                 optInAccelerationMaxShort,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158809,6 +159237,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158840,6 +159269,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -158847,6 +159277,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158861,6 +159292,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158892,6 +159324,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -158899,6 +159332,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158913,6 +159347,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158946,6 +159381,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -158954,6 +159390,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -158968,6 +159405,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -158999,6 +159437,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -159006,6 +159445,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159020,6 +159460,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159055,6 +159496,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -159064,6 +159506,7 @@ public class TaCodegenServe {
                 optInTimePeriod,
                 optInNbDev,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159078,6 +159521,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159130,6 +159574,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -159148,6 +159593,7 @@ public class TaCodegenServe {
                 optInSlowD_Period,
                 optInSlowD_MAType,
                 outBegIdx, outNBElement, outArr0, outArr1);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159164,6 +159610,7 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159212,6 +159659,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -159228,6 +159676,7 @@ public class TaCodegenServe {
                 optInFastD_Period,
                 optInFastD_MAType,
                 outBegIdx, outNBElement, outArr0, outArr1);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159244,6 +159693,7 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159284,6 +159734,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -159295,6 +159746,7 @@ public class TaCodegenServe {
                 optInFastD_Period,
                 optInFastD_MAType,
                 outBegIdx, outNBElement, outArr0, outArr1);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159311,6 +159763,7 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159347,6 +159800,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal0 = new float[inReal0.length];
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
@@ -159357,6 +159811,7 @@ public class TaCodegenServe {
                 f_inReal0,
                 f_inReal1,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159371,6 +159826,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159404,6 +159860,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -159412,6 +159869,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159426,6 +159884,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159462,6 +159921,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -159471,6 +159931,7 @@ public class TaCodegenServe {
                 optInTimePeriod,
                 optInVFactor,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159485,6 +159946,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159516,6 +159978,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -159523,6 +159986,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159537,6 +160001,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159568,6 +160033,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -159575,6 +160041,7 @@ public class TaCodegenServe {
                 startIdx, endIdx,
                 f_inReal,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159589,6 +160056,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159622,6 +160090,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -159630,6 +160099,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159644,6 +160114,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159685,6 +160156,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -159698,6 +160170,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159712,6 +160185,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159745,6 +160219,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -159753,6 +160228,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159767,6 +160243,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159800,6 +160277,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -159808,6 +160286,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159822,6 +160301,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159855,6 +160335,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -159863,6 +160344,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159877,6 +160359,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159918,6 +160401,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -159931,6 +160415,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -159945,6 +160430,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -159992,6 +160478,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -160008,6 +160495,7 @@ public class TaCodegenServe {
                 optInTimePeriod2,
                 optInTimePeriod3,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -160022,6 +160510,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -160057,6 +160546,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -160066,6 +160556,7 @@ public class TaCodegenServe {
                 optInTimePeriod,
                 optInNbDev,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -160080,6 +160571,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -160118,6 +160610,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -160129,6 +160622,7 @@ public class TaCodegenServe {
                 f_inVolume,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -160143,6 +160637,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -160184,6 +160679,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -160197,6 +160693,7 @@ public class TaCodegenServe {
                 f_inLow,
                 f_inClose,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -160211,6 +160708,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -160254,6 +160752,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inHigh = new float[inHigh.length];
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
@@ -160268,6 +160767,7 @@ public class TaCodegenServe {
                 f_inClose,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -160282,6 +160782,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
@@ -160315,6 +160816,7 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
@@ -160323,6 +160825,7 @@ public class TaCodegenServe {
                 f_inReal,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
@@ -160337,6 +160840,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
         return sb.toString();
