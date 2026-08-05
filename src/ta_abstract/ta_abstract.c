@@ -636,7 +636,12 @@ TA_RetCode TA_ParamHolderAlloc( const TA_FuncHandle *handle,
    for( i=0; i < funcInfo->nbOptInput; i++ )
    {
       optInput[i].optInputInfo = optInputInfo[i];
-      if( optInput[i].optInputInfo->type == TA_OptInput_RealRange )
+      /* Both real domains seed optInReal: TA_SetOptInputParamReal accepts
+       * RealList too, so seeding its default as an integer would leave the
+       * union holding a value TA_CallFunc never reads back. Dormant while no
+       * shipped function declares a RealList (issue #164). */
+      if( (optInput[i].optInputInfo->type == TA_OptInput_RealRange) ||
+          (optInput[i].optInputInfo->type == TA_OptInput_RealList) )
          optInput[i].data.optInReal = optInputInfo[i]->defaultValue;
       else
          optInput[i].data.optInInteger = (TA_Integer)optInputInfo[i]->defaultValue;

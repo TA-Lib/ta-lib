@@ -382,15 +382,22 @@ fn input_rows(inputs: &[Input]) -> Vec<InputRow> {
                     flags: 0,
                     signature_components: Vec::new(),
                 }),
-                ParamType::Integer => out.push(InputRow {
+                // An `Enum` in *input* position is `TA_Input_Integer` to C
+                // (`emit_input_descriptor`), so it must be one here too — dropping
+                // it gave the managed backends a different input arity than the
+                // ABI reference. Dormant: no shipped function has one (#164).
+                ParamType::Integer | ParamType::Enum(_) => out.push(InputRow {
                     kind: InputKind::Integer,
                     param_name: inp.name.clone(),
                     flags: 0,
                     signature_components: Vec::new(),
                 }),
-                // A bare `Price` never survives the fold, and an `Enum` is not a
-                // required input.
-                ParamType::Price(_) | ParamType::Enum(_) => {}
+                // A bare `Price` cannot survive the fold; say so rather than
+                // silently shortening the input list.
+                ParamType::Price(_) => panic!(
+                    "input '{}' is a bare Price that price_bundle::group did not fold",
+                    inp.name
+                ),
             },
         }
     }
@@ -412,28 +419,50 @@ fn output_rows(outputs: &[Output]) -> Vec<OutputRow> {
         .collect()
 }
 
+/// Decimal places of a suggested increment — the fallback C's `get_precision`
+/// applies when the YAML declares no explicit `precision`.
+#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+fn precision_of(increment: f64) -> i32 {
+    let s = format!("{increment}");
+    match s.split_once('.') {
+        Some(_) => {
+            let trimmed = s.trim_end_matches('0');
+            trimmed.find('.').map_or(0, |d| (trimmed.len() - d - 1) as i32)
+        }
+        None => 0,
+    }
+}
+
 #[allow(clippy::implicit_hasher, clippy::cast_possible_truncation)]
 fn opt_row(opt: &OptInput, enums: &HashMap<String, EnumDef>) -> OptRow {
     let domain = match &opt.param_type {
         ParamType::Real => {
-            let (min, max) = opt.range.unwrap_or((0.0, 0.0));
+            // The absent-YAML fallbacks must AGREE with the C emitter's
+            // (`emit_custom_real_opt_input`, `get_precision`) or the managed
+            // backends would describe a slot differently than the ABI reference
+            // the moment a field is left out. They are restated here rather than
+            // shared, so C keeps its own derivation and the metadata gate can
+            // still fail (#164). Every shipped real declares its range and
+            // suggested triple, and the 7 that omit `precision` have increment 0,
+            // which both rules map to 0 — so nothing observable moves today.
+            let (min, max) = opt.range.unwrap_or((0.0, f64::MAX));
             OptDomain::RealRange {
                 min,
                 max,
-                precision: opt.precision.unwrap_or(0),
+                precision: opt
+                    .precision
+                    .unwrap_or_else(|| opt.suggested.map_or(2, |(_, _, inc)| precision_of(inc))),
                 default: opt.default.unwrap_or(0.0),
                 suggested: opt.suggested.unwrap_or((0.0, 0.0, 0.0)),
             }
         }
         ParamType::Integer => {
-            let (min, max) = opt.range.unwrap_or((0.0, 0.0));
+            // Same reconciliation, against `emit_custom_int_opt_input`.
+            let (min, max) = opt.range.unwrap_or((1.0, 100_000.0));
             let (min, max) = (min as i32, max as i32);
-            // Prefer the explicit YAML `suggested` hints (matching ta_def_ui.c).
-            // Only when they are absent do all three fall back to max —
-            // func_api_xml applies that legacy fallback unconditionally.
             let suggested = match opt.suggested {
                 Some((a, b, c)) => (a as i32, b as i32, c as i32),
-                None => (max, max, max),
+                None => (min, max.min(200), 1),
             };
             OptDomain::IntegerRange {
                 min,

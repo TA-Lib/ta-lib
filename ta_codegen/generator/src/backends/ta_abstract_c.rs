@@ -2258,7 +2258,12 @@ fn gen_ta_abstract_c() -> String {
          \x20  for( i=0; i < funcInfo->nbOptInput; i++ )\n\
          \x20  {\n\
          \x20     optInput[i].optInputInfo = optInputInfo[i];\n\
-         \x20     if( optInput[i].optInputInfo->type == TA_OptInput_RealRange )\n\
+         \x20     /* Both real domains seed optInReal: TA_SetOptInputParamReal accepts\n\
+         \x20      * RealList too, so seeding its default as an integer would leave the\n\
+         \x20      * union holding a value TA_CallFunc never reads back. Dormant while no\n\
+         \x20      * shipped function declares a RealList (issue #164). */\n\
+         \x20     if( (optInput[i].optInputInfo->type == TA_OptInput_RealRange) ||\n\
+         \x20         (optInput[i].optInputInfo->type == TA_OptInput_RealList) )\n\
          \x20        optInput[i].data.optInReal = optInputInfo[i]->defaultValue;\n\
          \x20     else\n\
          \x20        optInput[i].data.optInInteger = (TA_Integer)optInputInfo[i]->defaultValue;\n\

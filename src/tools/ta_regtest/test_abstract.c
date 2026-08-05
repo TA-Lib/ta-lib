@@ -687,6 +687,17 @@ static ErrorNumber abstract_verify_func_metadata(
                            funcName, i, crefList, srvList);
                     return TA_ABSTRACT_CALL_MISMATCH;
                 }
+            } else {
+                /* The counter above was already incremented, so an unhandled
+                 * domain would report itself as compared while comparing
+                 * nothing -- exactly the vacuity g_optExtendedCompared exists to
+                 * catch. TA_OptInput_RealList is the only type that lands here
+                 * and no shipped function declares one; the day one does, this
+                 * says so instead of passing silently (#164). */
+                printf("  ABSTRACT ERROR [%s]: TA_GetOptInputParameterInfo[%u] domain type %d "
+                       "has no comparison arm -- it would be counted as compared\n",
+                       funcName, i, (int)crefOpt->type);
+                return TA_ABSTRACT_CALL_MISMATCH;
             }
         }
     }
@@ -1108,7 +1119,15 @@ static ErrorNumber abstract_verify_server_call(
             realInputCount++;
             break;
         case TA_Input_Integer:
-            break;
+            /* Silently omitted, which would leave the server's slot unbound
+             * while C's is bound -- the two binders would then be compared on
+             * different inputs and could agree by accident. No shipped function
+             * declares an integer input, so this is unreachable today; say so
+             * rather than let the first one that does slip through (#164). */
+            printf("  ABSTRACT ERROR [%s]: integer input '%s' is not sent by "
+                   "abstract_call -- the request builder needs an arm for it\n",
+                   funcInfo->name, inputInfo->paramName);
+            return TA_ABSTRACT_CALL_MISMATCH;
         }
     }
 
@@ -2642,6 +2661,231 @@ static void testInPlaceAlias( const TA_FuncInfo *funcInfo, void *opaqueData )
       *errorNumber = err;
 }
 
+/* ---- The ParamHolder ERROR contract (issue #164) ---------------------------
+ *
+ * Everything else in this file drives the holder down its success path. The
+ * four RetCodes that exist only in the dynamic tier -- TA_INVALID_PARAM_HOLDER_TYPE,
+ * TA_INPUT_NOT_ALL_INITIALIZE, TA_OUTPUT_NOT_ALL_INITIALIZE and the
+ * paramIndex/NULL TA_BAD_PARAM -- had their VALUES pinned by test_internals.c
+ * and were otherwise never produced by anything, so no test could tell a
+ * correct rejection from a silent accept. That matters more than it looks:
+ * the managed backends signal these same conditions by throwing, and their
+ * tests assert the throw, which left C the only backend whose refusals were
+ * unasserted.
+ *
+ * Driven over every function ta_abstract reports, exercising whichever slots
+ * each function's descriptors admit, so new functions are covered without a
+ * roster. Counted per class and floored below -- a sweep that stopped
+ * constructing cases would otherwise read exactly like a passing one. */
+static long long g_holderTypeErr = 0;   /* TA_INVALID_PARAM_HOLDER_TYPE  */
+static long long g_holderIndexErr = 0;  /* paramIndex out of range       */
+static long long g_holderNullErr = 0;   /* NULL value pointer            */
+static long long g_holderInputErr = 0;  /* TA_INPUT_NOT_ALL_INITIALIZE   */
+static long long g_holderOutputErr = 0; /* TA_OUTPUT_NOT_ALL_INITIALIZE  */
+
+/* Report a wrong RetCode from a call that had to be refused. */
+static int holder_expect( const char *funcName, const char *what,
+                          TA_RetCode got, TA_RetCode want )
+{
+   if( got == want )
+      return 1;
+   printf( "  HOLDER CONTRACT [%s]: %s returned %d, expected %d\n",
+           funcName, what, (int)got, (int)want );
+   return 0;
+}
+
+static ErrorNumber checkHolderErrorContract( const TA_FuncInfo *funcInfo )
+{
+   const TA_FuncHandle *handle = funcInfo->handle;
+   const TA_InputParameterInfo *inputInfo;
+   const TA_OptInputParameterInfo *optInfo;
+   const TA_OutputParameterInfo *outInfo;
+   TA_ParamHolder *paramHolder;
+   TA_RetCode retCode;
+   unsigned int i;
+   int ok = 1;
+   int outBegIdx, outNbElement;
+   /* One buffer PER OUTPUT SLOT, not one shared: binding every output to the
+    * same array is the aliasing #108 rejects, and it only stays invisible here
+    * because TA_CallFunc answers NULL/unbound before it dispatches. Relying on
+    * that ordering would make this test's meaning depend on an unrelated one. */
+   #define HOLDER_MAX_OUT 8
+   static double dummyReal[HOLDER_MAX_OUT][252];
+   static int    dummyInt[HOLDER_MAX_OUT][252];
+
+   if( funcInfo->nbOutput > HOLDER_MAX_OUT )
+   {
+      printf( "  HOLDER CONTRACT [%s]: %u outputs exceeds HOLDER_MAX_OUT (%d)\n",
+              funcInfo->name, funcInfo->nbOutput, HOLDER_MAX_OUT );
+      return TA_ABS_TST_FAIL_HOLDER_CONTRACT;
+   }
+
+   retCode = TA_ParamHolderAlloc( handle, &paramHolder );
+   if( retCode != TA_SUCCESS )
+      return TA_ABS_TST_FAIL_PARAMHOLDERALLOC;
+
+   /* 1. paramIndex out of range on all six setters. */
+   ok &= holder_expect( funcInfo->name, "SetInputParamRealPtr past nbInput",
+            TA_SetInputParamRealPtr( paramHolder, funcInfo->nbInput, dummyReal[0] ), TA_BAD_PARAM );
+   ok &= holder_expect( funcInfo->name, "SetInputParamIntegerPtr past nbInput",
+            TA_SetInputParamIntegerPtr( paramHolder, funcInfo->nbInput, dummyInt[0] ), TA_BAD_PARAM );
+   ok &= holder_expect( funcInfo->name, "SetInputParamPricePtr past nbInput",
+            TA_SetInputParamPricePtr( paramHolder, funcInfo->nbInput, dummyReal[0], dummyReal[0],
+                                      dummyReal[0], dummyReal[0], dummyReal[0], dummyReal[0] ), TA_BAD_PARAM );
+   ok &= holder_expect( funcInfo->name, "SetOptInputParamInteger past nbOptInput",
+            TA_SetOptInputParamInteger( paramHolder, funcInfo->nbOptInput, 1 ), TA_BAD_PARAM );
+   ok &= holder_expect( funcInfo->name, "SetOptInputParamReal past nbOptInput",
+            TA_SetOptInputParamReal( paramHolder, funcInfo->nbOptInput, 1.0 ), TA_BAD_PARAM );
+   ok &= holder_expect( funcInfo->name, "SetOutputParamRealPtr past nbOutput",
+            TA_SetOutputParamRealPtr( paramHolder, funcInfo->nbOutput, dummyReal[0] ), TA_BAD_PARAM );
+   ok &= holder_expect( funcInfo->name, "SetOutputParamIntegerPtr past nbOutput",
+            TA_SetOutputParamIntegerPtr( paramHolder, funcInfo->nbOutput, dummyInt[0] ), TA_BAD_PARAM );
+   g_holderIndexErr += 7;
+
+   /* 2. NULL value pointer on a slot that DOES exist -- otherwise the
+    *    paramIndex check above would answer first and this would prove nothing. */
+   ok &= holder_expect( funcInfo->name, "SetInputParamRealPtr(NULL)",
+            TA_SetInputParamRealPtr( paramHolder, 0, NULL ), TA_BAD_PARAM );
+   ok &= holder_expect( funcInfo->name, "SetInputParamIntegerPtr(NULL)",
+            TA_SetInputParamIntegerPtr( paramHolder, 0, NULL ), TA_BAD_PARAM );
+   ok &= holder_expect( funcInfo->name, "SetOutputParamRealPtr(NULL)",
+            TA_SetOutputParamRealPtr( paramHolder, 0, NULL ), TA_BAD_PARAM );
+   ok &= holder_expect( funcInfo->name, "SetOutputParamIntegerPtr(NULL)",
+            TA_SetOutputParamIntegerPtr( paramHolder, 0, NULL ), TA_BAD_PARAM );
+   g_holderNullErr += 4;
+
+   /* 3. Type mismatch: offer each slot the setter its declared type forbids. */
+   for( i = 0; i < funcInfo->nbInput; i++ )
+   {
+      TA_GetInputParameterInfo( handle, i, &inputInfo );
+      if( inputInfo->type == TA_Input_Real )
+      {
+         ok &= holder_expect( funcInfo->name, "real input via SetInputParamIntegerPtr",
+                  TA_SetInputParamIntegerPtr( paramHolder, i, dummyInt[0] ),
+                  TA_INVALID_PARAM_HOLDER_TYPE );
+         ok &= holder_expect( funcInfo->name, "real input via SetInputParamPricePtr",
+                  TA_SetInputParamPricePtr( paramHolder, i, dummyReal[0], dummyReal[0], dummyReal[0],
+                                            dummyReal[0], dummyReal[0], dummyReal[0] ),
+                  TA_INVALID_PARAM_HOLDER_TYPE );
+         g_holderTypeErr += 2;
+      }
+      else if( inputInfo->type == TA_Input_Price )
+      {
+         ok &= holder_expect( funcInfo->name, "price input via SetInputParamRealPtr",
+                  TA_SetInputParamRealPtr( paramHolder, i, dummyReal[0] ),
+                  TA_INVALID_PARAM_HOLDER_TYPE );
+         ok &= holder_expect( funcInfo->name, "price input via SetInputParamIntegerPtr",
+                  TA_SetInputParamIntegerPtr( paramHolder, i, dummyInt[0] ),
+                  TA_INVALID_PARAM_HOLDER_TYPE );
+         g_holderTypeErr += 2;
+      }
+   }
+
+   for( i = 0; i < funcInfo->nbOptInput; i++ )
+   {
+      TA_GetOptInputParameterInfo( handle, i, &optInfo );
+      if( optInfo->type == TA_OptInput_IntegerRange || optInfo->type == TA_OptInput_IntegerList )
+      {
+         ok &= holder_expect( funcInfo->name, "integer opt via SetOptInputParamReal",
+                  TA_SetOptInputParamReal( paramHolder, i, 1.0 ),
+                  TA_INVALID_PARAM_HOLDER_TYPE );
+         g_holderTypeErr++;
+      }
+      else
+      {
+         ok &= holder_expect( funcInfo->name, "real opt via SetOptInputParamInteger",
+                  TA_SetOptInputParamInteger( paramHolder, i, 1 ),
+                  TA_INVALID_PARAM_HOLDER_TYPE );
+         g_holderTypeErr++;
+      }
+   }
+
+   for( i = 0; i < funcInfo->nbOutput; i++ )
+   {
+      TA_GetOutputParameterInfo( handle, i, &outInfo );
+      if( outInfo->type == TA_Output_Real )
+      {
+         ok &= holder_expect( funcInfo->name, "real output via SetOutputParamIntegerPtr",
+                  TA_SetOutputParamIntegerPtr( paramHolder, i, dummyInt[i] ),
+                  TA_INVALID_PARAM_HOLDER_TYPE );
+      }
+      else
+      {
+         ok &= holder_expect( funcInfo->name, "integer output via SetOutputParamRealPtr",
+                  TA_SetOutputParamRealPtr( paramHolder, i, dummyReal[i] ),
+                  TA_INVALID_PARAM_HOLDER_TYPE );
+      }
+      g_holderTypeErr++;
+   }
+
+   /* 4. Outputs bound, inputs not: TA_CallFunc must refuse. The input test runs
+    *    FIRST in TA_CallFunc, so this order is the only one that can observe it. */
+   for( i = 0; i < funcInfo->nbOutput; i++ )
+   {
+      TA_GetOutputParameterInfo( handle, i, &outInfo );
+      if( outInfo->type == TA_Output_Real )
+         TA_SetOutputParamRealPtr( paramHolder, i, dummyReal[i] );
+      else
+         TA_SetOutputParamIntegerPtr( paramHolder, i, dummyInt[i] );
+   }
+   ok &= holder_expect( funcInfo->name, "CallFunc with no input bound",
+            TA_CallFunc( paramHolder, 0, 251, &outBegIdx, &outNbElement ),
+            TA_INPUT_NOT_ALL_INITIALIZE );
+   g_holderInputErr++;
+
+   TA_ParamHolderFree( paramHolder );
+
+   /* 5. Inputs bound, outputs not. A fresh holder, because the bitmaps only
+    *    ever clear -- there is no unbind. */
+   retCode = TA_ParamHolderAlloc( handle, &paramHolder );
+   if( retCode != TA_SUCCESS )
+      return TA_ABS_TST_FAIL_PARAMHOLDERALLOC;
+
+   for( i = 0; i < funcInfo->nbInput; i++ )
+   {
+      TA_GetInputParameterInfo( handle, i, &inputInfo );
+      if( inputInfo->type == TA_Input_Real )
+         TA_SetInputParamRealPtr( paramHolder, i, dummyReal[0] );
+      else if( inputInfo->type == TA_Input_Integer )
+         TA_SetInputParamIntegerPtr( paramHolder, i, dummyInt[0] );
+      else
+         TA_SetInputParamPricePtr( paramHolder, i, dummyReal[0], dummyReal[0], dummyReal[0],
+                                   dummyReal[0], dummyReal[0], dummyReal[0] );
+   }
+   ok &= holder_expect( funcInfo->name, "CallFunc with no output bound",
+            TA_CallFunc( paramHolder, 0, 251, &outBegIdx, &outNbElement ),
+            TA_OUTPUT_NOT_ALL_INITIALIZE );
+   g_holderOutputErr++;
+
+   /* 6. Fully bound, but NULL out-params: still TA_BAD_PARAM. */
+   for( i = 0; i < funcInfo->nbOutput; i++ )
+   {
+      TA_GetOutputParameterInfo( handle, i, &outInfo );
+      if( outInfo->type == TA_Output_Real )
+         TA_SetOutputParamRealPtr( paramHolder, i, dummyReal[i] );
+      else
+         TA_SetOutputParamIntegerPtr( paramHolder, i, dummyInt[i] );
+   }
+   ok &= holder_expect( funcInfo->name, "CallFunc(outBegIdx=NULL)",
+            TA_CallFunc( paramHolder, 0, 251, NULL, &outNbElement ), TA_BAD_PARAM );
+   ok &= holder_expect( funcInfo->name, "CallFunc(outNbElement=NULL)",
+            TA_CallFunc( paramHolder, 0, 251, &outBegIdx, NULL ), TA_BAD_PARAM );
+   g_holderNullErr += 2;
+
+   TA_ParamHolderFree( paramHolder );
+
+   return ok ? TA_TEST_PASS : TA_ABS_TST_FAIL_HOLDER_CONTRACT;
+}
+
+static void testHolderErrorContract( const TA_FuncInfo *funcInfo, void *opaqueData )
+{
+   ErrorNumber *errorNumber = (ErrorNumber *)opaqueData;
+   ErrorNumber err = checkHolderErrorContract( funcInfo );
+   /* Keep enumerating on failure so one run reports every offender. */
+   if( err != TA_TEST_PASS && *errorNumber == TA_TEST_PASS )
+      *errorNumber = err;
+}
+
 static ErrorNumber test_default_calls(void)
 {
    ErrorNumber errNumber;
@@ -2727,6 +2971,36 @@ static ErrorNumber test_default_calls(void)
       if( errNumber == TA_TEST_PASS )
          printf( "In-place alias gate: %d (input,output) pairs bitwise-verified\n",
                  ioAliasNbChecked );
+   }
+
+   /* The ParamHolder error contract -- the refusals, not the successes (#164). */
+   if( errNumber == TA_TEST_PASS )
+   {
+      g_holderTypeErr = g_holderIndexErr = g_holderNullErr = 0;
+      g_holderInputErr = g_holderOutputErr = 0;
+      TA_ForEachFunc( testHolderErrorContract, &errNumber );
+
+      /* Each class must have been reached. Every function contributes to every
+       * one of these, so a zero means the sweep stopped building cases, not
+       * that the corpus lacks them. */
+      if( errNumber == TA_TEST_PASS &&
+          ( g_holderTypeErr == 0 || g_holderIndexErr == 0 || g_holderNullErr == 0 ||
+            g_holderInputErr == 0 || g_holderOutputErr == 0 ) )
+      {
+         printf( "Failed: ParamHolder error-contract gate vacuous "
+                 "(type=%lld index=%lld null=%lld input=%lld output=%lld)\n",
+                 g_holderTypeErr, g_holderIndexErr, g_holderNullErr,
+                 g_holderInputErr, g_holderOutputErr );
+         errNumber = TA_ABS_TST_FAIL_HOLDER_CONTRACT_VACUOUS;
+      }
+      if( errNumber == TA_TEST_PASS )
+         printf( "ParamHolder error contract: %lld refusals asserted "
+                 "(%lld wrong-type, %lld bad-index, %lld NULL, %lld unbound-input, "
+                 "%lld unbound-output)\n",
+                 g_holderTypeErr + g_holderIndexErr + g_holderNullErr +
+                 g_holderInputErr + g_holderOutputErr,
+                 g_holderTypeErr, g_holderIndexErr, g_holderNullErr,
+                 g_holderInputErr, g_holderOutputErr );
    }
 
    return errNumber;

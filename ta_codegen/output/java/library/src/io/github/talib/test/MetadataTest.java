@@ -139,11 +139,35 @@ public class MetadataTest {
     /* ------------------------------------------------------------- registry */
 
     static void registryIsComplete() {
-        check(Functions.all().size() >= 160,
-              "registry lists every function (" + Functions.all().size() + ")");
+        // No `>= 160` threshold here: against 168 it would let eight functions
+        // disappear without a word. The EXACT set is pinned against C by
+        // abstract_for_each_func in test_abstract.c, which fails naming the
+        // missing function; what this suite owes is internal coherence, and
+        // every assertion below is per-row, so it cannot be satisfied by a
+        // shortened registry the way a floor can. (#164)
+        check(!Functions.all().isEmpty(), "registry is populated");
         check(Functions.byName("SMA") != null, "byName(SMA)");
         check(Functions.byName("NOSUCHFUNC") == null, "byName of an unknown name is null");
         check(!Functions.groups().isEmpty(), "groups() is populated");
+
+        // groups() and the rows are two views of one thing; they cannot drift
+        // apart without this failing. Counting per group and summing also means
+        // a row whose group() is absent from groups() is unreachable from the
+        // group view and shows up as a shortfall.
+        int inGroups = 0;
+        for (String g : Functions.groups()) {
+            int n = 0;
+            for (FunctionInfo f : Functions.all()) {
+                if (f.group().equals(g)) {
+                    n++;
+                }
+            }
+            check(n > 0, "group '" + g + "' is not empty");
+            inGroups += n;
+        }
+        check(inGroups == Functions.all().size(),
+              "every function's group is listed by groups() (" + inGroups + "/"
+              + Functions.all().size() + ")");
 
         // Every row must be internally coherent.
         for (FunctionInfo f : Functions.all()) {
@@ -299,7 +323,11 @@ public class MetadataTest {
                 check(same, f.name() + " output " + k + ": call-by-name is bit-identical");
             }
         }
-        check(compared >= 160, "compared nearly every function (" + compared + ")");
+        // Exact, not a floor: `>= 160` against 168 let eight functions drop out
+        // of the comparison silently, and a function whose typed overload cannot
+        // be reached is exactly the defect this test exists to find (#164).
+        check(compared == Functions.all().size(),
+              "compared every function (" + compared + "/" + Functions.all().size() + ")");
         check(nonEmpty >= compared - 5,
               "almost every comparison produced values (" + nonEmpty + "/" + compared
               + ") — an all-empty run would compare nothing");
