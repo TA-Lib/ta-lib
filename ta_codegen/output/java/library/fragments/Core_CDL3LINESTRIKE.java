@@ -122,61 +122,6 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdl3LineStrikeUnguardedInternal( int startIdx,
-                                            int endIdx,
-                                            double inOpen[],
-                                            double inHigh[],
-                                            double inLow[],
-                                            double inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-   {
-      double[] NearPeriodTotal = new double[4];
-      int i = 0;
-      int outIdx = 0;
-      int totIdx = 0;
-      int NearTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
-      int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
-      double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
-      lookbackTotal = cdl3LineStrikeLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      NearPeriodTotal[3] = 0;
-      NearPeriodTotal[2] = 0;
-      NearTrailingIdx = startIdx - Near_avgPeriod;
-      i = NearTrailingIdx;
-      while( i < startIdx ) {
-         NearPeriodTotal[3] = NearPeriodTotal[3] + ((Near_rangeType == 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((Near_rangeType == 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((Near_rangeType == 2) ? ((inHigh[i - 3] - inLow[i - 3]) - Math.abs(inClose[i - 3] - inOpen[i - 3])) : 0.0)));
-         NearPeriodTotal[2] = NearPeriodTotal[2] + ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && inOpen[i - 2] >= Math.min(inOpen[i - 3], inClose[i - 3]) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[3] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((Near_rangeType == 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((Near_rangeType == 2) ? ((inHigh[i - 3] - inLow[i - 3]) - Math.abs(inClose[i - 3] - inOpen[i - 3])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && inOpen[i - 2] <= Math.max(inOpen[i - 3], inClose[i - 3]) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[3] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((Near_rangeType == 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((Near_rangeType == 2) ? ((inHigh[i - 3] - inLow[i - 3]) - Math.abs(inClose[i - 3] - inOpen[i - 3])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && inOpen[i - 1] >= Math.min(inOpen[i - 2], inClose[i - 2]) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && inOpen[i - 1] <= Math.max(inOpen[i - 2], inClose[i - 2]) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && inClose[i - 1] > inClose[i - 2] && inClose[i - 2] > inClose[i - 3] && inOpen[i] > inClose[i - 1] && inClose[i] < inOpen[i - 3] || ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && inClose[i - 1] < inClose[i - 2] && inClose[i - 2] < inClose[i - 3] && inOpen[i] < inClose[i - 1] && inClose[i] > inOpen[i - 3]) ) {
-            outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         for( totIdx = 3; totIdx >= 2; totIdx -= 1 ) {
-            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((Near_rangeType == 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((Near_rangeType == 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((Near_rangeType == 2) ? ((inHigh[i - totIdx] - inLow[i - totIdx]) - Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - totIdx] - inOpen[NearTrailingIdx - totIdx])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - totIdx] - inLow[NearTrailingIdx - totIdx]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - totIdx] - inLow[NearTrailingIdx - totIdx]) - Math.abs(inClose[NearTrailingIdx - totIdx] - inOpen[NearTrailingIdx - totIdx])) : 0.0))));
-         }
-         i += 1;
-         NearTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
    RetCode cdl3LineStrikeInternal( int startIdx,
                                    int endIdx,
                                    float inOpen[],
@@ -202,61 +147,6 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdl3LineStrikeLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      NearPeriodTotal[3] = 0;
-      NearPeriodTotal[2] = 0;
-      NearTrailingIdx = startIdx - Near_avgPeriod;
-      i = NearTrailingIdx;
-      while( i < startIdx ) {
-         NearPeriodTotal[3] = NearPeriodTotal[3] + ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 3] - (double)inOpen[i - 3])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 3] - (double)inLow[i - 3]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 3] - (double)inLow[i - 3]) - Math.abs((double)inClose[i - 3] - (double)inOpen[i - 3])) : 0.0)));
-         NearPeriodTotal[2] = NearPeriodTotal[2] + ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (double)inOpen[i - 2] >= Math.min((double)inOpen[i - 3], (double)inClose[i - 3]) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[3] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 3] - (double)inOpen[i - 3])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 3] - (double)inLow[i - 3]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 3] - (double)inLow[i - 3]) - Math.abs((double)inClose[i - 3] - (double)inOpen[i - 3])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && (double)inOpen[i - 2] <= Math.max((double)inOpen[i - 3], (double)inClose[i - 3]) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[3] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 3] - (double)inOpen[i - 3])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 3] - (double)inLow[i - 3]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 3] - (double)inLow[i - 3]) - Math.abs((double)inClose[i - 3] - (double)inOpen[i - 3])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && (double)inOpen[i - 1] >= Math.min((double)inOpen[i - 2], (double)inClose[i - 2]) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && (double)inOpen[i - 1] <= Math.max((double)inOpen[i - 2], (double)inClose[i - 2]) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - (double)inLow[i - 2]) - Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (double)inClose[i - 1] > (double)inClose[i - 2] && (double)inClose[i - 2] > (double)inClose[i - 3] && (double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] < (double)inOpen[i - 3] || (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i - 1] < (double)inClose[i - 2] && (double)inClose[i - 2] < (double)inClose[i - 3] && (double)inOpen[i] < (double)inClose[i - 1] && (double)inClose[i] > (double)inOpen[i - 3]) ) {
-            outInteger[outIdx++] = (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         for( totIdx = 3; totIdx >= 2; totIdx -= 1 ) {
-            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((Near_rangeType == 0) ? (Math.abs((double)inClose[i - totIdx] - (double)inOpen[i - totIdx])) : ((Near_rangeType == 1) ? ((double)inHigh[i - totIdx] - (double)inLow[i - totIdx]) : ((Near_rangeType == 2) ? (((double)inHigh[i - totIdx] - (double)inLow[i - totIdx]) - Math.abs((double)inClose[i - totIdx] - (double)inOpen[i - totIdx])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs((double)inClose[NearTrailingIdx - totIdx] - (double)inOpen[NearTrailingIdx - totIdx])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - totIdx] - (double)inLow[NearTrailingIdx - totIdx]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - totIdx] - (double)inLow[NearTrailingIdx - totIdx]) - Math.abs((double)inClose[NearTrailingIdx - totIdx] - (double)inOpen[NearTrailingIdx - totIdx])) : 0.0))));
-         }
-         i += 1;
-         NearTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode cdl3LineStrikeUnguardedInternal( int startIdx,
-                                            int endIdx,
-                                            float inOpen[],
-                                            float inHigh[],
-                                            float inLow[],
-                                            float inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-   {
-      double[] NearPeriodTotal = new double[4];
-      int i = 0;
-      int outIdx = 0;
-      int totIdx = 0;
-      int NearTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
-      int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
-      double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
       lookbackTotal = cdl3LineStrikeLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -355,40 +245,6 @@
     * past the first candle's open. TA-Lib emits a signed continuation-style
     * signal keyed to the color of the first three candles. +100 = three-white
     * (bullish) strike, -100 = three-black (bearish) strike; traditionally read
-    * as significant only inside a trend matching the first three candles. —
-    * <b>unchecked</b> variant of {@link Core#cdl3LineStrike}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange cdl3LineStrikeUnguarded( int startIdx,
-                                            int endIdx,
-                                            double inOpen[],
-                                            double inHigh[],
-                                            double inLow[],
-                                            double inClose[],
-                                            int outInteger[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      cdl3LineStrikeUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * A four-candle pattern: three same-color candles with consecutively higher
-    * (or lower) closes, each opening within or near the prior real body, then a
-    * fourth opposite-color candle that opens beyond the third close and closes
-    * past the first candle's open. TA-Lib emits a signed continuation-style
-    * signal keyed to the color of the first three candles. +100 = three-white
-    * (bullish) strike, -100 = three-black (bearish) strike; traditionally read
     * as significant only inside a trend matching the first three candles.
     * <p><b>Notes</b>
     * <ul>
@@ -438,41 +294,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("CDL3LINESTRIKE", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * A four-candle pattern: three same-color candles with consecutively higher
-    * (or lower) closes, each opening within or near the prior real body, then a
-    * fourth opposite-color candle that opens beyond the third close and closes
-    * past the first candle's open. TA-Lib emits a signed continuation-style
-    * signal keyed to the color of the first three candles. +100 = three-white
-    * (bullish) strike, -100 = three-black (bearish) strike; traditionally read
-    * as significant only inside a trend matching the first three candles. —
-    * <b>unchecked</b> variant of {@link Core#cdl3LineStrike}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange cdl3LineStrikeUnguarded( int startIdx,
-                                            int endIdx,
-                                            float inOpen[],
-                                            float inHigh[],
-                                            float inLow[],
-                                            float inClose[],
-                                            int outInteger[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      cdl3LineStrikeUnguardedInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

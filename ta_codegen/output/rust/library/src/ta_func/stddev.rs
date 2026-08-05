@@ -183,12 +183,16 @@ impl Core {
         } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.stddev_lookback(optInTimePeriod, optInNbDev);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
         let mut tempReal: f64 = 0.0_f64;
         // Calculate the variance.
-        retCode = self.var_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+        retCode = self.var(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -196,62 +200,6 @@ impl Core {
         // is the standard deviation.
         //
         // Multiply also by the ratio specified.
-        if optInNbDev != 1.0 {
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-            i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal = outReal[i];
-                if !((tempReal) < 1e-14) {
-                    outReal[i] = (tempReal).sqrt() * optInNbDev;
-                } else {
-                    outReal[i] = 0.0 as f64;
-                }
-                i += 1;
-            }
-        } else {
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-            i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal = outReal[i];
-                if !((tempReal) < 1e-14) {
-                    outReal[i] = (tempReal).sqrt();
-                } else {
-                    outReal[i] = 0.0 as f64;
-                }
-                i += 1;
-            }
-        }
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::stddev`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::stddev`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::stddev`].
-    #[inline]
-    pub fn stddev_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInTimePeriod: i32,
-        mut optInNbDev: f64,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut i: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
-        let mut tempReal: f64 = 0.0_f64;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.stddev_lookback(optInTimePeriod, optInNbDev);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        retCode = self.var_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
-        if retCode != RetCode::Success {
-            return retCode;
-        }
         if optInNbDev != 1.0 {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
@@ -371,7 +319,7 @@ impl Core {
         // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.var_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.var_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        retCode = self.var(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -476,7 +424,7 @@ impl Core {
         // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.var_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.var_unguarded(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        retCode = self.var(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }

@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -219,13 +219,12 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
    }
    /* Read the caller array of period, truncate to min/max, and track the
     * range of periods actually used so all later work is sized by the data,
-    * not by optInMaxPeriod. The floor at 1 (and on minUsed's start value) is
-    * inert through the guarded API (optInMinPeriod >= 1); it keeps an
-    * off-contract unguarded call with a period below 1 from indexing the
-    * occurrence tables out of range. The high side is not floored here: an
-    * out-of-range optInMaxPeriod violates the unguarded precondition (every
-    * optional parameter resolved and in-range), and the bucket-table bound
-    * below is what keeps that from becoming undefined behaviour.
+    * not by optInMaxPeriod. The floor at 1 (and on minUsed's start value)
+    * keeps a period below 1 from indexing the occurrence tables out of range.
+    * mavp.yaml caps both periods at [1, 100000], so it is inert through the
+    * API; it is kept because this file is the source of truth for four
+    * backends and it makes the shared source safe by construction rather than
+    * by trusting each backend's prologue to be identical.
     */
    minUsed = optInMaxPeriod;
    if( minUsed < 1 )
@@ -257,16 +256,24 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
          maxUsed = tempInt;
       }
    }
-   /* Bound the bucket table before sizing it. Inert through the guarded API,
-    * where both periods are capped at 100000 (mavp.yaml) so the spread cannot
-    * reach the bound. It exists for an off-contract UNGUARDED call carrying a
-    * near-INT_MAX period, where the size expression below would otherwise
-    * overflow: signed-overflow UB in C, a wrapped negative in Java, a usize
-    * underflow panic in Rust. Written as a plain integer comparison on
-    * purpose — that is the only construct that means the same thing in every
-    * backend. A (size_t) cast would NOT help: this dialect's size_t parses to
-    * the generic index type and renders back as int in both the C and the
-    * Java output (it is a Rust-only annotation).
+   /* Bound the bucket table before sizing it.
+    *
+    * Unreachable through the API: mavp.yaml caps both periods at 100000, so
+    * the widest spread expressible is 99999. It is kept because it protects a
+    * memory-safety property and this file is the source of truth for four
+    * backends — without it the size expression below can overflow (signed
+    * overflow in C, a wrapped negative in Java, a usize underflow panic in
+    * Rust), and the four bodies would rest on each backend's prologue being
+    * byte-for-byte equivalent, which nothing here states or checks. One
+    * integer comparison per call is a cheap way not to depend on that.
+    *
+    * Written as a plain integer comparison on purpose — that is the only
+    * construct that means the same thing in every backend. A (size_t) cast
+    * would NOT help: this dialect's size_t parses to the generic index type
+    * and renders back as int in both the C and the Java output (it is a
+    * Rust-only annotation).
+    *
+    * If you delete this, delete the clamps and the comments together.
     */
    if( maxUsed < minUsed || maxUsed - minUsed > 100000 )
    {
@@ -306,7 +313,7 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       /* Single distinct period: one MA pass, written straight into the
        * destination buffer. Nothing to group or copy.
        */
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
+      retCode = TA_MA(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
       if( retCode != TA_SUCCESS )
       {
          free(localOutputArray);
@@ -372,7 +379,7 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
             firstOccurrence = sortedIdx[bucketStart];
             lastOccurrence = sortedIdx[bucketEnd - 1];
             /* Calculation of the MA required. */
-            retCode = TA_MA_Unguarded(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
+            retCode = TA_MA(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
             if( retCode != TA_SUCCESS )
             {
                free(localOutputArray);
@@ -420,250 +427,6 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       free(localFinalArray);
    }
    /* Done. Inform the caller of the success. */
-   *outBegIdx= startIdx;
-   *outNBElement= outputSize;
-   return TA_SUCCESS;
-}
-
-TA_LIB_API TA_RetCode TA_MAVP_Unguarded( int    startIdx,
-                                         int    endIdx,
-                                         const double inReal[],
-                                         const double inPeriods[],
-                                         int optInMinPeriod,
-                                         int optInMaxPeriod,
-                                         TA_MAType optInMAType,
-                                         int          *outBegIdx,
-                                         int          *outNBElement,
-                                         double        outReal[] )
-{
-   int i;
-   int lookbackTotal;
-   int outputSize;
-   int firstOut;
-   int tempInt;
-   int curPeriod;
-   int firstOccurrence;
-   int lastOccurrence;
-   int bucketStart;
-   int bucketEnd;
-   int minUsed;
-   int maxUsed;
-   int *localPeriodArray;
-   int *sortedIdx;
-   int *bucketOfs;
-   double *localOutputArray;
-   double *localFinalArray;
-   int finalIsAllocated;
-   int localBegIdx;
-   int localNbElement;
-   TA_RetCode retCode;
-
-   if( optInMinPeriod > optInMaxPeriod )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_BAD_PARAM;
-   }
-   lookbackTotal = TA_MA_Lookback(optInMaxPeriod,optInMAType);
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   if( lookbackTotal > startIdx )
-   {
-      firstOut = lookbackTotal;
-   } else 
-   {
-      firstOut = startIdx;
-   }
-   if( firstOut > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outputSize = endIdx - firstOut + 1;
-   localOutputArray = malloc(outputSize * sizeof(double));
-   localPeriodArray = malloc(outputSize * sizeof(int));
-   sortedIdx = malloc(outputSize * sizeof(int));
-   if( localOutputArray == NULL || localPeriodArray == NULL || sortedIdx == NULL )
-   {
-      free(localOutputArray);
-      free(localPeriodArray);
-      free(sortedIdx);
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_ALLOC_ERR;
-   }
-   finalIsAllocated = 0;
-   if( outReal == inReal )
-   {
-      finalIsAllocated = 1;
-      localFinalArray = malloc(outputSize * sizeof(double));
-      if( localFinalArray == NULL )
-      {
-         free(localOutputArray);
-         free(localPeriodArray);
-         free(sortedIdx);
-         *outBegIdx= 0;
-         *outNBElement= 0;
-         return TA_ALLOC_ERR;
-      }
-   } else 
-   {
-      localFinalArray = outReal;
-   }
-   minUsed = optInMaxPeriod;
-   if( minUsed < 1 )
-   {
-      minUsed = 1;
-   }
-   maxUsed = 1;
-   for( i = 0; i < outputSize; i += 1 )
-   {
-      tempInt = (int)inPeriods[startIdx + i];
-      if( tempInt < optInMinPeriod )
-      {
-         tempInt = optInMinPeriod;
-      } else if( tempInt > optInMaxPeriod )
-      {
-         tempInt = optInMaxPeriod;
-      }
-      if( tempInt < 1 )
-      {
-         tempInt = 1;
-      }
-      localPeriodArray[i] = tempInt;
-      if( tempInt < minUsed )
-      {
-         minUsed = tempInt;
-      }
-      if( tempInt > maxUsed )
-      {
-         maxUsed = tempInt;
-      }
-   }
-   if( maxUsed < minUsed || maxUsed - minUsed > 100000 )
-   {
-      free(localOutputArray);
-      free(localPeriodArray);
-      free(sortedIdx);
-      if( finalIsAllocated )
-      {
-         free(localFinalArray);
-      }
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_BAD_PARAM;
-   }
-   bucketOfs = malloc((maxUsed - minUsed + 2) * sizeof(int));
-   if( bucketOfs == NULL )
-   {
-      free(localOutputArray);
-      free(localPeriodArray);
-      free(sortedIdx);
-      if( finalIsAllocated )
-      {
-         free(localFinalArray);
-      }
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_ALLOC_ERR;
-   }
-   if( minUsed == maxUsed )
-   {
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
-      if( retCode != TA_SUCCESS )
-      {
-         free(localOutputArray);
-         free(localPeriodArray);
-         free(sortedIdx);
-         free(bucketOfs);
-         if( finalIsAllocated )
-         {
-            free(localFinalArray);
-         }
-         *outBegIdx= 0;
-         *outNBElement= 0;
-         return retCode;
-      }
-   } else 
-   {
-      for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 )
-      {
-         bucketOfs[curPeriod - minUsed] = 0;
-      }
-      for( i = 0; i < outputSize; i += 1 )
-      {
-         tempInt = localPeriodArray[i];
-         bucketOfs[tempInt + 1 - minUsed] = bucketOfs[tempInt + 1 - minUsed] + 1;
-      }
-      for( curPeriod = minUsed; curPeriod <= maxUsed; curPeriod += 1 )
-      {
-         bucketOfs[curPeriod + 1 - minUsed] = bucketOfs[curPeriod + 1 - minUsed] + bucketOfs[curPeriod - minUsed];
-      }
-      for( i = 0; i < outputSize; i += 1 )
-      {
-         tempInt = localPeriodArray[i];
-         sortedIdx[bucketOfs[tempInt - minUsed]] = i;
-         bucketOfs[tempInt - minUsed] = bucketOfs[tempInt - minUsed] + 1;
-      }
-      bucketStart = 0;
-      for( curPeriod = minUsed; curPeriod <= maxUsed; curPeriod += 1 )
-      {
-         bucketEnd = bucketOfs[curPeriod - minUsed];
-         if( bucketEnd > bucketStart )
-         {
-            firstOccurrence = sortedIdx[bucketStart];
-            lastOccurrence = sortedIdx[bucketEnd - 1];
-            retCode = TA_MA_Unguarded(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
-            if( retCode != TA_SUCCESS )
-            {
-               free(localOutputArray);
-               free(localPeriodArray);
-               free(sortedIdx);
-               free(bucketOfs);
-               if( finalIsAllocated )
-               {
-                  free(localFinalArray);
-               }
-               *outBegIdx= 0;
-               *outNBElement= 0;
-               return retCode;
-            }
-            if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart )
-            {
-               memcpy(&localFinalArray[firstOccurrence],&localOutputArray[firstOccurrence],(bucketEnd - bucketStart) * sizeof(double));
-            } else 
-            {
-               for( i = bucketStart; i < bucketEnd; i += 1 )
-               {
-                  tempInt = sortedIdx[i];
-                  localFinalArray[tempInt] = localOutputArray[tempInt];
-               }
-            }
-         }
-         bucketStart = bucketEnd;
-      }
-   }
-   if( localFinalArray != outReal )
-   {
-      memcpy(outReal,localFinalArray,outputSize * sizeof(double));
-   }
-   free(localOutputArray);
-   free(localPeriodArray);
-   free(sortedIdx);
-   free(bucketOfs);
-   if( finalIsAllocated )
-   {
-      free(localFinalArray);
-   }
    *outBegIdx= startIdx;
    *outNBElement= outputSize;
    return TA_SUCCESS;
@@ -844,7 +607,7 @@ TA_RetCode TA_S_MAVP( int    startIdx,
    }
    if( minUsed == maxUsed )
    {
-      retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
+      retCode = TA_S_MA(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
       if( retCode != TA_SUCCESS )
       {
          free(localOutputArray);
@@ -888,251 +651,7 @@ TA_RetCode TA_S_MAVP( int    startIdx,
          {
             firstOccurrence = sortedIdx[bucketStart];
             lastOccurrence = sortedIdx[bucketEnd - 1];
-            retCode = TA_S_MA_Unguarded(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
-            if( retCode != TA_SUCCESS )
-            {
-               free(localOutputArray);
-               free(localPeriodArray);
-               free(sortedIdx);
-               free(bucketOfs);
-               if( finalIsAllocated )
-               {
-                  free(localFinalArray);
-               }
-               *outBegIdx= 0;
-               *outNBElement= 0;
-               return retCode;
-            }
-            if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart )
-            {
-               memcpy(&localFinalArray[firstOccurrence],&localOutputArray[firstOccurrence],(bucketEnd - bucketStart) * sizeof(double));
-            } else 
-            {
-               for( i = bucketStart; i < bucketEnd; i += 1 )
-               {
-                  tempInt = sortedIdx[i];
-                  localFinalArray[tempInt] = localOutputArray[tempInt];
-               }
-            }
-         }
-         bucketStart = bucketEnd;
-      }
-   }
-   if( localFinalArray != outReal )
-   {
-      memcpy(outReal,localFinalArray,outputSize * sizeof(double));
-   }
-   free(localOutputArray);
-   free(localPeriodArray);
-   free(sortedIdx);
-   free(bucketOfs);
-   if( finalIsAllocated )
-   {
-      free(localFinalArray);
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outputSize;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_MAVP_Unguarded( int    startIdx,
-                                int    endIdx,
-                                const float inReal[],
-                                const float inPeriods[],
-                                int optInMinPeriod,
-                                int optInMaxPeriod,
-                                TA_MAType optInMAType,
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                double        outReal[] )
-{
-   int i;
-   int lookbackTotal;
-   int outputSize;
-   int firstOut;
-   int tempInt;
-   int curPeriod;
-   int firstOccurrence;
-   int lastOccurrence;
-   int bucketStart;
-   int bucketEnd;
-   int minUsed;
-   int maxUsed;
-   int *localPeriodArray;
-   int *sortedIdx;
-   int *bucketOfs;
-   double *localOutputArray;
-   double *localFinalArray;
-   int finalIsAllocated;
-   int localBegIdx;
-   int localNbElement;
-   TA_RetCode retCode;
-
-   if( optInMinPeriod > optInMaxPeriod )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_BAD_PARAM;
-   }
-   lookbackTotal = TA_MA_Lookback(optInMaxPeriod,optInMAType);
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   if( lookbackTotal > startIdx )
-   {
-      firstOut = lookbackTotal;
-   } else 
-   {
-      firstOut = startIdx;
-   }
-   if( firstOut > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outputSize = endIdx - firstOut + 1;
-   localOutputArray = malloc(outputSize * sizeof(double));
-   localPeriodArray = malloc(outputSize * sizeof(int));
-   sortedIdx = malloc(outputSize * sizeof(int));
-   if( localOutputArray == NULL || localPeriodArray == NULL || sortedIdx == NULL )
-   {
-      free(localOutputArray);
-      free(localPeriodArray);
-      free(sortedIdx);
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_ALLOC_ERR;
-   }
-   finalIsAllocated = 0;
-   if( 0 )
-   {
-      finalIsAllocated = 1;
-      localFinalArray = malloc(outputSize * sizeof(double));
-      if( localFinalArray == NULL )
-      {
-         free(localOutputArray);
-         free(localPeriodArray);
-         free(sortedIdx);
-         *outBegIdx= 0;
-         *outNBElement= 0;
-         return TA_ALLOC_ERR;
-      }
-   } else 
-   {
-      localFinalArray = outReal;
-   }
-   minUsed = optInMaxPeriod;
-   if( minUsed < 1 )
-   {
-      minUsed = 1;
-   }
-   maxUsed = 1;
-   for( i = 0; i < outputSize; i += 1 )
-   {
-      tempInt = (int)(double)inPeriods[startIdx + i];
-      if( tempInt < optInMinPeriod )
-      {
-         tempInt = optInMinPeriod;
-      } else if( tempInt > optInMaxPeriod )
-      {
-         tempInt = optInMaxPeriod;
-      }
-      if( tempInt < 1 )
-      {
-         tempInt = 1;
-      }
-      localPeriodArray[i] = tempInt;
-      if( tempInt < minUsed )
-      {
-         minUsed = tempInt;
-      }
-      if( tempInt > maxUsed )
-      {
-         maxUsed = tempInt;
-      }
-   }
-   if( maxUsed < minUsed || maxUsed - minUsed > 100000 )
-   {
-      free(localOutputArray);
-      free(localPeriodArray);
-      free(sortedIdx);
-      if( finalIsAllocated )
-      {
-         free(localFinalArray);
-      }
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_BAD_PARAM;
-   }
-   bucketOfs = malloc((maxUsed - minUsed + 2) * sizeof(int));
-   if( bucketOfs == NULL )
-   {
-      free(localOutputArray);
-      free(localPeriodArray);
-      free(sortedIdx);
-      if( finalIsAllocated )
-      {
-         free(localFinalArray);
-      }
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_ALLOC_ERR;
-   }
-   if( minUsed == maxUsed )
-   {
-      retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
-      if( retCode != TA_SUCCESS )
-      {
-         free(localOutputArray);
-         free(localPeriodArray);
-         free(sortedIdx);
-         free(bucketOfs);
-         if( finalIsAllocated )
-         {
-            free(localFinalArray);
-         }
-         *outBegIdx= 0;
-         *outNBElement= 0;
-         return retCode;
-      }
-   } else 
-   {
-      for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 )
-      {
-         bucketOfs[curPeriod - minUsed] = 0;
-      }
-      for( i = 0; i < outputSize; i += 1 )
-      {
-         tempInt = localPeriodArray[i];
-         bucketOfs[tempInt + 1 - minUsed] = bucketOfs[tempInt + 1 - minUsed] + 1;
-      }
-      for( curPeriod = minUsed; curPeriod <= maxUsed; curPeriod += 1 )
-      {
-         bucketOfs[curPeriod + 1 - minUsed] = bucketOfs[curPeriod + 1 - minUsed] + bucketOfs[curPeriod - minUsed];
-      }
-      for( i = 0; i < outputSize; i += 1 )
-      {
-         tempInt = localPeriodArray[i];
-         sortedIdx[bucketOfs[tempInt - minUsed]] = i;
-         bucketOfs[tempInt - minUsed] = bucketOfs[tempInt - minUsed] + 1;
-      }
-      bucketStart = 0;
-      for( curPeriod = minUsed; curPeriod <= maxUsed; curPeriod += 1 )
-      {
-         bucketEnd = bucketOfs[curPeriod - minUsed];
-         if( bucketEnd > bucketStart )
-         {
-            firstOccurrence = sortedIdx[bucketStart];
-            lastOccurrence = sortedIdx[bucketEnd - 1];
-            retCode = TA_S_MA_Unguarded(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
+            retCode = TA_S_MA(startIdx,startIdx + lastOccurrence,inReal,curPeriod,optInMAType,&localBegIdx,&localNbElement,localOutputArray);
             if( retCode != TA_SUCCESS )
             {
                free(localOutputArray);

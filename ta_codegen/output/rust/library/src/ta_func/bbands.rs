@@ -302,6 +302,12 @@ impl Core {
         if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
             return RetCode::BadParam;
         }
+        let _assertLb = self.bbands_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outRealUpperBand.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outRealMiddleBand.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outRealLowerBand.len());
         let mut startIdx = startIdx;
         let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
@@ -458,7 +464,7 @@ impl Core {
         tempBuffer1 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         tempBuffer2 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         // Calculate the middle band moving average.
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+        retCode = self.ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return retCode;
@@ -466,7 +472,7 @@ impl Core {
         // Remember where the moving average begins, to realign it below.
         maBegIdx = ((*outBegIdx) as usize) as usize;
         // Calculate the Standard Deviation into tempBuffer2.
-        retCode = self.stddev_unguarded(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
+        retCode = self.stddev(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
         if retCode != RetCode::Success {
             (*outNBElement) = 0;
             return retCode;
@@ -491,247 +497,6 @@ impl Core {
             outRealMiddleBand[_di.._di + _n].copy_from_slice(&tempBuffer1[_si.._si + _n]);
         };
         // Now do a tight loop to calculate the upper/lower band at the same time.
-        if optInNbDevUp == optInNbDevDn {
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-            i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal = tempBuffer2[i] * optInNbDevUp;
-                tempReal2 = outRealMiddleBand[i];
-                outRealUpperBand[i] = tempReal2 + tempReal;
-                outRealLowerBand[i] = tempReal2 - tempReal;
-                i += 1;
-            }
-        } else {
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-            i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal2 = outRealMiddleBand[i];
-                outRealUpperBand[i] = (((tempBuffer2[i] as f64).mul_add(optInNbDevUp, tempReal2)) as f64);
-                outRealLowerBand[i] = ((tempReal2 - tempBuffer2[i] * optInNbDevDn) as f64);
-                i += 1;
-            }
-        }
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::bbands`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::bbands`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::bbands`].
-    #[inline]
-    pub fn bbands_unguarded(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        optInTimePeriod: i32,
-        optInNbDevUp: f64,
-        optInNbDevDn: f64,
-        optInMAType: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outRealUpperBand: &mut [f64],
-        outRealMiddleBand: &mut [f64],
-        outRealLowerBand: &mut [f64],
-    ) -> RetCode {
-        #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, bbands_unguarded_fma, bbands_unguarded_impl, (startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand));
-        #[cfg(not(target_arch = "x86_64"))]
-        self.bbands_unguarded_impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
-    }
-    #[cfg(target_arch = "x86_64")]
-    #[target_feature(enable = "fma")]
-    fn bbands_unguarded_fma(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        optInTimePeriod: i32,
-        optInNbDevUp: f64,
-        optInNbDevDn: f64,
-        optInMAType: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outRealUpperBand: &mut [f64],
-        outRealMiddleBand: &mut [f64],
-        outRealLowerBand: &mut [f64],
-    ) -> RetCode {
-        self.bbands_unguarded_impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
-    }
-    #[inline(always)]
-    fn bbands_unguarded_impl(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInTimePeriod: i32,
-        mut optInNbDevUp: f64,
-        mut optInNbDevDn: f64,
-        mut optInMAType: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outRealUpperBand: &mut [f64],
-        outRealMiddleBand: &mut [f64],
-        outRealLowerBand: &mut [f64],
-    ) -> RetCode {
-        let mut retCode: RetCode = RetCode::Success;
-        let mut i: usize = 0_usize;
-        let mut maBegIdx: usize = 0_usize;
-        let mut shiftIdx: usize = 0_usize;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut tempReal2: f64 = 0.0_f64;
-        let mut tempBuffer1: Vec<f64> = Vec::new();
-        let mut tempBuffer2: Vec<f64> = Vec::new();
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.bbands_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outRealUpperBand.len());
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outRealMiddleBand.len());
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outRealLowerBand.len());
-        if ((optInMAType) as usize) == 0 {
-            let mut maTotal: f64 = 0.0_f64;
-            let mut shift: f64 = 0.0_f64;
-            let mut varTotal1: f64 = 0.0_f64;
-            let mut varTotal2: f64 = 0.0_f64;
-            let mut meanValue1: f64 = 0.0_f64;
-            let mut variance: f64 = 0.0_f64;
-            let mut _invPeriod: f64 = 0.0_f64;
-            let mut _tempReal: f64 = 0.0_f64;
-            let mut _i: usize = 0_usize;
-            let mut _j: usize = 0_usize;
-            let mut _outIdx: usize = 0_usize;
-            let mut _trailingIdx: usize = 0_usize;
-            let mut _windowStart: usize = 0_usize;
-            let mut _lookbackTotal: usize = 0_usize;
-            let mut _barsSinceReseed: usize = 0_usize;
-            _lookbackTotal = (optInTimePeriod - 1) as usize;
-            if startIdx < _lookbackTotal {
-                startIdx = _lookbackTotal;
-            }
-            if startIdx > endIdx {
-                (*outBegIdx) = 0;
-                (*outNBElement) = 0;
-                return RetCode::Success;
-            }
-            _invPeriod = 1.0 / (optInTimePeriod as f64);
-            _trailingIdx = startIdx - _lookbackTotal;
-            shift = inReal[_trailingIdx];
-            maTotal = 0.0;
-            varTotal1 = 0.0;
-            varTotal2 = 0.0;
-            // for( _j = _trailingIdx; _j < startIdx; _j += 1 )
-            _j = _trailingIdx;
-            while _j < startIdx {
-                maTotal += inReal[_j];
-                _tempReal = inReal[_j] - shift;
-                varTotal1 += _tempReal;
-                _tempReal *= _tempReal;
-                varTotal2 += _tempReal;
-                _j += 1;
-            }
-            _i = startIdx;
-            _outIdx = 0;
-            _barsSinceReseed = (32 * optInTimePeriod) as usize;
-            loop {
-                maTotal += inReal[_i];
-                _tempReal = inReal[_i] - shift;
-                varTotal1 += _tempReal;
-                _tempReal *= _tempReal;
-                varTotal2 += _tempReal;
-                meanValue1 = varTotal1 * _invPeriod;
-                variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-                outRealMiddleBand[_outIdx] = maTotal / ((optInTimePeriod) as f64);
-                maTotal -= inReal[_trailingIdx];
-                _tempReal = inReal[_trailingIdx] - shift;
-                varTotal1 -= _tempReal;
-                _tempReal *= _tempReal;
-                varTotal2 -= _tempReal;
-                _trailingIdx += 1;
-                _barsSinceReseed -= 1;
-                if variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 {
-                    _barsSinceReseed = (32 * optInTimePeriod) as usize;
-                    _windowStart = _i - _lookbackTotal;
-                    _tempReal = 0.0;
-                    for _j in (_windowStart as usize)..(_i as usize) + 1 {
-                        _tempReal += inReal[_j];
-                    }
-                    _j = (_i as usize) + 1;
-                    shift = _tempReal * _invPeriod;
-                    varTotal1 = 0.0;
-                    varTotal2 = 0.0;
-                    for _j in (_windowStart as usize)..(_i as usize) + 1 {
-                        _tempReal = inReal[_j] - shift;
-                        varTotal1 += _tempReal;
-                        _tempReal *= _tempReal;
-                        varTotal2 += _tempReal;
-                    }
-                    _j = (_i as usize) + 1;
-                    meanValue1 = varTotal1 * _invPeriod;
-                    variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-                    _tempReal = inReal[_windowStart] - shift;
-                    varTotal1 -= _tempReal;
-                    _tempReal *= _tempReal;
-                    varTotal2 -= _tempReal;
-                }
-                if !((variance) < 1e-14) {
-                    outRealUpperBand[_outIdx] = (variance).sqrt();
-                } else {
-                    outRealUpperBand[_outIdx] = 0.0;
-                }
-                _outIdx += 1;
-                _i += 1;
-                if !(_i <= endIdx) { break; }
-            }
-            (*outNBElement) = _outIdx;
-            (*outBegIdx) = startIdx;
-            if optInNbDevUp == optInNbDevDn {
-                // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-                i = 0;
-                while i < ((((*outNBElement) as usize)) as usize) {
-                    tempReal = outRealUpperBand[i] * optInNbDevUp;
-                    tempReal2 = outRealMiddleBand[i];
-                    outRealUpperBand[i] = tempReal2 + tempReal;
-                    outRealLowerBand[i] = tempReal2 - tempReal;
-                    i += 1;
-                }
-            } else {
-                // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-                i = 0;
-                while i < ((((*outNBElement) as usize)) as usize) {
-                    tempReal = outRealUpperBand[i];
-                    tempReal2 = outRealMiddleBand[i];
-                    outRealUpperBand[i] = (tempReal as f64).mul_add(optInNbDevUp, tempReal2);
-                    outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
-                    i += 1;
-                }
-            }
-            return RetCode::Success;
-        }
-        tempBuffer1 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
-        tempBuffer2 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        maBegIdx = ((*outBegIdx) as usize) as usize;
-        retCode = self.stddev_unguarded(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
-        if retCode != RetCode::Success {
-            (*outNBElement) = 0;
-            return retCode;
-        }
-        if ((((*outBegIdx) as usize)) as usize) > maBegIdx {
-            shiftIdx = ((((*outBegIdx) as usize)) as usize) - maBegIdx;
-        } else {
-            shiftIdx = 0;
-        }
-        {
-            let _n = ((*outNBElement) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (shiftIdx) as usize;
-            outRealMiddleBand[_di.._di + _n].copy_from_slice(&tempBuffer1[_si.._si + _n]);
-        };
         if optInNbDevUp == optInNbDevDn {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
@@ -874,7 +639,7 @@ impl Core {
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.ma_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInMAType)?;
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+        retCode = self.ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return Err(retCode);
@@ -885,7 +650,7 @@ impl Core {
         // Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub1, _) = self.stddev_open_internal(&inReal[..((endIdx) as usize) + 1], (((*outBegIdx) as usize) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.stddev_unguarded(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
+        retCode = self.stddev(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
         if retCode != RetCode::Success {
             (*outNBElement) = 0;
             return Err(retCode);
@@ -1037,7 +802,7 @@ impl Core {
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.ma_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInMAType)?;
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+        retCode = self.ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return Err(retCode);
@@ -1048,7 +813,7 @@ impl Core {
         // Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub1, _) = self.stddev_open_internal(&inReal[..((endIdx) as usize) + 1], (((*outBegIdx) as usize) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.stddev_unguarded(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
+        retCode = self.stddev(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
         if retCode != RetCode::Success {
             (*outNBElement) = 0;
             return Err(retCode);

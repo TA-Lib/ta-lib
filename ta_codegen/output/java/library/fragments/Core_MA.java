@@ -123,97 +123,37 @@
       switch( optInMAType )
       {
       case Sma:
-         retCode = smaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = smaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Ema:
-         retCode = emaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = emaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Wma:
-         retCode = wmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = wmaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Dema:
-         retCode = demaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = demaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Tema:
-         retCode = temaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = temaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Trima:
-         retCode = trimaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = trimaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Kama:
-         retCode = kamaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = kamaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Mama:
          /* The optInTimePeriod is ignored. FAMA is a nullable output
           * (issue #125): pass NULL to compute only the MAMA line into outReal.
           */
-         retCode = mamaUnguardedInternal(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         retCode = mamaInternal(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case T3:
-         retCode = t3UnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+         retCode = t3Internal(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
          break;
       case Hma:
-         retCode = hmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      default:
-         retCode = RetCode.BadParam;
-         break;
-      }
-      return retCode ;
-   }
-   RetCode movingAverageUnguardedInternal( int startIdx,
-                                           int endIdx,
-                                           double inReal[],
-                                           int optInTimePeriod,
-                                           MAType optInMAType,
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           double outReal[] )
-   {
-      RetCode retCode;
-      int nbElement = 0;
-      int outIdx = 0;
-      int todayIdx = 0;
-      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
-         nbElement = endIdx - startIdx + 1;
-         outNBElement.value = nbElement;
-         for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
-            outReal[outIdx] = inReal[todayIdx];
-         }
-         outBegIdx.value = startIdx;
-         return RetCode.Success ;
-      }
-      switch( optInMAType )
-      {
-      case Sma:
-         retCode = smaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Ema:
-         retCode = emaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Wma:
-         retCode = wmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Dema:
-         retCode = demaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Tema:
-         retCode = temaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Trima:
-         retCode = trimaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Kama:
-         retCode = kamaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Mama:
-         retCode = mamaUnguardedInternal(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
-         break;
-      case T3:
-         retCode = t3UnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
-         break;
-      case Hma:
-         retCode = hmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = hmaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       default:
          retCode = RetCode.BadParam;
@@ -257,94 +197,34 @@
       switch( optInMAType )
       {
       case Sma:
-         retCode = smaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = smaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Ema:
-         retCode = emaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = emaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Wma:
-         retCode = wmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = wmaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Dema:
-         retCode = demaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = demaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Tema:
-         retCode = temaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = temaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Trima:
-         retCode = trimaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = trimaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Kama:
-         retCode = kamaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = kamaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       case Mama:
-         retCode = mamaUnguardedInternal(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         retCode = mamaInternal(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case T3:
-         retCode = t3UnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+         retCode = t3Internal(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
          break;
       case Hma:
-         retCode = hmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      default:
-         retCode = RetCode.BadParam;
-         break;
-      }
-      return retCode ;
-   }
-   RetCode movingAverageUnguardedInternal( int startIdx,
-                                           int endIdx,
-                                           float inReal[],
-                                           int optInTimePeriod,
-                                           MAType optInMAType,
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           double outReal[] )
-   {
-      RetCode retCode;
-      int nbElement = 0;
-      int outIdx = 0;
-      int todayIdx = 0;
-      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
-         nbElement = endIdx - startIdx + 1;
-         outNBElement.value = nbElement;
-         for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
-            outReal[outIdx] = (double)inReal[todayIdx];
-         }
-         outBegIdx.value = startIdx;
-         return RetCode.Success ;
-      }
-      switch( optInMAType )
-      {
-      case Sma:
-         retCode = smaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Ema:
-         retCode = emaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Wma:
-         retCode = wmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Dema:
-         retCode = demaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Tema:
-         retCode = temaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Trima:
-         retCode = trimaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Kama:
-         retCode = kamaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-         break;
-      case Mama:
-         retCode = mamaUnguardedInternal(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
-         break;
-      case T3:
-         retCode = t3UnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
-         break;
-      case Hma:
-         retCode = hmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         retCode = hmaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
          break;
       default:
          retCode = RetCode.BadParam;
@@ -418,35 +298,6 @@
    /**
     * Generic moving-average dispatcher that forwards the job to a concrete MA
     * implementation selected by optInMAType. Single uniform interface over all
-    * TA-Lib moving averages. — <b>unchecked</b> variant of
-    * {@link Core#movingAverage}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange movingAverageUnguarded( int startIdx,
-                                           int endIdx,
-                                           double inReal[],
-                                           int optInTimePeriod,
-                                           MAType optInMAType,
-                                           double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Generic moving-average dispatcher that forwards the job to a concrete MA
-    * implementation selected by optInMAType. Single uniform interface over all
     * TA-Lib moving averages.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -508,36 +359,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("MA", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Generic moving-average dispatcher that forwards the job to a concrete MA
-    * implementation selected by optInMAType. Single uniform interface over all
-    * TA-Lib moving averages. — <b>unchecked</b> variant of
-    * {@link Core#movingAverage}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange movingAverageUnguarded( int startIdx,
-                                           int endIdx,
-                                           float inReal[],
-                                           int optInTimePeriod,
-                                           MAType optInMAType,
-                                           double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

@@ -171,92 +171,6 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode accbandsUnguardedInternal( int startIdx,
-                                      int endIdx,
-                                      double inHigh[],
-                                      double inLow[],
-                                      double inClose[],
-                                      int optInTimePeriod,
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      double outRealUpperBand[],
-                                      double outRealMiddleBand[],
-                                      double outRealLowerBand[] )
-   {
-      double periodTotalUpper = 0;
-      double periodTotalMiddle = 0;
-      double periodTotalLower = 0;
-      double tempUpper = 0;
-      double tempMiddle = 0;
-      double tempLower = 0;
-      double tempReal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int lookbackTotal = 0;
-      lookbackTotal = smaLookback(optInTimePeriod);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      periodTotalUpper = 0.0;
-      periodTotalMiddle = 0.0;
-      periodTotalLower = 0.0;
-      trailingIdx = startIdx - lookbackTotal;
-      i = trailingIdx;
-      while( i < startIdx ) {
-         tempReal = inHigh[i] + inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
-            periodTotalUpper += inHigh[i] * (1 + tempReal);
-            periodTotalLower += inLow[i] * (1 - tempReal);
-         } else {
-            periodTotalUpper += inHigh[i];
-            periodTotalLower += inLow[i];
-         }
-         periodTotalMiddle += inClose[i];
-         i = i + 1;
-      }
-      outIdx = 0;
-      while( i <= endIdx ) {
-         tempReal = inHigh[i] + inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
-            periodTotalUpper += inHigh[i] * (1 + tempReal);
-            periodTotalLower += inLow[i] * (1 - tempReal);
-         } else {
-            periodTotalUpper += inHigh[i];
-            periodTotalLower += inLow[i];
-         }
-         periodTotalMiddle += inClose[i];
-         i = i + 1;
-         tempUpper = periodTotalUpper;
-         tempMiddle = periodTotalMiddle;
-         tempLower = periodTotalLower;
-         tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            tempReal = 4 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
-            periodTotalUpper -= inHigh[trailingIdx] * (1 + tempReal);
-            periodTotalLower -= inLow[trailingIdx] * (1 - tempReal);
-         } else {
-            periodTotalUpper -= inHigh[trailingIdx];
-            periodTotalLower -= inLow[trailingIdx];
-         }
-         periodTotalMiddle -= inClose[trailingIdx];
-         trailingIdx = trailingIdx + 1;
-         outRealUpperBand[outIdx] = tempUpper / (double)optInTimePeriod;
-         outRealMiddleBand[outIdx] = tempMiddle / (double)optInTimePeriod;
-         outRealLowerBand[outIdx] = tempLower / (double)optInTimePeriod;
-         outIdx = outIdx + 1;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
    RetCode accbandsInternal( int startIdx,
                              int endIdx,
                              float inHigh[],
@@ -294,92 +208,6 @@
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
          return RetCode.BadParam ;
       }
-      lookbackTotal = smaLookback(optInTimePeriod);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      periodTotalUpper = 0.0;
-      periodTotalMiddle = 0.0;
-      periodTotalLower = 0.0;
-      trailingIdx = startIdx - lookbackTotal;
-      i = trailingIdx;
-      while( i < startIdx ) {
-         tempReal = (double)inHigh[i] + (double)inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
-            periodTotalUpper += (double)inHigh[i] * (1 + tempReal);
-            periodTotalLower += (double)inLow[i] * (1 - tempReal);
-         } else {
-            periodTotalUpper += (double)inHigh[i];
-            periodTotalLower += (double)inLow[i];
-         }
-         periodTotalMiddle += (double)inClose[i];
-         i = i + 1;
-      }
-      outIdx = 0;
-      while( i <= endIdx ) {
-         tempReal = (double)inHigh[i] + (double)inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            tempReal = 4 * ((double)inHigh[i] - (double)inLow[i]) / tempReal;
-            periodTotalUpper += (double)inHigh[i] * (1 + tempReal);
-            periodTotalLower += (double)inLow[i] * (1 - tempReal);
-         } else {
-            periodTotalUpper += (double)inHigh[i];
-            periodTotalLower += (double)inLow[i];
-         }
-         periodTotalMiddle += (double)inClose[i];
-         i = i + 1;
-         tempUpper = periodTotalUpper;
-         tempMiddle = periodTotalMiddle;
-         tempLower = periodTotalLower;
-         tempReal = (double)inHigh[trailingIdx] + (double)inLow[trailingIdx];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            tempReal = 4 * ((double)inHigh[trailingIdx] - (double)inLow[trailingIdx]) / tempReal;
-            periodTotalUpper -= (double)inHigh[trailingIdx] * (1 + tempReal);
-            periodTotalLower -= (double)inLow[trailingIdx] * (1 - tempReal);
-         } else {
-            periodTotalUpper -= (double)inHigh[trailingIdx];
-            periodTotalLower -= (double)inLow[trailingIdx];
-         }
-         periodTotalMiddle -= (double)inClose[trailingIdx];
-         trailingIdx = trailingIdx + 1;
-         outRealUpperBand[outIdx] = tempUpper / (double)optInTimePeriod;
-         outRealMiddleBand[outIdx] = tempMiddle / (double)optInTimePeriod;
-         outRealLowerBand[outIdx] = tempLower / (double)optInTimePeriod;
-         outIdx = outIdx + 1;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
-   RetCode accbandsUnguardedInternal( int startIdx,
-                                      int endIdx,
-                                      float inHigh[],
-                                      float inLow[],
-                                      float inClose[],
-                                      int optInTimePeriod,
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      double outRealUpperBand[],
-                                      double outRealMiddleBand[],
-                                      double outRealLowerBand[] )
-   {
-      double periodTotalUpper = 0;
-      double periodTotalMiddle = 0;
-      double periodTotalLower = 0;
-      double tempUpper = 0;
-      double tempMiddle = 0;
-      double tempLower = 0;
-      double tempReal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int lookbackTotal = 0;
       lookbackTotal = smaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -504,38 +332,6 @@
    /**
     * Acceleration Bands: three overlap lines around price. The middle band is
     * an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
-    * by an intraday-range factor. — <b>unchecked</b> variant of
-    * {@link Core#accbands}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange accbandsUnguarded( int startIdx,
-                                      int endIdx,
-                                      double inHigh[],
-                                      double inLow[],
-                                      double inClose[],
-                                      int optInTimePeriod,
-                                      double outRealUpperBand[],
-                                      double outRealMiddleBand[],
-                                      double outRealLowerBand[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      accbandsUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Acceleration Bands: three overlap lines around price. The middle band is
-    * an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
     * by an intraday-range factor.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -592,39 +388,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("ACCBANDS", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Acceleration Bands: three overlap lines around price. The middle band is
-    * an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
-    * by an intraday-range factor. — <b>unchecked</b> variant of
-    * {@link Core#accbands}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange accbandsUnguarded( int startIdx,
-                                      int endIdx,
-                                      float inHigh[],
-                                      float inLow[],
-                                      float inClose[],
-                                      int optInTimePeriod,
-                                      double outRealUpperBand[],
-                                      double outRealMiddleBand[],
-                                      double outRealLowerBand[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      accbandsUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

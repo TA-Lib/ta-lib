@@ -7,7 +7,7 @@ All indicator code is **generated** by a single generator, **`ta_codegen`**
 per-backend (C, Java, C#, Rust). The C backend is generated **in place** into
 `src/ta_func` / `src/ta_abstract` (the shipped library); the Rust/Java/C# bindings
 live under `ta_codegen/output/`. It also generates the JSON-RPC test servers, the bench
-binary, `include/ta_func_unguarded.h`, the `include/ta_defs.h` FuncUnstId enum, the
+binary, `src/ta_func/ta_func_stream_private.h`, the `include/ta_defs.h` FuncUnstId enum, the
 shipped Java (`ta_codegen/output/java/library/.../Core.java`, `FuncUnstId.java`, `MAType.java`), and owns the
 build-system source lists (CMake `LIB_SOURCES`, `src/ta_func/Makefile.am`,
 `ta_func_list.txt`). It also generates the **ta-lib.org website** — one page per function
@@ -158,16 +158,16 @@ is the shipped `ta-lib` crate, `tools/` holds the JSON-RPC server/bench.
   `impl Core` blocks.
 - The public API uses `f64` slices (`&[f64]` / `&mut [f64]`), `usize` indices,
   and `i32` optional params.
-- Each indicator generates a `xxx_lookback`, a guarded `xxx` (validates params,
-  pre-computes optimization values), and an `xxx_unguarded` variant (skips the
-  validation prologue only). Indexing stays safe in both: the crate is
-  `#![forbid(unsafe_code)]`, so violating an unguarded precondition panics —
-  never undefined behavior.
-- **Cross-indicator calls always use `_unguarded`** to avoid double-validation.
-- Functions with extra internal params (e.g., EMA's k factor) expose them on the
-  unguarded variant only; the guarded variant pre-computes them and delegates.
-  If the C source defines only the guarded function, the codegen auto-generates
-  the unguarded variant by stripping range checks.
+- Each indicator generates a `xxx_lookback` and a guarded `xxx` (validates
+  params, pre-computes optimization values, holds the algorithm). Indexing is
+  safe: the crate is `#![forbid(unsafe_code)]`, so a violated bounds precondition
+  panics — never undefined behavior. The body carries a bounds-assert preamble
+  (the LLVM proof that elides per-access bounds checks); it is skipped when the
+  lookback clamp means the call computes nothing, so a call that returns
+  `Success` with zero elements cannot panic.
+- **Cross-indicator calls target the guarded entry point.**
+- Functions with extra internal params (e.g., EMA's k factor) expose them on an
+  `xxx_private` variant; the guarded variant pre-computes them and delegates.
 - Rustdoc is generated from each function's canonical `<name>.md`
   (`backends/rust_doc.rs`), including a runnable doctest per function; crate
   docs/README/Cargo metadata come from the scaffolding in `main.rs`. Verify with

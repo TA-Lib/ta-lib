@@ -151,94 +151,6 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode willRUnguardedInternal( int startIdx,
-                                   int endIdx,
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   int optInTimePeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
-   {
-      double lowest = 0;
-      double highest = 0;
-      double tmp = 0;
-      double diff = 0;
-      int outIdx = 0;
-      int nbInitialElementNeeded = 0;
-      int trailingIdx = 0;
-      int lowestIdx = 0;
-      int highestIdx = 0;
-      int today = 0;
-      int i = 0;
-      nbInitialElementNeeded = optInTimePeriod - 1;
-      if( startIdx < nbInitialElementNeeded ) {
-         startIdx = nbInitialElementNeeded;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      diff = 0.0;
-      outIdx = 0;
-      today = startIdx;
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      highestIdx = 0 - 1;
-      lowestIdx = highestIdx;
-      lowest = 0.0;
-      highest = lowest;
-      diff = highest;
-      while( today <= endIdx ) {
-         tmp = inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-            diff = (highest - lowest) / (0 - 100.0);
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
-         }
-         tmp = inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
-               }
-            }
-            diff = (highest - lowest) / (0 - 100.0);
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
-         }
-         if( diff != 0.0 ) {
-            outReal[outIdx++] = (highest - inClose[today]) / diff;
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-         trailingIdx += 1;
-         today += 1;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
    RetCode willRInternal( int startIdx,
                           int endIdx,
                           float inHigh[],
@@ -271,94 +183,6 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      nbInitialElementNeeded = optInTimePeriod - 1;
-      if( startIdx < nbInitialElementNeeded ) {
-         startIdx = nbInitialElementNeeded;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      diff = 0.0;
-      outIdx = 0;
-      today = startIdx;
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      highestIdx = 0 - 1;
-      lowestIdx = highestIdx;
-      lowest = 0.0;
-      highest = lowest;
-      diff = highest;
-      while( today <= endIdx ) {
-         tmp = (double)inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = (double)inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-            diff = (highest - lowest) / (0 - 100.0);
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
-         }
-         tmp = (double)inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = (double)inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
-               }
-            }
-            diff = (highest - lowest) / (0 - 100.0);
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
-         }
-         if( diff != 0.0 ) {
-            outReal[outIdx++] = (highest - (double)inClose[today]) / diff;
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-         trailingIdx += 1;
-         today += 1;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
-   RetCode willRUnguardedInternal( int startIdx,
-                                   int endIdx,
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   int optInTimePeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
-   {
-      double lowest = 0;
-      double highest = 0;
-      double tmp = 0;
-      double diff = 0;
-      int outIdx = 0;
-      int nbInitialElementNeeded = 0;
-      int trailingIdx = 0;
-      int lowestIdx = 0;
-      int highestIdx = 0;
-      int today = 0;
-      int i = 0;
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
          startIdx = nbInitialElementNeeded;
@@ -482,37 +306,6 @@
     * Williams' %R momentum oscillator over a rolling period, bounded in [-100,
     * 0]. Measures where the current close sits relative to the high-low range
     * of the last N bars. Near 0 = close at period high (overbought); near -100
-    * = close at period low (oversold). — <b>unchecked</b> variant of
-    * {@link Core#willR}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange willRUnguarded( int startIdx,
-                                   int endIdx,
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   int optInTimePeriod,
-                                   double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      willRUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Williams' %R momentum oscillator over a rolling period, bounded in [-100,
-    * 0]. Measures where the current close sits relative to the high-low range
-    * of the last N bars. Near 0 = close at period high (overbought); near -100
     * = close at period low (oversold).
     * <p><b>Formula</b>
     * <pre>{@code
@@ -562,38 +355,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("WILLR", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Williams' %R momentum oscillator over a rolling period, bounded in [-100,
-    * 0]. Measures where the current close sits relative to the high-low range
-    * of the last N bars. Near 0 = close at period high (overbought); near -100
-    * = close at period low (oversold). — <b>unchecked</b> variant of
-    * {@link Core#willR}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange willRUnguarded( int startIdx,
-                                   int endIdx,
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   int optInTimePeriod,
-                                   double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      willRUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

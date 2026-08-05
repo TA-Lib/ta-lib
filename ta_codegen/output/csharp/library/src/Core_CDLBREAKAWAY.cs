@@ -161,58 +161,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlBreakawayUnguarded( int startIdx,
-                                           int endIdx,
-                                           double[] inOpen,
-                                           double[] inHigh,
-                                           double[] inLow,
-                                           double[] inClose,
-                                           out int outBegIdx,
-                                           out int outNBElement,
-                                           int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double BodyLongPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int BodyLongTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int BodyLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyLong].rangeType;
-      int BodyLong_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyLong].avgPeriod;
-      double BodyLong_factor = this.candleSettings[(int)CandleSettingType.BodyLong].factor;
-      lookbackTotal = CdlBreakawayLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      BodyLongPeriodTotal = 0;
-      BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
-      i = BodyLongTrailingIdx;
-      while( i < startIdx ) {
-         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 4] - inLow[i - 4]) - Math.Abs(inClose[i - 4] - inOpen[i - 4])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) && ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) && Math.Abs(inClose[i - 4] - inOpen[i - 4]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 4] - inLow[i - 4]) - Math.Abs(inClose[i - 4] - inOpen[i - 4])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && (Math.Max(inOpen[i - 3], inClose[i - 3]) < Math.Min(inOpen[i - 4], inClose[i - 4])) && inHigh[i - 2] < inHigh[i - 3] && inLow[i - 2] < inLow[i - 3] && inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] < inLow[i - 2] && inClose[i] > inOpen[i - 3] && inClose[i] < inClose[i - 4] || ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 1 && (Math.Min(inOpen[i - 3], inClose[i - 3]) > Math.Max(inOpen[i - 4], inClose[i - 4])) && inHigh[i - 2] > inHigh[i - 3] && inLow[i - 2] > inLow[i - 3] && inHigh[i - 1] > inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && inClose[i] < inOpen[i - 3] && inClose[i] > inClose[i - 4]) ) {
-            outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 4] - inLow[i - 4]) - Math.Abs(inClose[i - 4] - inOpen[i - 4])) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[BodyLongTrailingIdx - 4] - inOpen[BodyLongTrailingIdx - 4])) : ((BodyLong_rangeType == 1) ? (inHigh[BodyLongTrailingIdx - 4] - inLow[BodyLongTrailingIdx - 4]) : ((BodyLong_rangeType == 2) ? ((inHigh[BodyLongTrailingIdx - 4] - inLow[BodyLongTrailingIdx - 4]) - Math.Abs(inClose[BodyLongTrailingIdx - 4] - inOpen[BodyLongTrailingIdx - 4])) : 0.0)));
-         i += 1;
-         BodyLongTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode CdlBreakaway( int startIdx,
                                   int endIdx,
                                   float[] inOpen,
@@ -239,58 +187,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = CdlBreakawayLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      BodyLongPeriodTotal = 0;
-      BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
-      i = BodyLongTrailingIdx;
-      while( i < startIdx ) {
-         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 4] - (double)inLow[i - 4]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 4] - (double)inLow[i - 4]) - Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) && Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 4] - (double)inLow[i - 4]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 4] - (double)inLow[i - 4]) - Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && ((((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && (Math.Max((double)inOpen[i - 3], (double)inClose[i - 3]) < Math.Min((double)inOpen[i - 4], (double)inClose[i - 4])) && (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] < (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] < (double)inLow[i - 2] && (double)inClose[i] > (double)inOpen[i - 3] && (double)inClose[i] < (double)inClose[i - 4] || (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 1 && (Math.Min((double)inOpen[i - 3], (double)inClose[i - 3]) > Math.Max((double)inOpen[i - 4], (double)inClose[i - 4])) && (double)inHigh[i - 2] > (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] > (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (double)inClose[i] < (double)inOpen[i - 3] && (double)inClose[i] > (double)inClose[i - 4]) ) {
-            outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 4] - (double)inLow[i - 4]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 4] - (double)inLow[i - 4]) - Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4])) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[BodyLongTrailingIdx - 4] - (double)inOpen[BodyLongTrailingIdx - 4])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[BodyLongTrailingIdx - 4] - (double)inLow[BodyLongTrailingIdx - 4]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[BodyLongTrailingIdx - 4] - (double)inLow[BodyLongTrailingIdx - 4]) - Math.Abs((double)inClose[BodyLongTrailingIdx - 4] - (double)inOpen[BodyLongTrailingIdx - 4])) : 0.0)));
-         i += 1;
-         BodyLongTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode CdlBreakawayUnguarded( int startIdx,
-                                           int endIdx,
-                                           float[] inOpen,
-                                           float[] inHigh,
-                                           float[] inLow,
-                                           float[] inClose,
-                                           out int outBegIdx,
-                                           out int outNBElement,
-                                           int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double BodyLongPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int BodyLongTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int BodyLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyLong].rangeType;
-      int BodyLong_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyLong].avgPeriod;
-      double BodyLong_factor = this.candleSettings[(int)CandleSettingType.BodyLong].factor;
       lookbackTotal = CdlBreakawayLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -380,48 +276,6 @@ public partial class Core
    /// the move, and an opposite-colored fifth candle that closes back inside the
    /// gap. Emits a bullish signal (bottom reversal) or bearish signal (top
    /// reversal). A hit signals a reversal: +100 bullish (bottom), -100 bearish
-   /// (top). — <b>unchecked</b> variant of <c>CdlBreakaway</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlBreakawayUnguarded( int startIdx,
-                                          int endIdx,
-                                          double[] inOpen,
-                                          double[] inHigh,
-                                          double[] inLow,
-                                          double[] inClose,
-                                          int[] outInteger )
-   {
-      CdlBreakawayUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A five-candle reversal pattern: a long first candle, a same-colored second
-   /// candle that gaps away from it by its real body, two more candles extending
-   /// the move, and an opposite-colored fifth candle that closes back inside the
-   /// gap. Emits a bullish signal (bottom reversal) or bearish signal (top
-   /// reversal). A hit signals a reversal: +100 bullish (bottom), -100 bearish
    /// (top).
    /// </summary>
    /// <remarks>
@@ -471,51 +325,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("CDLBREAKAWAY", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A five-candle reversal pattern: a long first candle, a same-colored second
-   /// candle that gaps away from it by its real body, two more candles extending
-   /// the move, and an opposite-colored fifth candle that closes back inside the
-   /// gap. Emits a bullish signal (bottom reversal) or bearish signal (top
-   /// reversal). A hit signals a reversal: +100 bullish (bottom), -100 bearish
-   /// (top). — <b>unchecked</b> variant of <c>CdlBreakaway</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlBreakawayUnguarded( int startIdx,
-                                          int endIdx,
-                                          float[] inOpen,
-                                          float[] inHigh,
-                                          float[] inLow,
-                                          float[] inClose,
-                                          int[] outInteger )
-   {
-      CdlBreakawayUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

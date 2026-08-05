@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -103,27 +103,6 @@ TA_LIB_API TA_RetCode TA_MEDPRICE( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_MEDPRICE_Unguarded( int    startIdx,
-                                             int    endIdx,
-                                             const double inHigh[],
-                                             const double inLow[],
-                                             int          *outBegIdx,
-                                             int          *outNBElement,
-                                             double        outReal[] )
-{
-   int outIdx;
-   int i;
-
-   outIdx = 0;
-   for( i = startIdx; i <= endIdx; i += 1 )
-   {
-      outReal[outIdx++] = (inHigh[i] + inLow[i]) / 2.0;
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_MEDPRICE( int    startIdx,
                           int    endIdx,
                           const float inHigh[],
@@ -146,27 +125,6 @@ TA_RetCode TA_S_MEDPRICE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   outIdx = 0;
-   for( i = startIdx; i <= endIdx; i += 1 )
-   {
-      outReal[outIdx++] = ((double)inHigh[i] + (double)inLow[i]) / 2.0;
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_MEDPRICE_Unguarded( int    startIdx,
-                                    int    endIdx,
-                                    const float inHigh[],
-                                    const float inLow[],
-                                    int          *outBegIdx,
-                                    int          *outNBElement,
-                                    double        outReal[] )
-{
-   int outIdx;
-   int i;
 
    outIdx = 0;
    for( i = startIdx; i <= endIdx; i += 1 )

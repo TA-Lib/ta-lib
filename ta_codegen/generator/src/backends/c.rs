@@ -85,21 +85,16 @@ pub fn generate(
     out.push_str(&gen_header_comments(func));
     out.push_str(&gen_lookback(func, enums, registry, helpers));
 
-    // For functions with explicit _private, emit Private and Logic BEFORE guarded
-    // so the C compiler knows the signatures when the guarded body calls them.
+    // For functions with an explicit _private, emit Private BEFORE guarded so the
+    // C compiler knows the signature when the guarded body calls it. Only the
+    // double-precision Private is emitted: the single-precision guarded body
+    // inlines `private_body` directly (it cannot call the double-only Private),
+    // so a TA_S_<N>_Private would have no caller anywhere.
     if func.has_explicit_private {
-        out.push_str(&gen_private(func, false, enums, registry, helpers)); // double private
-        out.push_str(&gen_private(func, true, enums, registry, helpers)); // single-precision private
-        out.push_str(&gen_func(func, false, true, enums, registry, helpers)); // double-precision logic
-        out.push_str(&gen_func(func, false, false, enums, registry, helpers)); // double-precision guarded
-        out.push_str(&gen_func(func, true, true, enums, registry, helpers)); // single-precision logic
-        out.push_str(&gen_func(func, true, false, enums, registry, helpers)); // single-precision guarded
-    } else {
-        out.push_str(&gen_func(func, false, false, enums, registry, helpers)); // double-precision guarded
-        out.push_str(&gen_func(func, false, true, enums, registry, helpers)); // double-precision logic
-        out.push_str(&gen_func(func, true, false, enums, registry, helpers)); // single-precision guarded
-        out.push_str(&gen_func(func, true, true, enums, registry, helpers)); // single-precision logic
+        out.push_str(&gen_private(func, false, enums, registry, helpers));
     }
+    out.push_str(&gen_func(func, false, enums, registry, helpers)); // double-precision guarded
+    out.push_str(&gen_func(func, true, enums, registry, helpers)); // single-precision guarded
 
     // Streaming API section (only for YAML-declared streamable functions).
     if func.streaming {
@@ -216,19 +211,19 @@ fn gen_header() -> String {
          */\n\n",
     );
 
-    // Match the c-ref (gen_code output) includes, plus ta_func_unguarded.h so
-    // cross-indicator `TA_*_Unguarded` / `TA_*_Private` calls have a visible
-    // prototype in separate-compilation (library) builds — otherwise each
-    // src/ta_func/*.c hits -Wimplicit-function-declaration. That header is
-    // guarded, shipped (in the dist), and pure declarations, so it is a no-op in
-    // the single-TU server/bench builds.
+    // Match the c-ref (gen_code output) includes, plus the private stream header
+    // so a composed function opening a sub-stream has a visible prototype for
+    // `TA_*_OpenInternal` in separate-compilation (library) builds — otherwise
+    // each src/ta_func/*.c hits -Wimplicit-function-declaration. Pure
+    // declarations behind an include guard, so it is a no-op in the single-TU
+    // server/bench builds.
     out.push_str(
         "#include <string.h>\n\
          #include <math.h>\n\
          #include \"ta_func.h\"\n\
          #include \"ta_utility.h\"\n\
          #include \"ta_memory.h\"\n\
-         #include \"ta_func_unguarded.h\"\n\n",
+         #include \"ta_func_stream_private.h\"\n\n",
     );
 
     out
@@ -339,15 +334,13 @@ fn gen_lookback(
     )
 }
 
-/// Generate a `TA_{NAME}_Private` (double) or `TA_S_{NAME}_Private` (single-precision)
-/// function variant. Same body/params as `gen_func(logic=true)` but with `_Private`
-/// naming and the extra private params (e.g. EMA's k factor).
+/// Generate a `TA_{NAME}_Private` function variant: the same body and params as the
+/// guarded function but with `_Private` naming, the extra private params (e.g. EMA's
+/// k factor), and no validation prologue.
 ///
-/// The single-precision variant takes `const float` inputs (double intermediates/
-/// outputs, per the library convention). It exists so that single-precision callers
-/// which apply an indicator to the ORIGINAL float input with a precomputed param
-/// (e.g. `TA_S_MACD` -> `TA_S_EMA_Private(... inReal ...)`) resolve; calls that act on
-/// double intermediate buffers continue to use the double `TA_{NAME}_Private`.
+/// Double-precision only. The single-precision guarded body inlines `private_body`
+/// rather than calling a Private (it cannot call the double-only one), so a
+/// `TA_S_{NAME}_Private` would have no caller in the tree.
 fn gen_private(
     func: &FuncDef,
     single_precision: bool,
@@ -355,33 +348,30 @@ fn gen_private(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    let name_override = if single_precision {
-        format!("TA_S_{}_Private", func.name)
-    } else {
-        format!("TA_{}_Private", func.name)
-    };
-    gen_func_inner(func, single_precision, true, Some(&name_override), enums, registry, helpers)
+    let name_override = format!("TA_{}_Private", func.name);
+    gen_func_inner(func, single_precision, Some(&name_override), enums, registry, helpers)
 }
 
 #[allow(clippy::too_many_lines)]
 fn gen_func(
     func: &FuncDef,
     single_precision: bool,
-    logic: bool,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    gen_func_inner(func, single_precision, logic, None, enums, registry, helpers)
+    gen_func_inner(func, single_precision, None, enums, registry, helpers)
 }
 
 // Integer/enum optIn defaults and ranges come from f64 metadata but are whole
 // numbers; the `as i32` casts in the validation emitter are intentional.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity, clippy::cast_possible_truncation)]
+/// `name_override` distinguishes the two things this emits: `Some(..)` is the
+/// `_Private` variant (no validation prologue, extra private params), `None` is the
+/// guarded public entry point.
 fn gen_func_inner(
     func: &FuncDef,
     single_precision: bool,
-    logic: bool,
     name_override: Option<&str>,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
@@ -391,16 +381,19 @@ fn gen_func_inner(
 
     let prefix = if let Some(name) = name_override {
         name.to_string()
+    } else if single_precision {
+        format!("TA_S_{}", func.name)
     } else {
-        match (single_precision, logic) {
-            (false, false) => format!("TA_{}", func.name),
-            (false, true) => format!("TA_{}_Unguarded", func.name),
-            (true, false) => format!("TA_S_{}", func.name),
-            (true, true) => format!("TA_S_{}_Unguarded", func.name),
-        }
+        format!("TA_{}", func.name)
     };
 
-    let ret_type = if single_precision {
+    // The `_Private` variant is file-local: its only callers are the guarded
+    // bodies in the same generated .c, and the definition precedes them. `static`
+    // is what un-exports it (dropping TA_LIB_API alone is a no-op on ELF), and it
+    // survives the single-TU server/bench builds.
+    let ret_type = if name_override.is_some() {
+        "static TA_RetCode"
+    } else if single_precision {
         "TA_RetCode"
     } else {
         "TA_LIB_API TA_RetCode"
@@ -467,25 +460,22 @@ fn gen_func_inner(
     // Body selection:
     // - Private variant (name_override set): always private_body
     // - S_ variants with explicit _private: inline private_body (can't call double-only Private)
-    // - Double variants with explicit _private (guarded OR logic): body delegates to TA_*_Private
-    // - Logic without _private: private_body (auto-copied from body, same content)
+    // - Double variants with explicit _private: body delegates to TA_*_Private
     // - Guarded without _private: body
     let body = if name_override.is_some() || (single_precision && func.has_explicit_private) {
         // Private variant (actual computation body), or S_ variant inlining it
         &func.private_body
     } else if func.has_explicit_private {
-        &func.body          // double guarded/logic: body delegates to _Private
-    } else if logic {
-        &func.private_body  // logic variant without _private
+        &func.body          // double guarded: body delegates to _Private
     } else {
         &func.body          // guarded without _private
     };
 
     // Carry source comments only in the double-precision implementation: the
     // guarded `TA_*` and (for explicit-private functions) the `TA_*_Private`
-    // that holds the algorithm. Strip them from every single-precision (`TA_S_*`)
-    // copy and from the double `*_Unguarded`/logic duplicate, so they appear once.
-    let keep_comments = !single_precision && (name_override.is_some() || !logic);
+    // that holds the algorithm. Strip them from the single-precision (`TA_S_*`)
+    // copy so they appear once.
+    let keep_comments = !single_precision;
     let body_stripped;
     let body: &[Statement] = if keep_comments {
         body
@@ -503,9 +493,9 @@ fn gen_func_inner(
     let inline_counter = Cell::new(0);
     // FMA fusion sites for this body (same detector Rust/Java use → identical
     // sites → cross-language bit-parity). The index-param seeds don't affect any
-    // fusion decision (never float operands), so the unguarded seed set is used
-    // uniformly across variants.
-    let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::UNGUARDED_INDEX_SEEDS);
+    // fusion decision (never float operands), so one seed set is used uniformly
+    // across variants.
+    let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::INDEX_PARAM_SEEDS);
     let nullable_outputs: Vec<String> = func
         .outputs
         .iter()
@@ -520,18 +510,22 @@ fn gen_func_inner(
         nullable_outputs: &nullable_outputs,
     };
 
-    // For S_ variants with explicit _private: emit private_param_init as local VarDecls.
-    // These provide the extra params (e.g., k factor) that the inlined private body needs.
-    // Both guarded and logic S_ variants need this (both use private_body).
-    if single_precision && func.has_explicit_private && name_override.is_none() {
-        for (param_name, init_expr) in &func.private_param_init {
+    // For S_ variants with explicit _private: the extra params (e.g. EMA's k
+    // factor) the inlined private body needs. DECLARED here, ASSIGNED after the
+    // validation prologue — the initialiser reads an optional parameter, and the
+    // prologue is what substitutes a TA_INTEGER_DEFAULT sentinel for the declared
+    // default. Initialising here derives the value from INT_MIN and returns a
+    // wrong result with TA_SUCCESS. The double variant is unaffected: it
+    // delegates to TA_<N>_Private, called after the guarded body has validated.
+    let sp_private_init = single_precision && func.has_explicit_private && name_override.is_none();
+    if sp_private_init {
+        for (param_name, _) in &func.private_param_init {
             let c_type = func
                 .private_extra_params
                 .iter()
                 .find(|(n, _)| n == param_name)
                 .map_or("double", |(_, t)| t.as_str());
-            let init_c = render_expr(init_expr, ctx, registry, helpers);
-            out.push_str(&format!("   {c_type} {param_name} = {init_c};\n"));
+            out.push_str(&format!("   {c_type} {param_name};\n"));
             declared_vars.push(param_name.clone());
         }
     }
@@ -544,8 +538,9 @@ fn gen_func_inner(
 
     out.push('\n');
 
-    // Validation (omitted for Logic/unguarded variant)
-    if !logic {
+    // Validation prologue. Omitted for the `_Private` variant, whose callers are
+    // the guarded bodies that have already validated.
+    if name_override.is_none() {
         out.push_str("   if( startIdx < 0 )\n");
         out.push_str("      return TA_OUT_OF_RANGE_START_INDEX;\n");
         out.push_str("   if( (endIdx < 0) || (endIdx < startIdx) )\n");
@@ -594,6 +589,15 @@ fn gen_func_inner(
             }
             out.push_str(&format!("   if( {} )\n", pairs.join(" || ")));
             out.push_str("      return TA_BAD_PARAM;\n");
+        }
+        out.push('\n');
+    }
+
+    // Now that any sentinel has been substituted, derive the private extra params.
+    if sp_private_init {
+        for (param_name, init_expr) in &func.private_param_init {
+            let init_c = render_expr(init_expr, ctx, registry, helpers);
+            out.push_str(&format!("   {param_name} = {init_c};\n"));
         }
         out.push('\n');
     }
@@ -2230,7 +2234,10 @@ mod tests {
 
         let mut func_def = parser::yaml::parse_yaml(&yaml_path);
         let parsed = parser::c_source::parse_c_source(&c_path);
-        func_def.body = parsed.functions.first().unwrap().body.clone();
+        // Full wiring, not just body+lookback: `has_explicit_private`, the private
+        // body and its extra params are source-derived, and a YAML-only def makes
+        // an explicit-private function (EMA) render as if it had none.
+        parser::c_source::wire_parsed_source(&mut func_def, &parsed);
         func_def.lookback = Some(ir::LookbackExpr::Code(parsed.lookback_body));
 
         (func_def, enums)
@@ -2249,33 +2256,37 @@ mod tests {
 
         assert!(output.contains("TA_SMA_Lookback"), "Missing lookback");
         assert!(output.contains("TA_SMA("), "Missing guarded function");
-        assert!(output.contains("TA_SMA_Unguarded("), "Missing logic function");
+        assert!(output.contains("TA_S_SMA("), "Missing single-precision");
         // TA_INT_* macros are no longer generated
         assert!(!output.contains("TA_INT_SMA"), "Should not have TA_INT_ alias");
-        assert!(output.contains("TA_S_SMA("), "Missing single-precision");
+        // SMA has no explicit _private, so `TA_<N>` and `TA_S_<N>` are the whole
+        // surface.
         assert!(
-            output.contains("TA_S_SMA_Unguarded("),
-            "Missing single-precision logic"
+            !output.contains("_Unguarded"),
+            "no unguarded variant may be emitted"
         );
     }
 
     #[test]
-    fn test_c_logic_omits_range_checks() {
-        let (func, enums) = load_func("sma");
+    fn test_c_private_omits_range_checks() {
+        // Exactly one tier validates: the guarded entry point, not `_Private`.
+        // EMA is the one definition in ta_codegen/input/ with an explicit _private.
+        let (func, enums) = load_func("ema");
         let registry = make_registry();
         let output = generate(&func, &enums, &registry, &HelperRegistry::empty());
 
-        // Find the Logic function and verify it doesn't have range checks
-        let logic_start = output
-            .find("TA_SMA_Unguarded(")
-            .expect("Missing logic function");
+        // `_Private` is emitted BEFORE the guarded body (the guarded one calls
+        // it), so the private section runs from its definition to the guarded one.
+        let private_start = output
+            .find("static TA_RetCode TA_EMA_Private(")
+            .expect("Missing private function");
         let guarded_start = output
-            .find("TA_LIB_API TA_RetCode TA_SMA(")
+            .find("TA_LIB_API TA_RetCode TA_EMA(")
             .expect("Missing guarded function");
+        assert!(private_start < guarded_start, "_Private must precede its caller");
 
-        // Extract each function body (up to next function or end)
-        let logic_body = &output[logic_start..];
-        let guarded_body = &output[guarded_start..logic_start];
+        let private_section = &output[private_start..guarded_start];
+        let guarded_body = &output[guarded_start..];
 
         // Guarded function should have range checks
         assert!(
@@ -2287,23 +2298,20 @@ mod tests {
             "Guarded should have end index check"
         );
 
-        // Logic function should NOT have range checks
-        // Find end of the logic function body (before the next function)
-        // Boundary: the single-precision variants follow the logic fn (they
-        // carry no TA_LIB_API); the streaming section (TA_LIB_API-prefixed)
-        // comes after those, so prefer the TA_S_ marker.
-        let logic_end = logic_body
-            .find("TA_RetCode TA_S_")
-            .or_else(|| logic_body.find("TA_LIB_API"))
-            .unwrap_or(logic_body.len());
-        let logic_section = &logic_body[..logic_end];
+        // The private body carries the algorithm and no prologue: its callers
+        // have already validated.
         assert!(
-            !logic_section.contains("TA_OUT_OF_RANGE_START_INDEX"),
-            "Logic should not have start index check"
+            !private_section.contains("TA_OUT_OF_RANGE_START_INDEX"),
+            "_Private should not have start index check"
         );
         assert!(
-            !logic_section.contains("TA_OUT_OF_RANGE_END_INDEX"),
-            "Logic should not have end index check"
+            !private_section.contains("TA_OUT_OF_RANGE_END_INDEX"),
+            "_Private should not have end index check"
+        );
+        // ...and it is file-local, which is what un-exports it.
+        assert!(
+            !private_section.contains("TA_LIB_API"),
+            "_Private must be static, not exported"
         );
     }
 
@@ -2341,14 +2349,21 @@ mod tests {
             "ema_lookback should resolve to TA_EMA_Lookback"
         );
 
-        // bare sma and ema calls resolve to Unguarded (cross-indicator = skip validation)
+        // Bare sma/ema calls resolve to the guarded entry point. Anchored on the
+        // first argument so the assertion cannot be satisfied by a declaration or
+        // by the `TA_S_` single-precision sibling, and paired with the negative so
+        // it stays non-vacuous.
         assert!(
-            output.contains("TA_SMA_Unguarded("),
-            "sma should resolve to TA_SMA_Unguarded"
+            output.contains("TA_SMA(startIdx"),
+            "sma should resolve to a guarded TA_SMA call"
         );
         assert!(
-            output.contains("TA_EMA_Unguarded("),
-            "ema should resolve to TA_EMA_Unguarded"
+            output.contains("TA_EMA(startIdx"),
+            "ema should resolve to a guarded TA_EMA call"
+        );
+        assert!(
+            !output.contains("_Unguarded("),
+            "no unguarded variant may be emitted or called"
         );
     }
 }

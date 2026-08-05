@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -190,7 +190,7 @@ TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
     * (ep is just used as a temp buffer here, the name
     *  of the parameter is not significant).
     */
-   retCode = TA_MINUS_DM_Unguarded(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
+   retCode = TA_MINUS_DM(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
    if( ep_temp[0] > 0 )
    {
       isLong = 0;
@@ -367,183 +367,6 @@ TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
 }
 
 TA_FMA_MULTIVERSION
-TA_LIB_API TA_RetCode TA_SAR_Unguarded( int    startIdx,
-                                        int    endIdx,
-                                        const double inHigh[],
-                                        const double inLow[],
-                                        double optInAcceleration,
-                                        double optInMaximum,
-                                        int          *outBegIdx,
-                                        int          *outNBElement,
-                                        double        outReal[] )
-{
-   TA_RetCode retCode;
-   int isLong;
-   int todayIdx;
-   int outIdx;
-   int tempInt;
-   double newHigh;
-   double newLow;
-   double prevHigh;
-   double prevLow;
-   double af;
-   double ep;
-   double sar;
-   double ep_temp[1];
-
-   if( startIdx < 1 )
-   {
-      startIdx = 1;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   af = optInAcceleration;
-   if( af > optInMaximum )
-   {
-      optInAcceleration = optInMaximum;
-      af = optInAcceleration;
-   }
-   retCode = TA_MINUS_DM_Unguarded(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
-   if( ep_temp[0] > 0 )
-   {
-      isLong = 0;
-   } else 
-   {
-      isLong = 1;
-   }
-   if( retCode != TA_SUCCESS )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return retCode;
-   }
-   *outBegIdx= startIdx;
-   outIdx = 0;
-   todayIdx = startIdx;
-   newHigh = inHigh[todayIdx - 1];
-   newLow = inLow[todayIdx - 1];
-   if( isLong == 1 )
-   {
-      ep = inHigh[todayIdx];
-      sar = newLow;
-   } else 
-   {
-      ep = inLow[todayIdx];
-      sar = newHigh;
-   }
-   newLow = inLow[todayIdx];
-   newHigh = inHigh[todayIdx];
-   while( todayIdx <= endIdx )
-   {
-      prevLow = newLow;
-      prevHigh = newHigh;
-      newLow = inLow[todayIdx];
-      newHigh = inHigh[todayIdx];
-      todayIdx += 1;
-      if( isLong == 1 )
-      {
-         if( newLow <= sar )
-         {
-            isLong = 0;
-            sar = ep;
-            if( sar < prevHigh )
-            {
-               sar = prevHigh;
-            }
-            if( sar < newHigh )
-            {
-               sar = newHigh;
-            }
-            outReal[outIdx++] = sar;
-            af = optInAcceleration;
-            ep = newLow;
-            sar = fma(af, ep - sar, sar);
-            if( sar < prevHigh )
-            {
-               sar = prevHigh;
-            }
-            if( sar < newHigh )
-            {
-               sar = newHigh;
-            }
-         } else 
-         {
-            outReal[outIdx++] = sar;
-            if( newHigh > ep )
-            {
-               ep = newHigh;
-               af += optInAcceleration;
-               if( af > optInMaximum )
-               {
-                  af = optInMaximum;
-               }
-            }
-            sar = fma(af, ep - sar, sar);
-            if( sar > prevLow )
-            {
-               sar = prevLow;
-            }
-            if( sar > newLow )
-            {
-               sar = newLow;
-            }
-         }
-      } else if( newHigh >= sar )
-      {
-         isLong = 1;
-         sar = ep;
-         if( sar > prevLow )
-         {
-            sar = prevLow;
-         }
-         if( sar > newLow )
-         {
-            sar = newLow;
-         }
-         outReal[outIdx++] = sar;
-         af = optInAcceleration;
-         ep = newHigh;
-         sar = fma(af, ep - sar, sar);
-         if( sar > prevLow )
-         {
-            sar = prevLow;
-         }
-         if( sar > newLow )
-         {
-            sar = newLow;
-         }
-      } else 
-      {
-         outReal[outIdx++] = sar;
-         if( newLow < ep )
-         {
-            ep = newLow;
-            af += optInAcceleration;
-            if( af > optInMaximum )
-            {
-               af = optInMaximum;
-            }
-         }
-         sar = fma(af, ep - sar, sar);
-         if( sar < prevHigh )
-         {
-            sar = prevHigh;
-         }
-         if( sar < newHigh )
-         {
-            sar = newHigh;
-         }
-      }
-   }
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_FMA_MULTIVERSION
 TA_RetCode TA_S_SAR( int    startIdx,
                      int    endIdx,
                      const float inHigh[],
@@ -604,184 +427,7 @@ TA_RetCode TA_S_SAR( int    startIdx,
       optInAcceleration = optInMaximum;
       af = optInAcceleration;
    }
-   retCode = TA_S_MINUS_DM_Unguarded(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
-   if( ep_temp[0] > 0 )
-   {
-      isLong = 0;
-   } else 
-   {
-      isLong = 1;
-   }
-   if( retCode != TA_SUCCESS )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return retCode;
-   }
-   *outBegIdx= startIdx;
-   outIdx = 0;
-   todayIdx = startIdx;
-   newHigh = (double)inHigh[todayIdx - 1];
-   newLow = (double)inLow[todayIdx - 1];
-   if( isLong == 1 )
-   {
-      ep = (double)inHigh[todayIdx];
-      sar = newLow;
-   } else 
-   {
-      ep = (double)inLow[todayIdx];
-      sar = newHigh;
-   }
-   newLow = (double)inLow[todayIdx];
-   newHigh = (double)inHigh[todayIdx];
-   while( todayIdx <= endIdx )
-   {
-      prevLow = newLow;
-      prevHigh = newHigh;
-      newLow = (double)inLow[todayIdx];
-      newHigh = (double)inHigh[todayIdx];
-      todayIdx += 1;
-      if( isLong == 1 )
-      {
-         if( newLow <= sar )
-         {
-            isLong = 0;
-            sar = ep;
-            if( sar < prevHigh )
-            {
-               sar = prevHigh;
-            }
-            if( sar < newHigh )
-            {
-               sar = newHigh;
-            }
-            outReal[outIdx++] = sar;
-            af = optInAcceleration;
-            ep = newLow;
-            sar = fma(af, ep - sar, sar);
-            if( sar < prevHigh )
-            {
-               sar = prevHigh;
-            }
-            if( sar < newHigh )
-            {
-               sar = newHigh;
-            }
-         } else 
-         {
-            outReal[outIdx++] = sar;
-            if( newHigh > ep )
-            {
-               ep = newHigh;
-               af += optInAcceleration;
-               if( af > optInMaximum )
-               {
-                  af = optInMaximum;
-               }
-            }
-            sar = fma(af, ep - sar, sar);
-            if( sar > prevLow )
-            {
-               sar = prevLow;
-            }
-            if( sar > newLow )
-            {
-               sar = newLow;
-            }
-         }
-      } else if( newHigh >= sar )
-      {
-         isLong = 1;
-         sar = ep;
-         if( sar > prevLow )
-         {
-            sar = prevLow;
-         }
-         if( sar > newLow )
-         {
-            sar = newLow;
-         }
-         outReal[outIdx++] = sar;
-         af = optInAcceleration;
-         ep = newHigh;
-         sar = fma(af, ep - sar, sar);
-         if( sar > prevLow )
-         {
-            sar = prevLow;
-         }
-         if( sar > newLow )
-         {
-            sar = newLow;
-         }
-      } else 
-      {
-         outReal[outIdx++] = sar;
-         if( newLow < ep )
-         {
-            ep = newLow;
-            af += optInAcceleration;
-            if( af > optInMaximum )
-            {
-               af = optInMaximum;
-            }
-         }
-         sar = fma(af, ep - sar, sar);
-         if( sar < prevHigh )
-         {
-            sar = prevHigh;
-         }
-         if( sar < newHigh )
-         {
-            sar = newHigh;
-         }
-      }
-   }
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_FMA_MULTIVERSION
-TA_RetCode TA_S_SAR_Unguarded( int    startIdx,
-                               int    endIdx,
-                               const float inHigh[],
-                               const float inLow[],
-                               double optInAcceleration,
-                               double optInMaximum,
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] )
-{
-   TA_RetCode retCode;
-   int isLong;
-   int todayIdx;
-   int outIdx;
-   int tempInt;
-   double newHigh;
-   double newLow;
-   double prevHigh;
-   double prevLow;
-   double af;
-   double ep;
-   double sar;
-   double ep_temp[1];
-
-   if( startIdx < 1 )
-   {
-      startIdx = 1;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   af = optInAcceleration;
-   if( af > optInMaximum )
-   {
-      optInAcceleration = optInMaximum;
-      af = optInAcceleration;
-   }
-   retCode = TA_S_MINUS_DM_Unguarded(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
+   retCode = TA_S_MINUS_DM(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
    if( ep_temp[0] > 0 )
    {
       isLong = 0;
@@ -1185,7 +831,7 @@ TA_RetCode TA_SAR_OpenInternal( struct TA_SAR_Stream **stream, const double inHi
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = TA_MINUS_DM_Unguarded(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
+      retCode = TA_MINUS_DM(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
       if( ep_temp[0] > 0 )
       {
          isLong = 0;
@@ -1495,7 +1141,7 @@ TA_LIB_API TA_RetCode TA_SAR_OpenAndFill( TA_SAR_Stream **stream, const double i
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = TA_MINUS_DM_Unguarded(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
+      retCode = TA_MINUS_DM(startIdx,startIdx,inHigh,inLow,1,&tempInt,&tempInt,ep_temp);
       if( ep_temp[0] > 0 )
       {
          isLong = 0;

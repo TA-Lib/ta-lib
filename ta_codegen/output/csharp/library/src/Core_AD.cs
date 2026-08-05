@@ -134,46 +134,6 @@ public partial class Core
       }
       return RetCode.Success ;
    }
-   internal RetCode AdUnguarded( int startIdx,
-                                 int endIdx,
-                                 double[] inHigh,
-                                 double[] inLow,
-                                 double[] inClose,
-                                 double[] inVolume,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int nbBar = 0;
-      int currentBar = 0;
-      int outIdx = 0;
-      double high = 0;
-      double low = 0;
-      double close = 0;
-      double tmp = 0;
-      double ad = 0;
-      nbBar = endIdx - startIdx + 1;
-      outNBElement = nbBar;
-      outBegIdx = startIdx;
-      currentBar = startIdx;
-      outIdx = 0;
-      ad = 0.0;
-      while( nbBar != 0 ) {
-         high = inHigh[currentBar];
-         low = inLow[currentBar];
-         tmp = high - low;
-         close = inClose[currentBar];
-         if( tmp > 0.0 ) {
-            ad += (close - low - (high - close)) / tmp * (double)inVolume[currentBar];
-         }
-         outReal[outIdx++] = ad;
-         currentBar += 1;
-         nbBar -= 1;
-      }
-      return RetCode.Success ;
-   }
    internal RetCode Ad( int startIdx,
                         int endIdx,
                         float[] inHigh,
@@ -200,46 +160,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      nbBar = endIdx - startIdx + 1;
-      outNBElement = nbBar;
-      outBegIdx = startIdx;
-      currentBar = startIdx;
-      outIdx = 0;
-      ad = 0.0;
-      while( nbBar != 0 ) {
-         high = (double)inHigh[currentBar];
-         low = (double)inLow[currentBar];
-         tmp = high - low;
-         close = (double)inClose[currentBar];
-         if( tmp > 0.0 ) {
-            ad += (close - low - (high - close)) / tmp * (double)inVolume[currentBar];
-         }
-         outReal[outIdx++] = ad;
-         currentBar += 1;
-         nbBar -= 1;
-      }
-      return RetCode.Success ;
-   }
-   internal RetCode AdUnguarded( int startIdx,
-                                 int endIdx,
-                                 float[] inHigh,
-                                 float[] inLow,
-                                 float[] inClose,
-                                 float[] inVolume,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int nbBar = 0;
-      int currentBar = 0;
-      int outIdx = 0;
-      double high = 0;
-      double low = 0;
-      double close = 0;
-      double tmp = 0;
-      double ad = 0;
       nbBar = endIdx - startIdx + 1;
       outNBElement = nbBar;
       outBegIdx = startIdx;
@@ -313,46 +233,6 @@ public partial class Core
    /// Chaikin Accumulation/Distribution Line, a cumulative volume-flow
    /// indicator. Sums a volume-weighted money-flow multiplier per bar to gauge
    /// buying vs. selling pressure. Rising line = accumulation (buying pressure);
-   /// falling = distribution. — <b>unchecked</b> variant of <c>Ad</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="inVolume">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange AdUnguarded( int startIdx,
-                                int endIdx,
-                                double[] inHigh,
-                                double[] inLow,
-                                double[] inClose,
-                                double[] inVolume,
-                                double[] outReal )
-   {
-      AdUnguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Chaikin Accumulation/Distribution Line, a cumulative volume-flow
-   /// indicator. Sums a volume-weighted money-flow multiplier per bar to gauge
-   /// buying vs. selling pressure. Rising line = accumulation (buying pressure);
    /// falling = distribution.
    /// </summary>
    /// <remarks>
@@ -402,49 +282,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("AD", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Chaikin Accumulation/Distribution Line, a cumulative volume-flow
-   /// indicator. Sums a volume-weighted money-flow multiplier per bar to gauge
-   /// buying vs. selling pressure. Rising line = accumulation (buying pressure);
-   /// falling = distribution. — <b>unchecked</b> variant of <c>Ad</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="inVolume">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange AdUnguarded( int startIdx,
-                                int endIdx,
-                                float[] inHigh,
-                                float[] inLow,
-                                float[] inClose,
-                                float[] inVolume,
-                                double[] outReal )
-   {
-      AdUnguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

@@ -177,6 +177,11 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.plus_dm_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inHigh.len());
+        assert!(_assertStart > endIdx || endIdx < inLow.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -362,131 +367,6 @@ impl Core {
                 prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64) + diffP;
             } else {
                 // Case 2,4,5 and 7
-                prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64);
-            }
-            outReal[outIdx] = prevPlusDM;
-            outIdx += 1;
-        }
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::plus_dm`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::plus_dm`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::plus_dm`].
-    #[inline]
-    pub fn plus_dm_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut today: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut prevHigh: f64 = 0.0_f64;
-        let mut prevLow: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut prevPlusDM: f64 = 0.0_f64;
-        let mut diffP: f64 = 0.0_f64;
-        let mut diffM: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        assert!(endIdx < inHigh.len());
-        assert!(endIdx < inLow.len());
-        let _assertLb = self.plus_dm_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        if optInTimePeriod > 1 {
-            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PlusDM as usize] - 1) as usize;
-        } else {
-            lookbackTotal = 1;
-        }
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        outIdx = 0;
-        if optInTimePeriod <= 1 {
-            (*outBegIdx) = startIdx;
-            today = startIdx - 1;
-            prevHigh = inHigh[today];
-            prevLow = inLow[today];
-            while today < endIdx {
-                today += 1;
-                tempReal = inHigh[today];
-                diffP = tempReal - prevHigh;
-                prevHigh = tempReal;
-                tempReal = inLow[today];
-                diffM = prevLow - tempReal;
-                prevLow = tempReal;
-                if diffP > 0_f64 && diffP > diffM {
-                    outReal[outIdx] = diffP;
-                    outIdx += 1;
-                } else {
-                    outReal[outIdx] = 0.0;
-                    outIdx += 1;
-                }
-            }
-            (*outNBElement) = outIdx;
-            return RetCode::Success;
-        }
-        (*outBegIdx) = startIdx;
-        prevPlusDM = 0.0;
-        today = startIdx - lookbackTotal;
-        prevHigh = inHigh[today];
-        prevLow = inLow[today];
-        i = (optInTimePeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            today += 1;
-            tempReal = inHigh[today];
-            diffP = tempReal - prevHigh;
-            prevHigh = tempReal;
-            tempReal = inLow[today];
-            diffM = prevLow - tempReal;
-            prevLow = tempReal;
-            if diffP > 0_f64 && diffP > diffM {
-                prevPlusDM += diffP;
-            }
-        }
-        i = (self.unstable_period[FuncUnstId::PlusDM as usize]) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
-            today += 1;
-            tempReal = inHigh[today];
-            diffP = tempReal - prevHigh;
-            prevHigh = tempReal;
-            tempReal = inLow[today];
-            diffM = prevLow - tempReal;
-            prevLow = tempReal;
-            if diffP > 0_f64 && diffP > diffM {
-                prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64) + diffP;
-            } else {
-                prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64);
-            }
-        }
-        outReal[0] = prevPlusDM;
-        outIdx = 1;
-        while today < endIdx {
-            today += 1;
-            tempReal = inHigh[today];
-            diffP = tempReal - prevHigh;
-            prevHigh = tempReal;
-            tempReal = inLow[today];
-            diffM = prevLow - tempReal;
-            prevLow = tempReal;
-            if diffP > 0_f64 && diffP > diffM {
-                prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64) + diffP;
-            } else {
                 prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64);
             }
             outReal[outIdx] = prevPlusDM;

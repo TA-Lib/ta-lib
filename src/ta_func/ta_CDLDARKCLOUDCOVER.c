@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -176,65 +176,6 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Unguarded( int    startIdx,
-                                                      int    endIdx,
-                                                      const double inOpen[],
-                                                      const double inHigh[],
-                                                      const double inLow[],
-                                                      const double inClose[],
-                                                      double optInPenetration,
-                                                      int          *outBegIdx,
-                                                      int          *outNBElement,
-                                                      int        outInteger[] )
-{
-   double BodyLongPeriodTotal;
-   int i;
-   int outIdx;
-   int BodyLongTrailingIdx;
-   int lookbackTotal;
-   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
-   int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
-   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
-
-   lookbackTotal = TA_CDLDARKCLOUDCOVER_Lookback(optInPenetration);
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   BodyLongPeriodTotal = 0;
-   BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
-   i = BodyLongTrailingIdx;
-   while( i < startIdx )
-   {
-      BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 1);
-      i += 1;
-   }
-   i = startIdx;
-   outIdx = 0;
-   do
-   {
-      if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inOpen[i] > inHigh[i - 1] && inClose[i] > inOpen[i - 1] && inClose[i] < inClose[i - 1] - fabs(inClose[i - 1] - inOpen[i - 1]) * optInPenetration )
-      {
-         outInteger[outIdx++] = 0 - 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 1) - TA_CANDLERANGE(BodyLong,BodyLongTrailingIdx - 1);
-      i += 1;
-      BodyLongTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_CDLDARKCLOUDCOVER( int    startIdx,
                                    int    endIdx,
                                    const float inOpen[],
@@ -274,65 +215,6 @@ TA_RetCode TA_S_CDLDARKCLOUDCOVER( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
-
-   lookbackTotal = TA_CDLDARKCLOUDCOVER_Lookback(optInPenetration);
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   BodyLongPeriodTotal = 0;
-   BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
-   i = BodyLongTrailingIdx;
-   while( i < startIdx )
-   {
-      BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 1);
-      i += 1;
-   }
-   i = startIdx;
-   outIdx = 0;
-   do
-   {
-      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 1 && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inOpen[i] > (double)inHigh[i - 1] && (double)inClose[i] > (double)inOpen[i - 1] && (double)inClose[i] < (double)inClose[i - 1] - fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) * optInPenetration )
-      {
-         outInteger[outIdx++] = 0 - 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 1) - TA_CANDLERANGE(BodyLong,BodyLongTrailingIdx - 1);
-      i += 1;
-      BodyLongTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_CDLDARKCLOUDCOVER_Unguarded( int    startIdx,
-                                             int    endIdx,
-                                             const float inOpen[],
-                                             const float inHigh[],
-                                             const float inLow[],
-                                             const float inClose[],
-                                             double optInPenetration,
-                                             int          *outBegIdx,
-                                             int          *outNBElement,
-                                             int        outInteger[] )
-{
-   double BodyLongPeriodTotal;
-   int i;
-   int outIdx;
-   int BodyLongTrailingIdx;
-   int lookbackTotal;
-   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
-   int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
-   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
 
    lookbackTotal = TA_CDLDARKCLOUDCOVER_Lookback(optInPenetration);
    if( startIdx < lookbackTotal )

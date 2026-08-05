@@ -176,6 +176,12 @@ impl Core {
         if outAroonDown.as_ptr() == outAroonUp.as_ptr() {
             return RetCode::BadParam;
         }
+        let _assertLb = self.aroon_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inHigh.len());
+        assert!(_assertStart > endIdx || endIdx < inLow.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outAroonDown.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outAroonUp.len());
         let mut startIdx = startIdx;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
@@ -259,100 +265,6 @@ impl Core {
         }
         // Keep the outBegIdx relative to the
         // caller input before returning.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::aroon`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::aroon`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::aroon`].
-    #[inline]
-    pub fn aroon_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outAroonDown: &mut [f64],
-        outAroonUp: &mut [f64],
-    ) -> RetCode {
-        let mut lowest: f64 = 0.0_f64;
-        let mut highest: f64 = 0.0_f64;
-        let mut tmp: f64 = 0.0_f64;
-        let mut factor: f64 = 0.0_f64;
-        let mut outIdx: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut lowestIdx: i32 = 0_i32;
-        let mut highestIdx: i32 = 0_i32;
-        let mut today: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        assert!(endIdx < inHigh.len());
-        assert!(endIdx < inLow.len());
-        let _assertLb = self.aroon_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outAroonDown.len());
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outAroonUp.len());
-        if startIdx < ((optInTimePeriod) as usize) {
-            startIdx = (optInTimePeriod) as usize;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        outIdx = 0;
-        today = startIdx;
-        trailingIdx = startIdx - ((optInTimePeriod) as usize);
-        lowestIdx = 0 - 1;
-        highestIdx = 0 - 1;
-        lowest = 0.0;
-        highest = 0.0;
-        factor = (100.0 as f64) / (optInTimePeriod as f64);
-        while today <= endIdx {
-            tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tmp = inLow[i];
-                    if tmp <= lowest {
-                        lowestIdx = (i) as i32;
-                        lowest = tmp;
-                    }
-                }
-            } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
-                lowest = tmp;
-            }
-            tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tmp = inHigh[i];
-                    if tmp >= highest {
-                        highestIdx = (i) as i32;
-                        highest = tmp;
-                    }
-                }
-            } else if tmp >= highest {
-                highestIdx = (today) as i32;
-                highest = tmp;
-            }
-            outAroonUp[outIdx] = factor * (((optInTimePeriod - (((today) as i32) - highestIdx))) as f64);
-            outAroonDown[outIdx] = factor * (((optInTimePeriod - (((today) as i32) - lowestIdx))) as f64);
-            outIdx += 1;
-            trailingIdx += 1;
-            today += 1;
-        }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;

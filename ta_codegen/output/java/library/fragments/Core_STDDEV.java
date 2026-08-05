@@ -73,7 +73,7 @@
          return RetCode.BadParam;
       }
       /* Calculate the variance. */
-      retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+      retCode = varianceInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -82,43 +82,6 @@
        *
        * Multiply also by the ratio specified.
        */
-      if( optInNbDev != 1.0 ) {
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               outReal[i] = Math.sqrt(tempReal) * optInNbDev;
-            } else {
-               outReal[i] = (double)0.0;
-            }
-         }
-      } else {
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               outReal[i] = Math.sqrt(tempReal);
-            } else {
-               outReal[i] = (double)0.0;
-            }
-         }
-      }
-      return RetCode.Success ;
-   }
-   RetCode stdDevUnguardedInternal( int startIdx,
-                                    int endIdx,
-                                    double inReal[],
-                                    int optInTimePeriod,
-                                    double optInNbDev,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outReal[] )
-   {
-      int i = 0;
-      RetCode retCode;
-      double tempReal = 0;
-      retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             tempReal = outReal[i];
@@ -168,44 +131,7 @@
       } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      if( optInNbDev != 1.0 ) {
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               outReal[i] = Math.sqrt(tempReal) * optInNbDev;
-            } else {
-               outReal[i] = (double)0.0;
-            }
-         }
-      } else {
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               outReal[i] = Math.sqrt(tempReal);
-            } else {
-               outReal[i] = (double)0.0;
-            }
-         }
-      }
-      return RetCode.Success ;
-   }
-   RetCode stdDevUnguardedInternal( int startIdx,
-                                    int endIdx,
-                                    float inReal[],
-                                    int optInTimePeriod,
-                                    double optInNbDev,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outReal[] )
-   {
-      int i = 0;
-      RetCode retCode;
-      double tempReal = 0;
-      retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+      retCode = varianceInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -285,34 +211,6 @@
    }
    /**
     * Rolling standard deviation of a series over a window, scaled by a
-    * deviations multiplier. Delegates to VAR, then takes the square root. —
-    * <b>unchecked</b> variant of {@link Core#stdDev}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange stdDevUnguarded( int startIdx,
-                                    int endIdx,
-                                    double inReal[],
-                                    int optInTimePeriod,
-                                    double optInNbDev,
-                                    double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      stdDevUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Rolling standard deviation of a series over a window, scaled by a
     * deviations multiplier. Delegates to VAR, then takes the square root.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -365,35 +263,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("STDDEV", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Rolling standard deviation of a series over a window, scaled by a
-    * deviations multiplier. Delegates to VAR, then takes the square root. —
-    * <b>unchecked</b> variant of {@link Core#stdDev}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange stdDevUnguarded( int startIdx,
-                                    int endIdx,
-                                    float inReal[],
-                                    int optInTimePeriod,
-                                    double optInNbDev,
-                                    double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      stdDevUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
@@ -528,7 +397,7 @@
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       VarianceStream sub0 = varianceOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, 1.0);
-      retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
+      retCode = varianceInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -595,7 +464,7 @@
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       VarianceStream sub0 = varianceOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, 1.0);
-      retCode = varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
+      retCode = varianceInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }

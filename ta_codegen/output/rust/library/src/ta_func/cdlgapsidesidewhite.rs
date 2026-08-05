@@ -164,6 +164,13 @@ impl Core {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
+        let _assertLb = self.cdlgapsidesidewhite_lookback();
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inOpen.len());
+        assert!(_assertStart > endIdx || endIdx < inHigh.len());
+        assert!(_assertStart > endIdx || endIdx < inLow.len());
+        assert!(_assertStart > endIdx || endIdx < inClose.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outInteger.len());
         let mut startIdx = startIdx;
         let mut NearPeriodTotal: f64 = 0.0_f64;
         let mut EqualPeriodTotal: f64 = 0.0_f64;
@@ -342,185 +349,6 @@ impl Core {
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::cdlgapsidesidewhite`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::cdlgapsidesidewhite`]; an out-of-range parameter, an input slice not
-    /// covering `startIdx..=endIdx`, or an undersized output slice panics (never undefined
-    /// behavior). Prefer [`Core::cdlgapsidesidewhite`].
-    #[inline]
-    pub fn cdlgapsidesidewhite_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inOpen: &[f64],
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outInteger: &mut [i32],
-    ) -> RetCode {
-        let mut NearPeriodTotal: f64 = 0.0_f64;
-        let mut EqualPeriodTotal: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut NearTrailingIdx: usize = 0_usize;
-        let mut EqualTrailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        #[allow(non_snake_case)]
-        let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
-        #[allow(non_snake_case)]
-        let Equal_avgPeriod: i32 = self.candle_settings.equal.avg_period;
-        #[allow(non_snake_case)]
-        let Equal_factor: f64 = self.candle_settings.equal.factor;
-        #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type;
-        #[allow(non_snake_case)]
-        let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
-        #[allow(non_snake_case)]
-        let Near_factor: f64 = self.candle_settings.near.factor;
-        assert!(endIdx < inOpen.len());
-        assert!(endIdx < inHigh.len());
-        assert!(endIdx < inLow.len());
-        assert!(endIdx < inClose.len());
-        let _assertLb = self.cdlgapsidesidewhite_lookback();
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outInteger.len());
-        lookbackTotal = self.cdlgapsidesidewhite_lookback();
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        NearPeriodTotal = 0.0;
-        EqualPeriodTotal = 0.0;
-        NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
-        EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
-        i = NearTrailingIdx;
-        while i < startIdx {
-            let mut _candlerange_0: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_0 = (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                1 => {
-                    _candlerange_0 = inHigh[i - 1] - inLow[i - 1];
-                }
-                2 => {
-                    _candlerange_0 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                _ => {
-                    _candlerange_0 = 0.0;
-                }
-            }
-            NearPeriodTotal += _candlerange_0;
-            i += 1;
-        }
-        i = EqualTrailingIdx;
-        while i < startIdx {
-            let mut _candlerange_1: f64;
-            match Equal_rangeType {
-                0 => {
-                    _candlerange_1 = (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                1 => {
-                    _candlerange_1 = inHigh[i - 1] - inLow[i - 1];
-                }
-                2 => {
-                    _candlerange_1 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                _ => {
-                    _candlerange_1 = 0.0;
-                }
-            }
-            EqualPeriodTotal += _candlerange_1;
-            i += 1;
-        }
-        i = startIdx;
-        outIdx = 0;
-        loop {
-            if (((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && ((if (inOpen[i]).min(inClose[i]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0) && ((if (inOpen[i]).max(inClose[i]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) && (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && (inClose[i] - inOpen[i]).abs() >= (inClose[i - 1] - inOpen[i - 1]).abs() - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && (inClose[i] - inOpen[i]).abs() <= (inClose[i - 1] - inOpen[i - 1]).abs() + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && inOpen[i] >= inOpen[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && inOpen[i] <= inOpen[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                outInteger[outIdx] = (if ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) { 100 } else { 0 - 100 });
-                outIdx += 1;
-            } else {
-                outInteger[outIdx] = 0;
-                outIdx += 1;
-            }
-            let mut _candlerange_2: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_2 = (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                1 => {
-                    _candlerange_2 = inHigh[i - 1] - inLow[i - 1];
-                }
-                2 => {
-                    _candlerange_2 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                _ => {
-                    _candlerange_2 = 0.0;
-                }
-            }
-            let mut _candlerange_3: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_3 = (inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs();
-                }
-                1 => {
-                    _candlerange_3 = inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1];
-                }
-                2 => {
-                    _candlerange_3 = inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1] - (inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]).abs();
-                }
-                _ => {
-                    _candlerange_3 = 0.0;
-                }
-            }
-            NearPeriodTotal += _candlerange_2 - _candlerange_3;
-            let mut _candlerange_4: f64;
-            match Equal_rangeType {
-                0 => {
-                    _candlerange_4 = (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                1 => {
-                    _candlerange_4 = inHigh[i - 1] - inLow[i - 1];
-                }
-                2 => {
-                    _candlerange_4 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                _ => {
-                    _candlerange_4 = 0.0;
-                }
-            }
-            let mut _candlerange_5: f64;
-            match Equal_rangeType {
-                0 => {
-                    _candlerange_5 = (inClose[EqualTrailingIdx - 1] - inOpen[EqualTrailingIdx - 1]).abs();
-                }
-                1 => {
-                    _candlerange_5 = inHigh[EqualTrailingIdx - 1] - inLow[EqualTrailingIdx - 1];
-                }
-                2 => {
-                    _candlerange_5 = inHigh[EqualTrailingIdx - 1] - inLow[EqualTrailingIdx - 1] - (inClose[EqualTrailingIdx - 1] - inOpen[EqualTrailingIdx - 1]).abs();
-                }
-                _ => {
-                    _candlerange_5 = 0.0;
-                }
-            }
-            EqualPeriodTotal += _candlerange_4 - _candlerange_5;
-            i += 1;
-            NearTrailingIdx += 1;
-            EqualTrailingIdx += 1;
-            if !(i <= endIdx) { break; }
-        }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;

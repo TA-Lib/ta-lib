@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -207,77 +207,6 @@ TA_LIB_API TA_RetCode TA_WMA( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_WMA_Unguarded( int    startIdx,
-                                        int    endIdx,
-                                        const double inReal[],
-                                        int optInTimePeriod,
-                                        int          *outBegIdx,
-                                        int          *outNBElement,
-                                        double        outReal[] )
-{
-   int inIdx;
-   int outIdx;
-   int i;
-   int trailingIdx;
-   double periodSum;
-   double periodSub;
-   double tempReal;
-   double trailingValue;
-   double divider;
-   int lookbackTotal;
-
-   lookbackTotal = optInTimePeriod - 1;
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   if( optInTimePeriod == 1 )
-   {
-      *outBegIdx= startIdx;
-      *outNBElement= endIdx - startIdx + 1;
-      inIdx = startIdx;
-      for( i = 0; i < (int)*outNBElement; i += 1 )
-      {
-         outReal[i] = inReal[inIdx++];
-      }
-      return TA_SUCCESS;
-   }
-   divider = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
-   outIdx = 0;
-   trailingIdx = startIdx - lookbackTotal;
-   periodSub = (double)0.0;
-   periodSum = periodSub;
-   inIdx = trailingIdx;
-   i = 1;
-   while( inIdx < startIdx )
-   {
-      tempReal = inReal[inIdx++];
-      periodSub += tempReal;
-      periodSum += tempReal * i;
-      i += 1;
-   }
-   trailingValue = 0.0;
-   while( inIdx <= endIdx )
-   {
-      tempReal = inReal[inIdx++];
-      periodSub += tempReal;
-      periodSub -= trailingValue;
-      periodSum += tempReal * optInTimePeriod;
-      trailingValue = inReal[trailingIdx++];
-      outReal[outIdx++] = periodSum / divider;
-      periodSum -= periodSub;
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_WMA( int    startIdx,
                      int    endIdx,
                      const float inReal[],
@@ -310,77 +239,6 @@ TA_RetCode TA_S_WMA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   lookbackTotal = optInTimePeriod - 1;
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   if( optInTimePeriod == 1 )
-   {
-      *outBegIdx= startIdx;
-      *outNBElement= endIdx - startIdx + 1;
-      inIdx = startIdx;
-      for( i = 0; i < (int)*outNBElement; i += 1 )
-      {
-         outReal[i] = (double)inReal[inIdx++];
-      }
-      return TA_SUCCESS;
-   }
-   divider = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
-   outIdx = 0;
-   trailingIdx = startIdx - lookbackTotal;
-   periodSub = (double)0.0;
-   periodSum = periodSub;
-   inIdx = trailingIdx;
-   i = 1;
-   while( inIdx < startIdx )
-   {
-      tempReal = (double)inReal[inIdx++];
-      periodSub += tempReal;
-      periodSum += tempReal * i;
-      i += 1;
-   }
-   trailingValue = 0.0;
-   while( inIdx <= endIdx )
-   {
-      tempReal = (double)inReal[inIdx++];
-      periodSub += tempReal;
-      periodSub -= trailingValue;
-      periodSum += tempReal * optInTimePeriod;
-      trailingValue = (double)inReal[trailingIdx++];
-      outReal[outIdx++] = periodSum / divider;
-      periodSum -= periodSub;
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_WMA_Unguarded( int    startIdx,
-                               int    endIdx,
-                               const float inReal[],
-                               int optInTimePeriod,
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] )
-{
-   int inIdx;
-   int outIdx;
-   int i;
-   int trailingIdx;
-   double periodSum;
-   double periodSub;
-   double tempReal;
-   double trailingValue;
-   double divider;
-   int lookbackTotal;
 
    lookbackTotal = optInTimePeriod - 1;
    if( startIdx < lookbackTotal )

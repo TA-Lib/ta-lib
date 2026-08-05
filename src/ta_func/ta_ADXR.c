@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -148,7 +148,7 @@ TA_LIB_API TA_RetCode TA_ADXR( int    startIdx,
    /* Compute ADX over a range that starts (period-1) bars earlier, so each
     * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
     */
-   retCode = TA_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
+   retCode = TA_ADX(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
    if( retCode != TA_SUCCESS )
    {
       free(adx);
@@ -158,55 +158,6 @@ TA_LIB_API TA_RetCode TA_ADXR( int    startIdx,
     * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
     * is adx[k]; the ADX range holds (period-1) more elements than the output.
     */
-   nbElement = *outNBElement - (optInTimePeriod - 1);
-   for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
-   {
-      outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
-   }
-   free(adx);
-   *outBegIdx= startIdx;
-   *outNBElement= nbElement;
-   return TA_SUCCESS;
-}
-
-TA_LIB_API TA_RetCode TA_ADXR_Unguarded( int    startIdx,
-                                         int    endIdx,
-                                         const double inHigh[],
-                                         const double inLow[],
-                                         const double inClose[],
-                                         int optInTimePeriod,
-                                         int          *outBegIdx,
-                                         int          *outNBElement,
-                                         double        outReal[] )
-{
-   double *adx;
-   int adxrLookback;
-   int outIdx;
-   int nbElement;
-   TA_RetCode retCode;
-
-   adxrLookback = TA_ADXR_Lookback(optInTimePeriod);
-   if( startIdx < adxrLookback )
-   {
-      startIdx = adxrLookback;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   adx = malloc((endIdx - startIdx + optInTimePeriod) * sizeof(double));
-   if( !adx )
-   {
-      return TA_ALLOC_ERR;
-   }
-   retCode = TA_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
-   if( retCode != TA_SUCCESS )
-   {
-      free(adx);
-      return retCode;
-   }
    nbElement = *outNBElement - (optInTimePeriod - 1);
    for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
    {
@@ -268,56 +219,7 @@ TA_RetCode TA_S_ADXR( int    startIdx,
    {
       return TA_ALLOC_ERR;
    }
-   retCode = TA_S_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
-   if( retCode != TA_SUCCESS )
-   {
-      free(adx);
-      return retCode;
-   }
-   nbElement = *outNBElement - (optInTimePeriod - 1);
-   for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
-   {
-      outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
-   }
-   free(adx);
-   *outBegIdx= startIdx;
-   *outNBElement= nbElement;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_ADXR_Unguarded( int    startIdx,
-                                int    endIdx,
-                                const float inHigh[],
-                                const float inLow[],
-                                const float inClose[],
-                                int optInTimePeriod,
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                double        outReal[] )
-{
-   double *adx;
-   int adxrLookback;
-   int outIdx;
-   int nbElement;
-   TA_RetCode retCode;
-
-   adxrLookback = TA_ADXR_Lookback(optInTimePeriod);
-   if( startIdx < adxrLookback )
-   {
-      startIdx = adxrLookback;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   adx = malloc((endIdx - startIdx + optInTimePeriod) * sizeof(double));
-   if( !adx )
-   {
-      return TA_ALLOC_ERR;
-   }
-   retCode = TA_S_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
+   retCode = TA_S_ADX(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,outBegIdx,outNBElement,adx);
    if( retCode != TA_SUCCESS )
    {
       free(adx);
@@ -459,7 +361,7 @@ TA_RetCode TA_ADXR_OpenInternal( struct TA_ADXR_Stream **stream, const double in
             return subRc;
          }
       }
-      retCode = TA_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,&dummyBegIdx,&dummyNBElement,adx);
+      retCode = TA_ADX(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,&dummyBegIdx,&dummyNBElement,adx);
       if( retCode != TA_SUCCESS )
       {
          free(adx);
@@ -602,7 +504,7 @@ TA_LIB_API TA_RetCode TA_ADXR_OpenAndFill( TA_ADXR_Stream **stream, const double
             return subRc;
          }
       }
-      retCode = TA_ADX_Unguarded(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,&dummyBegIdx,&dummyNBElement,adx);
+      retCode = TA_ADX(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,&dummyBegIdx,&dummyNBElement,adx);
       if( retCode != TA_SUCCESS )
       {
          free(adx);

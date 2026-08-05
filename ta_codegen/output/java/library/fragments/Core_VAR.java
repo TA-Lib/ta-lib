@@ -182,95 +182,6 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode varianceUnguardedInternal( int startIdx,
-                                      int endIdx,
-                                      double inReal[],
-                                      int optInTimePeriod,
-                                      double optInNbDev,
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      double outReal[] )
-   {
-      double tempReal = 0;
-      double shift = 0;
-      double periodTotal1 = 0;
-      double periodTotal2 = 0;
-      double meanValue1 = 0;
-      double variance = 0;
-      double invPeriod = 0;
-      int i = 0;
-      int j = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int windowStart = 0;
-      int nbInitialElementNeeded = 0;
-      int barsSinceReseed = 0;
-      nbInitialElementNeeded = optInTimePeriod - 1;
-      if( startIdx < nbInitialElementNeeded ) {
-         startIdx = nbInitialElementNeeded;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      invPeriod = 1.0 / (double)optInTimePeriod;
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      shift = inReal[trailingIdx];
-      periodTotal1 = 0.0;
-      periodTotal2 = 0.0;
-      for( j = trailingIdx; j < startIdx; j += 1 ) {
-         tempReal = inReal[j] - shift;
-         periodTotal1 += tempReal;
-         tempReal *= tempReal;
-         periodTotal2 += tempReal;
-      }
-      i = startIdx;
-      outIdx = 0;
-      barsSinceReseed = 32 * optInTimePeriod;
-      do {
-         tempReal = inReal[i] - shift;
-         periodTotal1 += tempReal;
-         tempReal *= tempReal;
-         periodTotal2 += tempReal;
-         meanValue1 = periodTotal1 * invPeriod;
-         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-         tempReal = inReal[trailingIdx] - shift;
-         periodTotal1 -= tempReal;
-         tempReal *= tempReal;
-         periodTotal2 -= tempReal;
-         trailingIdx += 1;
-         barsSinceReseed -= 1;
-         if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
-            barsSinceReseed = 32 * optInTimePeriod;
-            windowStart = i - nbInitialElementNeeded;
-            tempReal = 0.0;
-            for( j = windowStart; j <= i; j += 1 ) {
-               tempReal += inReal[j];
-            }
-            shift = tempReal * invPeriod;
-            periodTotal1 = 0.0;
-            periodTotal2 = 0.0;
-            for( j = windowStart; j <= i; j += 1 ) {
-               tempReal = inReal[j] - shift;
-               periodTotal1 += tempReal;
-               tempReal *= tempReal;
-               periodTotal2 += tempReal;
-            }
-            meanValue1 = periodTotal1 * invPeriod;
-            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-            tempReal = inReal[windowStart] - shift;
-            periodTotal1 -= tempReal;
-            tempReal *= tempReal;
-            periodTotal2 -= tempReal;
-         }
-         outReal[outIdx++] = variance;
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
    RetCode varianceInternal( int startIdx,
                              int endIdx,
                              float inReal[],
@@ -310,95 +221,6 @@
       } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      nbInitialElementNeeded = optInTimePeriod - 1;
-      if( startIdx < nbInitialElementNeeded ) {
-         startIdx = nbInitialElementNeeded;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      invPeriod = 1.0 / (double)optInTimePeriod;
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      shift = (double)inReal[trailingIdx];
-      periodTotal1 = 0.0;
-      periodTotal2 = 0.0;
-      for( j = trailingIdx; j < startIdx; j += 1 ) {
-         tempReal = (double)inReal[j] - shift;
-         periodTotal1 += tempReal;
-         tempReal *= tempReal;
-         periodTotal2 += tempReal;
-      }
-      i = startIdx;
-      outIdx = 0;
-      barsSinceReseed = 32 * optInTimePeriod;
-      do {
-         tempReal = (double)inReal[i] - shift;
-         periodTotal1 += tempReal;
-         tempReal *= tempReal;
-         periodTotal2 += tempReal;
-         meanValue1 = periodTotal1 * invPeriod;
-         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-         tempReal = (double)inReal[trailingIdx] - shift;
-         periodTotal1 -= tempReal;
-         tempReal *= tempReal;
-         periodTotal2 -= tempReal;
-         trailingIdx += 1;
-         barsSinceReseed -= 1;
-         if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
-            barsSinceReseed = 32 * optInTimePeriod;
-            windowStart = i - nbInitialElementNeeded;
-            tempReal = 0.0;
-            for( j = windowStart; j <= i; j += 1 ) {
-               tempReal += (double)inReal[j];
-            }
-            shift = tempReal * invPeriod;
-            periodTotal1 = 0.0;
-            periodTotal2 = 0.0;
-            for( j = windowStart; j <= i; j += 1 ) {
-               tempReal = (double)inReal[j] - shift;
-               periodTotal1 += tempReal;
-               tempReal *= tempReal;
-               periodTotal2 += tempReal;
-            }
-            meanValue1 = periodTotal1 * invPeriod;
-            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-            tempReal = (double)inReal[windowStart] - shift;
-            periodTotal1 -= tempReal;
-            tempReal *= tempReal;
-            periodTotal2 -= tempReal;
-         }
-         outReal[outIdx++] = variance;
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode varianceUnguardedInternal( int startIdx,
-                                      int endIdx,
-                                      float inReal[],
-                                      int optInTimePeriod,
-                                      double optInNbDev,
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      double outReal[] )
-   {
-      double tempReal = 0;
-      double shift = 0;
-      double periodTotal1 = 0;
-      double periodTotal2 = 0;
-      double meanValue1 = 0;
-      double variance = 0;
-      double invPeriod = 0;
-      int i = 0;
-      int j = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int windowStart = 0;
-      int nbInitialElementNeeded = 0;
-      int barsSinceReseed = 0;
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
          startIdx = nbInitialElementNeeded;
@@ -521,35 +343,6 @@
    /**
     * Rolling population variance of a real series over a given period. Measures
     * dispersion of values around their mean. Higher values indicate greater
-    * dispersion; 0 means constant input. — <b>unchecked</b> variant of
-    * {@link Core#variance}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange varianceUnguarded( int startIdx,
-                                      int endIdx,
-                                      double inReal[],
-                                      int optInTimePeriod,
-                                      double optInNbDev,
-                                      double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Rolling population variance of a real series over a given period. Measures
-    * dispersion of values around their mean. Higher values indicate greater
     * dispersion; 0 means constant input.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -601,36 +394,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("VAR", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Rolling population variance of a real series over a given period. Measures
-    * dispersion of values around their mean. Higher values indicate greater
-    * dispersion; 0 means constant input. — <b>unchecked</b> variant of
-    * {@link Core#variance}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange varianceUnguarded( int startIdx,
-                                      int endIdx,
-                                      float inReal[],
-                                      int optInTimePeriod,
-                                      double optInNbDev,
-                                      double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      varianceUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

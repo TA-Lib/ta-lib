@@ -167,12 +167,19 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.ema_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut optInK_1: f64 = 2.0 / ((optInTimePeriod + 1) as f64);
         // Simply call the internal implementation of the EMA.
         return self.ema_private(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, outBegIdx, outNBElement, outReal);
     }
-    /// Internal variant of [`Core::ema_unguarded`] taking the precomputed parameter `optInK_1`.
-    /// Same contract as [`Core::ema_unguarded`].
+    /// Internal variant of [`Core::ema`] taking the precomputed parameter `optInK_1`. Skips the
+    /// validation prologue: its only callers are the guarded bodies, which have already validated.
+    ///
+    /// Unlike [`Core::ema`] the bounds assertions here are unconditional: an `endIdx` beyond the
+    /// input slice panics even when the lookback clamp means no element would be read.
     #[inline]
     pub fn ema_private(
         &self,
@@ -191,9 +198,9 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        assert!(endIdx < inReal.len());
         let _assertLb = self.ema_lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         // Internal implementation can be called from any other TA function.
         //
@@ -265,31 +272,6 @@ impl Core {
         }
         (*outNBElement) = outIdx;
         return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::ema`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::ema`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::ema`].
-    #[inline]
-    pub fn ema_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut optInK_1: f64 = 0.0_f64;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.ema_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
-        return self.ema_private(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, outBegIdx, outNBElement, outReal);
     }
 }
 /**** Streaming API *****/

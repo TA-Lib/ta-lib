@@ -160,37 +160,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode MomUnguarded( int startIdx,
-                                  int endIdx,
-                                  double[] inReal,
-                                  int optInTimePeriod,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int inIdx = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      if( startIdx < optInTimePeriod ) {
-         startIdx = optInTimePeriod;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      inIdx = startIdx;
-      trailingIdx = startIdx - optInTimePeriod;
-      while( inIdx <= endIdx ) {
-         outReal[outIdx++] = inReal[inIdx++] - inReal[trailingIdx++];
-      }
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode Mom( int startIdx,
                          int endIdx,
                          float[] inReal,
@@ -215,37 +184,6 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx < optInTimePeriod ) {
-         startIdx = optInTimePeriod;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      inIdx = startIdx;
-      trailingIdx = startIdx - optInTimePeriod;
-      while( inIdx <= endIdx ) {
-         outReal[outIdx++] = (double)inReal[inIdx++] - (double)inReal[trailingIdx++];
-      }
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode MomUnguarded( int startIdx,
-                                  int endIdx,
-                                  float[] inReal,
-                                  int optInTimePeriod,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int inIdx = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
       if( startIdx < optInTimePeriod ) {
          startIdx = optInTimePeriod;
       }
@@ -312,42 +250,6 @@ public partial class Core
    /// <summary>
    /// Momentum: current price minus the price optInTimePeriod bars ago. The
    /// absolute (unnormalized) rate of change. Positive = price rose over the
-   /// period, negative = fell; centered at zero. — <b>unchecked</b> variant of
-   /// <c>Mom</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange MomUnguarded( int startIdx,
-                                 int endIdx,
-                                 double[] inReal,
-                                 int optInTimePeriod,
-                                 double[] outReal )
-   {
-      MomUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Momentum: current price minus the price optInTimePeriod bars ago. The
-   /// absolute (unnormalized) rate of change. Positive = price rose over the
    /// period, negative = fell; centered at zero.
    /// </summary>
    /// <remarks>
@@ -394,45 +296,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("MOM", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Momentum: current price minus the price optInTimePeriod bars ago. The
-   /// absolute (unnormalized) rate of change. Positive = price rose over the
-   /// period, negative = fell; centered at zero. — <b>unchecked</b> variant of
-   /// <c>Mom</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange MomUnguarded( int startIdx,
-                                 int endIdx,
-                                 float[] inReal,
-                                 int optInTimePeriod,
-                                 double[] outReal )
-   {
-      MomUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

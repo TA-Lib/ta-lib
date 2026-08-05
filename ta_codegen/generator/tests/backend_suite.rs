@@ -143,12 +143,6 @@ fn check_c_variants(c: &str, upper: &str, name: &str) {
         name,
         upper
     );
-    assert!(
-        c.contains(&format!("TA_{}_Unguarded(", upper)),
-        "{}: C missing TA_{}_Unguarded",
-        name,
-        upper
-    );
     // TA_INT_* macros are no longer generated
     assert!(
         !c.contains(&format!("#define TA_INT_{}", upper)),
@@ -163,16 +157,15 @@ fn check_c_variants(c: &str, upper: &str, name: &str) {
         upper
     );
     assert!(
-        c.contains(&format!("TA_S_{}_Unguarded(", upper)),
-        "{}: C missing TA_S_{}_Unguarded",
-        name,
-        upper
+        !c.contains("_Unguarded"),
+        "{name}: C must not emit an unguarded variant"
     );
 }
 
 /// Check that all Rust variants exist for a given indicator.
-/// After the 2-variant refactor: only `foo` (guarded) + `foo_unguarded`.
-/// No `_unchecked` or `_unguarded_unchecked` variants. Concrete f64 types, not generic.
+/// `foo` (guarded) plus `foo_lookback`, and `foo_private` only for the
+/// definitions that declare one. No `_unguarded`, `_unchecked` or
+/// `_unguarded_unchecked` variants. Concrete f64 types, not generic.
 fn check_rust_generic_variants(r: &str, snake: &str, name: &str) {
     // Lookback (non-generic)
     assert!(
@@ -188,12 +181,9 @@ fn check_rust_generic_variants(r: &str, snake: &str, name: &str) {
         name,
         snake
     );
-    // Unguarded (concrete f64, no generics)
     assert!(
-        r.contains(&format!("fn {}_unguarded(", snake)),
-        "{}: Rust missing fn {}_unguarded(",
-        name,
-        snake
+        !r.contains("_unguarded"),
+        "{name}: Rust must not emit an unguarded variant"
     );
 }
 
@@ -213,10 +203,8 @@ fn check_java_variants(j: &str, lower: &str, name: &str) {
         lower
     );
     assert!(
-        j.contains(&format!("{}Unguarded(", lower)),
-        "{}: Java missing {}Unguarded",
-        name,
-        lower
+        !j.contains("Unguarded"),
+        "{name}: Java must not emit an unguarded variant"
     );
 }
 
@@ -424,14 +412,19 @@ fn test_ma_c_cross_calls() {
         c.contains("TA_EMA_Lookback("),
         "C: MA should call TA_EMA_Lookback"
     );
-    // Bare cross-indicator calls resolve to Unguarded (skip validation)
+    // Bare cross-indicator calls resolve to the guarded entry point. Anchored on
+    // the first argument: bare `TA_SMA(` would also match a declaration.
     assert!(
-        c.contains("TA_SMA_Unguarded("),
-        "C: MA should call TA_SMA_Unguarded"
+        c.contains("TA_SMA(startIdx"),
+        "C: MA should call guarded TA_SMA"
     );
     assert!(
-        c.contains("TA_EMA_Unguarded("),
-        "C: MA should call TA_EMA_Unguarded"
+        c.contains("TA_EMA(startIdx"),
+        "C: MA should call guarded TA_EMA"
+    );
+    assert!(
+        !c.contains("TA_SMA_Unguarded(") && !c.contains("TA_EMA_Unguarded("),
+        "C: MA must not call the unguarded variants"
     );
 }
 
@@ -449,10 +442,15 @@ fn test_ma_java_cross_calls() {
         j.contains("emaLookback("),
         "Java: MA should call emaLookback"
     );
-    // Bare cross-indicator calls resolve to the unguarded internal core
-    // (skip validation, and keep the C-shaped MInteger out-params).
-    assert!(j.contains("smaUnguardedInternal("), "Java: MA should call smaUnguardedInternal");
-    assert!(j.contains("emaUnguardedInternal("), "Java: MA should call emaUnguardedInternal");
+    // Bare cross-indicator calls resolve to the guarded internal core, which
+    // keeps the C-shaped MInteger out-params — going through the public
+    // OutRange wrapper would allocate a throwaway MInteger pair per call.
+    assert!(j.contains("smaInternal("), "Java: MA should call smaInternal");
+    assert!(j.contains("emaInternal("), "Java: MA should call emaInternal");
+    assert!(
+        !j.contains("smaUnguardedInternal(") && !j.contains("emaUnguardedInternal("),
+        "Java: MA must not call the unguarded cores"
+    );
 }
 
 #[test]
@@ -470,14 +468,18 @@ fn test_ma_rust_cross_calls() {
         r.contains("self.ema_lookback("),
         "Rust: MA should call self.ema_lookback"
     );
-    // Bare cross-indicator calls go to unguarded (skip validation)
+    // Bare cross-indicator calls go to the guarded fn
     assert!(
-        r.contains("self.sma_unguarded("),
-        "Rust: MA should call self.sma_unguarded"
+        r.contains("self.sma("),
+        "Rust: MA should call self.sma"
     );
     assert!(
-        r.contains("self.ema_unguarded("),
-        "Rust: MA should call self.ema_unguarded"
+        r.contains("self.ema("),
+        "Rust: MA should call self.ema"
+    );
+    assert!(
+        !r.contains("self.sma_unguarded(") && !r.contains("self.ema_unguarded("),
+        "Rust: MA must not call the unguarded variants"
     );
 }
 
@@ -486,13 +488,19 @@ fn test_ma_rust_cross_calls() {
 // ---------------------------------------------------------------------------
 
 /// Helper: extract the section of output between `start_marker` and `end_marker`.
-/// If `end_marker` is not found, returns everything after `start_marker`.
+///
+/// BOTH markers must be present. Falling back to "everything after the start" on
+/// a missing end marker silently turns a bounded `contains(..)` assertion into
+/// "the whole output mentions this somewhere", so a test keeps passing while
+/// checking strictly less.
 fn extract_section(output: &str, start_marker: &str, end_marker: &str) -> String {
     let start = output
         .find(start_marker)
-        .unwrap_or_else(|| panic!("Could not find '{}' in output", start_marker));
+        .unwrap_or_else(|| panic!("Could not find start marker '{start_marker}' in output"));
     let rest = &output[start..];
-    let end = rest.find(end_marker).unwrap_or(rest.len());
+    let end = rest.find(end_marker).unwrap_or_else(|| {
+        panic!("Could not find end marker '{end_marker}' after '{start_marker}' — the section would be unbounded")
+    });
     rest[..end].to_string()
 }
 
@@ -501,8 +509,8 @@ fn test_c_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");
     let out = generate_all(&func, &enums);
 
-    // Extract guarded function (between TA_SMA( and TA_SMA_Unguarded)
-    let guarded = extract_section(&out.c, "TA_RetCode TA_SMA(", "TA_SMA_Unguarded(");
+    // Bounded by the float twin, which directly follows the double guarded body.
+    let guarded = extract_section(&out.c, "TA_RetCode TA_SMA(", "TA_RetCode TA_S_SMA(");
     assert!(
         guarded.contains("TA_OUT_OF_RANGE_START_INDEX"),
         "C guarded SMA should have start index validation"
@@ -514,19 +522,25 @@ fn test_c_sma_guarded_has_validation() {
 }
 
 #[test]
-fn test_c_sma_logic_omits_validation() {
-    let (func, enums) = load_indicator("sma");
+fn test_c_ema_private_omits_validation() {
+    // Exactly one tier validates: the guarded entry point, not `_Private`.
+    // Anchored on EMA — the one definition in ta_codegen/input/ with an
+    // explicit _private.
+    let (func, enums) = load_indicator("ema");
     let out = generate_all(&func, &enums);
 
-    // Extract logic function (between TA_SMA_Unguarded( and #define TA_INT_SMA)
-    let logic = extract_section(&out.c, "TA_SMA_Unguarded(", "TA_S_SMA(");
-    assert!(
-        !logic.contains("TA_OUT_OF_RANGE_START_INDEX"),
-        "C logic SMA should NOT have start index validation"
+    let private = extract_section(
+        &out.c,
+        "static TA_RetCode TA_EMA_Private(",
+        "TA_LIB_API TA_RetCode TA_EMA(",
     );
     assert!(
-        !logic.contains("TA_OUT_OF_RANGE_END_INDEX"),
-        "C logic SMA should NOT have end index validation"
+        !private.contains("TA_OUT_OF_RANGE_START_INDEX"),
+        "C EMA _Private should NOT have start index validation"
+    );
+    assert!(
+        !private.contains("TA_OUT_OF_RANGE_END_INDEX"),
+        "C EMA _Private should NOT have end index validation"
     );
 }
 
@@ -536,7 +550,10 @@ fn test_java_sma_guarded_has_validation() {
     let out = generate_all(&func, &enums);
 
     // Extract the guarded core (between its own signature and the unguarded one)
-    let guarded = extract_section(&out.java, "RetCode smaInternal(", "smaUnguardedInternal(");
+    // Bounded to the DOUBLE core alone: the float twin is an overload with the
+    // same name, so a marker that spans both would let it satisfy the assertion.
+    let guarded = extract_section(&out.java, "RetCode smaInternal( int startIdx", "double inReal[]");
+    let guarded = format!("{guarded}{}", extract_section(&out.java, "double inReal[]", "float inReal[]"));
     assert!(
         guarded.contains("OutOfRangeStartIndex"),
         "Java guarded SMA should have start index validation"
@@ -544,22 +561,14 @@ fn test_java_sma_guarded_has_validation() {
 }
 
 #[test]
-fn test_java_sma_logic_omits_validation() {
-    let (func, enums) = load_indicator("sma");
+fn test_java_ema_private_omits_validation() {
+    let (func, enums) = load_indicator("ema");
     let out = generate_all(&func, &enums);
 
-    // Extract unguarded function (find smaUnguarded, get section until next "public RetCode")
-    let logic_start = out.java.find("smaUnguarded(").expect("Missing smaUnguarded");
-    let logic_section = &out.java[logic_start..];
-    // Look for next public function or end
-    let end = logic_section
-        .find("public RetCode sma(")
-        .or_else(|| logic_section.find("public int"))
-        .unwrap_or(logic_section.len());
-    let logic = &logic_section[..end];
+    let private = extract_section(&out.java, "RetCode emaPrivate(", "RetCode emaInternal(");
     assert!(
-        !logic.contains("OutOfRangeStartIndex"),
-        "Java logic SMA should NOT have start index validation"
+        !private.contains("OutOfRangeStartIndex"),
+        "Java emaPrivate should NOT have start index validation"
     );
 }
 
@@ -568,13 +577,9 @@ fn test_rust_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");
     let out = generate_all(&func, &enums);
 
-    // The guarded Rust function delegates to _unguarded, but first validates params.
-    // After 2-variant refactor: concrete f64 types, no generics.
-    let guarded = extract_section(
-        &out.rust,
-        "pub fn sma(",
-        "pub fn sma_unguarded(",
-    );
+    // The guarded Rust function holds the algorithm and validates first, bounded
+    // by the end of the impl block.
+    let guarded = extract_section(&out.rust, "pub fn sma(", "\n}\n");
     assert!(
         guarded.contains("endIdx < startIdx"),
         "Rust guarded SMA should have endIdx < startIdx check"
@@ -582,45 +587,24 @@ fn test_rust_sma_guarded_has_validation() {
 }
 
 #[test]
-fn test_rust_sma_unguarded_omits_validation() {
-    let (func, enums) = load_indicator("sma");
+fn test_rust_ema_private_omits_validation() {
+    let (func, enums) = load_indicator("ema");
     let out = generate_all(&func, &enums);
 
-    // The unguarded function should not have the range check.
-    // After 2-variant refactor: concrete f64 types, no _unchecked variant.
-    let unguarded_start = out
-        .rust
-        .find("pub fn sma_unguarded(")
-        .expect("Missing sma_unguarded");
-    let unguarded_section = &out.rust[unguarded_start..];
-    // No _unchecked variant anymore; use end of impl block or file as boundary
-    let end = unguarded_section.len();
-    let unguarded = &unguarded_section[..end];
+    let private = extract_section(&out.rust, "pub fn ema_private(", "\n}\n");
     assert!(
-        !unguarded.contains("OutOfRangeStartIndex"),
-        "Rust unguarded SMA should NOT have range validation"
+        !private.contains("OutOfRangeStartIndex"),
+        "Rust ema_private should NOT have range validation"
     );
 }
 
 // Also test a different indicator for validation (RSI)
 #[test]
-fn test_c_rsi_logic_omits_validation() {
-    let (func, enums) = load_indicator("rsi");
-    let out = generate_all(&func, &enums);
-
-    let logic = extract_section(&out.c, "TA_RSI_Unguarded(", "TA_S_RSI(");
-    assert!(
-        !logic.contains("TA_OUT_OF_RANGE_START_INDEX"),
-        "C logic RSI should NOT have start index validation"
-    );
-}
-
-#[test]
 fn test_c_rsi_guarded_has_validation() {
     let (func, enums) = load_indicator("rsi");
     let out = generate_all(&func, &enums);
 
-    let guarded = extract_section(&out.c, "TA_RetCode TA_RSI(", "TA_RSI_Unguarded(");
+    let guarded = extract_section(&out.c, "TA_RetCode TA_RSI(", "TA_RetCode TA_S_RSI(");
     assert!(
         guarded.contains("TA_OUT_OF_RANGE_START_INDEX"),
         "C guarded RSI should have start index validation"
@@ -1162,8 +1146,8 @@ fn test_rust_generic_output_smoke() {
         "Rust SMA should have pub fn sma("
     );
     assert!(
-        r.contains("pub fn sma_unguarded("),
-        "Rust SMA should have pub fn sma_unguarded("
+        !r.contains("_unguarded"),
+        "Rust SMA must not emit an unguarded variant"
     );
 
     // 2. No _s suffix methods
@@ -1194,13 +1178,13 @@ fn test_rust_generic_output_smoke() {
         "Rust SMA should NOT contain _unguarded_unchecked variants"
     );
 
-    // 6. Exactly 5 pub fn: guarded + unguarded + lookback + the stream tier's
-    // open + open_and_fill (open_internal is pub(crate), update/peek live on
-    // the handle type).
+    // 6. Exactly 4 pub fn: guarded + lookback + the stream tier's open +
+    // open_and_fill (open_internal is pub(crate), update/peek live on the handle
+    // type).
     let pub_fn_count = r.matches("pub fn sma").count();
     assert_eq!(
-        pub_fn_count, 5,
-        "Rust SMA should have exactly 5 pub fn (sma, sma_unguarded, sma_lookback, sma_open, sma_open_and_fill), got {}",
+        pub_fn_count, 4,
+        "Rust SMA should have exactly 4 pub fn (sma, sma_lookback, sma_open, sma_open_and_fill), got {}",
         pub_fn_count
     );
 }
@@ -3706,14 +3690,20 @@ fn rust_cross_indicator_call_via_generate() {
     let helpers = make_helpers();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    // Cross-indicator calls resolve to _unguarded (skip validation)
+    // Cross-indicator calls resolve to the guarded fn
     assert!(
-        rust_out.contains("self.sma_unguarded("),
-        "MA Rust should call self.sma_unguarded(): {rust_out}"
+        rust_out.contains("self.sma("),
+        "MA Rust should call self.sma(): {rust_out}"
     );
     assert!(
-        rust_out.contains("self.ema_unguarded("),
-        "MA Rust should call self.ema_unguarded(): {rust_out}"
+        rust_out.contains("self.ema("),
+        "MA Rust should call self.ema(): {rust_out}"
+    );
+    // `self.` makes this a call, not the `pub fn ma_unguarded(` definition that
+    // step 1 still emits — so the negative is real, not vacuous.
+    assert!(
+        !rust_out.contains("self.sma_unguarded(") && !rust_out.contains("self.ema_unguarded("),
+        "MA Rust must not call the unguarded variants: {rust_out}"
     );
 }
 
@@ -3735,7 +3725,8 @@ fn rust_cross_indicator_lookback_with_pascal_case() {
 #[test]
 fn rust_private_cross_indicator_call() {
     // EMA has explicit _private with extra params. Registry routes:
-    //   ema() → ema_unguarded(), ema_private() → ema_private()
+    //   ema() → ema(), ema_private() → ema_private()
+    // The `_private` arm is orthogonal to the guarded/unguarded pair and is
     // (MACD was the original vehicle for both paths, but its lockstep fusion
     // removed the EMA calls.) The bare-name path is exercised by MA's dispatch;
     // the private-name path by EMA's guarded body delegating to ema_private().
@@ -3745,8 +3736,8 @@ fn rust_private_cross_indicator_call() {
     let (func, enums) = load_indicator("ma");
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
     assert!(
-        rust_out.contains("self.ema_unguarded("),
-        "MA Rust dispatch should call self.ema_unguarded(): {rust_out}"
+        rust_out.contains("self.ema("),
+        "MA Rust dispatch should call self.ema(): {rust_out}"
     );
 
     let (func, enums) = load_indicator("ema");
@@ -3769,8 +3760,8 @@ fn rust_cross_indicator_vec_input_gets_ref() {
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
     assert!(
-        rust_out.contains("self.ma_unguarded(") && rust_out.contains("&tempBuffer"),
-        "STOCH Rust should pass &tempBuffer into self.ma_unguarded(): {rust_out}"
+        rust_out.contains("self.ma(") && rust_out.contains("&tempBuffer"),
+        "STOCH Rust should pass &tempBuffer into self.ma(): {rust_out}"
     );
 }
 
@@ -5348,18 +5339,18 @@ fn java_stoch_malloc_renders_as_new_array() {
 
 #[test]
 fn java_ma_cross_indicator_calls() {
-    // MA dispatches to the per-type moving averages via the unguarded variants.
+    // MA dispatches to the per-type moving averages via the guarded internal cores.
     // (MACD was the original vehicle, but its lockstep fusion removed the EMA
     // calls.)
     let (func, enums) = load_indicator("ma");
     let out = generate_all(&func, &enums);
     let j = &out.java;
 
-    // Anchor the call site so demaUnguarded(/temaUnguarded( (adjacent dispatch
+    // Anchor the call site so demaInternal(/temaInternal( (adjacent dispatch
     // arms) cannot substring-shadow the EMA arm.
     assert!(
-        j.contains("= emaUnguardedInternal("),
-        "Java MA should call emaUnguardedInternal(): {j}"
+        j.contains("= emaInternal("),
+        "Java MA should call emaInternal(): {j}"
     );
     assert!(
         j.contains("= emaLookback("),
@@ -5939,7 +5930,7 @@ fn c_stoch_has_malloc_and_free() {
 
 #[test]
 fn c_ma_cross_indicator_calls() {
-    // MA dispatches to the per-type moving averages via the unguarded variants.
+    // MA dispatches to the per-type moving averages via the guarded internal cores.
     // (MACD was the original vehicle, but its lockstep fusion removed the EMA
     // calls.)
     let (func, enums) = load_indicator("ma");
@@ -7114,7 +7105,7 @@ fn test_c_mama_nullable_fama_batch() {
     let mac = backends::c::generate(&ma, &ma_enums, &registry, &helpers);
     assert!(
         mac.contains(
-            "TA_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL)"
+            "TA_MAMA(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL)"
         ),
         "MA batch MAMA arm passes NULL for FAMA"
     );
@@ -7481,7 +7472,7 @@ fn test_c_stoch_composed_stream_section() {
     // Open: sub0 opens on the RAW series strictly BEFORE the in-place
     // smoothing call; sub1 after it, before the %D call.
     let sub0 = stream.find("subRc = TA_MA_OpenInternal( &sub0, tempBuffer").expect("sub0 open");
-    let ma1 = stream.find("retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer").expect("in-place smoothing");
+    let ma1 = stream.find("retCode = TA_MA(0,outIdx - 1,tempBuffer").expect("in-place smoothing");
     let sub1 = stream.find("subRc = TA_MA_OpenInternal( &sub1, tempBuffer").expect("sub1 open");
     let ma2 = stream.find("optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD").expect("%D call");
     assert!(sub0 < ma1 && ma1 < sub1 && sub1 < ma2, "sub-open ordering");
@@ -7919,9 +7910,9 @@ fn csharp_resolve_call_agrees_with_pascal_method_naming() {
     // whatever csharp_base returns -- deriving it from the dir-name yields
     // `Willr` and still satisfies every one of them. Only these catch that.
     for (dir, want) in [
-        ("willr", "WillRUnguarded"),
-        ("stochf", "StochFUnguarded"),
-        ("ma", "MovingAverageUnguarded"),
+        ("willr", "WillR"),
+        ("stochf", "StochF"),
+        ("ma", "MovingAverage"),
     ] {
         assert_eq!(
             registry.resolve_call(dir, ta_codegen_lib::registry::Lang::CSharp),
@@ -7935,15 +7926,15 @@ fn csharp_resolve_call_agrees_with_pascal_method_naming() {
         let bare = registry.resolve_call(&name, ta_codegen_lib::registry::Lang::CSharp);
         let lookback = registry.resolve_call(&format!("{name}_lookback"), ta_codegen_lib::registry::Lang::CSharp);
         assert!(
-            bare.ends_with("Unguarded"),
-            "{name}: bare cross-indicator call must resolve to the Unguarded \
-             variant, got {bare}"
+            !bare.ends_with("Unguarded"),
+            "{name}: bare cross-indicator call must resolve to the guarded \
+             entry point, got {bare}"
         );
-        let base = bare.trim_end_matches("Unguarded");
+        let base = &bare;
         assert_eq!(
             lookback,
             format!("{base}Lookback"),
-            "{name}: lookback and unguarded names disagree on the PascalCase base"
+            "{name}: lookback and guarded names disagree on the PascalCase base"
         );
         assert!(
             base.chars().next().is_some_and(char::is_uppercase),
@@ -7990,17 +7981,12 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
             let calls = out.matches("ta_lib_dispatch::dispatch_fma!").count();
             let clones = out.matches("#[target_feature(enable = \"fma\")]").count();
             assert_eq!(calls, clones, "{name}: dispatcher/clone count mismatch");
-            // BOTH batch variants must carry their clone — a one-variant
-            // partial no-op keeps calls==clones balanced, so pin each by
-            // name. (A future private-delegating fused function would trip
-            // this on purpose: a human must decide where dispatch goes.)
+            // The batch variant must carry its clone. (A future
+            // private-delegating fused function would trip the dispatcher/clone
+            // balance above on purpose.)
             assert!(
                 out.contains(&format!("fn {name}_fma(")),
                 "{name}: guarded variant lost its FMA clone"
-            );
-            assert!(
-                out.contains(&format!("fn {name}_unguarded_fma(")),
-                "{name}: unguarded variant lost its FMA clone"
             );
             // The fused sites live on in the renamed portable impl.
             assert!(

@@ -148,12 +148,12 @@ public partial class Core
          optInFastPeriod = tempInteger;
       }
       /* Calculate the fast MA into the tempBuffer. */
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
       /* Calculate the slow MA into the output. */
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -163,45 +163,6 @@ public partial class Core
        */
       offset = fastNb - outNBElement;
       /* Calculate (fast MA)-(slow MA) in the output. */
-      for( i = 0; i < (int)outNBElement; i += 1 ) {
-         outReal[i] = tempBuffer[i + offset] - outReal[i];
-      }
-      return RetCode.Success ;
-   }
-   internal RetCode ApoUnguarded( int startIdx,
-                                  int endIdx,
-                                  double[] inReal,
-                                  int optInFastPeriod,
-                                  int optInSlowPeriod,
-                                  MAType optInMAType,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double[] tempBuffer;
-      RetCode retCode;
-      int tempInteger = 0;
-      int fastBeg = 0;
-      int fastNb = 0;
-      int offset = 0;
-      int i = 0;
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-      if( optInSlowPeriod < optInFastPeriod ) {
-         tempInteger = optInSlowPeriod;
-         optInSlowPeriod = optInFastPeriod;
-         optInFastPeriod = tempInteger;
-      }
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      offset = fastNb - outNBElement;
       for( i = 0; i < (int)outNBElement; i += 1 ) {
          outReal[i] = tempBuffer[i + offset] - outReal[i];
       }
@@ -251,50 +212,11 @@ public partial class Core
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      offset = fastNb - outNBElement;
-      for( i = 0; i < (int)outNBElement; i += 1 ) {
-         outReal[i] = tempBuffer[i + offset] - outReal[i];
-      }
-      return RetCode.Success ;
-   }
-   internal RetCode ApoUnguarded( int startIdx,
-                                  int endIdx,
-                                  float[] inReal,
-                                  int optInFastPeriod,
-                                  int optInSlowPeriod,
-                                  MAType optInMAType,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double[] tempBuffer;
-      RetCode retCode;
-      int tempInteger = 0;
-      int fastBeg = 0;
-      int fastNb = 0;
-      int offset = 0;
-      int i = 0;
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-      if( optInSlowPeriod < optInFastPeriod ) {
-         tempInteger = optInSlowPeriod;
-         optInSlowPeriod = optInFastPeriod;
-         optInFastPeriod = tempInteger;
-      }
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      retCode = MovingAverageUnguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      retCode = MovingAverage(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -362,46 +284,6 @@ public partial class Core
    /// Absolute Price Oscillator: the difference between a fast and a slow moving
    /// average of the input, in price units. Measures short- vs long-term
    /// momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
-   /// otherwise. — <b>unchecked</b> variant of <c>Apo</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInFastPeriod">See the guarded method.</param>
-   /// <param name="optInSlowPeriod">See the guarded method.</param>
-   /// <param name="optInMAType">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange ApoUnguarded( int startIdx,
-                                 int endIdx,
-                                 double[] inReal,
-                                 int optInFastPeriod,
-                                 int optInSlowPeriod,
-                                 MAType optInMAType,
-                                 double[] outReal )
-   {
-      ApoUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Absolute Price Oscillator: the difference between a fast and a slow moving
-   /// average of the input, in price units. Measures short- vs long-term
-   /// momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
    /// otherwise.
    /// </summary>
    /// <remarks>
@@ -456,49 +338,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("APO", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Absolute Price Oscillator: the difference between a fast and a slow moving
-   /// average of the input, in price units. Measures short- vs long-term
-   /// momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
-   /// otherwise. — <b>unchecked</b> variant of <c>Apo</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInFastPeriod">See the guarded method.</param>
-   /// <param name="optInSlowPeriod">See the guarded method.</param>
-   /// <param name="optInMAType">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange ApoUnguarded( int startIdx,
-                                 int endIdx,
-                                 float[] inReal,
-                                 int optInFastPeriod,
-                                 int optInSlowPeriod,
-                                 MAType optInMAType,
-                                 double[] outReal )
-   {
-      ApoUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

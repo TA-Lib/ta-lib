@@ -208,35 +208,27 @@ fn default_sentinel_sentence(func: &FuncDef) -> Option<&'static str> {
     }
 }
 
-/// Rustdoc block for the `_unguarded` / `_private` variants.
-pub fn unguarded_docs(func: &FuncDef, snake: &str, is_private: bool) -> String {
+/// Rustdoc block for the `_private` variant.
+pub fn private_docs(func: &FuncDef, snake: &str) -> String {
     let mut d = DocWriter::new("    ");
-
-    if is_private {
-        let params: Vec<String> = func
-            .private_extra_params
-            .iter()
-            .map(|(name, _)| format!("`{name}`"))
-            .collect();
-        d.paragraph(&format!(
-            "Internal variant of [`Core::{snake}_unguarded`] taking the precomputed \
-             parameter{} {}. Same contract as [`Core::{snake}_unguarded`].",
-            if params.len() == 1 { "" } else { "s" },
-            params.join(", ")
-        ));
-    } else {
-        d.paragraph(&format!(
-            "Unguarded variant of [`Core::{snake}`], used for internal cross-indicator calls."
-        ));
-        d.blank();
-        d.paragraph(&format!(
-            "Skips parameter validation; indexing stays safe. Every argument must satisfy \
-             the constraints documented on [`Core::{snake}`]; an out-of-range parameter, an \
-             input slice not covering `startIdx..=endIdx`, or an undersized output slice \
-             panics (never undefined behavior). Prefer [`Core::{snake}`]."
-        ));
-    }
-
+    let params: Vec<String> = func
+        .private_extra_params
+        .iter()
+        .map(|(name, _)| format!("`{name}`"))
+        .collect();
+    d.paragraph(&format!(
+        "Internal variant of [`Core::{snake}`] taking the precomputed parameter{} {}. \
+         Skips the validation prologue: its only callers are the guarded bodies, which \
+         have already validated.",
+        if params.len() == 1 { "" } else { "s" },
+        params.join(", ")
+    ));
+    d.blank();
+    d.paragraph(&format!(
+        "Unlike [`Core::{snake}`] the bounds assertions here are unconditional: an \
+         `endIdx` beyond the input slice panics even when the lookback clamp means \
+         no element would be read."
+    ));
     d.finish()
 }
 

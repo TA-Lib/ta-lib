@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -175,78 +175,6 @@ TA_LIB_API TA_RetCode TA_CDLLONGLINE( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_CDLLONGLINE_Unguarded( int    startIdx,
-                                                int    endIdx,
-                                                const double inOpen[],
-                                                const double inHigh[],
-                                                const double inLow[],
-                                                const double inClose[],
-                                                int          *outBegIdx,
-                                                int          *outNBElement,
-                                                int        outInteger[] )
-{
-   double BodyPeriodTotal;
-   double ShadowPeriodTotal;
-   int i;
-   int outIdx;
-   int BodyTrailingIdx;
-   int ShadowTrailingIdx;
-   int lookbackTotal;
-   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
-   int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
-   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
-   int ShadowShort_rangeType = TA_Globals->candleSettings[TA_ShadowShort].rangeType;
-   int ShadowShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowShort].avgPeriod;
-   double ShadowShort_factor = TA_Globals->candleSettings[TA_ShadowShort].factor;
-
-   lookbackTotal = TA_CDLLONGLINE_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   BodyPeriodTotal = 0;
-   BodyTrailingIdx = startIdx - BodyLong_avgPeriod;
-   ShadowPeriodTotal = 0;
-   ShadowTrailingIdx = startIdx - ShadowShort_avgPeriod;
-   i = BodyTrailingIdx;
-   while( i < startIdx )
-   {
-      BodyPeriodTotal += TA_CANDLERANGE(BodyLong,i);
-      i += 1;
-   }
-   i = ShadowTrailingIdx;
-   while( i < startIdx )
-   {
-      ShadowPeriodTotal += TA_CANDLERANGE(ShadowShort,i);
-      i += 1;
-   }
-   outIdx = 0;
-   do
-   {
-      if( fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal,i) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowShort,ShadowPeriodTotal,i) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowShort,ShadowPeriodTotal,i) )
-      {
-         outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      BodyPeriodTotal += TA_CANDLERANGE(BodyLong,i) - TA_CANDLERANGE(BodyLong,BodyTrailingIdx);
-      ShadowPeriodTotal += TA_CANDLERANGE(ShadowShort,i) - TA_CANDLERANGE(ShadowShort,ShadowTrailingIdx);
-      i += 1;
-      BodyTrailingIdx += 1;
-      ShadowTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_CDLLONGLINE( int    startIdx,
                              int    endIdx,
                              const float inOpen[],
@@ -286,78 +214,6 @@ TA_RetCode TA_S_CDLLONGLINE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
-
-   lookbackTotal = TA_CDLLONGLINE_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   BodyPeriodTotal = 0;
-   BodyTrailingIdx = startIdx - BodyLong_avgPeriod;
-   ShadowPeriodTotal = 0;
-   ShadowTrailingIdx = startIdx - ShadowShort_avgPeriod;
-   i = BodyTrailingIdx;
-   while( i < startIdx )
-   {
-      BodyPeriodTotal += TA_CANDLERANGE(BodyLong,i);
-      i += 1;
-   }
-   i = ShadowTrailingIdx;
-   while( i < startIdx )
-   {
-      ShadowPeriodTotal += TA_CANDLERANGE(ShadowShort,i);
-      i += 1;
-   }
-   outIdx = 0;
-   do
-   {
-      if( fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyPeriodTotal,i) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE(ShadowShort,ShadowPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE(ShadowShort,ShadowPeriodTotal,i) )
-      {
-         outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      BodyPeriodTotal += TA_CANDLERANGE(BodyLong,i) - TA_CANDLERANGE(BodyLong,BodyTrailingIdx);
-      ShadowPeriodTotal += TA_CANDLERANGE(ShadowShort,i) - TA_CANDLERANGE(ShadowShort,ShadowTrailingIdx);
-      i += 1;
-      BodyTrailingIdx += 1;
-      ShadowTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_CDLLONGLINE_Unguarded( int    startIdx,
-                                       int    endIdx,
-                                       const float inOpen[],
-                                       const float inHigh[],
-                                       const float inLow[],
-                                       const float inClose[],
-                                       int          *outBegIdx,
-                                       int          *outNBElement,
-                                       int        outInteger[] )
-{
-   double BodyPeriodTotal;
-   double ShadowPeriodTotal;
-   int i;
-   int outIdx;
-   int BodyTrailingIdx;
-   int ShadowTrailingIdx;
-   int lookbackTotal;
-   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
-   int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
-   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
-   int ShadowShort_rangeType = TA_Globals->candleSettings[TA_ShadowShort].rangeType;
-   int ShadowShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowShort].avgPeriod;
-   double ShadowShort_factor = TA_Globals->candleSettings[TA_ShadowShort].factor;
 
    lookbackTotal = TA_CDLLONGLINE_Lookback();
    if( startIdx < lookbackTotal )

@@ -87,48 +87,6 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode avgDevUnguardedInternal( int startIdx,
-                                    int endIdx,
-                                    double inReal[],
-                                    int optInTimePeriod,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outReal[] )
-   {
-      int today = 0;
-      int outIdx = 0;
-      int lookback = 0;
-      lookback = optInTimePeriod - 1;
-      if( startIdx < lookback ) {
-         startIdx = lookback;
-      }
-      today = startIdx;
-      if( today > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx.value = today;
-      outIdx = 0;
-      while( today <= endIdx ) {
-         double todaySum;
-         double todayDev;
-         int i;
-         todaySum = 0.0;
-         for( i = 0; i < optInTimePeriod; i += 1 ) {
-            todaySum += inReal[today - i];
-         }
-         todayDev = 0.0;
-         for( i = 0; i < optInTimePeriod; i += 1 ) {
-            todayDev += Math.abs(inReal[today - i] - todaySum / optInTimePeriod);
-         }
-         outReal[outIdx] = todayDev / optInTimePeriod;
-         outIdx += 1;
-         today += 1;
-      }
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
    RetCode avgDevInternal( int startIdx,
                            int endIdx,
                            float inReal[],
@@ -151,48 +109,6 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookback = optInTimePeriod - 1;
-      if( startIdx < lookback ) {
-         startIdx = lookback;
-      }
-      today = startIdx;
-      if( today > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx.value = today;
-      outIdx = 0;
-      while( today <= endIdx ) {
-         double todaySum;
-         double todayDev;
-         int i;
-         todaySum = 0.0;
-         for( i = 0; i < optInTimePeriod; i += 1 ) {
-            todaySum += (double)inReal[today - i];
-         }
-         todayDev = 0.0;
-         for( i = 0; i < optInTimePeriod; i += 1 ) {
-            todayDev += Math.abs((double)inReal[today - i] - todaySum / optInTimePeriod);
-         }
-         outReal[outIdx] = todayDev / optInTimePeriod;
-         outIdx += 1;
-         today += 1;
-      }
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
-   RetCode avgDevUnguardedInternal( int startIdx,
-                                    int endIdx,
-                                    float inReal[],
-                                    int optInTimePeriod,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outReal[] )
-   {
-      int today = 0;
-      int outIdx = 0;
-      int lookback = 0;
       lookback = optInTimePeriod - 1;
       if( startIdx < lookback ) {
          startIdx = lookback;
@@ -276,34 +192,6 @@
     * Rolling average absolute deviation of a series from its own simple moving
     * average over the last N periods. Measures dispersion around the window
     * mean. Higher values indicate greater spread; zero when all values in the
-    * window are equal. — <b>unchecked</b> variant of {@link Core#avgDev}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange avgDevUnguarded( int startIdx,
-                                    int endIdx,
-                                    double inReal[],
-                                    int optInTimePeriod,
-                                    double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      avgDevUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Rolling average absolute deviation of a series from its own simple moving
-    * average over the last N periods. Measures dispersion around the window
-    * mean. Higher values indicate greater spread; zero when all values in the
     * window are equal.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -349,35 +237,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("AVGDEV", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Rolling average absolute deviation of a series from its own simple moving
-    * average over the last N periods. Measures dispersion around the window
-    * mean. Higher values indicate greater spread; zero when all values in the
-    * window are equal. — <b>unchecked</b> variant of {@link Core#avgDev}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange avgDevUnguarded( int startIdx,
-                                    int endIdx,
-                                    float inReal[],
-                                    int optInTimePeriod,
-                                    double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      avgDevUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

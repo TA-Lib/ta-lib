@@ -200,6 +200,10 @@ impl Core {
         if ((optInMAType) as i32) == (i32::MIN) {
             optInMAType = 1;
         }
+        let _assertLb = self.ppo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut tempBuffer: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;
@@ -220,12 +224,12 @@ impl Core {
             optInFastPeriod = (tempInteger) as i32;
         }
         // Calculate the fast MA into the tempBuffer.
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        retCode = self.ma(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
         // Calculate the slow MA into the output.
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+        retCode = self.ma(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -234,65 +238,6 @@ impl Core {
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
         offset = fastNb - (*outNBElement);
         // Calculate ((fast MA)-(slow MA))/(slow MA) in the output.
-        // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-        i = 0;
-        while i < ((((*outNBElement) as usize)) as usize) {
-            tempReal = outReal[i];
-            if !((tempReal).abs() < 1e-14) {
-                outReal[i] = (((tempBuffer[i + offset] - tempReal) / tempReal * 100.0) as f64);
-            } else {
-                outReal[i] = 0.0;
-            }
-            i += 1;
-        }
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::ppo`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::ppo`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::ppo`].
-    #[inline]
-    pub fn ppo_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInFastPeriod: i32,
-        mut optInSlowPeriod: i32,
-        mut optInMAType: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut tempBuffer: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut tempInteger: usize = 0_usize;
-        let mut fastBeg: usize = 0_usize;
-        let mut fastNb: usize = 0_usize;
-        let mut offset: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.ppo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        tempBuffer = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
-        if optInSlowPeriod < optInFastPeriod {
-            tempInteger = (optInSlowPeriod) as usize;
-            optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
-        }
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
-        if retCode != RetCode::Success {
-            return retCode;
-        }
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-        if retCode != RetCode::Success {
-            return retCode;
-        }
-        offset = fastNb - (*outNBElement);
         // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
         while i < ((((*outNBElement) as usize)) as usize) {
@@ -411,7 +356,7 @@ impl Core {
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.ma_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        retCode = self.ma(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -419,7 +364,7 @@ impl Core {
         // Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub1, _) = self.ma_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        retCode = self.ma(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -531,7 +476,7 @@ impl Core {
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.ma_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        retCode = self.ma(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -539,7 +484,7 @@ impl Core {
         // Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub1, _) = self.ma_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
-        retCode = self.ma_unguarded(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        retCode = self.ma(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }

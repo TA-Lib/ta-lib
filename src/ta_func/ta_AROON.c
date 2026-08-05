@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -203,100 +203,6 @@ TA_LIB_API TA_RetCode TA_AROON( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_AROON_Unguarded( int    startIdx,
-                                          int    endIdx,
-                                          const double inHigh[],
-                                          const double inLow[],
-                                          int optInTimePeriod,
-                                          int          *outBegIdx,
-                                          int          *outNBElement,
-                                          double        outAroonDown[],
-                                          double        outAroonUp[] )
-{
-   double lowest;
-   double highest;
-   double tmp;
-   double factor;
-   int outIdx;
-   int trailingIdx;
-   int lowestIdx;
-   int highestIdx;
-   int today;
-   int i;
-
-   if( startIdx < optInTimePeriod )
-   {
-      startIdx = optInTimePeriod;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outIdx = 0;
-   today = startIdx;
-   trailingIdx = startIdx - optInTimePeriod;
-   lowestIdx = 0 - 1;
-   highestIdx = 0 - 1;
-   lowest = 0.0;
-   highest = 0.0;
-   factor = (double)100.0 / (double)optInTimePeriod;
-   while( today <= endIdx )
-   {
-      tmp = inLow[today];
-      if( lowestIdx < trailingIdx )
-      {
-         lowestIdx = trailingIdx;
-         lowest = inLow[lowestIdx];
-         i = lowestIdx;
-         TA_UNROLL(4)
-         while( ++i <= today )
-         {
-            tmp = inLow[i];
-            if( tmp <= lowest )
-            {
-               lowestIdx = i;
-               lowest = tmp;
-            }
-         }
-      } else if( tmp <= lowest )
-      {
-         lowestIdx = today;
-         lowest = tmp;
-      }
-      tmp = inHigh[today];
-      if( highestIdx < trailingIdx )
-      {
-         highestIdx = trailingIdx;
-         highest = inHigh[highestIdx];
-         i = highestIdx;
-         TA_UNROLL(4)
-         while( ++i <= today )
-         {
-            tmp = inHigh[i];
-            if( tmp >= highest )
-            {
-               highestIdx = i;
-               highest = tmp;
-            }
-         }
-      } else if( tmp >= highest )
-      {
-         highestIdx = today;
-         highest = tmp;
-      }
-      outAroonUp[outIdx] = factor * (optInTimePeriod - (today - highestIdx));
-      outAroonDown[outIdx] = factor * (optInTimePeriod - (today - lowestIdx));
-      outIdx += 1;
-      trailingIdx += 1;
-      today += 1;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_AROON( int    startIdx,
                        int    endIdx,
                        const float inHigh[],
@@ -337,100 +243,6 @@ TA_RetCode TA_S_AROON( int    startIdx,
       return TA_BAD_PARAM;
    if( outAroonDown == outAroonUp )
       return TA_BAD_PARAM;
-
-   if( startIdx < optInTimePeriod )
-   {
-      startIdx = optInTimePeriod;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outIdx = 0;
-   today = startIdx;
-   trailingIdx = startIdx - optInTimePeriod;
-   lowestIdx = 0 - 1;
-   highestIdx = 0 - 1;
-   lowest = 0.0;
-   highest = 0.0;
-   factor = (double)100.0 / (double)optInTimePeriod;
-   while( today <= endIdx )
-   {
-      tmp = (double)inLow[today];
-      if( lowestIdx < trailingIdx )
-      {
-         lowestIdx = trailingIdx;
-         lowest = (double)inLow[lowestIdx];
-         i = lowestIdx;
-         TA_UNROLL(4)
-         while( ++i <= today )
-         {
-            tmp = (double)inLow[i];
-            if( tmp <= lowest )
-            {
-               lowestIdx = i;
-               lowest = tmp;
-            }
-         }
-      } else if( tmp <= lowest )
-      {
-         lowestIdx = today;
-         lowest = tmp;
-      }
-      tmp = (double)inHigh[today];
-      if( highestIdx < trailingIdx )
-      {
-         highestIdx = trailingIdx;
-         highest = (double)inHigh[highestIdx];
-         i = highestIdx;
-         TA_UNROLL(4)
-         while( ++i <= today )
-         {
-            tmp = (double)inHigh[i];
-            if( tmp >= highest )
-            {
-               highestIdx = i;
-               highest = tmp;
-            }
-         }
-      } else if( tmp >= highest )
-      {
-         highestIdx = today;
-         highest = tmp;
-      }
-      outAroonUp[outIdx] = factor * (optInTimePeriod - (today - highestIdx));
-      outAroonDown[outIdx] = factor * (optInTimePeriod - (today - lowestIdx));
-      outIdx += 1;
-      trailingIdx += 1;
-      today += 1;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_AROON_Unguarded( int    startIdx,
-                                 int    endIdx,
-                                 const float inHigh[],
-                                 const float inLow[],
-                                 int optInTimePeriod,
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 double        outAroonDown[],
-                                 double        outAroonUp[] )
-{
-   double lowest;
-   double highest;
-   double tmp;
-   double factor;
-   int outIdx;
-   int trailingIdx;
-   int lowestIdx;
-   int highestIdx;
-   int today;
-   int i;
 
    if( startIdx < optInTimePeriod )
    {

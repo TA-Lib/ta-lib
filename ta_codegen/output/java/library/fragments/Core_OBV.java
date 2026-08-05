@@ -66,36 +66,6 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode obvUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 double inVolume[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      int i = 0;
-      int outIdx = 0;
-      double prevReal = 0;
-      double tempReal = 0;
-      double prevOBV = 0;
-      prevOBV = inVolume[startIdx];
-      prevReal = inReal[startIdx];
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempReal = inReal[i];
-         if( tempReal > prevReal ) {
-            prevOBV += inVolume[i];
-         } else if( tempReal < prevReal ) {
-            prevOBV -= inVolume[i];
-         }
-         outReal[outIdx++] = prevOBV;
-         prevReal = tempReal;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
    RetCode obvInternal( int startIdx,
                         int endIdx,
                         float inReal[],
@@ -115,36 +85,6 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      prevOBV = (double)inVolume[startIdx];
-      prevReal = (double)inReal[startIdx];
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempReal = (double)inReal[i];
-         if( tempReal > prevReal ) {
-            prevOBV += (double)inVolume[i];
-         } else if( tempReal < prevReal ) {
-            prevOBV -= (double)inVolume[i];
-         }
-         outReal[outIdx++] = prevOBV;
-         prevReal = tempReal;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
-   RetCode obvUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 float inVolume[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      int i = 0;
-      int outIdx = 0;
-      double prevReal = 0;
-      double tempReal = 0;
-      double prevOBV = 0;
       prevOBV = (double)inVolume[startIdx];
       prevReal = (double)inReal[startIdx];
       outIdx = 0;
@@ -207,33 +147,6 @@
    /**
     * On Balance Volume: a running cumulative total of volume, added on up-price
     * bars and subtracted on down-price bars. Relates volume flow to price
-    * direction. — <b>unchecked</b> variant of {@link Core#obv}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange obvUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 double inVolume[],
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      obvUnguardedInternal(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * On Balance Volume: a running cumulative total of volume, added on up-price
-    * bars and subtracted on down-price bars. Relates volume flow to price
     * direction.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -274,34 +187,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("OBV", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * On Balance Volume: a running cumulative total of volume, added on up-price
-    * bars and subtracted on down-price bars. Relates volume flow to price
-    * direction. — <b>unchecked</b> variant of {@link Core#obv}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange obvUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 float inVolume[],
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      obvUnguardedInternal(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

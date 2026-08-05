@@ -45,64 +45,39 @@
  *  072126 MF,CC  First version (issue #137).
  */
 
-/* Generic four-variant parity gate.
+/* Generic variant parity gate.
  *
- * Every TA function ships four times over:
+ * Every TA function ships twice over:
  *
- *    TA_<N>              double inputs, parameter validation
- *    TA_<N>_Unguarded    double inputs, no validation
- *    TA_S_<N>            float  inputs, parameter validation
- *    TA_S_<N>_Unguarded  float  inputs, no validation
+ *    TA_<N>              double inputs
+ *    TA_S_<N>            float  inputs
  *
- * Two contracts bind them, and both are exact — no tolerance, no exemptions:
+ * One contract binds them, and it is exact — no tolerance, no exemptions:
  *
- *  (1) UNGUARDED == GUARDED.  The generator produces the unguarded variant by
- *      omitting a validation prologue and nothing else, so on arguments that
- *      would have passed validation the two must agree bit for bit.
+ *  TA_S_ == TA_ ON WIDENED INPUTS.  Per PR #33 the single-precision variants
+ *  differ only in the type of their input arrays; every value is widened to
+ *  double at the point of first use and all arithmetic happens in double. Feed
+ *  TA_S_ a float array and TA_ the exact same values widened back to double, and
+ *  the outputs must be bit-identical.
  *
- *  (2) TA_S_ == TA_ ON WIDENED INPUTS.  Per PR #33 the single-precision
- *      variants differ only in the type of their input arrays; every value is
- *      widened to double at the point of first use and all arithmetic happens
- *      in double. Feed TA_S_ a float array and TA_ the exact same values
- *      widened back to double, and the outputs must be bit-identical.
+ * This gate found a live defect on its first run: TA_S_WMA at
+ * optInTimePeriod==1 did a memmove of *sizeof(double)* out of a `const float*`.
  *
- * Before this gate neither contract was checked generically:
+ * Before it, the contract was not checked generically: the abstract layer
+ * (TA_CallFunc / ta_frame.c) only reaches the guarded double entry point, so
+ * nothing swept the float one.
  *
- *  - The abstract layer (TA_CallFunc / ta_frame.c) only reaches the guarded
- *    double entry point, so nothing here could sweep the other three.
- *  - The --codegen legs reach unguarded only for functions the frozen
- *    ta_ref_serve knows (post-cutover additions are skipped), only through a
- *    server, and only at 1e-9 / 1e-6 tolerances.
- *  - The guarded TA_S_<N> was observed NOWHERE: the generated server calls
- *    TA_S_<N> and then TA_S_<N>_Unguarded into the same output buffer, so the
- *    guarded result is always overwritten before it is reported.
- *
- * That last hole is how a live defect survived: TA_S_WMA at optInTimePeriod==1
- * did a memmove of *sizeof(double)* out of a `const float*`.
- *
- * The gate needs no oracle and no server — the four variants check each other.
+ * The gate needs no oracle and no server — the two variants check each other.
  * It runs on a bare ./ta_regtest so the autotools dist-verification nightly
  * (which never passes --codegen) is covered too.
  *
- * PRECONDITIONS. Calling an unguarded variant with arguments the guarded one
- * would have rejected is out of contract and reads out of bounds, so every
- * vector this file generates satisfies, by construction, the exact negation of
- * the checks the generator strips:
+ * PRECONDITIONS. Every vector this file generates satisfies:
  *      startIdx >= 0;  endIdx >= 0;  endIdx >= startIdx;
  *      every input pointer non-NULL;
- *      every optional parameter resolved to a concrete in-range value
- *        (never a TA_INTEGER_DEFAULT / TA_REAL_DEFAULT sentinel — unguarded
- *         does not substitute defaults, that lives in the guarded prologue);
+ *      every optional parameter resolved to a concrete in-range value;
  *      every output pointer non-NULL and pairwise distinct.
  * startIdx < lookback is deliberately allowed: the clamp and the empty-range
- * early return live in the shared body, not in the stripped prologue.
- *
- * WHAT A GREEN ROW DOES NOT PROVE. A function whose guarded and unguarded
- * entry points both delegate to a single TA_<N>_Private body is structurally
- * incapable of failing contract (1) — contract (2) still bites. Those are
- * counted separately and reported as "delegating" rather than padding the pass
- * count. The flag is generated from the definition (an explicit <name>_private()
- * in ta_codegen/input/), not hand-maintained here, so it cannot go stale.
+ * early return are part of the shared body.
  */
 
 #include <stdio.h>
@@ -121,7 +96,7 @@
 #define V_MAX_INPUT    6   /* widest is OHLCV + one spare */
 #define V_MAX_OUTPUT   3   /* BBANDS/MACD/MINMAXINDEX are the widest */
 #define V_MAX_OPT      8   /* SAREXT */
-#define V_MAX_CAND     6   /* candidate values probed per optional parameter */
+#define V_MAX_CAND     7   /* candidate values probed per optional parameter */
 
 /* Written past the end of every output buffer and re-checked after each call:
  * a variant that writes more elements than it reports is a defect the value
@@ -177,16 +152,12 @@ typedef struct
    float  *fIn[V_MAX_INPUT];
    TA_Real dIn[V_MAX_INPUT][V_MAX_BARS];
 
-   /* One output set per variant: guarded-double, unguarded-double,
-    * single-guarded, single-unguarded. Distinct allocations on purpose. */
+   /* One output set per variant: double and single-precision. Distinct
+    * allocations on purpose. */
    TA_Real    outD [V_MAX_OUTPUT][V_MAX_BARS + 1];
-   TA_Real    outDU[V_MAX_OUTPUT][V_MAX_BARS + 1];
    TA_Real    outS [V_MAX_OUTPUT][V_MAX_BARS + 1];
-   TA_Real    outSU[V_MAX_OUTPUT][V_MAX_BARS + 1];
    TA_Integer outDi [V_MAX_OUTPUT][V_MAX_BARS + 1];
-   TA_Integer outDUi[V_MAX_OUTPUT][V_MAX_BARS + 1];
    TA_Integer outSi [V_MAX_OUTPUT][V_MAX_BARS + 1];
-   TA_Integer outSUi[V_MAX_OUTPUT][V_MAX_BARS + 1];
 
    /* The current regime's OHLCV+OI series, staged once per regime and then
     * dealt out to each function's input slots by kind. */
@@ -200,8 +171,9 @@ typedef struct
     * pass by doing nothing. */
    long nbFunc;
    long nbVector;
-   long nbCompare;    /* four-variant comparisons actually performed */
+   long nbCompare;    /* variant comparisons actually performed */
    long nbValueCmp;   /* of those, ones that compared >0 output elements */
+   long nbOutputCmp;  /* actual memcmp calls — incremented AT the comparison */
 } VariantCtx;
 
 /**** Local functions declarations. ****/
@@ -234,7 +206,7 @@ ErrorNumber test_func_variants( TA_History *history )
    }
    nb = (int)history->nbBars;
    ctx.nb = nb;
-   ctx.nbFunc = ctx.nbVector = ctx.nbCompare = ctx.nbValueCmp = 0;
+   ctx.nbFunc = ctx.nbVector = ctx.nbCompare = ctx.nbValueCmp = ctx.nbOutputCmp = 0;
 
    /* TA_EMA_Lookback reads the unstable period and TA_EMA_Private branches on
     * the compatibility mode; neutralise both so a leftover setting from an
@@ -324,21 +296,19 @@ ErrorNumber test_func_variants( TA_History *history )
 
    /* Non-vacuity. A gate that silently compared nothing is worse than no gate:
     * it reads as coverage. Fail on zero rather than printing a cheerful zero. */
-   if( ctx.nbFunc == 0 || ctx.nbCompare == 0 || ctx.nbValueCmp == 0 )
+   if( ctx.nbFunc == 0 || ctx.nbCompare == 0 || ctx.nbValueCmp == 0 ||
+       ctx.nbOutputCmp == 0 )
    {
       printf( "\nVariant gate Fail: vacuous run (%ld functions, %ld comparisons, "
-              "%ld of them with output elements)\n",
-              ctx.nbFunc, ctx.nbCompare, ctx.nbValueCmp );
+              "%ld of them with output elements, %ld output memcmp(s))\n",
+              ctx.nbFunc, ctx.nbCompare, ctx.nbValueCmp, ctx.nbOutputCmp );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
-   printf( "\n  Variant parity: %ld functions x %ld vectors, %ld four-way "
-           "comparisons (%ld with output), bit-identical\n",
-           ctx.nbFunc, ctx.nbVector, ctx.nbCompare, ctx.nbValueCmp );
-   if( nbDelegating > 0 )
-      printf( "    (%ld function(s) delegate guarded+unguarded to a shared "
-              "_Private body: unguarded parity is structural for them)\n",
-              nbDelegating );
+   printf( "\n  Variant parity: %ld functions x %ld vectors, %ld TA_/TA_S_ "
+           "comparisons (%ld with output, %ld output memcmp(s)), bit-identical\n",
+           ctx.nbFunc, ctx.nbVector, ctx.nbCompare, ctx.nbValueCmp, ctx.nbOutputCmp );
+   (void)nbDelegating;
 
    return TA_TEST_PASS;
 }
@@ -346,7 +316,7 @@ ErrorNumber test_func_variants( TA_History *history )
 /* Targeted precision regression — issue #138.
  *
  * The generic gate above sweeps every CDL* across the history and nine fuzz
- * shapes and reports them bit-identical across all four variants. That green is
+ * shapes and reports them bit-identical across both variants. That green is
  * partly hollow: TA_CANDLERANGE/TA_CANDLEAVERAGE reach the leaf macros in
  * ta_utility.h (TA_HIGHLOWRANGE etc.), which read their input arrays WITHOUT a
  * (double) cast. Inside a TA_S_ body those arrays are `const float[]`, so the
@@ -379,9 +349,9 @@ ErrorNumber test_candle_precision( TA_History *history )
    enum { NB = 11 };
    float  fO[NB], fH[NB], fL[NB], fC[NB];
    double dO[NB], dH[NB], dL[NB], dC[NB];
-   int    outD[NB], outDU[NB], outS[NB], outSU[NB];
-   int    begD = 0, nbD = 0, begDU = 0, nbDU = 0, begS = 0, nbS = 0, begSU = 0, nbSU = 0;
-   TA_RetCode rcD, rcDU, rcS, rcSU, rcSet, rcRestore;
+   int    outD[NB], outS[NB];
+   int    begD = 0, nbD = 0, begS = 0, nbS = 0;
+   TA_RetCode rcD, rcS, rcSet, rcRestore;
    int i;
 
    (void)history;
@@ -418,45 +388,39 @@ ErrorNumber test_candle_precision( TA_History *history )
       dL[i] = (double)fL[i]; dC[i] = (double)fC[i];
    }
 
-   rcD  = TA_CDLDOJI            ( 10, 10, dO, dH, dL, dC, &begD,  &nbD,  outD  );
-   rcDU = TA_CDLDOJI_Unguarded  ( 10, 10, dO, dH, dL, dC, &begDU, &nbDU, outDU );
-   rcS  = TA_S_CDLDOJI          ( 10, 10, fO, fH, fL, fC, &begS,  &nbS,  outS  );
-   rcSU = TA_S_CDLDOJI_Unguarded( 10, 10, fO, fH, fL, fC, &begSU, &nbSU, outSU );
+   rcD = TA_CDLDOJI  ( 10, 10, dO, dH, dL, dC, &begD, &nbD, outD );
+   rcS = TA_S_CDLDOJI( 10, 10, fO, fH, fL, fC, &begS, &nbS, outS );
 
    /* Restore before any early return so a failure here cannot leak custom candle
     * globals into the tests that follow. */
    rcRestore = TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
 
-   if( rcD != TA_SUCCESS || rcDU != TA_SUCCESS ||
-       rcS != TA_SUCCESS || rcSU != TA_SUCCESS || rcRestore != TA_SUCCESS )
+   if( rcD != TA_SUCCESS || rcS != TA_SUCCESS || rcRestore != TA_SUCCESS )
    {
-      printf( "\nCandle precision Fail [CDLDOJI]: retCode double=%d/%d single=%d/%d "
-              "restore=%d\n", (int)rcD, (int)rcDU, (int)rcS, (int)rcSU, (int)rcRestore );
+      printf( "\nCandle precision Fail [CDLDOJI]: retCode double=%d single=%d "
+              "restore=%d\n", (int)rcD, (int)rcS, (int)rcRestore );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    }
 
-   if( begD != 10 || nbD != 1 || begDU != 10 || nbDU != 1 ||
-       begS != 10 || nbS != 1 || begSU != 10 || nbSU != 1 )
+   if( begD != 10 || nbD != 1 || begS != 10 || nbS != 1 )
    {
       printf( "\nCandle precision Fail [CDLDOJI]: expected one output at index 10, got "
-              "double(%d,%d) unguarded(%d,%d) single(%d,%d) single_unguarded(%d,%d)\n",
-              begD, nbD, begDU, nbDU, begS, nbS, begSU, nbSU );
+              "double(%d,%d) single(%d,%d)\n", begD, nbD, begS, nbS );
       return TA_TESTUTIL_TFRR_BAD_BEGIDX;
    }
 
-   /* The contract: all four variants agree bit-for-bit. Pre-#138-fix the float
-    * legs return 100 (doji) and the double legs 0, because the leaf range term
-    * was rounded to float in the TA_S_ bodies. */
-   if( outS[0] != outD[0] || outSU[0] != outD[0] || outDU[0] != outD[0] )
+   /* The contract: both variants agree bit-for-bit. Pre-#138-fix the float leg
+    * returns 100 (doji) and the double leg 0, because the leaf range term was
+    * rounded to float in the TA_S_ body. */
+   if( outS[0] != outD[0] )
    {
       printf( "\nCandle precision Fail [CDLDOJI issue #138]: variants disagree at bar 10"
-              " -- double=%d unguarded=%d TA_S_=%d TA_S_unguarded=%d. The single-precision"
-              " bodies must compute the candle range in double, not float.\n",
-              outD[0], outDU[0], outS[0], outSU[0] );
+              " -- double=%d TA_S_=%d. The single-precision body must compute the candle"
+              " range in double, not float.\n", outD[0], outS[0] );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
-   printf( "\n  Candle precision (issue #138): CDLDOJI four-variant parity on a high/low"
+   printf( "\n  Candle precision (issue #138): CDLDOJI TA_/TA_S_ parity on a high/low"
            " span past the float ULP -- bit-identical (out=%d)\n", outD[0] );
 
    return TA_TEST_PASS;
@@ -510,8 +474,13 @@ static void build_regime( VariantCtx *ctx, int regime, const TA_History *history
 /* Candidate values to probe for one optional parameter, others held at their
  * default. Returns how many were written to `out` (always >= 1: the default).
  *
- * The bounds come straight from the YAML metadata, already resolved to
- * concrete numbers by the generator — never a sentinel.
+ * The bounds come straight from the YAML metadata, already resolved to concrete
+ * numbers by the generator. The DEFAULT SENTINEL is probed too, appended after
+ * the clamp so the range cannot drop it: both variants must substitute the
+ * documented default and therefore agree. That leg is not decorative — it is the
+ * only place in the suite where a sentinel meets the TA_S_ path, and it fails
+ * today on TA_S_EMA, which computes its k factor from the raw sentinel before
+ * the prologue substitutes it.
  *
  * For integer parameters the minimum matters most: it is where optInTimePeriod
  * == 1 lives, the passthrough branch that carried the TA_S_WMA defect. Values
@@ -559,6 +528,13 @@ static int build_candidates( const TA_VOptSpec *spec, double *out )
       if( !dup )
          out[j++] = v;
    }
+
+   /* The default sentinel, appended AFTER the clamp: it is out of range by
+    * construction, and the guarded prologue is what turns it into the declared
+    * default. Both variants carry that prologue, so both must land on the same
+    * value and produce the same output. TA_INTEGER_DEFAULT is INT_MIN, exactly
+    * representable in double, so the frame's (int) cast round-trips it. */
+   out[j++] = spec->isReal ? (double)TA_REAL_DEFAULT : (double)TA_INTEGER_DEFAULT;
    return j;
 }
 
@@ -570,16 +546,12 @@ static void set_canaries( VariantCtx *ctx, const TA_VariantEntry *e )
       if( e->outIsInteger )
       {
          ctx->outDi [i][ctx->nb] = V_CANARY_I;
-         ctx->outDUi[i][ctx->nb] = V_CANARY_I;
          ctx->outSi [i][ctx->nb] = V_CANARY_I;
-         ctx->outSUi[i][ctx->nb] = V_CANARY_I;
       }
       else
       {
          ctx->outD [i][ctx->nb] = V_CANARY_D;
-         ctx->outDU[i][ctx->nb] = V_CANARY_D;
          ctx->outS [i][ctx->nb] = V_CANARY_D;
-         ctx->outSU[i][ctx->nb] = V_CANARY_D;
       }
    }
 }
@@ -592,34 +564,28 @@ static int canaries_intact( VariantCtx *ctx, const TA_VariantEntry *e )
       if( e->outIsInteger )
       {
          if( ctx->outDi [i][ctx->nb] != V_CANARY_I ) return 0;
-         if( ctx->outDUi[i][ctx->nb] != V_CANARY_I ) return 0;
          if( ctx->outSi [i][ctx->nb] != V_CANARY_I ) return 0;
-         if( ctx->outSUi[i][ctx->nb] != V_CANARY_I ) return 0;
       }
       else
       {
          if( ctx->outD [i][ctx->nb] != V_CANARY_D ) return 0;
-         if( ctx->outDU[i][ctx->nb] != V_CANARY_D ) return 0;
          if( ctx->outS [i][ctx->nb] != V_CANARY_D ) return 0;
-         if( ctx->outSU[i][ctx->nb] != V_CANARY_D ) return 0;
       }
    }
    return 1;
 }
 
-/* Drive all four variants at one (parameter vector, range) point and assert
- * they agree exactly. */
+/* Drive both variants at one (parameter vector, range) point and assert they
+ * agree exactly. */
 static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
                                    const double *optIn, int startIdx, int endIdx )
 {
    const double *dPtr[V_MAX_INPUT];
    const float  *fPtr[V_MAX_INPUT];
-   double    *outRealD[V_MAX_OUTPUT], *outRealDU[V_MAX_OUTPUT];
-   double    *outRealS[V_MAX_OUTPUT], *outRealSU[V_MAX_OUTPUT];
-   int       *outIntD [V_MAX_OUTPUT], *outIntDU [V_MAX_OUTPUT];
-   int       *outIntS [V_MAX_OUTPUT], *outIntSU [V_MAX_OUTPUT];
-   TA_RetCode rcD, rcDU, rcS, rcSU;
-   int begD = 0, nbD = 0, begDU = 0, nbDU = 0, begS = 0, nbS = 0, begSU = 0, nbSU = 0;
+   double    *outRealD[V_MAX_OUTPUT], *outRealS[V_MAX_OUTPUT];
+   int       *outIntD [V_MAX_OUTPUT], *outIntS [V_MAX_OUTPUT];
+   TA_RetCode rcD, rcS;
+   int begD = 0, nbD = 0, begS = 0, nbS = 0;
    int i;
 
    for( i = 0; i < e->nbInput; i++ )
@@ -629,10 +595,8 @@ static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
    }
    for( i = 0; i < e->nbOutput; i++ )
    {
-      outRealD [i] = ctx->outD [i];  outRealDU[i] = ctx->outDU[i];
-      outRealS [i] = ctx->outS [i];  outRealSU[i] = ctx->outSU[i];
-      outIntD  [i] = ctx->outDi [i]; outIntDU [i] = ctx->outDUi[i];
-      outIntS  [i] = ctx->outSi [i]; outIntSU [i] = ctx->outSUi[i];
+      outRealD[i] = ctx->outD[i];   outRealS[i] = ctx->outS[i];
+      outIntD [i] = ctx->outDi[i];  outIntS [i] = ctx->outSi[i];
    }
 
    set_canaries( ctx, e );
@@ -640,10 +604,8 @@ static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
    /* A guarded rejection returns without touching *outBegIdx / *outNBElement,
     * so these must be pre-set or an unequal retCode would be compared against
     * uninitialised memory. */
-   rcD  = e->guarded        ( startIdx, endIdx, dPtr, optIn, &begD,  &nbD,  outRealD,  outIntD  );
-   rcDU = e->unguarded      ( startIdx, endIdx, dPtr, optIn, &begDU, &nbDU, outRealDU, outIntDU );
-   rcS  = e->single         ( startIdx, endIdx, fPtr, optIn, &begS,  &nbS,  outRealS,  outIntS  );
-   rcSU = e->singleUnguarded( startIdx, endIdx, fPtr, optIn, &begSU, &nbSU, outRealSU, outIntSU );
+   rcD = e->guarded( startIdx, endIdx, dPtr, optIn, &begD, &nbD, outRealD, outIntD );
+   rcS = e->single ( startIdx, endIdx, fPtr, optIn, &begS, &nbS, outRealS, outIntS );
 
    ctx->nbCompare++;
 
@@ -654,22 +616,21 @@ static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
-   if( rcDU != rcD || rcS != rcD || rcSU != rcD )
+   if( rcS != rcD )
    {
       printf( "\nVariant gate Fail [TA_%s %s start=%d end=%d]: retCode guarded=%d "
-              "unguarded=%d TA_S_=%d TA_S_unguarded=%d\n",
-              e->name, regime_name(ctx->regime), startIdx, endIdx, (int)rcD, (int)rcDU, (int)rcS, (int)rcSU );
+              "TA_S_=%d\n",
+              e->name, regime_name(ctx->regime), startIdx, endIdx, (int)rcD, (int)rcS );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    }
    if( rcD != TA_SUCCESS )
       return TA_TEST_PASS;   /* agreed rejection — nothing to compare */
 
-   if( begDU != begD || begS != begD || begSU != begD ||
-       nbDU  != nbD  || nbS  != nbD  || nbSU  != nbD )
+   if( begS != begD || nbS != nbD )
    {
       printf( "\nVariant gate Fail [TA_%s %s start=%d end=%d]: shape guarded(%d,%d) "
-              "unguarded(%d,%d) TA_S_(%d,%d) TA_S_unguarded(%d,%d)\n",
-              e->name, regime_name(ctx->regime), startIdx, endIdx, begD, nbD, begDU, nbDU, begS, nbS, begSU, nbSU );
+              "TA_S_(%d,%d)\n",
+              e->name, regime_name(ctx->regime), startIdx, endIdx, begD, nbD, begS, nbS );
       return TA_TESTUTIL_TFRR_BAD_BEGIDX;
    }
    if( nbD == 0 )
@@ -688,32 +649,21 @@ static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
    for( i = 0; i < e->nbOutput; i++ )
    {
       size_t width = e->outIsInteger ? sizeof(TA_Integer) : sizeof(TA_Real);
-      const void *a  = e->outIsInteger ? (const void *)ctx->outDi [i] : (const void *)ctx->outD [i];
-      const void *b  = e->outIsInteger ? (const void *)ctx->outDUi[i] : (const void *)ctx->outDU[i];
-      const void *c  = e->outIsInteger ? (const void *)ctx->outSi [i] : (const void *)ctx->outS [i];
-      const void *d  = e->outIsInteger ? (const void *)ctx->outSUi[i] : (const void *)ctx->outSU[i];
+      const void *a  = e->outIsInteger ? (const void *)ctx->outDi[i] : (const void *)ctx->outD[i];
+      const void *c  = e->outIsInteger ? (const void *)ctx->outSi[i] : (const void *)ctx->outS[i];
       size_t len = (size_t)nbD * width;
 
-      if( memcmp( a, b, len ) != 0 )
-      {
-         printf( "\nVariant gate Fail [TA_%s %s start=%d end=%d out%d]: "
-                 "TA_%s_Unguarded differs from TA_%s -- the unguarded variant "
-                 "must be bit-identical on already-valid arguments\n",
-                 e->name, regime_name(ctx->regime), startIdx, endIdx, i, e->name, e->name );
-         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-      }
+      /* Counted HERE, at the memcmp itself, not at the call above: a counter
+       * incremented before the comparisons and independently of them lets a
+       * deleted memcmp leave the summary printing byte-identical numbers while
+       * the gate checks strictly less. */
+      ctx->nbOutputCmp++;
+
       if( memcmp( a, c, len ) != 0 )
       {
          printf( "\nVariant gate Fail [TA_%s %s start=%d end=%d out%d]: "
                  "TA_S_%s differs from TA_%s on widened inputs -- TA_S_ must "
                  "compute in double throughout (PR #33)\n",
-                 e->name, regime_name(ctx->regime), startIdx, endIdx, i, e->name, e->name );
-         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-      }
-      if( memcmp( a, d, len ) != 0 )
-      {
-         printf( "\nVariant gate Fail [TA_%s %s start=%d end=%d out%d]: "
-                 "TA_S_%s_Unguarded differs from TA_%s\n",
                  e->name, regime_name(ctx->regime), startIdx, endIdx, i, e->name, e->name );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
@@ -732,8 +682,8 @@ static ErrorNumber run_one_function( VariantCtx *ctx, const TA_VariantEntry *e )
    int j, c, r, nbCand;
    int nb = ctx->nb;
 
-   /* startIdx deliberately spans below and above any plausible lookback; the
-    * unguarded variants must handle both, the clamp lives in the shared body. */
+   /* startIdx deliberately spans below and above any plausible lookback; both
+    * variants must handle either, the clamp lives in the shared body. */
    const int ranges[][2] = { { 0, 0 }, { 37, 0 }, { 0, 60 }, { 200, 0 } };
    const int nbRange = (int)( sizeof(ranges) / sizeof(ranges[0]) );
 

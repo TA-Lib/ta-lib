@@ -215,89 +215,6 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode TrixUnguarded( int startIdx,
-                                   int endIdx,
-                                   double[] inReal,
-                                   int optInTimePeriod,
-                                   out int outBegIdx,
-                                   out int outNBElement,
-                                   double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double prevEMA1 = 0;
-      double prevEMA2 = 0;
-      double prevEMA3 = 0;
-      double tempReal = 0;
-      double optInK_1 = 0;
-      int i = 0;
-      int today = 0;
-      int outIdx = 0;
-      int lookbackEMA = 0;
-      int lookbackTotal = 0;
-      outNBElement = 0;
-      outBegIdx = 0;
-      lookbackEMA = EmaLookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + RocRLookback(1);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         return RetCode.Success ;
-      }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         tempReal += prevEMA1;
-      }
-      prevEMA2 = tempReal / optInTimePeriod;
-      while( today <= startIdx - (lookbackEMA + 1) ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA2;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         tempReal += prevEMA2;
-      }
-      prevEMA3 = tempReal / optInTimePeriod;
-      while( today <= startIdx - 1 ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
-      }
-      outIdx = 0;
-      while( today <= endIdx ) {
-         tempReal = prevEMA3;
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
-         if( tempReal != 0.0 ) {
-            outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-      }
-      outBegIdx = startIdx;
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
    internal RetCode Trix( int startIdx,
                           int endIdx,
                           float[] inReal,
@@ -329,89 +246,6 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      outNBElement = 0;
-      outBegIdx = 0;
-      lookbackEMA = EmaLookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + RocRLookback(1);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         return RetCode.Success ;
-      }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-         prevEMA1 = Math.FusedMultiplyAdd((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         tempReal += prevEMA1;
-      }
-      prevEMA2 = tempReal / optInTimePeriod;
-      while( today <= startIdx - (lookbackEMA + 1) ) {
-         prevEMA1 = Math.FusedMultiplyAdd((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA2;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         tempReal += prevEMA2;
-      }
-      prevEMA3 = tempReal / optInTimePeriod;
-      while( today <= startIdx - 1 ) {
-         prevEMA1 = Math.FusedMultiplyAdd((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
-      }
-      outIdx = 0;
-      while( today <= endIdx ) {
-         tempReal = prevEMA3;
-         prevEMA1 = Math.FusedMultiplyAdd((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
-         if( tempReal != 0.0 ) {
-            outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-      }
-      outBegIdx = startIdx;
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode TrixUnguarded( int startIdx,
-                                   int endIdx,
-                                   float[] inReal,
-                                   int optInTimePeriod,
-                                   out int outBegIdx,
-                                   out int outNBElement,
-                                   double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double prevEMA1 = 0;
-      double prevEMA2 = 0;
-      double prevEMA3 = 0;
-      double tempReal = 0;
-      double optInK_1 = 0;
-      int i = 0;
-      int today = 0;
-      int outIdx = 0;
-      int lookbackEMA = 0;
-      int lookbackTotal = 0;
       outNBElement = 0;
       outBegIdx = 0;
       lookbackEMA = EmaLookback(optInTimePeriod);
@@ -528,42 +362,6 @@ public partial class Core
    /// 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum
    /// oscillator that filters out price moves shorter than the chosen period.
    /// Oscillates around zero; sign, zero-crossings and slope signal momentum
-   /// direction. — <b>unchecked</b> variant of <c>Trix</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange TrixUnguarded( int startIdx,
-                                  int endIdx,
-                                  double[] inReal,
-                                  int optInTimePeriod,
-                                  double[] outReal )
-   {
-      TrixUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum
-   /// oscillator that filters out price moves shorter than the chosen period.
-   /// Oscillates around zero; sign, zero-crossings and slope signal momentum
    /// direction.
    /// </summary>
    /// <remarks>
@@ -613,45 +411,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("TRIX", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum
-   /// oscillator that filters out price moves shorter than the chosen period.
-   /// Oscillates around zero; sign, zero-crossings and slope signal momentum
-   /// direction. — <b>unchecked</b> variant of <c>Trix</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange TrixUnguarded( int startIdx,
-                                  int endIdx,
-                                  float[] inReal,
-                                  int optInTimePeriod,
-                                  double[] outReal )
-   {
-      TrixUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

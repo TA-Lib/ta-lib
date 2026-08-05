@@ -98,7 +98,6 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "server_verify.h"
-#include "ta_func_unguarded.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -140,7 +139,7 @@ static float   mvPeriodsS[MV_BUF_SIZE];
 
 /**** Local functions declarations.    ****/
 static ErrorNumber mvLoadTypes( void );
-static ErrorNumber mvUnguardedBoundCheck( void );
+static ErrorNumber mvWidestExpressibleBand( void );
 static ErrorNumber mvOracleCheck( const char *label,
                                   const TA_History *history,
                                   const TA_Real *periods,
@@ -321,8 +320,8 @@ ErrorNumber test_func_mavp( TA_History *history )
                                    2, 30, TA_MAType_SMA );
    if( errNb != TA_TEST_PASS ) return errNb;
 
-   /* Off-contract unguarded periods must stay bounded (#145). */
-   errNb = mvUnguardedBoundCheck();
+   /* The widest bucket table the API can ask for is sized sanely (#145). */
+   errNb = mvWidestExpressibleBand();
    if( errNb != TA_TEST_PASS ) return errNb;
 
    /* Leave globals as found. */
@@ -390,53 +389,35 @@ static ErrorNumber mvLoadTypes( void )
    return TA_TEST_PASS;
 }
 
-/* Issue #145: the bucket table must stay bounded on an OFF-CONTRACT unguarded
- * call carrying a near-INT_MAX period.
+/* Issue #145: the bucket table must be sized by the SPREAD of periods actually
+ * used, not by the largest one. The pre-#145 `malloc((maxUsed+2) * sizeof(int))`
+ * asked for ~400KB to describe a two-wide band clustered near 100000.
  *
- * ma_lookback() returns 0 for TA_MAType_DISABLED at any period, so a huge
- * optInMaxPeriod does NOT push startIdx past endIdx — a handful of bars is
- * enough to reach the allocation. That is the one path where the pre-#145
- * `malloc((maxUsed+2) * sizeof(int))` evaluated 2147483646+2 in signed int
- * (UBSan: "signed integer overflow ... cannot be represented in type 'int'"),
- * and where merely-huge periods asked for a multi-GB table.
+ * The widest band the API can express is optInMinPeriod = 1,
+ * optInMaxPeriod = 100000 with the period series hitting both ends — a
+ * 100001-int table. The narrow band at the top of the range is a two-int table.
+ * Both shapes are checked here.
  */
-static ErrorNumber mvUnguardedBoundCheck( void )
+static ErrorNumber mvWidestExpressibleBand( void )
 {
    TA_RetCode retCode;
    TA_Integer outBegIdx, outNbElement;
    int i;
-   const int huge = 2147483646;   /* INT_MAX-1 */
 
    for( i = 0; i < MV_DATA_SIZE; i++ )
       mvInplace[i] = 100.0 + (TA_Real)i;
 
-   /* Widest possible spread: the table is refused, not overflowed. */
+   /* Widest band the guarded API can express: spread 99999, one below the
+    * bound. Sized by the spread, so this must succeed rather than be refused. */
    for( i = 0; i < MV_DATA_SIZE; i++ )
-      mvPeriods[i] = ( i % 2 ) ? 1.0 : (TA_Real)huge;
+      mvPeriods[i] = ( i % 2 ) ? 1.0 : 100000.0;
    outBegIdx = outNbElement = -1;
-   retCode = TA_MAVP_Unguarded( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
-                                1, huge, TA_MAType_DISABLED,
-                                &outBegIdx, &outNbElement, mvOut );
-   if( retCode != TA_BAD_PARAM || outBegIdx != 0 || outNbElement != 0 )
-   {
-      printf( "\nFail: MAVP unguarded wide spread: rc=%d beg=%d nb=%d,"
-              " expected clean TA_BAD_PARAM\n",
-              (int)retCode, (int)outBegIdx, (int)outNbElement );
-      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
-   }
-
-   /* Same huge period on every bar: the spread is 0, so relative indexing
-    * makes this a two-int table and an ordinary success — the absolute
-    * indexing it replaced would have asked for ~8GB here. */
-   for( i = 0; i < MV_DATA_SIZE; i++ )
-      mvPeriods[i] = (TA_Real)huge;
-   outBegIdx = outNbElement = -1;
-   retCode = TA_MAVP_Unguarded( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
-                                huge, huge, TA_MAType_DISABLED,
-                                &outBegIdx, &outNbElement, mvOut );
+   retCode = TA_MAVP( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
+                      1, 100000, TA_MAType_DISABLED,
+                      &outBegIdx, &outNbElement, mvOut );
    if( retCode != TA_SUCCESS || outBegIdx != 0 || outNbElement != MV_DATA_SIZE )
    {
-      printf( "\nFail: MAVP unguarded narrow huge band: rc=%d beg=%d nb=%d,"
+      printf( "\nFail: MAVP widest expressible band: rc=%d beg=%d nb=%d,"
               " expected the identity copy over %d bars\n",
               (int)retCode, (int)outBegIdx, (int)outNbElement, MV_DATA_SIZE );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
@@ -445,23 +426,39 @@ static ErrorNumber mvUnguardedBoundCheck( void )
    {
       if( !( mvOut[i] == mvInplace[i] ) )
       {
-         printf( "\nFail: MAVP unguarded narrow huge band [%d]: got %.17g,"
+         printf( "\nFail: MAVP widest expressible band [%d]: got %.17g,"
                  " expected %.17g\n", i, mvOut[i], mvInplace[i] );
          return TA_REGTEST_OPTIMIZATION_REF_ERROR;
       }
    }
 
-   /* Control: the same path at in-contract periods is untouched. The bound is
-    * inert for anything the guarded API can express. */
+   /* Narrow band at the top of the range: the spread is 0, so relative
+    * indexing makes this a two-int table. Absolute indexing would have asked
+    * for ~400KB to describe a single period. */
+   for( i = 0; i < MV_DATA_SIZE; i++ )
+      mvPeriods[i] = 100000.0;
+   outBegIdx = outNbElement = -1;
+   retCode = TA_MAVP( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
+                      100000, 100000, TA_MAType_DISABLED,
+                      &outBegIdx, &outNbElement, mvOut );
+   if( retCode != TA_SUCCESS || outBegIdx != 0 || outNbElement != MV_DATA_SIZE )
+   {
+      printf( "\nFail: MAVP narrow band at the range top: rc=%d beg=%d nb=%d,"
+              " expected the identity copy over %d bars\n",
+              (int)retCode, (int)outBegIdx, (int)outNbElement, MV_DATA_SIZE );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   /* Control: ordinary in-contract periods are untouched. */
    for( i = 0; i < MV_DATA_SIZE; i++ )
       mvPeriods[i] = (TA_Real)( 2 + i % 50 );
    outBegIdx = outNbElement = -1;
-   retCode = TA_MAVP_Unguarded( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
-                                1, 100000, TA_MAType_DISABLED,
-                                &outBegIdx, &outNbElement, mvOut );
+   retCode = TA_MAVP( 0, MV_DATA_SIZE-1, mvInplace, mvPeriods,
+                      1, 100000, TA_MAType_DISABLED,
+                      &outBegIdx, &outNbElement, mvOut );
    if( retCode != TA_SUCCESS || outNbElement != MV_DATA_SIZE )
    {
-      printf( "\nFail: MAVP unguarded in-contract control: rc=%d nb=%d\n",
+      printf( "\nFail: MAVP in-contract control: rc=%d nb=%d\n",
               (int)retCode, (int)outNbElement );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }

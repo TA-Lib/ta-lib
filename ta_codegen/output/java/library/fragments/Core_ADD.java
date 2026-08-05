@@ -48,23 +48,6 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode addUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 double inReal0[],
-                                 double inReal1[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      int outIdx = 0;
-      int i = 0;
-      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx] = inReal0[i] + inReal1[i];
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
    RetCode addInternal( int startIdx,
                         int endIdx,
                         float inReal0[],
@@ -81,23 +64,6 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx] = (double)inReal0[i] + (double)inReal1[i];
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode addUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 float inReal0[],
-                                 float inReal1[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      int outIdx = 0;
-      int i = 0;
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
          outReal[outIdx] = (double)inReal0[i] + (double)inReal1[i];
       }
@@ -152,32 +118,6 @@
    }
    /**
     * Vector arithmetic addition. Outputs the element-wise sum of two input
-    * series. — <b>unchecked</b> variant of {@link Core#add}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange addUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal0[],
-                                 double inReal1[],
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      addUnguardedInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Vector arithmetic addition. Outputs the element-wise sum of two input
     * series.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -222,33 +162,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("ADD", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Vector arithmetic addition. Outputs the element-wise sum of two input
-    * series. — <b>unchecked</b> variant of {@link Core#add}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange addUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal0[],
-                                 float inReal1[],
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      addUnguardedInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

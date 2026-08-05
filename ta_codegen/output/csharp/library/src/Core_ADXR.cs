@@ -146,7 +146,7 @@ public partial class Core
       /* Compute ADX over a range that starts (period-1) bars earlier, so each
        * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
        */
-      retCode = AdxUnguarded(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
+      retCode = Adx(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -154,45 +154,6 @@ public partial class Core
        * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
        * is adx[k]; the ADX range holds (period-1) more elements than the output.
        */
-      nbElement = outNBElement - (optInTimePeriod - 1);
-      for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
-         outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
-      }
-      outBegIdx = startIdx;
-      outNBElement = nbElement;
-      return RetCode.Success ;
-   }
-   internal RetCode AdxrUnguarded( int startIdx,
-                                   int endIdx,
-                                   double[] inHigh,
-                                   double[] inLow,
-                                   double[] inClose,
-                                   int optInTimePeriod,
-                                   out int outBegIdx,
-                                   out int outNBElement,
-                                   double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double[] adx;
-      int adxrLookback = 0;
-      int outIdx = 0;
-      int nbElement = 0;
-      RetCode retCode;
-      adxrLookback = AdxrLookback(optInTimePeriod);
-      if( startIdx < adxrLookback ) {
-         startIdx = adxrLookback;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
-      retCode = AdxUnguarded(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
       nbElement = outNBElement - (optInTimePeriod - 1);
       for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
          outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
@@ -239,46 +200,7 @@ public partial class Core
          return RetCode.Success ;
       }
       adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
-      retCode = AdxUnguarded(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      nbElement = outNBElement - (optInTimePeriod - 1);
-      for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
-         outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
-      }
-      outBegIdx = startIdx;
-      outNBElement = nbElement;
-      return RetCode.Success ;
-   }
-   internal RetCode AdxrUnguarded( int startIdx,
-                                   int endIdx,
-                                   float[] inHigh,
-                                   float[] inLow,
-                                   float[] inClose,
-                                   int optInTimePeriod,
-                                   out int outBegIdx,
-                                   out int outNBElement,
-                                   double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double[] adx;
-      int adxrLookback = 0;
-      int outIdx = 0;
-      int nbElement = 0;
-      RetCode retCode;
-      adxrLookback = AdxrLookback(optInTimePeriod);
-      if( startIdx < adxrLookback ) {
-         startIdx = adxrLookback;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
-      retCode = AdxUnguarded(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
+      retCode = Adx(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -347,46 +269,6 @@ public partial class Core
    /// Smoothed variant of ADX: the average of the current ADX value and the ADX
    /// value from (period-1) bars earlier. Further damps ADX to gauge trend
    /// strength. Higher values mean a stronger trend; smoother and more lagging
-   /// than ADX. — <b>unchecked</b> variant of <c>Adxr</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange AdxrUnguarded( int startIdx,
-                                  int endIdx,
-                                  double[] inHigh,
-                                  double[] inLow,
-                                  double[] inClose,
-                                  int optInTimePeriod,
-                                  double[] outReal )
-   {
-      AdxrUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Smoothed variant of ADX: the average of the current ADX value and the ADX
-   /// value from (period-1) bars earlier. Further damps ADX to gauge trend
-   /// strength. Higher values mean a stronger trend; smoother and more lagging
    /// than ADX.
    /// </summary>
    /// <remarks>
@@ -440,49 +322,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("ADXR", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Smoothed variant of ADX: the average of the current ADX value and the ADX
-   /// value from (period-1) bars earlier. Further damps ADX to gauge trend
-   /// strength. Higher values mean a stronger trend; smoother and more lagging
-   /// than ADX. — <b>unchecked</b> variant of <c>Adxr</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange AdxrUnguarded( int startIdx,
-                                  int endIdx,
-                                  float[] inHigh,
-                                  float[] inLow,
-                                  float[] inClose,
-                                  int optInTimePeriod,
-                                  double[] outReal )
-   {
-      AdxrUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

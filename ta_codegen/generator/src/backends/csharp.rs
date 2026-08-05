@@ -17,9 +17,9 @@
 //!   callees return RetCode that callers *inspect* (MA, BBANDS, MAVP, STOCHRSI,
 //!   SAR). Throwing cores would make those inspection sites dead code the
 //!   renderer has to delete. Keeping RetCode internally means zero body changes.
-//!   Unlike Java there is no `…UnguardedInternal` naming split: C#'s `internal`
-//!   accessibility plus overloading (the cores carry the two `out int` params
-//!   the public wrappers do not) lets the cores share the public names.
+//!   C#'s `internal` accessibility plus overloading (the cores carry the two
+//!   `out int` params the public wrappers do not) lets the cores share the
+//!   public names, so no separate core naming scheme is needed.
 //!
 //! - **Scratch buffers are `new double[n]`, not `ArrayPool`, in v1.** ArrayPool
 //!   has no lifetime story in the current IR lowering: Java renders
@@ -193,15 +193,11 @@ pub fn generate(
     // Internal cores keep the RetCode + out-int shape: the JSON-RPC server calls
     // these directly, so the harness's retCode ints and output hashes are
     // untouched by the public surface below.
-    out.push_str(&gen_func(func, false, false, enums, registry, helpers)); // double guarded
-    out.push_str(&gen_func(func, false, true, enums, registry, helpers)); // double unguarded
-    out.push_str(&gen_func(func, true, false, enums, registry, helpers)); // float guarded
-    out.push_str(&gen_func(func, true, true, enums, registry, helpers)); // float unguarded
+    out.push_str(&gen_func(func, false, enums, registry, helpers)); // double guarded
+    out.push_str(&gen_func(func, true, enums, registry, helpers)); // float guarded
     // Public surface: OutRange-returning wrappers over the cores above.
-    out.push_str(&gen_public_wrapper(func, false, false, enums));
-    out.push_str(&gen_public_wrapper(func, false, true, enums));
-    out.push_str(&gen_public_wrapper(func, true, false, enums));
-    out.push_str(&gen_public_wrapper(func, true, true, enums));
+    out.push_str(&gen_public_wrapper(func, false, enums));
+    out.push_str(&gen_public_wrapper(func, true, enums));
     out.push_str("}\n");
     out
 }
@@ -392,10 +388,9 @@ fn render_init_expr(expr: &Expr) -> String {
 
 /// Emit the public, `OutRange`-returning wrapper over one internal core.
 ///
-/// Guarded wrappers translate the core's `RetCode` into the documented exception
-/// mapping; unguarded wrappers check nothing and never throw. Both are thin: the
-/// numerics live entirely in the core (which is an overload of the same name
-/// carrying the two `out int` params).
+/// The wrapper translates the core's `RetCode` into the documented exception
+/// mapping. It is thin: the numerics live entirely in the core (an overload of
+/// the same name carrying the two `out int` params).
 ///
 /// **A short range is not an error.** A valid range shorter than the lookback
 /// returns `Success` with `outNBElement == 0`, which becomes an `OutRange` whose
@@ -403,15 +398,10 @@ fn render_init_expr(expr: &Expr) -> String {
 fn gen_public_wrapper(
     func: &FuncDef,
     single_precision: bool,
-    unguarded: bool,
     enums: &HashMap<String, EnumDef>,
 ) -> String {
     let base_name = to_csharp_method_name(&func.name, func.camel_case.as_deref());
-    let core = if unguarded {
-        format!("{base_name}Unguarded")
-    } else {
-        base_name.clone()
-    };
+    let core = base_name.clone();
     let public_name = core.clone();
 
     // Parameters: same as the core minus the two out-int params.
@@ -442,11 +432,7 @@ fn gen_public_wrapper(
     }
 
     let mut out = String::new();
-    if unguarded {
-        out.push_str(&super::csharp_doc::unguarded_docs(func, &base_name, single_precision));
-    } else {
-        out.push_str(&super::csharp_doc::guarded_docs(func, &base_name, single_precision, enums));
-    }
+    out.push_str(&super::csharp_doc::guarded_docs(func, &base_name, single_precision, enums));
     let sig_prefix = format!("   public OutRange {public_name}( ");
     let indent = " ".repeat(sig_prefix.len());
     out.push_str(&sig_prefix);
@@ -457,13 +443,7 @@ fn gen_public_wrapper(
         out.push_str(param);
     }
     out.push_str(" )\n   {\n");
-    if unguarded {
-        // Checks nothing by contract, so there is no failure to report and the
-        // core's RetCode is discarded.
-        let _ = write!(out, "      {core}(");
-        out.push_str(&args.join(", "));
-        out.push_str(");\n");
-    } else {
+    {
         let _ = write!(out, "      RetCode retCode = {core}(");
         out.push_str(&args.join(", "));
         out.push_str(");\n");
@@ -486,25 +466,23 @@ fn gen_private(
 ) -> String {
     let base_name = to_csharp_method_name(&func.name, func.camel_case.as_deref());
     let name_override = format!("{base_name}Private");
-    gen_func_inner(func, single_precision, true, Some(&name_override), enums, registry, helpers)
+    gen_func_inner(func, single_precision, Some(&name_override), enums, registry, helpers)
 }
 
 fn gen_func(
     func: &FuncDef,
     single_precision: bool,
-    logic: bool,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    gen_func_inner(func, single_precision, logic, None, enums, registry, helpers)
+    gen_func_inner(func, single_precision, None, enums, registry, helpers)
 }
 
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 fn gen_func_inner(
     func: &FuncDef,
     single_precision: bool,
-    logic: bool,
     name_override: Option<&str>,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
@@ -514,8 +492,6 @@ fn gen_func_inner(
     let base_name = to_csharp_method_name(&func.name, func.camel_case.as_deref());
     let name = if let Some(n) = name_override {
         n.to_string()
-    } else if logic {
-        format!("{base_name}Unguarded")
     } else {
         base_name.clone()
     };
@@ -588,15 +564,13 @@ fn gen_func_inner(
         &func.private_body
     } else if func.has_explicit_private {
         &func.body
-    } else if logic {
-        &func.private_body
     } else {
         &func.body
     };
 
     // Carry source comments only in the double-precision guarded implementation
     // (or the double Private for explicit-private functions).
-    let keep_comments = !single_precision && (name_override.is_some() || !logic);
+    let keep_comments = !single_precision;
     let body_stripped;
     let body: &[Statement] = if keep_comments {
         body
@@ -667,12 +641,14 @@ fn gen_func_inner(
         }
     }
 
-    // For S_ variants with _private: emit private_param_init as local VarDecls
-    // Both guarded and logic S_ variants need this (both use private_body).
-    if single_precision && func.has_explicit_private && name_override.is_none() {
-        for (param_name, init_expr) in &func.private_param_init {
-            let init_cs = render_init_expr(init_expr);
-            out.push_str(&format!("      double {param_name} = {init_cs};\n"));
+    // For S_ variants with _private: the extra params (e.g. EMA's k factor) the
+    // inlined private body needs. DECLARED here, ASSIGNED after the validation
+    // prologue — the initialiser reads an optional parameter, and the prologue is
+    // what substitutes a sentinel for the declared default.
+    let sp_private_init = single_precision && func.has_explicit_private && name_override.is_none();
+    if sp_private_init {
+        for (param_name, _) in &func.private_param_init {
+            out.push_str(&format!("      double {param_name} = 0.0;\n"));
         }
     }
 
@@ -682,8 +658,9 @@ fn gen_func_inner(
         out.push_str(&emit_csharp_unpacking(&candle_used, 6));
     }
 
-    // Validation (omitted for Logic/unguarded variant)
-    if !logic {
+    // Validation prologue. Omitted for the `Private` variant, whose callers are the
+    // guarded cores that have already validated.
+    if name_override.is_none() {
         out.push_str("      if( startIdx < 0 ) {\n");
         out.push_str("         return RetCode.OutOfRangeStartIndex ;\n");
         out.push_str("      }\n");
@@ -711,10 +688,18 @@ fn gen_func_inner(
         }
     }
 
+    // Any sentinel is substituted by now — derive the private extra params.
+    if sp_private_init {
+        for (param_name, init_expr) in &func.private_param_init {
+            let init_cs = render_init_expr(init_expr);
+            out.push_str(&format!("      {param_name} = {init_cs};\n"));
+        }
+    }
+
     let inline_counter = Cell::new(0);
     // FMA fusion sites for this body — same detector C/Rust/Java use, so the
     // four backends fuse identical sites.
-    let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::UNGUARDED_INDEX_SEEDS);
+    let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::INDEX_PARAM_SEEDS);
     let ctx = CsRenderCtx {
         single_precision,
         double_address_of_vars: &double_address_of_vars,
@@ -2047,7 +2032,7 @@ mod tests {
             let base = to_csharp_method_name(&fd.name, fd.camel_case.as_deref());
             assert_eq!(
                 registry.resolve_call(&key, Lang::CSharp),
-                format!("{base}Unguarded"),
+                base,
                 "cross-call target for `{key}` disagrees with the emitted method name"
             );
             assert_eq!(
@@ -2071,29 +2056,21 @@ mod tests {
         assert!(output.contains("namespace TALib;"), "missing namespace");
         assert!(output.contains("public partial class Core"), "missing partial class");
 
-        // Internal cores with the out-int pair and the CS0177 seeding prologue.
+        // The internal core with the out-int pair and the CS0177 seeding prologue.
         assert!(output.contains("   internal RetCode Sma( "), "missing guarded core");
-        assert!(output.contains("   internal RetCode SmaUnguarded( "), "missing unguarded core");
+        assert!(!output.contains("Unguarded"), "no unguarded tier may exist");
         assert!(output.contains("out int outBegIdx"), "missing out param");
         assert!(
             output.contains("      outBegIdx = 0;\n      outNBElement = 0;\n"),
             "missing seeding prologue"
         );
 
-        // The unguarded core skips validation; the guarded one performs it.
-        let logic_pos = output.find("internal RetCode SmaUnguarded( ").unwrap();
-        let logic_section = &output[logic_pos..];
-        let next_fn_pos = logic_section[1..]
-            .find("   internal RetCode ")
-            .map_or(logic_section.len(), |i| i + 1);
-        assert!(
-            !logic_section[..next_fn_pos].contains("OutOfRangeStartIndex"),
-            "unguarded core should not contain validation"
-        );
+        // The surviving core validates. Bounded to the double core's own body so
+        // a match inside the float overload cannot stand in for it.
         let guarded_pos = output.find("internal RetCode Sma( ").unwrap();
-        let guarded_end = output[guarded_pos..]
-            .find("internal RetCode SmaUnguarded(")
-            .unwrap_or(output.len() - guarded_pos);
+        let guarded_end = output[guarded_pos + 1..]
+            .find("   internal RetCode ")
+            .map_or(output.len() - guarded_pos, |i| i + 1);
         assert!(
             output[guarded_pos..guarded_pos + guarded_end].contains("OutOfRangeStartIndex"),
             "guarded core should contain validation"
@@ -2102,7 +2079,6 @@ mod tests {
         // The public surface is OutRange-returning wrappers over those cores,
         // and nothing Java-shaped leaks through.
         assert!(output.contains("   public OutRange Sma( "), "missing public wrapper");
-        assert!(output.contains("   public OutRange SmaUnguarded( "), "missing unguarded wrapper");
         assert!(
             output.contains("throw Failure(\"SMA\", retCode);"),
             "guarded wrapper must map RetCode onto the documented exception"
@@ -2128,7 +2104,7 @@ mod tests {
             "&localBegIdx must lower to an `out` argument"
         );
         assert!(
-            output.contains("MovingAverageUnguarded(startIdx, endIdx, inReal, minUsed"),
+            output.contains("MovingAverage(startIdx, endIdx, inReal, minUsed"),
             "cross-call must resolve through the registry's C# naming"
         );
         assert!(

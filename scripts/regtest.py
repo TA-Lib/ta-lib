@@ -104,7 +104,7 @@ def _ta_ref_serve_paths(src_root, build_dir):
             os.path.join(src_root, "ta_codegen", "generator", "templates", "c"),
             # Current-tree layout: ta_memory.h / ta_utility.h live with the
             # library sources, not under ta_codegen/output/c, and the server
-            # includes "ta_func/ta_func_private.h" relative to src/.
+            # includes "ta_func/ta_func_stream_private.h" relative to src/.
             os.path.join(src_root, "src", "ta_common"),
             os.path.join(src_root, "src", "ta_func"),
             os.path.join(src_root, "src"),
@@ -190,8 +190,7 @@ def ensure_reference_serve(root, bin_dir):
         # use_float leg); the ORACLE property lives in lib_a, which stays the
         # frozen pinned-tag build. The two trees' public C API declarations are
         # identical (audited), so current headers link cleanly against the
-        # frozen library. TA_*_Unguarded/TA_S_*_Unguarded calls are compiled
-        # out via TA_REF_SERVE (the frozen lib has no unguarded symbols).
+        # frozen library.
         serve_src, _lib_ignored, includes = _ta_ref_serve_paths(root, os.path.join(root, "cmake-build"))
         # Build the frozen reference static lib (the tag is immutable, but the
         # FP-contraction setting must match this tree's — see build_frozen_lib).
@@ -280,7 +279,7 @@ def main():
         "--function=", "--language=", "--points=", "--iters=", "--period=",
         "--shape=", "--seed=", "--regime-period=", "--trend-strength=",
         "--codegen", "--codegen=", "--codegen-only",
-        "--fuzz-064", "--xlang-hash", "--no-guarded", "--no-unguarded",
+        "--fuzz-064", "--xlang-hash", "--no-guarded",
     )
     unknown = [a for a in passthrough
                if a != "-p" and not a.startswith(KNOWN_PASSTHROUGH)]
@@ -424,7 +423,7 @@ def main():
         # ever ran. An allowlist keeps a future bench flag from breaking it again.
         REGTEST_FLAGS = ("--function=", "--language=", "--codegen", "--codegen=",
                          "--codegen-only", "--fuzz-064", "--xlang-hash",
-                         "--no-guarded", "--no-unguarded", "-p")
+                         "--no-guarded", "-p")
         codegen_args = [a for a in passthrough
                         if a == "-p" or a.startswith(tuple(
                             f for f in REGTEST_FLAGS if f != "-p"))]

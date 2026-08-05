@@ -186,75 +186,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlHikkakeUnguarded( int startIdx,
-                                         int endIdx,
-                                         double[] inOpen,
-                                         double[] inHigh,
-                                         double[] inLow,
-                                         double[] inClose,
-                                         out int outBegIdx,
-                                         out int outNBElement,
-                                         int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int i = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      int patternResult = 0;
-      int cd = 0;
-      double savedHigh = 0;
-      double savedLow = 0;
-      lookbackTotal = CdlHikkakeLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      cd = 0;
-      patternResult = 0;
-      i = startIdx - 3;
-      while( i < startIdx ) {
-         if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            savedHigh = inHigh[i - 1];
-            savedLow = inLow[i - 1];
-            cd = 4;
-         } else if( cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) {
-            cd = 0;
-         }
-         if( cd > 0 ) {
-            cd -= 1;
-         }
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            savedHigh = inHigh[i - 1];
-            savedLow = inLow[i - 1];
-            cd = 4;
-            outInteger[outIdx++] = patternResult;
-         } else if( cd > 0 && (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) {
-            outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            cd = 0;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         if( cd > 0 ) {
-            cd -= 1;
-         }
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode CdlHikkake( int startIdx,
                                 int endIdx,
                                 float[] inOpen,
@@ -280,75 +211,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = CdlHikkakeLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      cd = 0;
-      patternResult = 0;
-      i = startIdx - 3;
-      while( i < startIdx ) {
-         if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
-            patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            savedHigh = (double)inHigh[i - 1];
-            savedLow = (double)inLow[i - 1];
-            cd = 4;
-         } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) ) {
-            cd = 0;
-         }
-         if( cd > 0 ) {
-            cd -= 1;
-         }
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1]) ) {
-            patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : 0 - 1);
-            savedHigh = (double)inHigh[i - 1];
-            savedLow = (double)inLow[i - 1];
-            cd = 4;
-            outInteger[outIdx++] = patternResult;
-         } else if( cd > 0 && (patternResult > 0 && (double)inClose[i] > savedHigh || patternResult < 0 && (double)inClose[i] < savedLow) ) {
-            outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            cd = 0;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         if( cd > 0 ) {
-            cd -= 1;
-         }
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode CdlHikkakeUnguarded( int startIdx,
-                                         int endIdx,
-                                         float[] inOpen,
-                                         float[] inHigh,
-                                         float[] inLow,
-                                         float[] inClose,
-                                         out int outBegIdx,
-                                         out int outNBElement,
-                                         int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int i = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      int patternResult = 0;
-      int cd = 0;
-      double savedHigh = 0;
-      double savedLow = 0;
       lookbackTotal = CdlHikkakeLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -451,48 +313,6 @@ public partial class Core
    /// later confirmed by a follow-through bar. Signals a bullish or bearish
    /// reversal/continuation depending on the breakout direction. A
    /// false-breakout setup: positive = bullish, negative = bearish; magnitude
-   /// 200 flags the confirming bar. — <b>unchecked</b> variant of
-   /// <c>CdlHikkake</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlHikkakeUnguarded( int startIdx,
-                                        int endIdx,
-                                        double[] inOpen,
-                                        double[] inHigh,
-                                        double[] inLow,
-                                        double[] inClose,
-                                        int[] outInteger )
-   {
-      CdlHikkakeUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A 3-bar pattern: an inside bar followed by a false breakout, optionally
-   /// later confirmed by a follow-through bar. Signals a bullish or bearish
-   /// reversal/continuation depending on the breakout direction. A
-   /// false-breakout setup: positive = bullish, negative = bearish; magnitude
    /// 200 flags the confirming bar.
    /// </summary>
    /// <remarks>
@@ -539,51 +359,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("CDLHIKKAKE", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A 3-bar pattern: an inside bar followed by a false breakout, optionally
-   /// later confirmed by a follow-through bar. Signals a bullish or bearish
-   /// reversal/continuation depending on the breakout direction. A
-   /// false-breakout setup: positive = bullish, negative = bearish; magnitude
-   /// 200 flags the confirming bar. — <b>unchecked</b> variant of
-   /// <c>CdlHikkake</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlHikkakeUnguarded( int startIdx,
-                                        int endIdx,
-                                        float[] inOpen,
-                                        float[] inHigh,
-                                        float[] inLow,
-                                        float[] inClose,
-                                        int[] outInteger )
-   {
-      CdlHikkakeUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

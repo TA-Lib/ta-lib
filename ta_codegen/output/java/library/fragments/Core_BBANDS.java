@@ -284,7 +284,7 @@
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Calculate the middle band moving average. */
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
@@ -292,7 +292,7 @@
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)outBegIdx.value;
       /* Calculate the Standard Deviation into tempBuffer2. */
-      retCode = stdDevUnguardedInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
+      retCode = stdDevInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement.value = 0;
          return retCode ;
@@ -313,188 +313,6 @@
       }
       System.arraycopy(tempBuffer1, shiftIdx, outRealMiddleBand, 0, outNBElement.value * 1);
       /* Now do a tight loop to calculate the upper/lower band at the same time. */
-      if( optInNbDevUp == optInNbDevDn ) {
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = tempBuffer2[i] * optInNbDevUp;
-            tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempReal;
-            outRealLowerBand[i] = tempReal2 - tempReal;
-         }
-      } else {
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
-            outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
-         }
-      }
-      return RetCode.Success ;
-   }
-   RetCode bbandsUnguardedInternal( int startIdx,
-                                    int endIdx,
-                                    double inReal[],
-                                    int optInTimePeriod,
-                                    double optInNbDevUp,
-                                    double optInNbDevDn,
-                                    MAType optInMAType,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outRealUpperBand[],
-                                    double outRealMiddleBand[],
-                                    double outRealLowerBand[] )
-   {
-      RetCode retCode;
-      int i = 0;
-      int maBegIdx = 0;
-      int shiftIdx = 0;
-      double tempReal = 0;
-      double tempReal2 = 0;
-      double[] tempBuffer1;
-      double[] tempBuffer2;
-      if( optInMAType == MAType.Sma ) {
-         if( inReal == outRealUpperBand ) {
-            tempBuffer1 = outRealMiddleBand;
-            tempBuffer2 = outRealLowerBand;
-         } else if( inReal == outRealLowerBand ) {
-            tempBuffer1 = outRealMiddleBand;
-            tempBuffer2 = outRealUpperBand;
-         } else if( inReal == outRealMiddleBand ) {
-            tempBuffer1 = outRealLowerBand;
-            tempBuffer2 = outRealUpperBand;
-         } else {
-            tempBuffer1 = outRealMiddleBand;
-            tempBuffer2 = outRealUpperBand;
-         }
-         if( tempBuffer1 == inReal || tempBuffer2 == inReal ) {
-            return RetCode.BadParam ;
-         }
-         double maTotal;
-         double shift;
-         double varTotal1;
-         double varTotal2;
-         double meanValue1;
-         double variance;
-         double _invPeriod;
-         double _tempReal;
-         int _i;
-         int _j;
-         int _outIdx;
-         int _trailingIdx;
-         int _windowStart;
-         int _lookbackTotal;
-         int _barsSinceReseed;
-         _lookbackTotal = optInTimePeriod - 1;
-         if( startIdx < _lookbackTotal ) {
-            startIdx = _lookbackTotal;
-         }
-         if( startIdx > endIdx ) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return RetCode.Success ;
-         }
-         _invPeriod = 1.0 / (double)optInTimePeriod;
-         _trailingIdx = startIdx - _lookbackTotal;
-         shift = inReal[_trailingIdx];
-         maTotal = 0.0;
-         varTotal1 = 0.0;
-         varTotal2 = 0.0;
-         for( _j = _trailingIdx; _j < startIdx; _j += 1 ) {
-            maTotal += inReal[_j];
-            _tempReal = inReal[_j] - shift;
-            varTotal1 += _tempReal;
-            _tempReal *= _tempReal;
-            varTotal2 += _tempReal;
-         }
-         _i = startIdx;
-         _outIdx = 0;
-         _barsSinceReseed = 32 * optInTimePeriod;
-         do {
-            maTotal += inReal[_i];
-            _tempReal = inReal[_i] - shift;
-            varTotal1 += _tempReal;
-            _tempReal *= _tempReal;
-            varTotal2 += _tempReal;
-            meanValue1 = varTotal1 * _invPeriod;
-            variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-            tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
-            maTotal -= inReal[_trailingIdx];
-            _tempReal = inReal[_trailingIdx] - shift;
-            varTotal1 -= _tempReal;
-            _tempReal *= _tempReal;
-            varTotal2 -= _tempReal;
-            _trailingIdx += 1;
-            _barsSinceReseed -= 1;
-            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 ) {
-               _barsSinceReseed = 32 * optInTimePeriod;
-               _windowStart = _i - _lookbackTotal;
-               _tempReal = 0.0;
-               for( _j = _windowStart; _j <= _i; _j += 1 ) {
-                  _tempReal += inReal[_j];
-               }
-               shift = _tempReal * _invPeriod;
-               varTotal1 = 0.0;
-               varTotal2 = 0.0;
-               for( _j = _windowStart; _j <= _i; _j += 1 ) {
-                  _tempReal = inReal[_j] - shift;
-                  varTotal1 += _tempReal;
-                  _tempReal *= _tempReal;
-                  varTotal2 += _tempReal;
-               }
-               meanValue1 = varTotal1 * _invPeriod;
-               variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-               _tempReal = inReal[_windowStart] - shift;
-               varTotal1 -= _tempReal;
-               _tempReal *= _tempReal;
-               varTotal2 -= _tempReal;
-            }
-            if( !(variance < 0.00000000000001) ) {
-               tempBuffer2[_outIdx] = Math.sqrt(variance);
-            } else {
-               tempBuffer2[_outIdx] = 0.0;
-            }
-            _outIdx += 1;
-            _i += 1;
-         } while( _i <= endIdx );
-         outNBElement.value = _outIdx;
-         outBegIdx.value = startIdx;
-         if( tempBuffer1 != outRealMiddleBand ) {
-            System.arraycopy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement.value * 1);
-         }
-         if( optInNbDevUp == optInNbDevDn ) {
-            for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-               tempReal = tempBuffer2[i] * optInNbDevUp;
-               tempReal2 = outRealMiddleBand[i];
-               outRealUpperBand[i] = tempReal2 + tempReal;
-               outRealLowerBand[i] = tempReal2 - tempReal;
-            }
-         } else {
-            for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-               tempReal = tempBuffer2[i];
-               tempReal2 = outRealMiddleBand[i];
-               outRealUpperBand[i] = Math.fma(tempReal, optInNbDevUp, tempReal2);
-               outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
-            }
-         }
-         return RetCode.Success ;
-      }
-      tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      maBegIdx = (int)outBegIdx.value;
-      retCode = stdDevUnguardedInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
-      if( retCode != RetCode.Success ) {
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      if( (int)outBegIdx.value > maBegIdx ) {
-         shiftIdx = (int)outBegIdx.value - maBegIdx;
-      } else {
-         shiftIdx = 0;
-      }
-      System.arraycopy(tempBuffer1, shiftIdx, outRealMiddleBand, 0, outNBElement.value * 1);
       if( optInNbDevUp == optInNbDevDn ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             tempReal = tempBuffer2[i] * optInNbDevUp;
@@ -684,195 +502,13 @@
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
       }
       maBegIdx = (int)outBegIdx.value;
-      retCode = stdDevUnguardedInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
-      if( retCode != RetCode.Success ) {
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      if( (int)outBegIdx.value > maBegIdx ) {
-         shiftIdx = (int)outBegIdx.value - maBegIdx;
-      } else {
-         shiftIdx = 0;
-      }
-      System.arraycopy(tempBuffer1, shiftIdx, outRealMiddleBand, 0, outNBElement.value * 1);
-      if( optInNbDevUp == optInNbDevDn ) {
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = tempBuffer2[i] * optInNbDevUp;
-            tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempReal;
-            outRealLowerBand[i] = tempReal2 - tempReal;
-         }
-      } else {
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
-            outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
-         }
-      }
-      return RetCode.Success ;
-   }
-   RetCode bbandsUnguardedInternal( int startIdx,
-                                    int endIdx,
-                                    float inReal[],
-                                    int optInTimePeriod,
-                                    double optInNbDevUp,
-                                    double optInNbDevDn,
-                                    MAType optInMAType,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outRealUpperBand[],
-                                    double outRealMiddleBand[],
-                                    double outRealLowerBand[] )
-   {
-      RetCode retCode;
-      int i = 0;
-      int maBegIdx = 0;
-      int shiftIdx = 0;
-      double tempReal = 0;
-      double tempReal2 = 0;
-      double[] tempBuffer1;
-      double[] tempBuffer2;
-      if( optInMAType == MAType.Sma ) {
-         if( false ) {
-            tempBuffer1 = outRealMiddleBand;
-            tempBuffer2 = outRealLowerBand;
-         } else if( false ) {
-            tempBuffer1 = outRealMiddleBand;
-            tempBuffer2 = outRealUpperBand;
-         } else if( false ) {
-            tempBuffer1 = outRealLowerBand;
-            tempBuffer2 = outRealUpperBand;
-         } else {
-            tempBuffer1 = outRealMiddleBand;
-            tempBuffer2 = outRealUpperBand;
-         }
-         if( false || false ) {
-            return RetCode.BadParam ;
-         }
-         double maTotal;
-         double shift;
-         double varTotal1;
-         double varTotal2;
-         double meanValue1;
-         double variance;
-         double _invPeriod;
-         double _tempReal;
-         int _i;
-         int _j;
-         int _outIdx;
-         int _trailingIdx;
-         int _windowStart;
-         int _lookbackTotal;
-         int _barsSinceReseed;
-         _lookbackTotal = optInTimePeriod - 1;
-         if( startIdx < _lookbackTotal ) {
-            startIdx = _lookbackTotal;
-         }
-         if( startIdx > endIdx ) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return RetCode.Success ;
-         }
-         _invPeriod = 1.0 / (double)optInTimePeriod;
-         _trailingIdx = startIdx - _lookbackTotal;
-         shift = (double)inReal[_trailingIdx];
-         maTotal = 0.0;
-         varTotal1 = 0.0;
-         varTotal2 = 0.0;
-         for( _j = _trailingIdx; _j < startIdx; _j += 1 ) {
-            maTotal += (double)inReal[_j];
-            _tempReal = (double)inReal[_j] - shift;
-            varTotal1 += _tempReal;
-            _tempReal *= _tempReal;
-            varTotal2 += _tempReal;
-         }
-         _i = startIdx;
-         _outIdx = 0;
-         _barsSinceReseed = 32 * optInTimePeriod;
-         do {
-            maTotal += (double)inReal[_i];
-            _tempReal = (double)inReal[_i] - shift;
-            varTotal1 += _tempReal;
-            _tempReal *= _tempReal;
-            varTotal2 += _tempReal;
-            meanValue1 = varTotal1 * _invPeriod;
-            variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-            tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
-            maTotal -= (double)inReal[_trailingIdx];
-            _tempReal = (double)inReal[_trailingIdx] - shift;
-            varTotal1 -= _tempReal;
-            _tempReal *= _tempReal;
-            varTotal2 -= _tempReal;
-            _trailingIdx += 1;
-            _barsSinceReseed -= 1;
-            if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 ) {
-               _barsSinceReseed = 32 * optInTimePeriod;
-               _windowStart = _i - _lookbackTotal;
-               _tempReal = 0.0;
-               for( _j = _windowStart; _j <= _i; _j += 1 ) {
-                  _tempReal += (double)inReal[_j];
-               }
-               shift = _tempReal * _invPeriod;
-               varTotal1 = 0.0;
-               varTotal2 = 0.0;
-               for( _j = _windowStart; _j <= _i; _j += 1 ) {
-                  _tempReal = (double)inReal[_j] - shift;
-                  varTotal1 += _tempReal;
-                  _tempReal *= _tempReal;
-                  varTotal2 += _tempReal;
-               }
-               meanValue1 = varTotal1 * _invPeriod;
-               variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-               _tempReal = (double)inReal[_windowStart] - shift;
-               varTotal1 -= _tempReal;
-               _tempReal *= _tempReal;
-               varTotal2 -= _tempReal;
-            }
-            if( !(variance < 0.00000000000001) ) {
-               tempBuffer2[_outIdx] = Math.sqrt(variance);
-            } else {
-               tempBuffer2[_outIdx] = 0.0;
-            }
-            _outIdx += 1;
-            _i += 1;
-         } while( _i <= endIdx );
-         outNBElement.value = _outIdx;
-         outBegIdx.value = startIdx;
-         if( tempBuffer1 != outRealMiddleBand ) {
-            System.arraycopy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement.value * 1);
-         }
-         if( optInNbDevUp == optInNbDevDn ) {
-            for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-               tempReal = tempBuffer2[i] * optInNbDevUp;
-               tempReal2 = outRealMiddleBand[i];
-               outRealUpperBand[i] = tempReal2 + tempReal;
-               outRealLowerBand[i] = tempReal2 - tempReal;
-            }
-         } else {
-            for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-               tempReal = tempBuffer2[i];
-               tempReal2 = outRealMiddleBand[i];
-               outRealUpperBand[i] = Math.fma(tempReal, optInNbDevUp, tempReal2);
-               outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
-            }
-         }
-         return RetCode.Success ;
-      }
-      tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      maBegIdx = (int)outBegIdx.value;
-      retCode = stdDevUnguardedInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
+      retCode = stdDevInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement.value = 0;
          return retCode ;
@@ -979,38 +615,6 @@
    /**
     * Bollinger Bands: a moving-average middle band with upper and lower bands
     * offset by a multiple of the standard deviation. Used to gauge relative
-    * price volatility. — <b>unchecked</b> variant of {@link Core#bbands}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange bbandsUnguarded( int startIdx,
-                                    int endIdx,
-                                    double inReal[],
-                                    int optInTimePeriod,
-                                    double optInNbDevUp,
-                                    double optInNbDevDn,
-                                    MAType optInMAType,
-                                    double outRealUpperBand[],
-                                    double outRealMiddleBand[],
-                                    double outRealLowerBand[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      bbandsUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Bollinger Bands: a moving-average middle band with upper and lower bands
-    * offset by a multiple of the standard deviation. Used to gauge relative
     * price volatility.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -1086,39 +690,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("BBANDS", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Bollinger Bands: a moving-average middle band with upper and lower bands
-    * offset by a multiple of the standard deviation. Used to gauge relative
-    * price volatility. — <b>unchecked</b> variant of {@link Core#bbands}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange bbandsUnguarded( int startIdx,
-                                    int endIdx,
-                                    float inReal[],
-                                    int optInTimePeriod,
-                                    double optInNbDevUp,
-                                    double optInNbDevDn,
-                                    MAType optInMAType,
-                                    double outRealUpperBand[],
-                                    double outRealMiddleBand[],
-                                    double outRealLowerBand[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      bbandsUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
@@ -1314,7 +885,7 @@
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, optInMAType);
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
@@ -1325,7 +896,7 @@
       /* Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       StdDevStream sub1 = stdDevOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), (int)outBegIdx.value, optInTimePeriod, 1.0);
-      retCode = stdDevUnguardedInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
+      retCode = stdDevInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement.value = 0;
          return retCode ;
@@ -1424,7 +995,7 @@
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, optInMAType);
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
@@ -1435,7 +1006,7 @@
       /* Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       StdDevStream sub1 = stdDevOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), (int)outBegIdx.value, optInTimePeriod, 1.0);
-      retCode = stdDevUnguardedInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
+      retCode = stdDevInternal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement.value = 0;
          return retCode ;

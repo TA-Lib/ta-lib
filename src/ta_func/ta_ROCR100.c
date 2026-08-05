@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -160,49 +160,6 @@ TA_LIB_API TA_RetCode TA_ROCR100( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_ROCR100_Unguarded( int    startIdx,
-                                            int    endIdx,
-                                            const double inReal[],
-                                            int optInTimePeriod,
-                                            int          *outBegIdx,
-                                            int          *outNBElement,
-                                            double        outReal[] )
-{
-   int inIdx;
-   int outIdx;
-   int trailingIdx;
-   double tempReal;
-
-   if( startIdx < optInTimePeriod )
-   {
-      startIdx = optInTimePeriod;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outIdx = 0;
-   inIdx = startIdx;
-   trailingIdx = startIdx - optInTimePeriod;
-   while( inIdx <= endIdx )
-   {
-      tempReal = inReal[trailingIdx++];
-      if( tempReal != 0.0 )
-      {
-         outReal[outIdx++] = inReal[inIdx] / tempReal * 100.0;
-      } else 
-      {
-         outReal[outIdx++] = 0.0;
-      }
-      inIdx += 1;
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_ROCR100( int    startIdx,
                          int    endIdx,
                          const float inReal[],
@@ -229,49 +186,6 @@ TA_RetCode TA_S_ROCR100( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   if( startIdx < optInTimePeriod )
-   {
-      startIdx = optInTimePeriod;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outIdx = 0;
-   inIdx = startIdx;
-   trailingIdx = startIdx - optInTimePeriod;
-   while( inIdx <= endIdx )
-   {
-      tempReal = (double)inReal[trailingIdx++];
-      if( tempReal != 0.0 )
-      {
-         outReal[outIdx++] = (double)inReal[inIdx] / tempReal * 100.0;
-      } else 
-      {
-         outReal[outIdx++] = 0.0;
-      }
-      inIdx += 1;
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_ROCR100_Unguarded( int    startIdx,
-                                   int    endIdx,
-                                   const float inReal[],
-                                   int optInTimePeriod,
-                                   int          *outBegIdx,
-                                   int          *outNBElement,
-                                   double        outReal[] )
-{
-   int inIdx;
-   int outIdx;
-   int trailingIdx;
-   double tempReal;
 
    if( startIdx < optInTimePeriod )
    {

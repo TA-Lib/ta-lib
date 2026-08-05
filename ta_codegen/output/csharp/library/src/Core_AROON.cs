@@ -196,87 +196,6 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode AroonUnguarded( int startIdx,
-                                    int endIdx,
-                                    double[] inHigh,
-                                    double[] inLow,
-                                    int optInTimePeriod,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    double[] outAroonDown,
-                                    double[] outAroonUp )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double lowest = 0;
-      double highest = 0;
-      double tmp = 0;
-      double factor = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int lowestIdx = 0;
-      int highestIdx = 0;
-      int today = 0;
-      int i = 0;
-      if( startIdx < optInTimePeriod ) {
-         startIdx = optInTimePeriod;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      trailingIdx = startIdx - optInTimePeriod;
-      lowestIdx = 0 - 1;
-      highestIdx = 0 - 1;
-      lowest = 0.0;
-      highest = 0.0;
-      factor = (double)100.0 / (double)optInTimePeriod;
-      while( today <= endIdx ) {
-         tmp = inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inLow[i];
-               if( tmp <= lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         tmp = inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = inHigh[i];
-               if( tmp >= highest ) {
-                  highestIdx = i;
-                  highest = tmp;
-               }
-            }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
-         }
-         outAroonUp[outIdx] = factor * (optInTimePeriod - (today - highestIdx));
-         outAroonDown[outIdx] = factor * (optInTimePeriod - (today - lowestIdx));
-         outIdx += 1;
-         trailingIdx += 1;
-         today += 1;
-      }
-      outBegIdx = startIdx;
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
    internal RetCode Aroon( int startIdx,
                            int endIdx,
                            float[] inHigh,
@@ -313,87 +232,6 @@ public partial class Core
       if( outAroonDown == outAroonUp ) {
          return RetCode.BadParam ;
       }
-      if( startIdx < optInTimePeriod ) {
-         startIdx = optInTimePeriod;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      trailingIdx = startIdx - optInTimePeriod;
-      lowestIdx = 0 - 1;
-      highestIdx = 0 - 1;
-      lowest = 0.0;
-      highest = 0.0;
-      factor = (double)100.0 / (double)optInTimePeriod;
-      while( today <= endIdx ) {
-         tmp = (double)inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = (double)inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inLow[i];
-               if( tmp <= lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         tmp = (double)inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = (double)inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inHigh[i];
-               if( tmp >= highest ) {
-                  highestIdx = i;
-                  highest = tmp;
-               }
-            }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
-         }
-         outAroonUp[outIdx] = factor * (optInTimePeriod - (today - highestIdx));
-         outAroonDown[outIdx] = factor * (optInTimePeriod - (today - lowestIdx));
-         outIdx += 1;
-         trailingIdx += 1;
-         today += 1;
-      }
-      outBegIdx = startIdx;
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode AroonUnguarded( int startIdx,
-                                    int endIdx,
-                                    float[] inHigh,
-                                    float[] inLow,
-                                    int optInTimePeriod,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    double[] outAroonDown,
-                                    double[] outAroonUp )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double lowest = 0;
-      double highest = 0;
-      double tmp = 0;
-      double factor = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int lowestIdx = 0;
-      int highestIdx = 0;
-      int today = 0;
-      int i = 0;
       if( startIdx < optInTimePeriod ) {
          startIdx = optInTimePeriod;
       }
@@ -510,48 +348,6 @@ public partial class Core
    /// a rolling window of length optInTimePeriod, as two 0-100 oscillators.
    /// Indicates trend strength and direction. Up near 100 = a very recent new
    /// high (strong uptrend); Down near 100 = a very recent new low. Up/Down
-   /// crossovers signal trend shifts. — <b>unchecked</b> variant of
-   /// <c>Aroon</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outAroonDown">See the guarded method.</param>
-   /// <param name="outAroonUp">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange AroonUnguarded( int startIdx,
-                                   int endIdx,
-                                   double[] inHigh,
-                                   double[] inLow,
-                                   int optInTimePeriod,
-                                   double[] outAroonDown,
-                                   double[] outAroonUp )
-   {
-      AroonUnguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Aroon reports how recently the highest high and lowest low occurred within
-   /// a rolling window of length optInTimePeriod, as two 0-100 oscillators.
-   /// Indicates trend strength and direction. Up near 100 = a very recent new
-   /// high (strong uptrend); Down near 100 = a very recent new low. Up/Down
    /// crossovers signal trend shifts.
    /// </summary>
    /// <remarks>
@@ -603,51 +399,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("AROON", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Aroon reports how recently the highest high and lowest low occurred within
-   /// a rolling window of length optInTimePeriod, as two 0-100 oscillators.
-   /// Indicates trend strength and direction. Up near 100 = a very recent new
-   /// high (strong uptrend); Down near 100 = a very recent new low. Up/Down
-   /// crossovers signal trend shifts. — <b>unchecked</b> variant of
-   /// <c>Aroon</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outAroonDown">See the guarded method.</param>
-   /// <param name="outAroonUp">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange AroonUnguarded( int startIdx,
-                                   int endIdx,
-                                   float[] inHigh,
-                                   float[] inLow,
-                                   int optInTimePeriod,
-                                   double[] outAroonDown,
-                                   double[] outAroonUp )
-   {
-      AroonUnguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

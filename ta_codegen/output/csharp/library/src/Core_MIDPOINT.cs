@@ -208,84 +208,6 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MidPointUnguarded( int startIdx,
-                                       int endIdx,
-                                       double[] inReal,
-                                       int optInTimePeriod,
-                                       out int outBegIdx,
-                                       out int outNBElement,
-                                       double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double lowest = 0;
-      double highest = 0;
-      double tmpLow = 0;
-      double tmpHigh = 0;
-      int outIdx = 0;
-      int nbInitialElementNeeded = 0;
-      int trailingIdx = 0;
-      int lowestIdx = 0;
-      int highestIdx = 0;
-      int today = 0;
-      int i = 0;
-      nbInitialElementNeeded = optInTimePeriod - 1;
-      if( startIdx < nbInitialElementNeeded ) {
-         startIdx = nbInitialElementNeeded;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      highestIdx = 0 - 1;
-      highest = 0.0;
-      lowestIdx = 0 - 1;
-      lowest = 0.0;
-      while( today <= endIdx ) {
-         tmpHigh = inReal[today];
-         tmpLow = tmpHigh;
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inReal[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmpHigh = inReal[i];
-               if( tmpHigh > highest ) {
-                  highestIdx = i;
-                  highest = tmpHigh;
-               }
-            }
-         } else if( tmpHigh >= highest ) {
-            highestIdx = today;
-            highest = tmpHigh;
-         }
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inReal[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmpLow = inReal[i];
-               if( tmpLow < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmpLow;
-               }
-            }
-         } else if( tmpLow <= lowest ) {
-            lowestIdx = today;
-            lowest = tmpLow;
-         }
-         outReal[outIdx++] = (highest + lowest) / 2.0;
-         trailingIdx += 1;
-         today += 1;
-      }
-      outBegIdx = startIdx;
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
    internal RetCode MidPoint( int startIdx,
                               int endIdx,
                               float[] inReal,
@@ -318,84 +240,6 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      nbInitialElementNeeded = optInTimePeriod - 1;
-      if( startIdx < nbInitialElementNeeded ) {
-         startIdx = nbInitialElementNeeded;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      highestIdx = 0 - 1;
-      highest = 0.0;
-      lowestIdx = 0 - 1;
-      lowest = 0.0;
-      while( today <= endIdx ) {
-         tmpHigh = (double)inReal[today];
-         tmpLow = tmpHigh;
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = (double)inReal[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmpHigh = (double)inReal[i];
-               if( tmpHigh > highest ) {
-                  highestIdx = i;
-                  highest = tmpHigh;
-               }
-            }
-         } else if( tmpHigh >= highest ) {
-            highestIdx = today;
-            highest = tmpHigh;
-         }
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = (double)inReal[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmpLow = (double)inReal[i];
-               if( tmpLow < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmpLow;
-               }
-            }
-         } else if( tmpLow <= lowest ) {
-            lowestIdx = today;
-            lowest = tmpLow;
-         }
-         outReal[outIdx++] = (highest + lowest) / 2.0;
-         trailingIdx += 1;
-         today += 1;
-      }
-      outBegIdx = startIdx;
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode MidPointUnguarded( int startIdx,
-                                       int endIdx,
-                                       float[] inReal,
-                                       int optInTimePeriod,
-                                       out int outBegIdx,
-                                       out int outNBElement,
-                                       double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double lowest = 0;
-      double highest = 0;
-      double tmpLow = 0;
-      double tmpHigh = 0;
-      int outIdx = 0;
-      int nbInitialElementNeeded = 0;
-      int trailingIdx = 0;
-      int lowestIdx = 0;
-      int highestIdx = 0;
-      int today = 0;
-      int i = 0;
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
          startIdx = nbInitialElementNeeded;
@@ -501,42 +345,6 @@ public partial class Core
    /// <summary>
    /// Midpoint over a period: the average of the highest and lowest input values
    /// within the lookback window. A single-series overlap smoother (use MIDPRICE
-   /// for separate high/low price bars). — <b>unchecked</b> variant of
-   /// <c>MidPoint</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange MidPointUnguarded( int startIdx,
-                                      int endIdx,
-                                      double[] inReal,
-                                      int optInTimePeriod,
-                                      double[] outReal )
-   {
-      MidPointUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Midpoint over a period: the average of the highest and lowest input values
-   /// within the lookback window. A single-series overlap smoother (use MIDPRICE
    /// for separate high/low price bars).
    /// </summary>
    /// <remarks>
@@ -583,45 +391,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("MIDPOINT", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Midpoint over a period: the average of the highest and lowest input values
-   /// within the lookback window. A single-series overlap smoother (use MIDPRICE
-   /// for separate high/low price bars). — <b>unchecked</b> variant of
-   /// <c>MidPoint</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange MidPointUnguarded( int startIdx,
-                                      int endIdx,
-                                      float[] inReal,
-                                      int optInTimePeriod,
-                                      double[] outReal )
-   {
-      MidPointUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

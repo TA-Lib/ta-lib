@@ -195,6 +195,11 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.vwma_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx < inVolume.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut sumPV: f64 = 0.0_f64;
         let mut sumV: f64 = 0.0_f64;
@@ -261,78 +266,6 @@ impl Core {
             outIdx = outIdx + 1;
         }
         // All done. Indicate the output limits and return.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::vwma`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::vwma`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::vwma`].
-    #[inline]
-    pub fn vwma_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        inVolume: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut sumPV: f64 = 0.0_f64;
-        let mut sumV: f64 = 0.0_f64;
-        let mut tempPV: f64 = 0.0_f64;
-        let mut tempV: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        assert!(endIdx < inReal.len());
-        assert!(endIdx < inVolume.len());
-        let _assertLb = self.vwma_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        lookbackTotal = (optInTimePeriod - 1) as usize;
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        sumPV = 0.0;
-        sumV = 0.0;
-        trailingIdx = startIdx - lookbackTotal;
-        i = trailingIdx;
-        if optInTimePeriod > 1 {
-            while i < startIdx {
-                tempReal = inReal[i] * inVolume[i];
-                sumPV += tempReal;
-                sumV += inVolume[i];
-                i = i + 1;
-            }
-        }
-        outIdx = 0;
-        while i <= endIdx {
-            tempReal = inReal[i] * inVolume[i];
-            sumPV += tempReal;
-            sumV += inVolume[i];
-            i = i + 1;
-            tempPV = sumPV;
-            tempV = sumV;
-            tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
-            sumPV -= tempReal;
-            sumV -= inVolume[trailingIdx];
-            outReal[outIdx] = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
-            trailingIdx = trailingIdx + 1;
-            outIdx = outIdx + 1;
-        }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;

@@ -134,13 +134,12 @@ TA_RetCode mavp(int startIdx, int endIdx,
 
    /* Read the caller array of period, truncate to min/max, and track the
     * range of periods actually used so all later work is sized by the data,
-    * not by optInMaxPeriod. The floor at 1 (and on minUsed's start value) is
-    * inert through the guarded API (optInMinPeriod >= 1); it keeps an
-    * off-contract unguarded call with a period below 1 from indexing the
-    * occurrence tables out of range. The high side is not floored here: an
-    * out-of-range optInMaxPeriod violates the unguarded precondition (every
-    * optional parameter resolved and in-range), and the bucket-table bound
-    * below is what keeps that from becoming undefined behaviour.
+    * not by optInMaxPeriod. The floor at 1 (and on minUsed's start value)
+    * keeps a period below 1 from indexing the occurrence tables out of range.
+    * mavp.yaml caps both periods at [1, 100000], so it is inert through the
+    * API; it is kept because this file is the source of truth for four
+    * backends and it makes the shared source safe by construction rather than
+    * by trusting each backend's prologue to be identical.
     */
    minUsed = optInMaxPeriod;
    if( minUsed < 1 )
@@ -162,16 +161,24 @@ TA_RetCode mavp(int startIdx, int endIdx,
          maxUsed = tempInt;
    }
 
-   /* Bound the bucket table before sizing it. Inert through the guarded API,
-    * where both periods are capped at 100000 (mavp.yaml) so the spread cannot
-    * reach the bound. It exists for an off-contract UNGUARDED call carrying a
-    * near-INT_MAX period, where the size expression below would otherwise
-    * overflow: signed-overflow UB in C, a wrapped negative in Java, a usize
-    * underflow panic in Rust. Written as a plain integer comparison on
-    * purpose — that is the only construct that means the same thing in every
-    * backend. A (size_t) cast would NOT help: this dialect's size_t parses to
-    * the generic index type and renders back as int in both the C and the
-    * Java output (it is a Rust-only annotation).
+   /* Bound the bucket table before sizing it.
+    *
+    * Unreachable through the API: mavp.yaml caps both periods at 100000, so
+    * the widest spread expressible is 99999. It is kept because it protects a
+    * memory-safety property and this file is the source of truth for four
+    * backends — without it the size expression below can overflow (signed
+    * overflow in C, a wrapped negative in Java, a usize underflow panic in
+    * Rust), and the four bodies would rest on each backend's prologue being
+    * byte-for-byte equivalent, which nothing here states or checks. One
+    * integer comparison per call is a cheap way not to depend on that.
+    *
+    * Written as a plain integer comparison on purpose — that is the only
+    * construct that means the same thing in every backend. A (size_t) cast
+    * would NOT help: this dialect's size_t parses to the generic index type
+    * and renders back as int in both the C and the Java output (it is a
+    * Rust-only annotation).
+    *
+    * If you delete this, delete the clamps and the comments together.
     */
    if( maxUsed < minUsed || maxUsed - minUsed > 100000 )
    {

@@ -121,8 +121,8 @@ impl Registry {
     /// Given `sma_lookback` or bare `sma`, parses out the indicator name
     /// and function type, then maps to the target language's naming convention.
     ///
-    /// Bare indicator names (e.g. `sma`) are cross-indicator logic calls
-    /// and resolve to the unguarded/internal variant in each language.
+    /// Bare indicator names (e.g. `sma`) are cross-indicator composition calls
+    /// and resolve to the guarded entry point in each language.
     ///
     /// Returns the original name unchanged if the indicator is not found.
     pub fn resolve_call(&self, func_name: &str, lang: Lang) -> String {
@@ -139,21 +139,24 @@ impl Registry {
             }
         }
 
-        // Bare indicator names resolve to the Unguarded variant.
-        // All code in ta_codegen/input is internal — cross-indicator calls skip validation.
-        // Java routes to the package-private internal core (`…UnguardedInternal`),
-        // not the public `…Unguarded` wrapper: the callers pass the C-shaped
-        // MInteger out-params, and going through the wrapper would allocate a
-        // throwaway pair per call.
+        // Bare indicator names resolve to the guarded entry point.
+        //
+        // This is safe structurally: a composite's lookback is *defined* as its
+        // callee's lookback plus the extra history it needs, so a startIdx already
+        // clamped to the composite's lookback lands exactly on the callee's.
+        //
+        // Java routes to the package-private guarded core (`…Internal`), not the
+        // public `…` wrapper: the callers pass the C-shaped MInteger out-params,
+        // and going through the wrapper would allocate a throwaway pair per call.
         if self.contains(func_name) {
             return match lang {
-                Lang::Rust => format!("{func_name}_unguarded"),
-                Lang::C => format!("TA_{}_Unguarded", func_name.to_uppercase()),
-                Lang::Java => format!("{}UnguardedInternal", self.java_base(func_name)),
-                // Managed C# shape. Unlike Java there is no `…UnguardedInternal`
-                // split: partial classes let the core be `internal` in the same
-                // type, so cross-indicator calls target `…Unguarded` directly.
-                Lang::CSharp => format!("{}Unguarded", self.csharp_base(func_name)),
+                Lang::Rust => func_name.to_string(),
+                Lang::C => format!("TA_{}", func_name.to_uppercase()),
+                Lang::Java => format!("{}Internal", self.java_base(func_name)),
+                // Managed C# shape. Unlike Java there is no `…Internal` split:
+                // partial classes let the core be `internal` in the same type, so
+                // cross-indicator calls target the entry point directly.
+                Lang::CSharp => self.csharp_base(func_name),
             };
         }
 
@@ -257,15 +260,15 @@ mod tests {
             "TA_SMA_Lookback"
         );
 
-        // C backend: bare indicator names resolve to Unguarded (cross-indicator = skip validation)
-        assert_eq!(registry.resolve_call("sma", Lang::C), "TA_SMA_Unguarded");
-        assert_eq!(registry.resolve_call("ema", Lang::C), "TA_EMA_Unguarded");
+        // C backend: bare indicator names resolve to the guarded entry point
+        assert_eq!(registry.resolve_call("sma", Lang::C), "TA_SMA");
+        assert_eq!(registry.resolve_call("ema", Lang::C), "TA_EMA");
 
         // C backend: _private suffix resolves to Private (double-only)
         assert_eq!(registry.resolve_call("ema_private", Lang::C), "TA_EMA_Private");
 
-        // Rust backend (bare names resolve to _unguarded)
-        assert_eq!(registry.resolve_call("ema", Lang::Rust), "ema_unguarded");
+        // Rust backend (bare names resolve to the guarded fn)
+        assert_eq!(registry.resolve_call("ema", Lang::Rust), "ema");
         assert_eq!(
             registry.resolve_call("ema_lookback", Lang::Rust),
             "ema_lookback"
@@ -273,32 +276,33 @@ mod tests {
         // Rust: _private stays as _private (generic, handles both f32/f64)
         assert_eq!(registry.resolve_call("ema_private", Lang::Rust), "ema_private");
 
-        // Java backend: bare names resolve to the package-private unguarded
-        // *core*, not the public OutRange wrapper — cross-indicator callers pass
-        // the C-shaped MInteger out-params straight through.
+        // Java backend: bare names resolve to the package-private *guarded* core,
+        // not the public OutRange wrapper — cross-indicator callers pass the
+        // C-shaped MInteger out-params straight through, so routing through the
+        // wrapper would allocate a throwaway MInteger pair per call.
         assert_eq!(
             registry.resolve_call("ema_lookback", Lang::Java),
             "emaLookback"
         );
-        assert_eq!(registry.resolve_call("ema", Lang::Java), "emaUnguardedInternal");
+        assert_eq!(registry.resolve_call("ema", Lang::Java), "emaInternal");
         assert_eq!(registry.resolve_call("ema_private", Lang::Java), "emaPrivate");
 
         // Java backend: irregular/typo names come from the YAML `camel_case` field,
         // not a naive lowercase of the C name.
-        assert_eq!(registry.resolve_call("ma", Lang::Java), "movingAverageUnguardedInternal");
-        assert_eq!(registry.resolve_call("willr", Lang::Java), "willRUnguardedInternal");
-        assert_eq!(registry.resolve_call("stochf", Lang::Java), "stochFUnguardedInternal");
+        assert_eq!(registry.resolve_call("ma", Lang::Java), "movingAverageInternal");
+        assert_eq!(registry.resolve_call("willr", Lang::Java), "willRInternal");
+        assert_eq!(registry.resolve_call("stochf", Lang::Java), "stochFInternal");
         assert_eq!(
             registry.resolve_call("ma_lookback", Lang::Java),
             "movingAverageLookback"
         );
 
-        // C# backend: PascalCase, bare names resolve to the Unguarded variant.
+        // C# backend: PascalCase, bare names resolve to the guarded entry point.
         assert_eq!(
             registry.resolve_call("sma_lookback", Lang::CSharp),
             "SmaLookback"
         );
-        assert_eq!(registry.resolve_call("sma", Lang::CSharp), "SmaUnguarded");
+        assert_eq!(registry.resolve_call("sma", Lang::CSharp), "Sma");
         assert_eq!(registry.resolve_call("ema_private", Lang::CSharp), "EmaPrivate");
     }
 
@@ -313,15 +317,17 @@ mod tests {
     }
 
     #[test]
-    fn test_registry_bare_name_resolves_to_unguarded() {
+    fn test_registry_bare_name_resolves_to_guarded() {
         let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
         let registry = Registry::from_dir(&base);
-        // Bare indicator names resolve to unguarded (cross-indicator calls skip validation)
-        assert_eq!(registry.resolve_call("sma", Lang::C), "TA_SMA_Unguarded");
-        // _private resolves to Private
+        // Bare indicator names resolve to the guarded entry point
+        assert_eq!(registry.resolve_call("sma", Lang::C), "TA_SMA");
+        // _private is an orthogonal variant with its own arm.
         assert_eq!(registry.resolve_call("sma_private", Lang::C), "TA_SMA_Private");
-        // For Rust, bare names resolve to _unguarded
-        assert_eq!(registry.resolve_call("sma", Lang::Rust), "sma_unguarded");
+        // For Rust, bare names resolve to the guarded fn
+        assert_eq!(registry.resolve_call("sma", Lang::Rust), "sma");
+        assert_eq!(registry.resolve_call("sma", Lang::Java), "smaInternal");
+        assert_eq!(registry.resolve_call("sma", Lang::CSharp), "Sma");
     }
 
     #[test]

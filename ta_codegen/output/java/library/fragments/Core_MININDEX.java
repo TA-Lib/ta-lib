@@ -114,61 +114,6 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode minIndexUnguardedInternal( int startIdx,
-                                      int endIdx,
-                                      double inReal[],
-                                      int optInTimePeriod,
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-   {
-      double lowest = 0;
-      double tmp = 0;
-      int outIdx = 0;
-      int nbInitialElementNeeded = 0;
-      int trailingIdx = 0;
-      int lowestIdx = 0;
-      int today = 0;
-      int i = 0;
-      nbInitialElementNeeded = optInTimePeriod - 1;
-      if( startIdx < nbInitialElementNeeded ) {
-         startIdx = nbInitialElementNeeded;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      lowestIdx = 0 - 1;
-      lowest = 0.0;
-      while( today <= endIdx ) {
-         tmp = inReal[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inReal[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inReal[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         outInteger[outIdx++] = lowestIdx;
-         trailingIdx += 1;
-         today += 1;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
    RetCode minIndexInternal( int startIdx,
                              int endIdx,
                              float inReal[],
@@ -196,61 +141,6 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      nbInitialElementNeeded = optInTimePeriod - 1;
-      if( startIdx < nbInitialElementNeeded ) {
-         startIdx = nbInitialElementNeeded;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      lowestIdx = 0 - 1;
-      lowest = 0.0;
-      while( today <= endIdx ) {
-         tmp = (double)inReal[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = (double)inReal[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inReal[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         outInteger[outIdx++] = lowestIdx;
-         trailingIdx += 1;
-         today += 1;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
-   RetCode minIndexUnguardedInternal( int startIdx,
-                                      int endIdx,
-                                      float inReal[],
-                                      int optInTimePeriod,
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-   {
-      double lowest = 0;
-      double tmp = 0;
-      int outIdx = 0;
-      int nbInitialElementNeeded = 0;
-      int trailingIdx = 0;
-      int lowestIdx = 0;
-      int today = 0;
-      int i = 0;
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
          startIdx = nbInitialElementNeeded;
@@ -346,34 +236,6 @@
    /**
     * Returns the absolute index of the lowest value within a rolling window of
     * the given period. Same scan as MIN but outputs the position of the minimum
-    * rather than its value. — <b>unchecked</b> variant of
-    * {@link Core#minIndex}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange minIndexUnguarded( int startIdx,
-                                      int endIdx,
-                                      double inReal[],
-                                      int optInTimePeriod,
-                                      int outInteger[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      minIndexUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Returns the absolute index of the lowest value within a rolling window of
-    * the given period. Same scan as MIN but outputs the position of the minimum
     * rather than its value.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -425,35 +287,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("MININDEX", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Returns the absolute index of the lowest value within a rolling window of
-    * the given period. Same scan as MIN but outputs the position of the minimum
-    * rather than its value. — <b>unchecked</b> variant of
-    * {@link Core#minIndex}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange minIndexUnguarded( int startIdx,
-                                      int endIdx,
-                                      float inReal[],
-                                      int optInTimePeriod,
-                                      int outInteger[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      minIndexUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

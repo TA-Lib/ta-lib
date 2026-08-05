@@ -179,77 +179,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlCounterAttackUnguarded( int startIdx,
-                                               int endIdx,
-                                               double[] inOpen,
-                                               double[] inHigh,
-                                               double[] inLow,
-                                               double[] inClose,
-                                               out int outBegIdx,
-                                               out int outNBElement,
-                                               int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double EqualPeriodTotal = 0;
-      double[] BodyLongPeriodTotal = new double[2];
-      int i = 0;
-      int outIdx = 0;
-      int totIdx = 0;
-      int EqualTrailingIdx = 0;
-      int BodyLongTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int BodyLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyLong].rangeType;
-      int BodyLong_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyLong].avgPeriod;
-      double BodyLong_factor = this.candleSettings[(int)CandleSettingType.BodyLong].factor;
-      int Equal_rangeType = (int)this.candleSettings[(int)CandleSettingType.Equal].rangeType;
-      int Equal_avgPeriod = this.candleSettings[(int)CandleSettingType.Equal].avgPeriod;
-      double Equal_factor = this.candleSettings[(int)CandleSettingType.Equal].factor;
-      lookbackTotal = CdlCounterAttackLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      EqualPeriodTotal = 0;
-      EqualTrailingIdx = startIdx - Equal_avgPeriod;
-      BodyLongPeriodTotal[1] = 0;
-      BodyLongPeriodTotal[0] = 0;
-      BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
-      i = EqualTrailingIdx;
-      while( i < startIdx ) {
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.Abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = BodyLongTrailingIdx;
-      while( i < startIdx ) {
-         BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.Abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)));
-         BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyLong_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) && Math.Abs(inClose[i - 1] - inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.Abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs(inClose[i] - inOpen[i]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyLong_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.Abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && inClose[i] <= inClose[i - 1] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.Abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && inClose[i] >= inClose[i - 1] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.Abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.Abs(inClose[i - 1] - inOpen[i - 1])) : 0.0))) - ((Equal_rangeType == 0) ? (Math.Abs(inClose[EqualTrailingIdx - 1] - inOpen[EqualTrailingIdx - 1])) : ((Equal_rangeType == 1) ? (inHigh[EqualTrailingIdx - 1] - inLow[EqualTrailingIdx - 1]) : ((Equal_rangeType == 2) ? ((inHigh[EqualTrailingIdx - 1] - inLow[EqualTrailingIdx - 1]) - Math.Abs(inClose[EqualTrailingIdx - 1] - inOpen[EqualTrailingIdx - 1])) : 0.0)));
-         for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
-            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((BodyLong_rangeType == 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - totIdx] - inLow[i - totIdx]) - Math.Abs(inClose[i - totIdx] - inOpen[i - totIdx])) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[BodyLongTrailingIdx - totIdx] - inOpen[BodyLongTrailingIdx - totIdx])) : ((BodyLong_rangeType == 1) ? (inHigh[BodyLongTrailingIdx - totIdx] - inLow[BodyLongTrailingIdx - totIdx]) : ((BodyLong_rangeType == 2) ? ((inHigh[BodyLongTrailingIdx - totIdx] - inLow[BodyLongTrailingIdx - totIdx]) - Math.Abs(inClose[BodyLongTrailingIdx - totIdx] - inOpen[BodyLongTrailingIdx - totIdx])) : 0.0))));
-         }
-         i += 1;
-         EqualTrailingIdx += 1;
-         BodyLongTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode CdlCounterAttack( int startIdx,
                                       int endIdx,
                                       float[] inOpen,
@@ -282,77 +211,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = CdlCounterAttackLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      EqualPeriodTotal = 0;
-      EqualTrailingIdx = startIdx - Equal_avgPeriod;
-      BodyLongPeriodTotal[1] = 0;
-      BodyLongPeriodTotal[0] = 0;
-      BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
-      i = EqualTrailingIdx;
-      while( i < startIdx ) {
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = BodyLongTrailingIdx;
-      while( i < startIdx ) {
-         BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)));
-         BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i] - (double)inOpen[i]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i] - (double)inLow[i]) - Math.Abs((double)inClose[i] - (double)inOpen[i])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (double)inClose[i] <= (double)inClose[i - 1] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && (double)inClose[i] >= (double)inClose[i - 1] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 1] - (double)inLow[i - 1]) - Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : 0.0))) - ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[EqualTrailingIdx - 1] - (double)inOpen[EqualTrailingIdx - 1])) : ((Equal_rangeType == 1) ? ((double)inHigh[EqualTrailingIdx - 1] - (double)inLow[EqualTrailingIdx - 1]) : ((Equal_rangeType == 2) ? (((double)inHigh[EqualTrailingIdx - 1] - (double)inLow[EqualTrailingIdx - 1]) - Math.Abs((double)inClose[EqualTrailingIdx - 1] - (double)inOpen[EqualTrailingIdx - 1])) : 0.0)));
-         for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
-            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - totIdx] - (double)inOpen[i - totIdx])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - totIdx] - (double)inLow[i - totIdx]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - totIdx] - (double)inLow[i - totIdx]) - Math.Abs((double)inClose[i - totIdx] - (double)inOpen[i - totIdx])) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[BodyLongTrailingIdx - totIdx] - (double)inOpen[BodyLongTrailingIdx - totIdx])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[BodyLongTrailingIdx - totIdx] - (double)inLow[BodyLongTrailingIdx - totIdx]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[BodyLongTrailingIdx - totIdx] - (double)inLow[BodyLongTrailingIdx - totIdx]) - Math.Abs((double)inClose[BodyLongTrailingIdx - totIdx] - (double)inOpen[BodyLongTrailingIdx - totIdx])) : 0.0))));
-         }
-         i += 1;
-         EqualTrailingIdx += 1;
-         BodyLongTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode CdlCounterAttackUnguarded( int startIdx,
-                                               int endIdx,
-                                               float[] inOpen,
-                                               float[] inHigh,
-                                               float[] inLow,
-                                               float[] inClose,
-                                               out int outBegIdx,
-                                               out int outNBElement,
-                                               int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double EqualPeriodTotal = 0;
-      double[] BodyLongPeriodTotal = new double[2];
-      int i = 0;
-      int outIdx = 0;
-      int totIdx = 0;
-      int EqualTrailingIdx = 0;
-      int BodyLongTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int BodyLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyLong].rangeType;
-      int BodyLong_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyLong].avgPeriod;
-      double BodyLong_factor = this.candleSettings[(int)CandleSettingType.BodyLong].factor;
-      int Equal_rangeType = (int)this.candleSettings[(int)CandleSettingType.Equal].rangeType;
-      int Equal_avgPeriod = this.candleSettings[(int)CandleSettingType.Equal].avgPeriod;
-      double Equal_factor = this.candleSettings[(int)CandleSettingType.Equal].factor;
       lookbackTotal = CdlCounterAttackLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -455,49 +313,6 @@ public partial class Core
    /// candle is white and a bearish signal when it is black (a reversal signal,
    /// though its trend context is not checked). A hit signals a reversal: +100
    /// (white 2nd candle) bullish, -100 (black 2nd candle) bearish; significance
-   /// depends on a prior trend the code does not check. — <b>unchecked</b>
-   /// variant of <c>CdlCounterAttack</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlCounterAttackUnguarded( int startIdx,
-                                              int endIdx,
-                                              double[] inOpen,
-                                              double[] inHigh,
-                                              double[] inLow,
-                                              double[] inClose,
-                                              int[] outInteger )
-   {
-      CdlCounterAttackUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A two-candle pattern of two long, opposite-colored real bodies whose
-   /// closing prices are (nearly) equal. Emits a bullish signal when the second
-   /// candle is white and a bearish signal when it is black (a reversal signal,
-   /// though its trend context is not checked). A hit signals a reversal: +100
-   /// (white 2nd candle) bullish, -100 (black 2nd candle) bearish; significance
    /// depends on a prior trend the code does not check.
    /// </summary>
    /// <remarks>
@@ -547,52 +362,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("CDLCOUNTERATTACK", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A two-candle pattern of two long, opposite-colored real bodies whose
-   /// closing prices are (nearly) equal. Emits a bullish signal when the second
-   /// candle is white and a bearish signal when it is black (a reversal signal,
-   /// though its trend context is not checked). A hit signals a reversal: +100
-   /// (white 2nd candle) bullish, -100 (black 2nd candle) bearish; significance
-   /// depends on a prior trend the code does not check. — <b>unchecked</b>
-   /// variant of <c>CdlCounterAttack</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlCounterAttackUnguarded( int startIdx,
-                                              int endIdx,
-                                              float[] inOpen,
-                                              float[] inHigh,
-                                              float[] inLow,
-                                              float[] inClose,
-                                              int[] outInteger )
-   {
-      CdlCounterAttackUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

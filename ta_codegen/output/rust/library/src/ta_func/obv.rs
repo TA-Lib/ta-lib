@@ -142,58 +142,17 @@ impl Core {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
+        let _assertLb = self.obv_lookback();
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx < inVolume.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut prevReal: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut prevOBV: f64 = 0.0_f64;
-        prevOBV = inVolume[startIdx];
-        prevReal = inReal[startIdx];
-        outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            tempReal = inReal[i];
-            if tempReal > prevReal {
-                prevOBV += inVolume[i];
-            } else if tempReal < prevReal {
-                prevOBV -= inVolume[i];
-            }
-            outReal[outIdx] = prevOBV;
-            outIdx += 1;
-            prevReal = tempReal;
-        }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::obv`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::obv`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::obv`].
-    #[inline]
-    pub fn obv_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        inVolume: &[f64],
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut prevReal: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut prevOBV: f64 = 0.0_f64;
-        assert!(endIdx < inReal.len());
-        assert!(endIdx < inVolume.len());
-        let _assertLb = self.obv_lookback();
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         prevOBV = inVolume[startIdx];
         prevReal = inReal[startIdx];
         outIdx = 0;

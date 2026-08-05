@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -105,7 +105,7 @@ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
       return TA_BAD_PARAM;
 
    /* Calculate the variance. */
-   retCode = TA_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
+   retCode = TA_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
    if( retCode != TA_SUCCESS )
    {
       return retCode;
@@ -115,54 +115,6 @@ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
     *
     * Multiply also by the ratio specified.
     */
-   if( optInNbDev != 1.0 )
-   {
-      for( i = 0; i < (int)*outNBElement; i += 1 )
-      {
-         tempReal = outReal[i];
-         if( !TA_IS_ZERO_OR_NEG(tempReal) )
-         {
-            outReal[i] = sqrt(tempReal) * optInNbDev;
-         } else 
-         {
-            outReal[i] = (double)0.0;
-         }
-      }
-   } else 
-   {
-      for( i = 0; i < (int)*outNBElement; i += 1 )
-      {
-         tempReal = outReal[i];
-         if( !TA_IS_ZERO_OR_NEG(tempReal) )
-         {
-            outReal[i] = sqrt(tempReal);
-         } else 
-         {
-            outReal[i] = (double)0.0;
-         }
-      }
-   }
-   return TA_SUCCESS;
-}
-
-TA_LIB_API TA_RetCode TA_STDDEV_Unguarded( int    startIdx,
-                                           int    endIdx,
-                                           const double inReal[],
-                                           int optInTimePeriod,
-                                           double optInNbDev,
-                                           int          *outBegIdx,
-                                           int          *outNBElement,
-                                           double        outReal[] )
-{
-   int i;
-   TA_RetCode retCode;
-   double tempReal;
-
-   retCode = TA_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
-   if( retCode != TA_SUCCESS )
-   {
-      return retCode;
-   }
    if( optInNbDev != 1.0 )
    {
       for( i = 0; i < (int)*outNBElement; i += 1 )
@@ -224,55 +176,7 @@ TA_RetCode TA_S_STDDEV( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   retCode = TA_S_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
-   if( retCode != TA_SUCCESS )
-   {
-      return retCode;
-   }
-   if( optInNbDev != 1.0 )
-   {
-      for( i = 0; i < (int)*outNBElement; i += 1 )
-      {
-         tempReal = outReal[i];
-         if( !TA_IS_ZERO_OR_NEG(tempReal) )
-         {
-            outReal[i] = sqrt(tempReal) * optInNbDev;
-         } else 
-         {
-            outReal[i] = (double)0.0;
-         }
-      }
-   } else 
-   {
-      for( i = 0; i < (int)*outNBElement; i += 1 )
-      {
-         tempReal = outReal[i];
-         if( !TA_IS_ZERO_OR_NEG(tempReal) )
-         {
-            outReal[i] = sqrt(tempReal);
-         } else 
-         {
-            outReal[i] = (double)0.0;
-         }
-      }
-   }
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_STDDEV_Unguarded( int    startIdx,
-                                  int    endIdx,
-                                  const float inReal[],
-                                  int optInTimePeriod,
-                                  double optInNbDev,
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  double        outReal[] )
-{
-   int i;
-   TA_RetCode retCode;
-   double tempReal;
-
-   retCode = TA_S_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
+   retCode = TA_S_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
    if( retCode != TA_SUCCESS )
    {
       return retCode;
@@ -406,7 +310,7 @@ TA_RetCode TA_STDDEV_OpenInternal( struct TA_STDDEV_Stream **stream, const doubl
             return subRc;
          }
       }
-      retCode = TA_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,sc_outReal);
+      retCode = TA_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,sc_outReal);
       if( retCode != TA_SUCCESS )
       {
          TA_VAR_Close( sub0 ); TA_Free( sc_outReal );
@@ -517,7 +421,7 @@ TA_LIB_API TA_RetCode TA_STDDEV_OpenAndFill( TA_STDDEV_Stream **stream, const do
             return subRc;
          }
       }
-      retCode = TA_VAR_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,sc_outReal);
+      retCode = TA_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,sc_outReal);
       if( retCode != TA_SUCCESS )
       {
          TA_VAR_Close( sub0 ); TA_Free( sc_outReal );

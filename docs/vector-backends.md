@@ -97,7 +97,7 @@ expressed in the parsed-C statement IR, so it is injected by the emitter around 
 keyed off metadata — not parsed from the input.
 
 **Dispatch only in the double batch variants.** Each of these functions emits several variants
-(guarded / unguarded / `TA_S_*` single-precision / streaming one-value). The vector call is valid
+(guarded / `TA_S_*` single-precision / streaming one-value). The vector call is valid
 only for the `double` batch loop; the float and streaming paths stay scalar.
 
 ### 3.2 The data (one central file: `ta_codegen/input/vector_backends.yaml`)
