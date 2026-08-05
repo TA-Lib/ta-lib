@@ -223,6 +223,20 @@ proven: deleting one entry from the Java server's handler fails with
 `abstract_for_each_func omits 'WILLR'` while the metadata sweep still reports 0
 failures.
 
+**The binder parameter contract.** The dynamic legs used to bind every optional
+parameter at its declared default, so all four binders were exercised at one point
+in their domain. `d2_param_vectors` now drives, on `inputRandomData`, a
+non-default value per slot (distinct per slot — same-default siblings would
+otherwise hide a transposition), the default sentinel per slot, and both bounds
+out of range per slot, for integer *and* real domains. C and the server get the
+same vector, so this compares two binders rather than one against its own oracle.
+
+Two self-checks keep it honest, mirroring `--xlang-hash`'s `oorNotRejected` /
+`sentNotDefault`: an out-of-range probe C *accepts* is not out of range, and a
+sentinel is asserted against the all-defaults result rather than only against the
+server — otherwise both tiers could be wrong together. All four counts are printed
+and asserted non-zero.
+
 Opt-level `hint` is compared too, and it was worth adding precisely because
 nothing compared it: for the ~80 opt slots whose C descriptor is a predefined
 `TA_DEF_UI_*`, the hint is a hand-written literal in the generator rather than a

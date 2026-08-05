@@ -85,6 +85,19 @@ static CodegenPipe *g_abstractPipe = NULL;
 /* Which language the attached server is ("c"/"rust"/"java"/"csharp"), so a
  * per-backend carve-out can name its backend instead of applying to all four. */
 static const char *g_abstractLang = NULL;
+
+/* How many optional-parameter vectors were driven through a binder, and how many
+ * of each contract class, across the whole run. */
+static long long g_d2Vectors = 0;
+static long long g_d2NonDefault = 0;
+static long long g_d2Sentinel = 0;
+static long long g_d2Reject = 0;
+/* Self-checks, mirroring --xlang-hash's oorNotRejected / sentNotDefault. Both
+ * classes assert only "C and the server agree" on their own; if C stopped
+ * rejecting, or stopped substituting, the two tiers would be wrong TOGETHER and
+ * the leg would pass while asserting nothing. */
+static long long g_d2OorNotRejected = 0;
+static long long g_d2SentNotDefault = 0;
 static char        *g_abstractReqBuf = NULL;
 static char        *g_abstractRespBuf = NULL;
 #define ABSTRACT_JSON_BUF_SIZE (512 * 1024)
@@ -146,6 +159,10 @@ static int    output_int[10][2000];
 void test_abstract_set_server(CodegenPipe *cp, const char *lang)
 {
    g_abstractLang = lang;
+   /* Per-server, so the summary line reports the server it names rather than a
+      running total across every server tested so far. */
+   g_d2Vectors = g_d2NonDefault = g_d2Sentinel = g_d2Reject = 0;
+   g_d2OorNotRejected = g_d2SentNotDefault = 0;
    if( cp )
    {
       g_abstractPipe = cp;
@@ -414,6 +431,7 @@ static int g_optExtendedCompared = 0;
  * Calls TA_GetFuncInfo, TA_GetInputParameterInfo, TA_GetOptInputParameterInfo,
  * TA_GetOutputParameterInfo on both C and server, compares results.
  */
+
 static ErrorNumber abstract_verify_func_metadata(
     const char *funcName,
     const TA_FuncHandle *handle,
@@ -1011,7 +1029,10 @@ static ErrorNumber abstract_verify_server_call(
     TA_RetCode crefRetCode,
     int crefBegIdx, int crefNbElement, int crefLookback,
     double crefOutReal[][2000], int crefOutInt[][2000],
-    int relaxValues)
+    int relaxValues,
+    /* Optional-parameter values to send, one per declared slot, or NULL for the
+     * declared defaults. Everything but the D2 vector sweep passes NULL. */
+    const double *optVals)
 {
     if( !g_abstractPipe ) return TA_TEST_PASS;
 
@@ -1104,11 +1125,13 @@ static ErrorNumber abstract_verify_server_call(
         case TA_OptInput_RealRange:
         case TA_OptInput_RealList:
             /* %.17g for the same round-trip reason as the input arrays. */
-            pos = codegen_appendf(buf, bufSize, pos, "%.17g", optInfo->defaultValue);
+            pos = codegen_appendf(buf, bufSize, pos, "%.17g",
+                                  optVals ? optVals[i] : optInfo->defaultValue);
             break;
         case TA_OptInput_IntegerRange:
         case TA_OptInput_IntegerList:
-            pos = codegen_appendf(buf, bufSize, pos, "%d", (int)optInfo->defaultValue);
+            pos = codegen_appendf(buf, bufSize, pos, "%d",
+                                  (int)(optVals ? optVals[i] : optInfo->defaultValue));
             break;
         }
     }
@@ -1273,6 +1296,282 @@ static ErrorNumber abstract_verify_server_call(
     return TA_TEST_PASS;
 }
 
+/* ---- D2: drive the binders off their defaults (issue #164) -----------------
+ *
+ * Every dynamic-dispatch comparison in this file bound optional parameters at
+ * their declared defaults, so the binders were only ever exercised at one point
+ * in their domain. Three things were therefore untested through a binder: a
+ * NON-DEFAULT value (a transposed opt slot produces identical output when every
+ * slot carries the same number), the DEFAULT SENTINEL (which must resolve to the
+ * declared default -- issue #162, and the reason Java's binder shipped a version
+ * that threw), and an OUT-OF-RANGE value (which both tiers must reject).
+ *
+ * The C golden and the server are driven with the SAME vector, so this compares
+ * two binders rather than a binder against an oracle of its own making.
+ *
+ * Counted, and asserted non-zero by the caller: a sweep that silently stopped
+ * building vectors would otherwise read exactly like a passing one. */
+
+
+#define D2_MAX_OPT 16
+
+/* An in-range value that is NOT the declared default. `slot` offsets it so two
+ * parameters of one function that share a default do not end up sharing a value
+ * too -- 18 slots across 5 functions do (MACDEXT's three periods, STOCH's, ...),
+ * and a swap between same-valued slots is invisible. */
+static double d2_non_default( const TA_OptInputParameterInfo *oi, unsigned int slot )
+{
+    switch( oi->type )
+    {
+    case TA_OptInput_IntegerRange:
+    {
+        const TA_IntegerRange *r = (const TA_IntegerRange *)oi->dataSet;
+        if( !r ) return oi->defaultValue;
+        int def = (int)oi->defaultValue;
+        int step = (int)slot + 1;
+        if( def + step <= r->max ) return (double)(def + step);
+        if( def - step >= r->min ) return (double)(def - step);
+        if( def + 1 <= r->max ) return (double)(def + 1);
+        if( def - 1 >= r->min ) return (double)(def - 1);
+        return oi->defaultValue;
+    }
+    case TA_OptInput_RealRange:
+    {
+        const TA_RealRange *r = (const TA_RealRange *)oi->dataSet;
+        if( !r ) return oi->defaultValue;
+        double span = (r->max > r->min) ? (r->max - r->min) : 0.0;
+        double step = (span > 0.0 && span < 1e30) ? span * 1e-3 * (double)(slot + 1)
+                                                  : 0.125 * (double)(slot + 1);
+        if( oi->defaultValue + step <= r->max ) return oi->defaultValue + step;
+        if( oi->defaultValue - step >= r->min ) return oi->defaultValue - step;
+        return oi->defaultValue;
+    }
+    case TA_OptInput_IntegerList:
+    {
+        const TA_IntegerList *l = (const TA_IntegerList *)oi->dataSet;
+        if( !l || l->nbElement == 0 ) return oi->defaultValue;
+        /* Rotate by slot so sibling MAType parameters differ from each other. */
+        for( unsigned int n = 0; n < l->nbElement; n++ )
+        {
+            unsigned int e = (n + slot + 1) % l->nbElement;
+            if( l->data[e].value != (int)oi->defaultValue )
+                return (double)l->data[e].value;
+        }
+        return oi->defaultValue;
+    }
+    default:
+        return oi->defaultValue;
+    }
+}
+
+/* Values outside the declared range. BOTH bounds, not the first that fits: every
+ * shipped integer range is [1,100000] or [2,100000], so returning on the first
+ * branch probed only `min-1` and a backend that dropped `|| value > max` passed
+ * for all 79 functions. Reals are included too -- #148 was the Rust backend
+ * emitting NO validation for real params, so skipping them omits exactly the
+ * class the historical defect lived in. Returns how many probes were written. */
+static int d2_out_of_range( const TA_OptInputParameterInfo *oi, double out[2] )
+{
+    int n = 0;
+    if( oi->type == TA_OptInput_IntegerRange )
+    {
+        const TA_IntegerRange *r = (const TA_IntegerRange *)oi->dataSet;
+        if( !r ) return 0;
+        if( (long long)r->min - 1 >= (long long)TA_INTEGER_MIN )
+            out[n++] = (double)((long long)r->min - 1);
+        if( (long long)r->max + 1 <= (long long)TA_INTEGER_MAX )
+            out[n++] = (double)((long long)r->max + 1);
+    }
+    else if( oi->type == TA_OptInput_RealRange )
+    {
+        const TA_RealRange *r = (const TA_RealRange *)oi->dataSet;
+        if( !r ) return 0;
+        /* +/-1.0 is absorbed at TA_REAL_MIN/MAX magnitude, so fall back to a
+         * multiple of the widest legal bound -- the same escape fuzz_add_out_of_range
+         * uses, and neither value can collide with TA_REAL_DEFAULT. */
+        out[n++] = (r->min - 1.0 < r->min) ? r->min - 1.0 : 2.0 * TA_REAL_MIN;
+        out[n++] = (r->max + 1.0 > r->max) ? r->max + 1.0 : 2.0 * TA_REAL_MAX;
+    }
+    return n;
+}
+
+/* Load one vector into the C paramHolder. */
+static void d2_set_opts( TA_ParamHolder *paramHolder, const TA_FuncHandle *handle,
+                         const TA_FuncInfo *funcInfo, const double *vec )
+{
+    for( unsigned int k = 0; k < funcInfo->nbOptInput && k < D2_MAX_OPT; k++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        TA_GetOptInputParameterInfo(handle, k, &oi);
+        if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
+            TA_SetOptInputParamReal(paramHolder, k, vec[k]);
+        else
+            TA_SetOptInputParamInteger(paramHolder, k, (int)vec[k]);
+    }
+}
+
+/* Drive one vector through BOTH binders and compare. `paramHolder` already has
+ * this function's inputs and outputs bound by the caller. */
+#define D2_CLASS_NON_DEFAULT 0
+#define D2_CLASS_SENTINEL     1
+#define D2_CLASS_REJECT       2
+
+/* The all-defaults C result, captured before the sweep so the sentinel class can
+ * assert what it exists to assert. */
+typedef struct { TA_RetCode rc; TA_Integer beg, nb, lookback; unsigned long long sum; } D2Baseline;
+
+/* A cheap order-sensitive digest of the output buffers actually written. */
+static unsigned long long d2_digest( const TA_FuncInfo *funcInfo, const TA_FuncHandle *handle,
+                                     TA_Integer nb )
+{
+    unsigned long long h = 1469598103934665603ULL;
+    for( unsigned int o = 0; o < funcInfo->nbOutput; o++ )
+    {
+        const TA_OutputParameterInfo *oinfo;
+        TA_GetOutputParameterInfo(handle, o, &oinfo);
+        for( TA_Integer j = 0; j < nb && j < 2000; j++ )
+        {
+            unsigned long long bits;
+            if( oinfo->type == TA_Output_Real ) memcpy(&bits, &output[o][j], sizeof(bits));
+            else                                bits = (unsigned long long)(unsigned)output_int[o][j];
+            h = (h ^ bits) * 1099511628211ULL;
+        }
+    }
+    return h;
+}
+
+static ErrorNumber d2_drive( const char *funcName, const TA_FuncHandle *handle,
+                             const TA_FuncInfo *funcInfo, TA_ParamHolder *paramHolder,
+                             const double *input, int size, const double *vec,
+                             const char *what, int relaxValues,
+                             int vecClass, const D2Baseline *base )
+{
+    TA_RetCode rc;
+    TA_Integer beg = 0, nb = 0, lookback = -1;
+
+    d2_set_opts(paramHolder, handle, funcInfo, vec);
+    rc = TA_CallFunc(paramHolder, 0, size - 1, &beg, &nb);
+    if( TA_GetLookback(paramHolder, &lookback) != TA_SUCCESS ) lookback = -1;
+
+    /* An out-of-range probe the C library ACCEPTS is not out of range, and the
+     * retCode parity asserted on it below is then vacuous. */
+    if( vecClass == D2_CLASS_REJECT && rc != TA_BAD_PARAM )
+    {
+        g_d2OorNotRejected++;
+        printf("  ABSTRACT ERROR [%s]: an out-of-range parameter was ACCEPTED by C "
+               "(rc=%d) — the probe is not out of range and its parity is vacuous\n",
+               funcName, (int)rc);
+        return TA_ABSTRACT_CALL_MISMATCH;
+    }
+
+    /* The sentinel must resolve to the DECLARED DEFAULT. Comparing C-with-sentinel
+     * against server-with-sentinel only proves the two agree; if C stopped
+     * substituting, both would be wrong together. Compare against the
+     * all-defaults result C produced before the sweep. */
+    if( vecClass == D2_CLASS_SENTINEL && base )
+    {
+        unsigned long long dig = (rc == TA_SUCCESS) ? d2_digest(funcInfo, handle, nb) : 0;
+        if( rc != base->rc || beg != base->beg || nb != base->nb
+            || lookback != base->lookback || dig != base->sum )
+        {
+            g_d2SentNotDefault++;
+            printf("  ABSTRACT ERROR [%s]: the default sentinel did not reproduce the "
+                   "declared default in C (rc %d/%d beg %d/%d nb %d/%d lb %d/%d)\n",
+                   funcName, (int)rc, (int)base->rc, beg, base->beg, nb, base->nb,
+                   lookback, base->lookback);
+            return TA_ABSTRACT_CALL_MISMATCH;
+        }
+    }
+
+    g_d2Vectors++;
+
+    ErrorNumber e = abstract_verify_server_call(
+        funcName, handle, funcInfo, input, size, 0, size - 1,
+        rc, beg, nb, lookback, output, output_int, relaxValues, vec);
+    if( e != TA_TEST_PASS )
+        printf("  ABSTRACT ERROR [%s]: the %s vector diverged\n", funcName, what);
+    return e;
+}
+
+/* The whole sweep for one function. */
+static ErrorNumber d2_param_vectors( const char *funcName, const TA_FuncHandle *handle,
+                                     const TA_FuncInfo *funcInfo,
+                                     TA_ParamHolder *paramHolder,
+                                     const double *input, int size, int relaxValues )
+{
+    if( !g_abstractPipe || funcInfo->nbOptInput == 0 ) return TA_TEST_PASS;
+    if( funcInfo->nbOptInput > D2_MAX_OPT )
+    {
+        printf("  ABSTRACT ERROR [%s]: %u optional parameters exceeds D2_MAX_OPT (%d) — "
+               "the parameter-contract sweep would skip this function silently\n",
+               funcName, funcInfo->nbOptInput, D2_MAX_OPT);
+        return TA_ABSTRACT_CALL_MISMATCH;
+    }
+
+    double base[D2_MAX_OPT], vec[D2_MAX_OPT];
+    const TA_OptInputParameterInfo *oi;
+    unsigned int k, j;
+
+    for( k = 0; k < funcInfo->nbOptInput; k++ )
+    {
+        TA_GetOptInputParameterInfo(handle, k, &oi);
+        base[k] = oi->defaultValue;
+    }
+
+    /* The all-defaults C result the sentinel class is asserted against. The caller
+     * has just made exactly this call, but recompute it here so this function does
+     * not depend on the caller's buffers being untouched. */
+    D2Baseline baseline;
+    d2_set_opts(paramHolder, handle, funcInfo, base);
+    baseline.rc = TA_CallFunc(paramHolder, 0, size - 1, &baseline.beg, &baseline.nb);
+    if( TA_GetLookback(paramHolder, &baseline.lookback) != TA_SUCCESS ) baseline.lookback = -1;
+    baseline.sum = (baseline.rc == TA_SUCCESS) ? d2_digest(funcInfo, handle, baseline.nb) : 0;
+
+    /* 1. Every parameter at a DISTINCT non-default in-range value at once, so a
+     *    transposed slot changes the answer even between same-default siblings. */
+    for( k = 0; k < funcInfo->nbOptInput; k++ )
+    {
+        TA_GetOptInputParameterInfo(handle, k, &oi);
+        vec[k] = d2_non_default(oi, k);
+    }
+    g_d2NonDefault++;
+    ErrorNumber e = d2_drive(funcName, handle, funcInfo, paramHolder, input, size,
+                             vec, "non-default", relaxValues, D2_CLASS_NON_DEFAULT, NULL);
+    if( e != TA_TEST_PASS ) return e;
+
+    /* 2. and 3., one parameter at a time so a failure names the slot. */
+    for( k = 0; k < funcInfo->nbOptInput; k++ )
+    {
+        TA_GetOptInputParameterInfo(handle, k, &oi);
+        for( j = 0; j < funcInfo->nbOptInput; j++ ) vec[j] = base[j];
+
+        vec[k] = ( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
+                 ? TA_REAL_DEFAULT : (double)TA_INTEGER_DEFAULT;
+        g_d2Sentinel++;
+        e = d2_drive(funcName, handle, funcInfo, paramHolder, input, size,
+                     vec, "default-sentinel", relaxValues, D2_CLASS_SENTINEL, &baseline);
+        if( e != TA_TEST_PASS ) return e;
+
+        /* BOTH bounds. A choice list has no expressible outside -- that is a
+         * different contract this sweep does not claim. */
+        double bad[2];
+        int nbad = d2_out_of_range(oi, bad);
+        for( int b = 0; b < nbad; b++ )
+        {
+            for( j = 0; j < funcInfo->nbOptInput; j++ ) vec[j] = base[j];
+            vec[k] = bad[b];
+            g_d2Reject++;
+            e = d2_drive(funcName, handle, funcInfo, paramHolder, input, size,
+                         vec, "out-of-range", relaxValues, D2_CLASS_REJECT, NULL);
+            if( e != TA_TEST_PASS ) return e;
+        }
+    }
+
+    /* Leave the holder as the caller had it. */
+    d2_set_opts(paramHolder, handle, funcInfo, base);
+    return TA_TEST_PASS;
+}
+
 ErrorNumber test_abstract( void )
 {
    ErrorNumber retValue;
@@ -1400,6 +1699,36 @@ ErrorNumber test_abstract( void )
    if( g_abstractPipe )
    {
       printf( "  Abstract server verification: all calls match C\n" );
+      printf( "  Binder parameter contract (#164): %lld vector(s) driven through both "
+              "binders — %lld non-default, %lld default-sentinel, %lld out-of-range "
+              "(both bounds, integer and real)\n",
+              g_d2Vectors, g_d2NonDefault, g_d2Sentinel, g_d2Reject );
+
+      /* Every count is asserted, not merely printed. The whole sweep is built
+       * from the declared domains, so a metadata change (a range collapsing, a
+       * domain retyped) can stop it producing vectors — and a sweep that quietly
+       * built none reads exactly like a passing one. Each class is what it is:
+       * non-default and sentinel exist for every function with a parameter,
+       * out-of-range only for the integer ranges (a choice list has no
+       * expressible outside, which is a different contract). */
+      /* The two self-checks fail the run where they fire, so reaching here with a
+         non-zero count would mean one was counted but not acted on. */
+      if( g_d2OorNotRejected != 0 || g_d2SentNotDefault != 0 )
+      {
+         printf( "  ABSTRACT ERROR: %lld out-of-range probe(s) accepted by C and %lld "
+                 "sentinel(s) that did not reproduce the declared default\n",
+                 g_d2OorNotRejected, g_d2SentNotDefault );
+         return TA_ABSTRACT_CALL_MISMATCH;
+      }
+
+      if( g_d2Vectors == 0 || g_d2NonDefault == 0 || g_d2Sentinel == 0 || g_d2Reject == 0 )
+      {
+         printf( "  ABSTRACT ERROR: the binder parameter-contract sweep produced no "
+                 "vectors of some class (%lld/%lld/%lld/%lld) — the binders are back "
+                 "to being tested only at their declared defaults\n",
+                 g_d2Vectors, g_d2NonDefault, g_d2Sentinel, g_d2Reject );
+         return TA_ABSTRACT_CALL_MISMATCH;
+      }
    }
 
    return TA_TEST_PASS; /* Succcess. */
@@ -1844,11 +2173,26 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
           funcName, handle, funcInfo, input, size,
           0, size-1,
           TA_SUCCESS, outBegIdx, outNbElement, lookback,
-          output, output_int, relaxValues);
+          output, output_int, relaxValues, NULL);
       if( srvErr != TA_TEST_PASS )
       {
          TA_ParamHolderFree( paramHolder );
          return srvErr;
+      }
+
+      /* D2: the same binder, off its defaults. Bounded to ONE dataset on purpose
+       * -- the contract being asserted is about parameter VALUES, not about the
+       * data, so running it on all five would multiply the cost without adding a
+       * claim. inputRandomData is the one with real dynamic range. */
+      if( datasetName && strcmp(datasetName, "inputRandomData") == 0 )
+      {
+         srvErr = d2_param_vectors( funcName, handle, funcInfo, paramHolder,
+                                    input, size, relaxValues );
+         if( srvErr != TA_TEST_PASS )
+         {
+            TA_ParamHolderFree( paramHolder );
+            return srvErr;
+         }
       }
    }
 
@@ -1897,7 +2241,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
           funcName, handle, funcInfo, input, size,
           0, 0,
           retCode, outBegIdx, outNbElement, lookback,
-          output, output_int, relaxValues);
+          output, output_int, relaxValues, NULL);
       if( srvErr != TA_TEST_PASS )
       {
          TA_ParamHolderFree( paramHolder );
