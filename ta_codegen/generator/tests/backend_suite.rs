@@ -164,8 +164,8 @@ fn check_c_variants(c: &str, upper: &str, name: &str) {
 
 /// Check that all Rust variants exist for a given indicator.
 /// `foo` (guarded) plus `foo_lookback`, and `foo_private` only for the
-/// definitions that declare one. No `_unguarded`, `_unchecked` or
-/// `_unguarded_unchecked` variants. Concrete f64 types, not generic.
+/// definitions that declare one. No `_unchecked` variants. Concrete f64 types,
+/// not generic.
 fn check_rust_generic_variants(r: &str, snake: &str, name: &str) {
     // Lookback (non-generic)
     assert!(
@@ -549,7 +549,7 @@ fn test_java_sma_guarded_has_validation() {
     let (func, enums) = load_indicator("sma");
     let out = generate_all(&func, &enums);
 
-    // Extract the guarded core (between its own signature and the unguarded one)
+    // Extract the double-precision core, bounded before the float overload
     // Bounded to the DOUBLE core alone: the float twin is an overload with the
     // same name, so a marker that spans both would let it satisfy the assertion.
     let guarded = extract_section(&out.java, "RetCode smaInternal( int startIdx", "double inReal[]");
@@ -1077,8 +1077,8 @@ fn test_all_indicators_contain_success_returns() {
 
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             // Delegation functions (e.g. EMA -> TA_EMA_Private, MACDFIX ->
-            // TA_MACD_Unguarded) return a RetCode from a callee without ever
-            // mentioning TA_SUCCESS literally.
+            // TA_MACD) return a RetCode from a callee without ever mentioning
+            // TA_SUCCESS literally.
             // Accept: literal TA_SUCCESS OR a `return TA_<func>( ... )` delegation.
             let c_has_success = out.c.contains("TA_SUCCESS")
                 || out.c.lines().any(|l| {
@@ -1090,8 +1090,7 @@ fn test_all_indicators_contain_success_returns() {
             // callee without ever mentioning RetCode.Success literally.
             // Accept: literal RetCode::Success OR a return of a RetCode from a cross-indicator call.
             let rust_has_success = out.rust.contains("RetCode::Success")
-                || (out.rust.contains("return self.") && out.rust.contains("_unguarded"))
-                || (out.rust.contains("return self.") && out.rust.contains("_private("));
+                || out.rust.contains("return self.");
             assert!(
                 rust_has_success,
                 "Rust {}: missing RetCode::Success return",
@@ -1100,7 +1099,7 @@ fn test_all_indicators_contain_success_returns() {
             // Accept: literal RetCode.Success OR a return of a RetCode variable/call.
             let java_has_success = out.java.contains("RetCode.Success")
                 || out.java.contains("return retCode ;")
-                || (out.java.contains("return ") && out.java.contains("Unguarded("));
+                || (out.java.contains("return ") && out.java.contains("Internal("));
             assert!(
                 java_has_success,
                 "Java {}: missing RetCode.Success return",
@@ -1168,7 +1167,7 @@ fn test_rust_generic_output_smoke() {
         "Rust SMA input params should use concrete type &[f64]"
     );
 
-    // 5. No _unchecked or _unguarded_unchecked variants
+    // 5. No _unchecked variants
     assert!(
         !r.contains("fn sma_unchecked(") && !r.contains("fn sma_unchecked<"),
         "Rust SMA should NOT contain _unchecked variants"
@@ -3699,7 +3698,7 @@ fn rust_cross_indicator_call_via_generate() {
         rust_out.contains("self.ema("),
         "MA Rust should call self.ema(): {rust_out}"
     );
-    // `self.` makes this a call, not the `pub fn ma_unguarded(` definition that
+    // `self.` makes this a call, not a definition, so the negative is real.
     // step 1 still emits — so the negative is real, not vacuous.
     assert!(
         !rust_out.contains("self.sma_unguarded(") && !rust_out.contains("self.ema_unguarded("),
@@ -3726,7 +3725,7 @@ fn rust_cross_indicator_lookback_with_pascal_case() {
 fn rust_private_cross_indicator_call() {
     // EMA has explicit _private with extra params. Registry routes:
     //   ema() → ema(), ema_private() → ema_private()
-    // The `_private` arm is orthogonal to the guarded/unguarded pair and is
+    // The `_private` arm has its own resolution path and is
     // (MACD was the original vehicle for both paths, but its lockstep fusion
     // removed the EMA calls.) The bare-name path is exercised by MA's dispatch;
     // the private-name path by EMA's guarded body delegating to ema_private().
@@ -3753,7 +3752,7 @@ fn rust_cross_indicator_vec_input_gets_ref() {
     // Indicators that allocate a local buffer (Vec) and pass it to a cross-indicator
     // call should render the Vec as `&name` in input position. (MACD was the original
     // vehicle, but its lockstep fusion removed the local buffers.) STOCH builds
-    // tempBuffer and passes it into ma_unguarded as an input.
+    // tempBuffer and passes it into ma as an input.
     let (func, enums) = load_indicator("stoch");
     let registry = make_registry();
     let helpers = make_helpers();
@@ -5370,11 +5369,11 @@ fn java_stochrsi_cross_indicator_calls() {
 
     // STOCHRSI calls rsi and stochf (stochf's Java name is the irregular `stochF`)
     assert!(
-        j.contains("rsiUnguarded(") || j.contains("rsiLookback("),
+        j.contains("rsiInternal(") || j.contains("rsiLookback("),
         "Java STOCHRSI should call rsi: {j}"
     );
     assert!(
-        j.contains("stochFUnguarded(") || j.contains("stochFLookback("),
+        j.contains("stochFInternal(") || j.contains("stochFLookback("),
         "Java STOCHRSI should call stochF: {j}"
     );
 }
@@ -5938,7 +5937,7 @@ fn c_ma_cross_indicator_calls() {
     let c = &out.c;
 
     assert!(
-        c.contains("TA_INT_EMA(") || c.contains("TA_EMA(") || c.contains("TA_EMA_Unguarded("),
+        c.contains("TA_INT_EMA(") || c.contains("TA_EMA("),
         "C MA should call EMA: {c}"
     );
     assert!(
@@ -7675,7 +7674,7 @@ fn rust_bbands_elects_output_scratch_only_in_the_sma_fast_path() {
         "BBANDS Rust should have no pointer tests left on tempBuffer1: {rust_out}"
     );
     // The general MA path's allocations are real and must survive — one pair in
-    // each of the guarded and unguarded batch variants, plus the stream tier's.
+    // the batch variant, plus the stream tier's.
     let allocs = rust_out.matches("tempBuffer1 = vec![0.0_f64;").count();
     assert!(
         allocs >= 2,

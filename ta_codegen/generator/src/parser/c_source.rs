@@ -5532,7 +5532,7 @@ TA_RetCode test_func(int startIdx, int *outBegIdx)
         assert_eq!(transform_func_name("plain_func"), "plain_func");
     }
 
-    // ===== Unguarded function detection =====
+    // ===== Private function detection =====
 
     #[test]
     fn test_private_function_detection() {

@@ -7,14 +7,15 @@
 //! into the detector; C and Java rebuild the equivalent name-sets from the same
 //! IR body via `build_fma_var_sets`, but — because they emit typed declarations
 //! and don't otherwise track variable types — they seed the range/count index
-//! vars uniformly with the unguarded set instead of the guarded/unguarded split
-//! the Rust context uses per variant.
+//! vars uniformly with the full set, instead of the per-variant split the Rust
+//! context uses (the guarded body seeds only startIdx/endIdx where it delegates;
+//! the `_private` body seeds all four).
 //!
 //! This test proves that seed difference is immaterial: for every function body,
 //! `fuse_operands` makes the identical decision at every `a*b+c` site whether the
-//! context was built with the guarded (2) or unguarded (4) index-param seeds. So
-//! C/Java (uniform unguarded seeds) fuse exactly the sites Rust does (per-variant
-//! seeds). It also confirms the 26 fusion-candidate functions actually fuse.
+//! context was built with the 2-seed or the 4-seed index-param set. So C/Java
+//! (uniform seeding) fuse exactly the sites Rust does. It also confirms the 26
+//! fusion-candidate functions actually fuse.
 
 use std::cell::Cell;
 use std::path::Path;
@@ -101,7 +102,7 @@ fn fused_count(body: &[Statement], ctx: &fma::FmaCtx) -> usize {
     n.get()
 }
 
-/// Guarded vs unguarded index-param seeds must yield identical fusion decisions
+/// The 2-seed and 4-seed index-param sets must yield identical fusion decisions
 /// at every site of every function body — the property that lets C/Java seed
 /// uniformly yet fuse exactly the sites Rust does per variant.
 #[test]
@@ -115,8 +116,9 @@ fn fma_fusion_is_seed_invariant_across_all_functions() {
             let (fa, fb, disagree) = compare_fusion(body, &g.view(), &u.view());
             assert_eq!(
                 disagree, 0,
-                "{name}: {disagree} site(s) fuse differently under guarded vs unguarded seeds \
-                 (guarded fused {fa}, unguarded fused {fb}) — C/Java would desync from Rust"
+                "{name}: {disagree} site(s) fuse differently under the 2-seed vs 4-seed \
+                 index-param sets (2-seed fused {fa}, 4-seed fused {fb}) — C/Java would \
+                 desync from Rust"
             );
         }
         checked += 1;

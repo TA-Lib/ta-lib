@@ -3012,7 +3012,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;\n");
 
         // want_hash mode (server_verify / issue #115): digest of the GUARDED
-        // output, returned before the unguarded rerun.
+        // output, returned before the value response is built.
         s.push_str("        if (GetInt(p, \"want_hash\", 0) != 0 && GetInt(p, \"full_output\", 0) == 0) {\n");
         s.push_str("            ulong _h = SvHashInit();\n");
         s.push_str("            if (rc == RetCode.Success && outNBElement > 0) {\n");

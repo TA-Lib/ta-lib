@@ -116,11 +116,10 @@ fn flat_inputs(func: &FuncDef) -> Vec<(&'static str, String)> {
 
 /// `(is_real, min, max, default)` for one optional input, as concrete numbers.
 ///
-/// The gate feeds these straight through: `TA_<N>_Unguarded` does **not**
-/// substitute the `TA_INTEGER_DEFAULT` / `TA_REAL_DEFAULT` sentinels (that code
-/// lives in the guarded-only validation prologue), so a sentinel forwarded to
-/// the unguarded variant would compute against `0x80000000` and diverge for
-/// reasons that have nothing to do with correctness. Always send resolved values.
+/// Both variants carry the validation prologue, so both substitute the
+/// `TA_INTEGER_DEFAULT` / `TA_REAL_DEFAULT` sentinels and must agree on the
+/// result. The gate probes the sentinel as well as these resolved values —
+/// see `build_candidates` in `test_variants.c`.
 fn opt_spec(opt: &OptInput, enums: &HashMap<String, EnumDef>) -> (bool, f64, f64, f64) {
     let is_real = matches!(opt.param_type, ParamType::Real);
     let (min, max) = match (&opt.range, &opt.param_type) {

@@ -28,7 +28,7 @@ pub fn generate_c_bench(funcs: &[FuncDef]) -> String {
     // path — see the ta_bench_cg / ta_bench_stream gcc invocations in main.rs).
     s.push_str("#include \"bench_corpus.h\"\n\n");
 
-    // Include headers for unguarded and private function declarations
+    // Internal stream declarations (TA_<N>_OpenInternal)
     s.push_str("#include \"ta_func/ta_func_stream_private.h\"\n\n");
     // Globals + indicator includes (same single-TU pattern as server)
     s.push_str("#include \"ta_common/ta_global.c\"\n");
