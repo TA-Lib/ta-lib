@@ -465,10 +465,10 @@ fn gen_func_inner(
     let body = if name_override.is_some() || (single_precision && func.has_explicit_private) {
         // Private variant (actual computation body), or S_ variant inlining it
         &func.private_body
-    } else if func.has_explicit_private {
-        &func.body          // double guarded: body delegates to _Private
     } else {
-        &func.body          // guarded without _private
+        // Double guarded with an explicit _private delegates to it; without one
+        // the same body holds the algorithm inline.
+        &func.body
     };
 
     // Carry source comments only in the double-precision implementation: the

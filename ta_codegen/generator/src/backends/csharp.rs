@@ -562,8 +562,6 @@ fn gen_func_inner(
     // Body selection (same pattern as the C/Java backends).
     let body = if name_override.is_some() || (single_precision && func.has_explicit_private) {
         &func.private_body
-    } else if func.has_explicit_private {
-        &func.body
     } else {
         &func.body
     };

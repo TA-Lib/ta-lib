@@ -789,8 +789,6 @@ fn gen_func_inner(
     let body = if name_override.is_some() || (single_precision && func.has_explicit_private) {
         // Private variant, or S_ variant inlining the private body
         &func.private_body
-    } else if func.has_explicit_private {
-        &func.body
     } else {
         &func.body
     };
