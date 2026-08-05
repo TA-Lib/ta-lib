@@ -1296,19 +1296,6 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * scripts/serve_version.py). Skip it rather than hard-fail on the missing
      * baseline; it stays covered by server_verify, --xlang-hash and its
      * hard-coded tests. Mirrors the --fuzz-064 subset gate. */
-    if( ctx->refFuncList )
-    {
-        char needle[80];
-        snprintf(needle, sizeof(needle), "\"TA_%s\"", funcInfo->name);
-        if( !strstr(ctx->refFuncList, needle) )
-        {
-            if( ctx->nbSkipNames < MAX_FUNCTIONS )
-                strncpy(ctx->skipNames[ctx->nbSkipNames++], funcInfo->name,
-                        sizeof(ctx->skipNames[0]) - 1);
-            ctx->skipped++;
-            return;
-        }
-    }
 
     /* Skip functions with integer inputs (very rare, no test data) */
     unsigned int hasIntegerInput = 0;
@@ -1385,6 +1372,41 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     /* Set up output buffers */
     setup_outputs(&params);
+
+    /* Frozen-reference subset gate, applied HERE rather than on entry.
+     *
+     * The seven functions added after the pinned reference tag (CMF, CMOU, HMA,
+     * NVI, PVI, PVO, VWMA) have no ta_ref_serve baseline, so everything below
+     * that diffs against it must be skipped. The FLOAT leg must not be: it
+     * compares a language's single-precision entry point against that same
+     * language's own double entry point and never touches refCp, so skipping it
+     * here left 14 shipped float entry points (7 in Java, 7 in C#) with no value
+     * verification at all — the hole this leg exists to close. Run it, then skip
+     * the reference-dependent remainder. */
+    if( ctx->refFuncList )
+    {
+        char needle[80];
+        snprintf(needle, sizeof(needle), "\"TA_%s\"", funcInfo->name);
+        if( !strstr(ctx->refFuncList, needle) )
+        {
+            if( strcmp(ctx->lang->name, "rust") != 0 )
+                run_float_leg(&params);
+            if( params.codegenError != TA_TEST_PASS )
+            {
+                printf("CODEGEN FAILED (code=%d)  (TA_%s is post-reference: "
+                       "only the float leg ran)\n",
+                       params.codegenError, funcInfo->name);
+                ctx->failed++;
+                ctx->error = params.codegenError;
+                return;
+            }
+            if( ctx->nbSkipNames < MAX_FUNCTIONS )
+                strncpy(ctx->skipNames[ctx->nbSkipNames++], funcInfo->name,
+                        sizeof(ctx->skipNames[0]) - 1);
+            ctx->skipped++;
+            return;
+        }
+    }
 
     /* ---- Baseline from ta_ref_serve (reference-as-server, task #7) ----
      * The codegen comparison baseline is the reference C library exposed as a
