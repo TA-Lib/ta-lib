@@ -2515,59 +2515,144 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("    }\n\n");
     }
 
-    // ta_abstract dynamic dispatch (issue #114): abstract_get_lookback + abstract_call.
-    // computeLookback parses a function's opt params (same JSON keys as the per-function
-    // handler) and calls its guarded <name>Lookback; abstract_call reroutes to the
-    // existing per-function handler and prepends the `lookback` the C ta_abstract path returns.
-    s.push_str("    static int computeLookback(String funcName, String json) {\n");
-    s.push_str("        switch (funcName) {\n");
-    for func in funcs {
-        let func_lower = to_java_method_name(&func.name, func.camel_case.as_deref());
-        s.push_str(&format!("        case \"{}\": {{\n", func.name));
-        for opt in &func.optional_inputs {
-            match &opt.param_type {
-                ParamType::Real => s.push_str(&format!(
-                    "            double {} = jsonDouble(json, \"{}\");\n",
-                    opt.name, opt.name
-                )),
-                ParamType::Enum(enum_name) => s.push_str(&format!(
-                    "            {} {} = {}.values()[jsonInt(json, \"{}\")];\n",
-                    enum_name, opt.name, enum_name, opt.name
-                )),
-                _ => s.push_str(&format!(
-                    "            int {} = jsonInt(json, \"{}\");\n",
-                    opt.name, opt.name
-                )),
+    // ta_abstract dynamic dispatch. Both RPCs bind through the SHIPPED registry
+    // (io.github.talib.metadata) rather than a server-private switch, so
+    // test_abstract.c exercises the artifact that ships. Fully-qualified names
+    // throughout: this file carries its own default-package Core/MAType/RetCode
+    // twins, and importing the shipped ones would be ambiguous.
+    //
+    // Java's public API is exception-based -- Core returns OutRange and throws --
+    // so the retCode C reports is reconstituted at this boundary. That is a
+    // spelling difference the contract tolerates; what must match, and does, is
+    // WHICH calls are rejected.
+    s.push_str(r#"    static int computeLookback(String funcName, String json) {
+        io.github.talib.metadata.FunctionInfo f = io.github.talib.metadata.Functions.byName(funcName);
+        if (f == null) return -1;
+        try {
+            return absBind(f, json, null).lookback();
+        } catch (RuntimeException e) {
+            return -1;
+        }
+    }
+
+    /* Binds every declared parameter of `f` from the request. `outs` receives the
+       output arrays when the caller needs them back; pass null for the lookback
+       tier, which binds none. */
+    static io.github.talib.metadata.ParamHolder absBind(
+            io.github.talib.metadata.FunctionInfo f, String json, Object[] outs) {
+        io.github.talib.metadata.ParamHolder h = f.newCall();
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int n = endIdx - startIdx + 1;
+        if (n < 1) n = 1;
+
+        for (int i = 0; i < f.inputs().size(); i++) {
+            io.github.talib.metadata.InputInfo in = f.inputs().get(i);
+            switch (in.type()) {
+                case PRICE -> h.setPriceInput(i,
+                    jsonDoubleArray(json, "inOpen"), jsonDoubleArray(json, "inHigh"),
+                    jsonDoubleArray(json, "inLow"), jsonDoubleArray(json, "inClose"),
+                    jsonDoubleArray(json, "inVolume"), jsonDoubleArray(json, "inOpenInterest"));
+                case REAL -> h.setInput(i, absRealInput(json, f, i));
+                case INTEGER -> {
+                    double[] raw = absRealInput(json, f, i);
+                    int[] ints = new int[raw.length];
+                    for (int k = 0; k < raw.length; k++) ints[k] = (int) raw[k];
+                    h.setInput(i, ints);
+                }
             }
         }
-        let args: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
-        s.push_str(&format!(
-            "            return core.{}Lookback({});\n",
-            func_lower,
-            args.join(", ")
-        ));
-        s.push_str("        }\n");
-    }
-    s.push_str("        default: return -1;\n");
-    s.push_str("        }\n");
-    s.push_str("    }\n\n");
 
-    s.push_str("    static String handleAbstractCall(String json) {\n");
-    s.push_str("        String fn = jsonString(json, \"funcName\");\n");
-    s.push_str("        String resp;\n");
-    s.push_str("        switch (fn) {\n");
-    for func in funcs {
-        s.push_str(&format!(
-            "        case \"{}\": resp = handle_{}(json); break;\n",
-            func.name, func.name
-        ));
+        for (int i = 0; i < f.optInputs().size(); i++) {
+            io.github.talib.metadata.OptInputInfo o = f.optInputs().get(i);
+            switch (o.type()) {
+                case REAL_RANGE, REAL_LIST -> h.setOptInput(i, jsonDouble(json, o.paramName()));
+                default -> h.setOptInput(i, jsonInt(json, o.paramName()));
+            }
+        }
+
+        if (outs != null) {
+            for (int k = 0; k < f.outputs().size(); k++) {
+                if (f.outputs().get(k).type() == io.github.talib.metadata.OutputType.REAL) {
+                    double[] a = new double[n];
+                    outs[k] = a;
+                    h.setOutput(k, a);
+                } else {
+                    int[] a = new int[n];
+                    outs[k] = a;
+                    h.setOutput(k, a);
+                }
+            }
+        }
+        return h;
     }
-    s.push_str("        default: return \"{\\\"error\\\":\\\"Unknown function\\\"}\";\n");
-    s.push_str("        }\n");
-    s.push_str("        int lb = computeLookback(fn, json);\n");
-    // The per-function response starts with '{'; splice "lookback" in as the first key.
-    s.push_str("        return \"{\\\"lookback\\\":\" + lb + \",\" + resp.substring(1);\n");
-    s.push_str("    }\n\n");
+
+    /* inReal / inReal0 / inReal1, matching the driver's key scheme. */
+    static double[] absRealInput(String json, io.github.talib.metadata.FunctionInfo f, int slot) {
+        int generic = 0;
+        for (int i = 0; i < slot; i++) {
+            if (f.inputs().get(i).type() != io.github.talib.metadata.InputType.PRICE) generic++;
+        }
+        int total = 0;
+        for (int i = 0; i < f.inputs().size(); i++) {
+            if (f.inputs().get(i).type() != io.github.talib.metadata.InputType.PRICE) total++;
+        }
+        return jsonDoubleArray(json, total == 1 ? "inReal" : ("inReal" + generic));
+    }
+
+    static String handleAbstractCall(String json) {
+        String fn = jsonString(json, "funcName");
+        io.github.talib.metadata.FunctionInfo f = io.github.talib.metadata.Functions.byName(fn);
+        if (f == null) return "{\"error\":\"Unknown function\"}";
+
+        Object[] outs = new Object[f.outputs().size()];
+        int lb;
+        int rc = 0;
+        int beg = 0;
+        int nb = 0;
+        try {
+            io.github.talib.metadata.ParamHolder h = absBind(f, json, outs);
+            lb = h.lookback();
+            io.github.talib.OutRange r = h.call(jsonInt(json, "startIdx"), jsonInt(json, "endIdx"));
+            beg = r.begIdx();
+            nb = r.count();
+        } catch (RuntimeException e) {
+            /* The shipped binder signals a rejected call by throwing; C's
+               TA_CallFunc returns TA_BAD_PARAM for the same conditions. */
+            lb = -1;
+            rc = 2;
+        }
+
+        StringBuilder b = new StringBuilder();
+        b.append("{\"lookback\":").append(lb)
+         .append(",\"retCode\":").append(rc)
+         .append(",\"outBegIdx\":").append(beg)
+         .append(",\"outNBElement\":").append(nb);
+        /* Real and integer outputs are numbered INDEPENDENTLY, each from its own
+           counter -- MINMAXINDEX has two integer outputs, so one shared "outInteger"
+           key made the second overwrite the first. Matches the driver's scheme in
+           test_abstract.c. */
+        int realIdx = 0;
+        int intIdx = 0;
+        for (int k = 0; k < f.outputs().size(); k++) {
+            boolean isReal = f.outputs().get(k).type() == io.github.talib.metadata.OutputType.REAL;
+            String key;
+            if (isReal) {
+                key = realIdx == 0 ? "outReal" : ("outReal" + realIdx);
+                realIdx++;
+            } else {
+                key = intIdx == 0 ? "outInteger" : ("outInteger" + intIdx);
+                intIdx++;
+            }
+            b.append(",\"").append(key).append("\":");
+            if (isReal) b.append(doubleArrayToJson((double[]) outs[k], nb));
+            else b.append(intArrayToJson((int[]) outs[k], nb));
+        }
+        b.append('}');
+        return b.toString();
+    }
+
+"#);
 
     // stream_verify: Java stream vs Java batch, bitwise (drives the ta_regtest
     // stream pass the moment the capability probe sees "not_streamable").

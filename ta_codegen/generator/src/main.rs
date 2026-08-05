@@ -1120,6 +1120,15 @@ fn build_servers(backend_filter: Option<&str>) {
                 let java_dir = out_base.join("java/tools");
                 let class_dir = bin_dir.join("ta_codegen_java");
                 std::fs::create_dir_all(&class_dir).ok();
+                // The server's ta_abstract RPCs answer from the SHIPPED registry
+                // (io.github.talib.metadata), so the library's sources are on the
+                // source path. Before that they came from a server-private table
+                // and the abstract gate never touched what ships (issue #164) --
+                // the reason #162's Java half went unseen while its C# twin, whose
+                // server does bind through the shipped FunctionCall, was caught.
+                // javac pulls in only what is referenced, so this does not drag
+                // the library's test sources into the server build.
+                let lib_src = out_base.join("java/library/src");
                 match std::process::Command::new("javac")
                     .args([
                         // JDK 17 (LTS) floor: the spliced public wrappers return
@@ -1127,6 +1136,9 @@ fn build_servers(backend_filter: Option<&str>) {
                         // fails with a clear unsupported-release error.
                         "--release",
                         JAVA_RELEASE,
+                        "-nowarn",
+                        "--source-path",
+                        lib_src.to_str().unwrap(),
                         "-d",
                         class_dir.to_str().unwrap(),
                         java_dir.join("TaCodegenServe.java").to_str().unwrap(),
