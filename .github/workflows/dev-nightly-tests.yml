@@ -120,6 +120,31 @@ jobs:
         shell: cmd
         run: '%PYTHON% %GITHUB_WORKSPACE%\scripts\test-dist.py'
 
+      # Upload the freshly built packages into the content-addressed asset pool.
+      #
+      # ORDER IS LOAD-BEARING: this runs BEFORE the digests that reference the
+      # packages are committed. The reverse order can commit a digest naming a
+      # package that was never uploaded, and that state is not recoverable by
+      # retry -- the only way out is a full rebuild + re-test. For the same
+      # reason this step must never be continue-on-error: a failed upload has to
+      # stop the run before anything is committed.
+      #
+      # Idempotent: assets are named by content hash, so re-running uploads
+      # nothing new, and a race with the other matrix leg resolves to success.
+      - name: Push dist packages to the asset pool (Linux)
+        if: runner.os == 'Linux'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py push
+
+      - name: Push dist packages to the asset pool (Windows x64)
+        if: runner.os == 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: cmd
+        run: '%PYTHON% %GITHUB_WORKSPACE%\scripts\dist-pool.py push'
+
       - name: Check for changes and commit if any
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
