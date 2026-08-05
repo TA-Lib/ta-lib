@@ -612,10 +612,33 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
         "*.am",
         "ta_func_api.xml",
         "ta_func_list.txt",
-        "ta_codegen/output/java/library/src/**/*.java",
-        "ta_codegen/output/csharp/library/*.cs",
-        "ta_codegen/output/csharp/library/*.csproj",
-        "ta_codegen/output/csharp/library/src/**/*.cs",
+        # NOTE: the Java and C# library sources are deliberately NOT listed.
+        #
+        # This digest exists to trigger repackaging of the assets in
+        # get_release_assets() -- and not one of them contains a byte of Java or C#.
+        # Verified against the built artifacts: src.tar.gz is autotools + include/ +
+        # src/ (319 entries, zero .java/.cs), the .deb is 5 headers plus
+        # libta-lib.{a,so}, and the Windows .zip is ta-lib.dll + 2 .lib + 5 headers.
+        # Java ships via Maven and C# via NuGet, on their own release paths.
+        #
+        # Listing them meant every ta_codegen Java/C# regeneration bumped this digest
+        # and forced a rebuild + repack + commit of all 8 C packages -- ~15 MB of
+        # non-deltable bytes each time, for a change that cannot reach any of them.
+        # Only re-add a binding here if a release asset actually starts carrying it.
+        #
+        # The packaging scripts decide package CONTENT, so a change to them must
+        # invalidate the digest exactly like a source change does. get_src_generated_files()
+        # literally defines what lands in src.tar.gz, and package.py picks the CPack
+        # generator and assembles the zip/tarball.
+        #
+        # Without these, editing the packaging and then cutting a release ships a stale
+        # package with a green digest: scheduled nightlies always rebuild and would
+        # self-correct within a day, but the release path is a MANUAL dispatch
+        # (README-DEVS.md step 6), which takes the build-SKIP branch of
+        # is_build_skipping_allowed().
+        "scripts/package.py",
+        "scripts/utilities/common.py",
+        "scripts/utilities/files.py",
         "LICENSE",
         "VERSION",
     ]
