@@ -98,6 +98,56 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, lib_src: &P
 
     let rows = rows(funcs, enums);
 
+    // ParamHolder binds a choice list through `MAType.values()[value]`, i.e. it
+    // treats the declared VALUE as an enum ordinal. That is correct only while
+    // every choice list is dense from zero, which enums.yaml happens to make true
+    // and nothing enforced. C# guards the equivalent assumption; Java did not, so
+    // a list with a gap would have silently bound the wrong member (issue #164).
+    // Fail the build instead, where the fix is obvious.
+    // The real assumption is stronger than density: the binder does
+    // `MAType.values()[value]` and range-checks against `MAType.values().length`,
+    // so a list that is dense but a SUBSET of MAType would still let
+    // setOptInput(idx, 7) bind a member the list does not declare. Assert the
+    // whole invariant — same length, same members, same order — and that the
+    // declared default is one of them.
+    let matype: Vec<&str> = enums
+        .get("MAType")
+        .map(|e| e.variants.iter().map(|v| v.short_name.as_str()).collect())
+        .unwrap_or_default();
+    for f in &rows {
+        for opt in &f.opt_inputs {
+            if let OptDomain::IntegerList { values, default } = &opt.domain {
+                assert_eq!(
+                    values.len(),
+                    matype.len(),
+                    "{}.{}: choice list has {} entries but MAType has {}. ParamHolder \
+                     resolves these through MAType.values()[value]; teach it the declared \
+                     values before shipping a list that is not MAType.",
+                    f.name, opt.param_name, values.len(), matype.len()
+                );
+                for (i, (v, name)) in values.iter().enumerate() {
+                    assert_eq!(
+                        *v, i as i64,
+                        "{}.{}: choice list is not dense from zero ({name} = {v} at position {i}).",
+                        f.name, opt.param_name
+                    );
+                    assert_eq!(
+                        name.as_str(), matype[i],
+                        "{}.{}: choice list entry {i} is {name}, MAType's is {}. The binder \
+                         maps value -> MAType ordinal, so the two must agree member for member.",
+                        f.name, opt.param_name, matype[i]
+                    );
+                }
+                assert!(
+                    values.iter().any(|(v, _)| v == default),
+                    "{}.{}: declared default {default} is not one of its own choices — \
+                     MAType.values()[{default}] would be an out-of-bounds bind.",
+                    f.name, opt.param_name
+                );
+            }
+        }
+    }
+
     write(&dir, "InputType.java", &input_type_enum());
     write(&dir, "OptInputType.java", &opt_input_type_enum());
     write(&dir, "OutputType.java", &output_type_enum());
@@ -781,11 +831,23 @@ public final class ParamHolder {
       intOpts[idx] = value;
       if (info.optInputs().get(idx).type() == OptInputType.INTEGER_LIST) {
          MAType[] all = MAType.values();
-         if (value < 0 || value >= all.length) {
+         /* Setting a parameter to its documented default THROUGH the abstract
+            interface is part of the ABI: C's TA_SetOptInputParamInteger accepts
+            TA_INTEGER_DEFAULT and the function substitutes the declared default.
+            Java cannot carry the sentinel any further than here -- Core takes a
+            real MAType -- so it resolves at this boundary, which is exactly where
+            an UNSET choice list already resolves (see the constructor). Leaving
+            the two to disagree was issue #164's first finding. */
+         if (value == Core.TA_INTEGER_DEFAULT) {
+            int declared = (int) info.optInputs().get(idx).defaultValue();
+            maTypeOpts[idx] = all[declared];
+            intOpts[idx] = declared;
+         } else if (value < 0 || value >= all.length) {
             throw new IllegalArgumentException(
                info.name() + " optInput " + idx + ": " + value + " is not a valid MAType ordinal");
+         } else {
+            maTypeOpts[idx] = all[value];
          }
-         maTypeOpts[idx] = all[value];
       }
       optSet[idx] = true;
       return this;
@@ -837,6 +899,22 @@ public final class ParamHolder {
    }
 
    /**
+    * The first index at which this function produces output, for the optional
+    * parameters bound so far.
+    *
+    * <p>The counterpart of C's {@code TA_GetLookback} and C#'s
+    * {@code FunctionCall.Lookback()}. Inputs and outputs need not be bound --
+    * a lookback depends only on the optional parameters, which is what makes it
+    * useful for sizing the output arrays before binding them.
+    *
+    * @return the lookback, or {@code -1} if a parameter is out of range
+    */
+   public int lookback() {
+      resolveUnsetOptInputs();
+      return Dispatch.lookback(this);
+   }
+
+   /**
     * Calls the function over {@code [startIdx, endIdx]}.
     *
     * <p>Unbound parameters that carry a documented default are filled in with it;
@@ -864,8 +942,16 @@ public final class ParamHolder {
                info.name() + ": output " + i + " (" + info.outputs().get(i).paramName() + ") not set");
          }
       }
-      // Unset optional parameters take the cross-language default sentinel, which
-      // every generated function maps to its documented default.
+      resolveUnsetOptInputs();
+      return Dispatch.call(this, startIdx, endIdx);
+   }
+
+   /* Unset optional parameters take the cross-language default sentinel, which
+      every generated function maps to its documented default. Shared by call()
+      and lookback(): it used to live inside call(), so a lookback taken before
+      the first call read zero-initialised slots and came back -1 for every
+      function with an optional parameter. */
+   private void resolveUnsetOptInputs() {
       for (int i = 0; i < info.optInputs().size(); i++) {
          if (optSet[i]) {
             continue;
@@ -873,10 +959,17 @@ public final class ParamHolder {
          switch (info.optInputs().get(i).type()) {
             case REAL_RANGE, REAL_LIST -> realOpts[i] = -4e37;
             case INTEGER_RANGE -> intOpts[i] = Integer.MIN_VALUE;
-            case INTEGER_LIST -> maTypeOpts[i] = MAType.values()[(int) info.optInputs().get(i).defaultValue()];
+            /* Both slots, not just maTypeOpts: setOptInput's sentinel branch keeps
+               them in step, and leaving unset to record intOpts=0 while recording
+               maTypeOpts=Ema (APO/PPO/PVO default to 1) would reintroduce the very
+               unset-vs-sentinel divergence this pair of methods exists to remove. */
+            case INTEGER_LIST -> {
+               int declared = (int) info.optInputs().get(i).defaultValue();
+               maTypeOpts[i] = MAType.values()[declared];
+               intOpts[i] = declared;
+            }
          }
       }
-      return Dispatch.call(this, startIdx, endIdx);
    }
 
    private static <T> T require(T v, String what) {
@@ -977,6 +1070,37 @@ fn dispatch_class(rows: &[FuncRow]) -> String {
         let _ = writeln!(s, "         case {}:", js(&f.name));
         let _ = writeln!(s, "            return core.{camel}(");
         let _ = writeln!(s, "               {});", args.join(", "));
+    }
+
+    s.push_str(
+        r#"         default:
+            throw new IllegalArgumentException("no such function: " + h.info().name());
+      }
+   }
+
+   /* The lookback tier. Separate from call() because it takes only the optional
+      parameters -- no inputs, no outputs, no range -- so a caller can size its
+      output arrays before binding them, exactly as TA_GetLookback allows. */
+   static int lookback(ParamHolder h) {
+      Core core = h.core();
+      switch (h.info().name()) {
+"#,
+    );
+
+    for f in rows {
+        let camel = super::java::to_java_method_name(&f.name, f.camel_case.as_deref());
+        let mut args: Vec<String> = Vec::new();
+        for (k, opt) in f.opt_inputs.iter().enumerate() {
+            match &opt.domain {
+                OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+                    args.push(format!("h.realOpt({k})"));
+                }
+                OptDomain::IntegerList { .. } => args.push(format!("h.maTypeOpt({k})")),
+                OptDomain::IntegerRange { .. } => args.push(format!("h.intOpt({k})")),
+            }
+        }
+        let _ = writeln!(s, "         case {}:", js(&f.name));
+        let _ = writeln!(s, "            return core.{camel}Lookback({});", args.join(", "));
     }
 
     s.push_str(

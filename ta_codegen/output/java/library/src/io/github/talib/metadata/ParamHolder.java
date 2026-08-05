@@ -181,11 +181,23 @@ public final class ParamHolder {
       intOpts[idx] = value;
       if (info.optInputs().get(idx).type() == OptInputType.INTEGER_LIST) {
          MAType[] all = MAType.values();
-         if (value < 0 || value >= all.length) {
+         /* Setting a parameter to its documented default THROUGH the abstract
+            interface is part of the ABI: C's TA_SetOptInputParamInteger accepts
+            TA_INTEGER_DEFAULT and the function substitutes the declared default.
+            Java cannot carry the sentinel any further than here -- Core takes a
+            real MAType -- so it resolves at this boundary, which is exactly where
+            an UNSET choice list already resolves (see the constructor). Leaving
+            the two to disagree was issue #164's first finding. */
+         if (value == Core.TA_INTEGER_DEFAULT) {
+            int declared = (int) info.optInputs().get(idx).defaultValue();
+            maTypeOpts[idx] = all[declared];
+            intOpts[idx] = declared;
+         } else if (value < 0 || value >= all.length) {
             throw new IllegalArgumentException(
                info.name() + " optInput " + idx + ": " + value + " is not a valid MAType ordinal");
+         } else {
+            maTypeOpts[idx] = all[value];
          }
-         maTypeOpts[idx] = all[value];
       }
       optSet[idx] = true;
       return this;
@@ -237,6 +249,22 @@ public final class ParamHolder {
    }
 
    /**
+    * The first index at which this function produces output, for the optional
+    * parameters bound so far.
+    *
+    * <p>The counterpart of C's {@code TA_GetLookback} and C#'s
+    * {@code FunctionCall.Lookback()}. Inputs and outputs need not be bound --
+    * a lookback depends only on the optional parameters, which is what makes it
+    * useful for sizing the output arrays before binding them.
+    *
+    * @return the lookback, or {@code -1} if a parameter is out of range
+    */
+   public int lookback() {
+      resolveUnsetOptInputs();
+      return Dispatch.lookback(this);
+   }
+
+   /**
     * Calls the function over {@code [startIdx, endIdx]}.
     *
     * <p>Unbound parameters that carry a documented default are filled in with it;
@@ -264,8 +292,16 @@ public final class ParamHolder {
                info.name() + ": output " + i + " (" + info.outputs().get(i).paramName() + ") not set");
          }
       }
-      // Unset optional parameters take the cross-language default sentinel, which
-      // every generated function maps to its documented default.
+      resolveUnsetOptInputs();
+      return Dispatch.call(this, startIdx, endIdx);
+   }
+
+   /* Unset optional parameters take the cross-language default sentinel, which
+      every generated function maps to its documented default. Shared by call()
+      and lookback(): it used to live inside call(), so a lookback taken before
+      the first call read zero-initialised slots and came back -1 for every
+      function with an optional parameter. */
+   private void resolveUnsetOptInputs() {
       for (int i = 0; i < info.optInputs().size(); i++) {
          if (optSet[i]) {
             continue;
@@ -273,10 +309,17 @@ public final class ParamHolder {
          switch (info.optInputs().get(i).type()) {
             case REAL_RANGE, REAL_LIST -> realOpts[i] = -4e37;
             case INTEGER_RANGE -> intOpts[i] = Integer.MIN_VALUE;
-            case INTEGER_LIST -> maTypeOpts[i] = MAType.values()[(int) info.optInputs().get(i).defaultValue()];
+            /* Both slots, not just maTypeOpts: setOptInput's sentinel branch keeps
+               them in step, and leaving unset to record intOpts=0 while recording
+               maTypeOpts=Ema (APO/PPO/PVO default to 1) would reintroduce the very
+               unset-vs-sentinel divergence this pair of methods exists to remove. */
+            case INTEGER_LIST -> {
+               int declared = (int) info.optInputs().get(i).defaultValue();
+               maTypeOpts[i] = MAType.values()[declared];
+               intOpts[i] = declared;
+            }
          }
       }
-      return Dispatch.call(this, startIdx, endIdx);
    }
 
    private static <T> T require(T v, String what) {
