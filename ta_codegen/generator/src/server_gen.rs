@@ -2581,7 +2581,16 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        String line;\n");
     s.push_str("        while ((line = reader.readLine()) != null) {\n");
     s.push_str("            if (line.trim().isEmpty()) continue;\n");
-    s.push_str("            System.out.println(handleRequest(line));\n");
+    // An escaping exception kills the JVM, and the driver then reports a
+    // pipe-read failure for every REMAINING function instead of naming the one
+    // request that broke. That is exactly how MAType.values()[Integer.MIN_VALUE]
+    // presented (issue #164): a dead pipe, not a diagnosable answer.
+    s.push_str("            String reply;\n");
+    s.push_str("            try { reply = handleRequest(line); }\n");
+    s.push_str("            catch (Throwable t) {\n");
+    s.push_str("                reply = \"{\\\"error\\\":\" + absStr(t.getClass().getName() + \": \" + t.getMessage()) + \"}\";\n");
+    s.push_str("            }\n");
+    s.push_str("            System.out.println(reply);\n");
     s.push_str("            System.out.flush();\n");
     s.push_str("        }\n");
     s.push_str("    }\n");
@@ -3118,12 +3127,22 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("    }\n\n");
     }
 
-    // Main
+    // Main. The handler is wrapped because an escaping exception kills the
+    // process, and the driver then reports a pipe-read failure for every
+    // REMAINING function rather than naming the one request that broke -- the
+    // failure mode that made the Java server's MAType decode so hard to place
+    // (issue #164). A thrown request now answers with an error object and the
+    // server stays up for the next one.
     s.push_str("    static void Main(string[] args) {\n");
     s.push_str("        string? line;\n");
     s.push_str("        while ((line = Console.ReadLine()) != null) {\n");
     s.push_str("            if (string.IsNullOrWhiteSpace(line)) continue;\n");
-    s.push_str("            Console.WriteLine(HandleRequest(line));\n");
+    s.push_str("            string reply;\n");
+    s.push_str("            try { reply = HandleRequest(line); }\n");
+    s.push_str("            catch (Exception e) {\n");
+    s.push_str("                reply = \"{\\\"error\\\":\" + AbsStr(e.GetType().Name + \": \" + e.Message) + \"}\";\n");
+    s.push_str("            }\n");
+    s.push_str("            Console.WriteLine(reply);\n");
     s.push_str("            Console.Out.Flush();\n");
     s.push_str("        }\n");
     s.push_str("    }\n");
@@ -4973,8 +4992,25 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         if (v is null) return "\"\"";
         var b = new System.Text.StringBuilder("\"");
         foreach (char c in v) {
-            if (c == '"' || c == '\\') b.Append('\\');
-            b.Append(c);
+            /* The full JSON string grammar, not just quote and backslash. The
+               transport is NEWLINE-FRAMED (codegen_pipe reads to the next '\n'),
+               so an unescaped control character in an error message would split
+               one reply into two lines and hand the second to the NEXT request --
+               desynchronising the stream permanently, which is worse than the
+               crash the surrounding try/catch replaces. */
+            switch (c) {
+                case '"':  b.Append("\\\""); break;
+                case '\\': b.Append("\\\\"); break;
+                case '\b': b.Append("\\b"); break;
+                case '\f': b.Append("\\f"); break;
+                case '\n': b.Append("\\n"); break;
+                case '\r': b.Append("\\r"); break;
+                case '\t': b.Append("\\t"); break;
+                default:
+                    if (c < 0x20) b.Append("\\u").Append(((int)c).ToString("x4"));
+                    else b.Append(c);
+                    break;
+            }
         }
         b.Append('"');
         return b.ToString();

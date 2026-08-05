@@ -189,20 +189,20 @@ public sealed class FunctionCall
     /// <see cref="PriceComponents.High"/>.</param>
     /// <param name="series">The series. Not copied.</param>
     /// <returns>This call, for chaining.</returns>
-    /// <exception cref="ArgumentException">The slot is not a price input, or the
-    /// function does not consume that component — supplying one it ignores is an
-    /// error rather than a silent no-op.</exception>
+    /// <exception cref="ArgumentException">The slot is not a price input.</exception>
+    /// <remarks>A component the function does not consume is accepted and ignored,
+    /// matching C's <c>TA_SetInputParamPricePtr</c> (whose <c>SET_PARAM_INFO</c>
+    /// stores only the flagged components) and Java's <c>ParamHolder</c>. This
+    /// used to throw. It reads like the stricter, safer choice and is not: no
+    /// function in the catalogue consumes <see cref="PriceComponents.OpenInterest"/>,
+    /// so the natural generic call — hand the binder a whole OHLCV bundle and let
+    /// it take what it needs — threw for every price function here while working
+    /// against C and Java. Rejecting a MISSING required component is the check
+    /// that earns its keep, and all three backends still do it.</remarks>
     public FunctionCall SetPriceInput(int slot, PriceComponents component, double[] series)
     {
         InputInfo info = CheckInput(slot, InputKind.Price);
         ArgumentNullException.ThrowIfNull(series);
-        if (!info.Requires(component))
-        {
-            throw new ArgumentException(
-                $"{_info.Name} input {slot} ({info.ParamName}) does not consume {component}",
-                nameof(component));
-        }
-
         _price[slot][ComponentIndex(component)] = series;
         return this;
     }
@@ -216,8 +216,9 @@ public sealed class FunctionCall
     /// <param name="volume">The volume series, when consumed.</param>
     /// <param name="openInterest">The open-interest series, when consumed.</param>
     /// <returns>This call, for chaining.</returns>
-    /// <exception cref="ArgumentException">A consumed component was not supplied,
-    /// or a component the function ignores was.</exception>
+    /// <exception cref="ArgumentException">A consumed component was not supplied.
+    /// A component the function ignores is accepted — see the single-component
+    /// overload's remarks.</exception>
     public FunctionCall SetPriceInput(int slot, double[]? open = null, double[]? high = null,
                                       double[]? low = null, double[]? close = null,
                                       double[]? volume = null, double[]? openInterest = null)
@@ -239,12 +240,8 @@ public sealed class FunctionCall
                     $"{_info.Name} input {slot} ({info.ParamName}) requires {all[i]}", nameof(slot));
             }
 
-            if (!required && given[i] is not null)
-            {
-                throw new ArgumentException(
-                    $"{_info.Name} input {slot} ({info.ParamName}) does not consume {all[i]}", nameof(slot));
-            }
-
+            /* An unconsumed component is stored and ignored -- see the remark on
+               the single-component overload. */
             _price[slot][i] = given[i];
         }
 
@@ -343,8 +340,25 @@ public sealed class FunctionCall
         return parameter.Domain switch
         {
             OptInputDomain.RealRange or OptInputDomain.RealList => SetOption(index, value),
-            _ => SetOption(index, (int)value),
+            _ => SetOption(index, ToIntegerOperand(parameter, value)),
         };
+    }
+
+    /* `(int)value` on a double outside the int range is unspecified in C#, and on
+       x86 it lands on int.MinValue -- which is the "use the default" sentinel. So
+       SetParam(p, 1e18) silently meant "use the default" where the caller plainly
+       meant an error. Reject what the integer domain cannot represent. The
+       sentinel itself stays reachable: asking for the default IS a legal request
+       (issue #162). */
+    private static int ToIntegerOperand(OptInputInfo parameter, double value)
+    {
+        if (double.IsNaN(value) || value < int.MinValue || value > int.MaxValue)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value),
+                $"{parameter.ParamName}: {value} is outside the range an integer parameter can hold");
+        }
+
+        return (int)value;
     }
 
     private OutputInfo CheckOutput(int index, OutputKind expected)
@@ -395,34 +409,51 @@ public sealed class FunctionCall
     /// <returns>The lookback, or <c>-1</c> when a bound parameter is out of range.</returns>
     public int Lookback() => _info.Lookback(_core, this);
 
-    private void RequireBound()
+    /* Returns Success when every input and output is bound, or the code C's
+       TA_CallFunc returns for the same condition. Split out of RequireBound so
+       TryInvoke can honour its name: it advertises "failure as a code rather than
+       an exception" and then threw from the binding it performs, which would take
+       the C# server's process down on the first reject vector. */
+    private RetCode BoundState() => BoundState(out _);
+
+    /* `which` names the offending slot so Invoke can keep the diagnostic it used
+       to throw ("SMA: input 0 (inReal) was not set"). TryInvoke discards it and
+       returns the bare code. Reporting only the code from both would have made a
+       mis-bound multi-input call materially harder to place -- the same class of
+       problem the server hardening exists to fix. */
+    private RetCode BoundState(out string which)
     {
+        which = "";
         for (int i = 0; i < _info.Inputs.Length; i++)
         {
-            InputInfo info = _info.Inputs[i];
-            bool bound = info.Kind switch
+            InputInfo probe = _info.Inputs[i];
+            bool ok = probe.Kind switch
             {
                 InputKind.Real => _series[i] is not null,
                 InputKind.Integer => _intSeries[i] is not null,
-                _ => AllPriceComponentsBound(i, info),
+                _ => AllPriceComponentsBound(i, probe),
             };
 
-            if (!bound)
+            if (!ok)
             {
-                throw new ArgumentException($"{_info.Name}: input {i} ({info.ParamName}) was not set");
+                which = $"input {i} ({probe.ParamName})";
+                return RetCode.InputNotAllInitialize;
             }
         }
 
         for (int i = 0; i < _info.Outputs.Length; i++)
         {
-            OutputInfo info = _info.Outputs[i];
-            bool bound = info.Kind == OutputKind.Real ? _realOuts[i] is not null : _intOuts[i] is not null;
-            if (!bound)
+            OutputInfo probe = _info.Outputs[i];
+            if (probe.Kind == OutputKind.Real ? _realOuts[i] is null : _intOuts[i] is null)
             {
-                throw new ArgumentException($"{_info.Name}: output {i} ({info.ParamName}) was not set");
+                which = $"output {i} ({probe.ParamName})";
+                return RetCode.OutputNotAllInitialize;
             }
         }
+
+        return RetCode.Success;
     }
+
 
     private bool AllPriceComponentsBound(int slot, InputInfo info)
     {
@@ -452,6 +483,12 @@ public sealed class FunctionCall
     /// reports.</exception>
     public OutRange Invoke(int startIdx, int endIdx)
     {
+        RetCode bound = BoundState(out string which);
+        if (bound != RetCode.Success)
+        {
+            throw new ArgumentException($"{_info.Name}: {which} was not set");
+        }
+
         RetCode rc = TryInvoke(startIdx, endIdx, out OutRange range);
         if (rc != RetCode.Success)
         {
@@ -466,18 +503,26 @@ public sealed class FunctionCall
     /// <param name="startIdx">First input bar to compute.</param>
     /// <param name="endIdx">Last input bar to compute.</param>
     /// <param name="range">Where the output starts and how much there is.</param>
-    /// <returns>The function's return code.</returns>
-    /// <exception cref="ArgumentException">A required input or output was never bound.</exception>
+    /// <returns>The function's return code. An unbound input or output is reported
+    /// as <see cref="RetCode.InputNotAllInitialize"/> /
+    /// <see cref="RetCode.OutputNotAllInitialize"/>, the codes C returns for the
+    /// same condition — this method does not throw.</returns>
     public RetCode TryInvoke(int startIdx, int endIdx, out OutRange range)
     {
-        RequireBound();
+        RetCode bound = BoundState();
+        if (bound != RetCode.Success)
+        {
+            range = new OutRange(0, 0);
+            return bound;
+        }
+
         CallOutcome outcome = _info.Invoke(_core, this, startIdx, endIdx);
         range = new OutRange(outcome.BegIdx, outcome.Count);
         return outcome.Code;
     }
 
     /* Accessors used by the generated thunks. Every one is reached only after
-       RequireBound(), so the null-forgiving operator is discharged there. */
+       BoundState(), so the null-forgiving operator is discharged there. */
 
     internal double[] Series(int slot) => _series[slot]!;
 

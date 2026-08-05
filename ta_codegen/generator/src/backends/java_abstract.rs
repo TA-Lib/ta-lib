@@ -207,8 +207,25 @@ fn emit_handlers(xml_len: usize, xml_checksum: u64) -> String {
         StringBuilder b = new StringBuilder("\"");
         for (int i = 0; i < v.length(); i++) {
             char c = v.charAt(i);
-            if (c == '"' || c == '\\') b.append('\\');
-            b.append(c);
+            /* The full JSON string grammar, not just quote and backslash. The
+               transport is NEWLINE-FRAMED (codegen_pipe reads to the next '\n'),
+               so an unescaped control character in an error message would split
+               one reply into two lines and hand the second to the NEXT request --
+               desynchronising the stream permanently, which is worse than the
+               crash the surrounding try/catch replaces. */
+            switch (c) {
+                case '"'  -> b.append("\\\"");
+                case '\\' -> b.append("\\\\");
+                case '\b' -> b.append("\\b");
+                case '\f' -> b.append("\\f");
+                case '\n' -> b.append("\\n");
+                case '\r' -> b.append("\\r");
+                case '\t' -> b.append("\\t");
+                default -> {
+                    if (c < 0x20) b.append(String.format("\\u%04x", (int) c));
+                    else b.append(c);
+                }
+            }
         }
         b.append('"');
         return b.toString();

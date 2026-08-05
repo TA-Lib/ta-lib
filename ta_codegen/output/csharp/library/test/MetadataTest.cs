@@ -411,14 +411,50 @@ public static class MetadataTest
         CheckThrows<ArgumentException>(() => stoch.CreateCall().SetInput(0, Close), "a real series on a price input");
         CheckThrows<ArgumentException>(
             () => sma.CreateCall().SetPriceInput(0, PriceComponents.High, High), "a price component on a real input");
-        CheckThrows<ArgumentException>(
-            () => stoch.CreateCall().SetPriceInput(0, PriceComponents.Volume, Volume),
-            "a component the function does not consume");
+        /* An unconsumed component is ACCEPTED and ignored, matching C's
+           SET_PARAM_INFO and Java's ParamHolder. This asserted the opposite until
+           issue #164: no function in the catalogue consumes OpenInterest, so the
+           six-argument bundle call -- the natural way to drive the binder
+           generically -- threw for every price function here while working
+           against C and Java, and the two in-process suites encoded opposite
+           contracts. Java's MetadataTest binds all six to every price function;
+           this now agrees with it. */
+        Check(stoch.CreateCall().SetPriceInput(0, PriceComponents.Volume, Volume) is not null,
+            "a component the function does not consume is accepted and ignored");
+        Check(stoch.CreateCall().SetPriceInput(0, open: Open, high: High, low: Low,
+                  close: Close, volume: Volume, openInterest: OpenInterest) is not null,
+            "and a full OHLCV bundle binds against a function that consumes three of it");
         CheckThrows<ArgumentException>(() => doji.CreateCall().SetOutput(0, buf), "a real buffer on an integer output");
         CheckThrows<ArgumentException>(
             () => sma.CreateCall().SetOutput(0, buf).Invoke(0, N - 1), "an unbound input");
         CheckThrows<ArgumentException>(
             () => sma.CreateCall().SetInput(0, Close).Invoke(0, N - 1), "an unbound output");
+
+        /* TryInvoke advertises "failure as a code rather than an exception" and
+           then threw from the binding it performs. It now reports the codes C
+           returns for the same condition. This is load-bearing rather than
+           cosmetic: the C# JSON-RPC server has no exception handling, so the first
+           reject vector driven through the binder would terminate the process. */
+        RetCode noInput = sma.CreateCall().SetOutput(0, new double[N]).TryInvoke(0, N - 1, out OutRange rNoIn);
+        Check(noInput == RetCode.InputNotAllInitialize && rNoIn.Count == 0,
+            $"TryInvoke reports an unbound input as a code ({noInput}), and does not throw");
+        RetCode noOutput = sma.CreateCall().SetInput(0, Close).TryInvoke(0, N - 1, out OutRange rNoOut);
+        Check(noOutput == RetCode.OutputNotAllInitialize && rNoOut.Count == 0,
+            $"TryInvoke reports an unbound output as a code ({noOutput})");
+
+        /* `(int)value` on an out-of-range double is unspecified in C# and on x86
+           lands on int.MinValue -- the "use the default" sentinel. So an absurd
+           magnitude silently meant "use the default" where the caller meant an
+           error. The sentinel itself stays reachable: asking for the default is a
+           legal request (issue #162). */
+        OptInputInfo smaPeriod = sma.OptInputs[0];
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => sma.CreateCall().SetParam(smaPeriod, 1e18),
+            "SetParam rejects a magnitude no integer parameter can hold");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => sma.CreateCall().SetParam(smaPeriod, double.NaN), "SetParam rejects NaN");
+        Check(sma.CreateCall().SetParam(smaPeriod, int.MinValue) is not null,
+            "but the integer default sentinel is still a legal request");
         CheckThrows<ArgumentException>(
             () => stoch.CreateCall().SetPriceInput(0, high: High, low: Low).Invoke(0, N - 1),
             "a price bundle missing a required component");
@@ -470,14 +506,19 @@ public static class MetadataTest
                 {
                     if (useNamedArgs)
                     {
+                        /* All six unconditionally, exactly as Java's sweep does
+                           (MetadataTest.java's bind()). That is what makes the
+                           bitwise comparison below the proof of the IGNORE half of
+                           accept-and-ignore: if an unconsumed component ever
+                           reached the computation, these outputs would stop
+                           matching the typed call, which is handed only the
+                           components the function declares. Filtering through
+                           Requires() here — as this did — proves only that the
+                           binder does not throw. */
                         call.SetPriceInput(
                             i,
-                            open: info.Requires(PriceComponents.Open) ? Open : null,
-                            high: info.Requires(PriceComponents.High) ? High : null,
-                            low: info.Requires(PriceComponents.Low) ? Low : null,
-                            close: info.Requires(PriceComponents.Close) ? Close : null,
-                            volume: info.Requires(PriceComponents.Volume) ? Volume : null,
-                            openInterest: info.Requires(PriceComponents.OpenInterest) ? OpenInterest : null);
+                            open: Open, high: High, low: Low,
+                            close: Close, volume: Volume, openInterest: OpenInterest);
                     }
                     else
                     {

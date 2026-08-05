@@ -51,6 +51,15 @@ public enum RetCode
     BadParam = 2,
     /// <summary>An internal allocation failed (<c>TA_ALLOC_ERR</c> = 3).</summary>
     AllocErr = 3,
+    /// <summary>A <see cref="TALib.Metadata.FunctionCall"/> was invoked with an
+    /// input left unbound (<c>TA_INPUT_NOT_ALL_INITIALIZE</c> = 10). Reachable only
+    /// from the dynamic binder — the typed API takes its inputs as
+    /// arguments.</summary>
+    InputNotAllInitialize = 10,
+    /// <summary>A <see cref="TALib.Metadata.FunctionCall"/> was invoked with an
+    /// output left unbound (<c>TA_OUTPUT_NOT_ALL_INITIALIZE</c> = 11). Reachable
+    /// only from the dynamic binder.</summary>
+    OutputNotAllInitialize = 11,
     /// <summary><c>startIdx</c> is negative (<c>TA_OUT_OF_RANGE_START_INDEX</c>
     /// = 12).</summary>
     OutOfRangeStartIndex = 12,

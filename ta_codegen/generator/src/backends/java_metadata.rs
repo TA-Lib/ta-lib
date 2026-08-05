@@ -99,17 +99,13 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, lib_src: &P
     let rows = rows(funcs, enums);
 
     // ParamHolder binds a choice list through `MAType.values()[value]`, i.e. it
-    // treats the declared VALUE as an enum ordinal. That is correct only while
-    // every choice list is dense from zero, which enums.yaml happens to make true
-    // and nothing enforced. C# guards the equivalent assumption; Java did not, so
-    // a list with a gap would have silently bound the wrong member (issue #164).
-    // Fail the build instead, where the fix is obvious.
-    // The real assumption is stronger than density: the binder does
-    // `MAType.values()[value]` and range-checks against `MAType.values().length`,
-    // so a list that is dense but a SUBSET of MAType would still let
-    // setOptInput(idx, 7) bind a member the list does not declare. Assert the
-    // whole invariant — same length, same members, same order — and that the
-    // declared default is one of them.
+    // treats the declared VALUE as an enum ordinal, and range-checks against
+    // `MAType.values().length`. So the assumption is not merely "dense from zero"
+    // — a dense SUBSET of MAType would still let setOptInput(idx, 7) bind a member
+    // the list never declared. Assert the whole invariant (same length, same
+    // members, same order, and a default among its own choices) and fail the build
+    // where the fix is obvious. C# guards the equivalent assumption; Java did not,
+    // so a list with a gap silently bound the wrong member (issue #164).
     let matype: Vec<&str> = enums
         .get("MAType")
         .map(|e| e.variants.iter().map(|v| v.short_name.as_str()).collect())
