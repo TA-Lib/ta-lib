@@ -13335,12 +13335,24 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             if fname.is_empty() {
                 return "{\"error\":\"Missing funcName\"}".to_string();
             }
-            let rerouted = format!("TA_{}", fname);
-            dispatch(core, ref_data, &rerouted, params)
+            // Two callers, two contracts. test_abstract.c drives the BINDER and
+            // wants values back; --xlang-hash drives the same RPC as its seed
+            // transport and wants the per-function handler's fuzz-generated
+            // inputs and out_hash, which is a statement about the FUNCTION, not
+            // about a binder. Route by what the request carries.
+            if params["gen_present"].as_i64().unwrap_or(0) != 0
+                || params["want_hash"].as_i64().unwrap_or(0) != 0
+            {
+                let rerouted = format!("TA_{}", fname);
+                dispatch(core, ref_data, &rerouted, params)
+            } else {
+                let _ = ref_data;
+                abs_call(core, params)
+            }
         }
         "abstract_get_lookback" => {
             let fname = params["funcName"].as_str().unwrap_or("");
-            match abstract_lookback(core, fname, params) {
+            match abs_lookback(core, params) {
                 Some(lb) => format!("{{\"lookback\":{}}}", lb),
                 None => format!("{{\"error\":\"Unknown function: {}\"}}", fname),
             }
@@ -13370,638 +13382,174 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
     }
 }
 
-fn abstract_lookback(core: &Core, func_name: &str, params: &Value) -> Option<usize> {
-    match func_name {
-        "ACCBANDS" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
-            Some(core.accbands_lookback(optInTimePeriod))
-        }
-        "ACOS" => {
-            Some(core.acos_lookback())
-        }
-        "AD" => {
-            Some(core.ad_lookback())
-        }
-        "ADD" => {
-            Some(core.add_lookback())
-        }
-        "ADOSC" => {
-            let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(3) as i32;
-            let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(10) as i32;
-            Some(core.adosc_lookback(optInFastPeriod, optInSlowPeriod))
-        }
-        "ADX" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.adx_lookback(optInTimePeriod))
-        }
-        "ADXR" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.adxr_lookback(optInTimePeriod))
-        }
-        "APO" => {
-            let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
-            let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
-            Some(core.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType))
-        }
-        "AROON" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.aroon_lookback(optInTimePeriod))
-        }
-        "AROONOSC" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.aroonosc_lookback(optInTimePeriod))
-        }
-        "ASIN" => {
-            Some(core.asin_lookback())
-        }
-        "ATAN" => {
-            Some(core.atan_lookback())
-        }
-        "ATR" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.atr_lookback(optInTimePeriod))
-        }
-        "AVGDEV" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.avgdev_lookback(optInTimePeriod))
-        }
-        "AVGPRICE" => {
-            Some(core.avgprice_lookback())
-        }
-        "BBANDS" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
-            let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0) as f64;
-            let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0) as f64;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
-            Some(core.bbands_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType))
-        }
-        "BETA" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
-            Some(core.beta_lookback(optInTimePeriod))
-        }
-        "BOP" => {
-            Some(core.bop_lookback())
-        }
-        "CCI" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.cci_lookback(optInTimePeriod))
-        }
-        "CDL2CROWS" => {
-            Some(core.cdl2crows_lookback())
-        }
-        "CDL3BLACKCROWS" => {
-            Some(core.cdl3blackcrows_lookback())
-        }
-        "CDL3INSIDE" => {
-            Some(core.cdl3inside_lookback())
-        }
-        "CDL3LINESTRIKE" => {
-            Some(core.cdl3linestrike_lookback())
-        }
-        "CDL3OUTSIDE" => {
-            Some(core.cdl3outside_lookback())
-        }
-        "CDL3STARSINSOUTH" => {
-            Some(core.cdl3starsinsouth_lookback())
-        }
-        "CDL3WHITESOLDIERS" => {
-            Some(core.cdl3whitesoldiers_lookback())
-        }
-        "CDLABANDONEDBABY" => {
-            let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3) as f64;
-            Some(core.cdlabandonedbaby_lookback(optInPenetration))
-        }
-        "CDLADVANCEBLOCK" => {
-            Some(core.cdladvanceblock_lookback())
-        }
-        "CDLBELTHOLD" => {
-            Some(core.cdlbelthold_lookback())
-        }
-        "CDLBREAKAWAY" => {
-            Some(core.cdlbreakaway_lookback())
-        }
-        "CDLCLOSINGMARUBOZU" => {
-            Some(core.cdlclosingmarubozu_lookback())
-        }
-        "CDLCONCEALBABYSWALL" => {
-            Some(core.cdlconcealbabyswall_lookback())
-        }
-        "CDLCOUNTERATTACK" => {
-            Some(core.cdlcounterattack_lookback())
-        }
-        "CDLDARKCLOUDCOVER" => {
-            let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.5) as f64;
-            Some(core.cdldarkcloudcover_lookback(optInPenetration))
-        }
-        "CDLDOJI" => {
-            Some(core.cdldoji_lookback())
-        }
-        "CDLDOJISTAR" => {
-            Some(core.cdldojistar_lookback())
-        }
-        "CDLDRAGONFLYDOJI" => {
-            Some(core.cdldragonflydoji_lookback())
-        }
-        "CDLENGULFING" => {
-            Some(core.cdlengulfing_lookback())
-        }
-        "CDLEVENINGDOJISTAR" => {
-            let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3) as f64;
-            Some(core.cdleveningdojistar_lookback(optInPenetration))
-        }
-        "CDLEVENINGSTAR" => {
-            let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3) as f64;
-            Some(core.cdleveningstar_lookback(optInPenetration))
-        }
-        "CDLGAPSIDESIDEWHITE" => {
-            Some(core.cdlgapsidesidewhite_lookback())
-        }
-        "CDLGRAVESTONEDOJI" => {
-            Some(core.cdlgravestonedoji_lookback())
-        }
-        "CDLHAMMER" => {
-            Some(core.cdlhammer_lookback())
-        }
-        "CDLHANGINGMAN" => {
-            Some(core.cdlhangingman_lookback())
-        }
-        "CDLHARAMI" => {
-            Some(core.cdlharami_lookback())
-        }
-        "CDLHARAMICROSS" => {
-            Some(core.cdlharamicross_lookback())
-        }
-        "CDLHIGHWAVE" => {
-            Some(core.cdlhighwave_lookback())
-        }
-        "CDLHIKKAKE" => {
-            Some(core.cdlhikkake_lookback())
-        }
-        "CDLHIKKAKEMOD" => {
-            Some(core.cdlhikkakemod_lookback())
-        }
-        "CDLHOMINGPIGEON" => {
-            Some(core.cdlhomingpigeon_lookback())
-        }
-        "CDLIDENTICAL3CROWS" => {
-            Some(core.cdlidentical3crows_lookback())
-        }
-        "CDLINNECK" => {
-            Some(core.cdlinneck_lookback())
-        }
-        "CDLINVERTEDHAMMER" => {
-            Some(core.cdlinvertedhammer_lookback())
-        }
-        "CDLKICKING" => {
-            Some(core.cdlkicking_lookback())
-        }
-        "CDLKICKINGBYLENGTH" => {
-            Some(core.cdlkickingbylength_lookback())
-        }
-        "CDLLADDERBOTTOM" => {
-            Some(core.cdlladderbottom_lookback())
-        }
-        "CDLLONGLEGGEDDOJI" => {
-            Some(core.cdllongleggeddoji_lookback())
-        }
-        "CDLLONGLINE" => {
-            Some(core.cdllongline_lookback())
-        }
-        "CDLMARUBOZU" => {
-            Some(core.cdlmarubozu_lookback())
-        }
-        "CDLMATCHINGLOW" => {
-            Some(core.cdlmatchinglow_lookback())
-        }
-        "CDLMATHOLD" => {
-            let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.5) as f64;
-            Some(core.cdlmathold_lookback(optInPenetration))
-        }
-        "CDLMORNINGDOJISTAR" => {
-            let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3) as f64;
-            Some(core.cdlmorningdojistar_lookback(optInPenetration))
-        }
-        "CDLMORNINGSTAR" => {
-            let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3) as f64;
-            Some(core.cdlmorningstar_lookback(optInPenetration))
-        }
-        "CDLONNECK" => {
-            Some(core.cdlonneck_lookback())
-        }
-        "CDLPIERCING" => {
-            Some(core.cdlpiercing_lookback())
-        }
-        "CDLRICKSHAWMAN" => {
-            Some(core.cdlrickshawman_lookback())
-        }
-        "CDLRISEFALL3METHODS" => {
-            Some(core.cdlrisefall3methods_lookback())
-        }
-        "CDLSEPARATINGLINES" => {
-            Some(core.cdlseparatinglines_lookback())
-        }
-        "CDLSHOOTINGSTAR" => {
-            Some(core.cdlshootingstar_lookback())
-        }
-        "CDLSHORTLINE" => {
-            Some(core.cdlshortline_lookback())
-        }
-        "CDLSPINNINGTOP" => {
-            Some(core.cdlspinningtop_lookback())
-        }
-        "CDLSTALLEDPATTERN" => {
-            Some(core.cdlstalledpattern_lookback())
-        }
-        "CDLSTICKSANDWICH" => {
-            Some(core.cdlsticksandwich_lookback())
-        }
-        "CDLTAKURI" => {
-            Some(core.cdltakuri_lookback())
-        }
-        "CDLTASUKIGAP" => {
-            Some(core.cdltasukigap_lookback())
-        }
-        "CDLTHRUSTING" => {
-            Some(core.cdlthrusting_lookback())
-        }
-        "CDLTRISTAR" => {
-            Some(core.cdltristar_lookback())
-        }
-        "CDLUNIQUE3RIVER" => {
-            Some(core.cdlunique3river_lookback())
-        }
-        "CDLUPSIDEGAP2CROWS" => {
-            Some(core.cdlupsidegap2crows_lookback())
-        }
-        "CDLXSIDEGAP3METHODS" => {
-            Some(core.cdlxsidegap3methods_lookback())
-        }
-        "CEIL" => {
-            Some(core.ceil_lookback())
-        }
-        "CMF" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
-            Some(core.cmf_lookback(optInTimePeriod))
-        }
-        "CMO" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.cmo_lookback(optInTimePeriod))
-        }
-        "CMOU" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.cmou_lookback(optInTimePeriod))
-        }
-        "CORREL" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.correl_lookback(optInTimePeriod))
-        }
-        "COS" => {
-            Some(core.cos_lookback())
-        }
-        "COSH" => {
-            Some(core.cosh_lookback())
-        }
-        "DEMA" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.dema_lookback(optInTimePeriod))
-        }
-        "DIV" => {
-            Some(core.div_lookback())
-        }
-        "DX" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.dx_lookback(optInTimePeriod))
-        }
-        "EMA" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.ema_lookback(optInTimePeriod))
-        }
-        "EXP" => {
-            Some(core.exp_lookback())
-        }
-        "FLOOR" => {
-            Some(core.floor_lookback())
-        }
-        "HMA" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
-            Some(core.hma_lookback(optInTimePeriod))
-        }
-        "HT_DCPERIOD" => {
-            Some(core.ht_dcperiod_lookback())
-        }
-        "HT_DCPHASE" => {
-            Some(core.ht_dcphase_lookback())
-        }
-        "HT_PHASOR" => {
-            Some(core.ht_phasor_lookback())
-        }
-        "HT_SINE" => {
-            Some(core.ht_sine_lookback())
-        }
-        "HT_TRENDLINE" => {
-            Some(core.ht_trendline_lookback())
-        }
-        "HT_TRENDMODE" => {
-            Some(core.ht_trendmode_lookback())
-        }
-        "IMI" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.imi_lookback(optInTimePeriod))
-        }
-        "KAMA" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.kama_lookback(optInTimePeriod))
-        }
-        "LINEARREG" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.linearreg_lookback(optInTimePeriod))
-        }
-        "LINEARREG_ANGLE" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.linearreg_angle_lookback(optInTimePeriod))
-        }
-        "LINEARREG_INTERCEPT" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.linearreg_intercept_lookback(optInTimePeriod))
-        }
-        "LINEARREG_SLOPE" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.linearreg_slope_lookback(optInTimePeriod))
-        }
-        "LN" => {
-            Some(core.ln_lookback())
-        }
-        "LOG10" => {
-            Some(core.log10_lookback())
-        }
-        "MA" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
-            Some(core.ma_lookback(optInTimePeriod, optInMAType))
-        }
-        "MACD" => {
-            let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
-            let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInSignalPeriod = params["optInSignalPeriod"].as_i64().unwrap_or(9) as i32;
-            Some(core.macd_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod))
-        }
-        "MACDEXT" => {
-            let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
-            let optInFastMAType = params["optInFastMAType"].as_i64().unwrap_or(0) as i32;
-            let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInSlowMAType = params["optInSlowMAType"].as_i64().unwrap_or(0) as i32;
-            let optInSignalPeriod = params["optInSignalPeriod"].as_i64().unwrap_or(9) as i32;
-            let optInSignalMAType = params["optInSignalMAType"].as_i64().unwrap_or(0) as i32;
-            Some(core.macdext_lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType))
-        }
-        "MACDFIX" => {
-            let optInSignalPeriod = params["optInSignalPeriod"].as_i64().unwrap_or(9) as i32;
-            Some(core.macdfix_lookback(optInSignalPeriod))
-        }
-        "MAMA" => {
-            let optInFastLimit = params["optInFastLimit"].as_f64().unwrap_or(0.5) as f64;
-            let optInSlowLimit = params["optInSlowLimit"].as_f64().unwrap_or(0.05) as f64;
-            Some(core.mama_lookback(optInFastLimit, optInSlowLimit))
-        }
-        "MAVP" => {
-            let optInMinPeriod = params["optInMinPeriod"].as_i64().unwrap_or(2) as i32;
-            let optInMaxPeriod = params["optInMaxPeriod"].as_i64().unwrap_or(30) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
-            Some(core.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType))
-        }
-        "MAX" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.max_lookback(optInTimePeriod))
-        }
-        "MAXINDEX" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.maxindex_lookback(optInTimePeriod))
-        }
-        "MEDPRICE" => {
-            Some(core.medprice_lookback())
-        }
-        "MFI" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.mfi_lookback(optInTimePeriod))
-        }
-        "MIDPOINT" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.midpoint_lookback(optInTimePeriod))
-        }
-        "MIDPRICE" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.midprice_lookback(optInTimePeriod))
-        }
-        "MIN" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.min_lookback(optInTimePeriod))
-        }
-        "MININDEX" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.minindex_lookback(optInTimePeriod))
-        }
-        "MINMAX" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.minmax_lookback(optInTimePeriod))
-        }
-        "MINMAXINDEX" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.minmaxindex_lookback(optInTimePeriod))
-        }
-        "MINUS_DI" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.minus_di_lookback(optInTimePeriod))
-        }
-        "MINUS_DM" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.minus_dm_lookback(optInTimePeriod))
-        }
-        "MOM" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
-            Some(core.mom_lookback(optInTimePeriod))
-        }
-        "MULT" => {
-            Some(core.mult_lookback())
-        }
-        "NATR" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.natr_lookback(optInTimePeriod))
-        }
-        "NVI" => {
-            Some(core.nvi_lookback())
-        }
-        "OBV" => {
-            Some(core.obv_lookback())
-        }
-        "PLUS_DI" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.plus_di_lookback(optInTimePeriod))
-        }
-        "PLUS_DM" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.plus_dm_lookback(optInTimePeriod))
-        }
-        "PPO" => {
-            let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
-            let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
-            Some(core.ppo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType))
-        }
-        "PVI" => {
-            Some(core.pvi_lookback())
-        }
-        "PVO" => {
-            let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
-            let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
-            Some(core.pvo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType))
-        }
-        "ROC" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
-            Some(core.roc_lookback(optInTimePeriod))
-        }
-        "ROCP" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
-            Some(core.rocp_lookback(optInTimePeriod))
-        }
-        "ROCR" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
-            Some(core.rocr_lookback(optInTimePeriod))
-        }
-        "ROCR100" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
-            Some(core.rocr100_lookback(optInTimePeriod))
-        }
-        "RSI" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.rsi_lookback(optInTimePeriod))
-        }
-        "SAR" => {
-            let optInAcceleration = params["optInAcceleration"].as_f64().unwrap_or(0.02) as f64;
-            let optInMaximum = params["optInMaximum"].as_f64().unwrap_or(0.2) as f64;
-            Some(core.sar_lookback(optInAcceleration, optInMaximum))
-        }
-        "SAREXT" => {
-            let optInStartValue = params["optInStartValue"].as_f64().unwrap_or(0.0) as f64;
-            let optInOffsetOnReverse = params["optInOffsetOnReverse"].as_f64().unwrap_or(0.0) as f64;
-            let optInAccelerationInitLong = params["optInAccelerationInitLong"].as_f64().unwrap_or(0.02) as f64;
-            let optInAccelerationLong = params["optInAccelerationLong"].as_f64().unwrap_or(0.02) as f64;
-            let optInAccelerationMaxLong = params["optInAccelerationMaxLong"].as_f64().unwrap_or(0.2) as f64;
-            let optInAccelerationInitShort = params["optInAccelerationInitShort"].as_f64().unwrap_or(0.02) as f64;
-            let optInAccelerationShort = params["optInAccelerationShort"].as_f64().unwrap_or(0.02) as f64;
-            let optInAccelerationMaxShort = params["optInAccelerationMaxShort"].as_f64().unwrap_or(0.2) as f64;
-            Some(core.sarext_lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort))
-        }
-        "SIN" => {
-            Some(core.sin_lookback())
-        }
-        "SINH" => {
-            Some(core.sinh_lookback())
-        }
-        "SMA" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.sma_lookback(optInTimePeriod))
-        }
-        "SQRT" => {
-            Some(core.sqrt_lookback())
-        }
-        "STDDEV" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
-            let optInNbDev = params["optInNbDev"].as_f64().unwrap_or(1.0) as f64;
-            Some(core.stddev_lookback(optInTimePeriod, optInNbDev))
-        }
-        "STOCH" => {
-            let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
-            let optInSlowK_Period = params["optInSlowK_Period"].as_i64().unwrap_or(3) as i32;
-            let optInSlowK_MAType = params["optInSlowK_MAType"].as_i64().unwrap_or(0) as i32;
-            let optInSlowD_Period = params["optInSlowD_Period"].as_i64().unwrap_or(3) as i32;
-            let optInSlowD_MAType = params["optInSlowD_MAType"].as_i64().unwrap_or(0) as i32;
-            Some(core.stoch_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType))
-        }
-        "STOCHF" => {
-            let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
-            let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
-            let optInFastD_MAType = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
-            Some(core.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType))
-        }
-        "STOCHRSI" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
-            let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
-            let optInFastD_MAType = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
-            Some(core.stochrsi_lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType))
-        }
-        "SUB" => {
-            Some(core.sub_lookback())
-        }
-        "SUM" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.sum_lookback(optInTimePeriod))
-        }
-        "T3" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
-            let optInVFactor = params["optInVFactor"].as_f64().unwrap_or(0.7) as f64;
-            Some(core.t3_lookback(optInTimePeriod, optInVFactor))
-        }
-        "TAN" => {
-            Some(core.tan_lookback())
-        }
-        "TANH" => {
-            Some(core.tanh_lookback())
-        }
-        "TEMA" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.tema_lookback(optInTimePeriod))
-        }
-        "TRANGE" => {
-            Some(core.trange_lookback())
-        }
-        "TRIMA" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.trima_lookback(optInTimePeriod))
-        }
-        "TRIX" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.trix_lookback(optInTimePeriod))
-        }
-        "TSF" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.tsf_lookback(optInTimePeriod))
-        }
-        "TYPPRICE" => {
-            Some(core.typprice_lookback())
-        }
-        "ULTOSC" => {
-            let optInTimePeriod1 = params["optInTimePeriod1"].as_i64().unwrap_or(7) as i32;
-            let optInTimePeriod2 = params["optInTimePeriod2"].as_i64().unwrap_or(14) as i32;
-            let optInTimePeriod3 = params["optInTimePeriod3"].as_i64().unwrap_or(28) as i32;
-            Some(core.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3))
-        }
-        "VAR" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
-            let optInNbDev = params["optInNbDev"].as_f64().unwrap_or(1.0) as f64;
-            Some(core.var_lookback(optInTimePeriod, optInNbDev))
-        }
-        "VWMA" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.vwma_lookback(optInTimePeriod))
-        }
-        "WCLPRICE" => {
-            Some(core.wclprice_lookback())
-        }
-        "WILLR" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
-            Some(core.willr_lookback(optInTimePeriod))
-        }
-        "WMA" => {
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            Some(core.wma_lookback(optInTimePeriod))
-        }
-        _ => None,
-    }
+
+/// One input array. Delegates to `parse_f64_array` rather than reimplementing the
+/// number-array half: that function also decodes the lossless hex-of-IEEE-bits
+/// encoding (issue #115), which the per-function handlers accept and which the
+/// reroute this replaced therefore accepted too. Handling only decimals here would
+/// answer an empty slice for a hex payload, and an empty input slice reaches the
+/// guarded body's bounds assert and panics the process.
+fn abs_f64s(params: &Value, key: &str) -> Vec<f64> {
+    parse_f64_array(&params[key])
 }
 
+/// `None` for an absent component, so `set_price_input` sees exactly what the
+/// request carried — a component the function does not consume is accepted and
+/// ignored, as in C and the other binders.
+fn abs_opt(v: &[f64]) -> Option<&[f64]> {
+    if v.is_empty() { None } else { Some(v) }
+}
+
+/// Bind every declared parameter from the request and run the call, through the
+/// shipped binder. Answers the same shape the C server's ta_abstract path does.
+fn abs_call(core: &Core, params: &Value) -> String {
+    let fname = params["funcName"].as_str().unwrap_or("");
+    let Some(id) = abstract_api::get_func_handle(fname) else {
+        return format!("{{\"error\":\"Unknown function: {fname}\"}}");
+    };
+    let info = id.info();
+    // C answers TA_OUT_OF_RANGE_START_INDEX / _END_INDEX for these rather than
+    // clamping, and the driver compares retCodes.
+    let raw_start = params["startIdx"].as_i64().unwrap_or(0);
+    let raw_end = params["endIdx"].as_i64().unwrap_or(0);
+    if raw_start < 0 {
+        return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
+                       retcode_to_int(RetCode::OutOfRangeStartIndex));
+    }
+    if raw_end < 0 || raw_end < raw_start {
+        return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
+                       retcode_to_int(RetCode::OutOfRangeEndIndex));
+    }
+    let start = raw_start as usize;
+    let end = raw_end as usize;
+    let n = end - start + 1;
+
+    // Declared before the holder so they outlive the borrows it takes.
+    let po = abs_f64s(params, "inOpen");
+    let ph = abs_f64s(params, "inHigh");
+    let pl = abs_f64s(params, "inLow");
+    let pc = abs_f64s(params, "inClose");
+    let pv = abs_f64s(params, "inVolume");
+    let pi = abs_f64s(params, "inOpenInterest");
+
+    let generic_total = info.inputs.iter().filter(|i| i.kind != InputType::Price).count();
+    let mut reals: Vec<Vec<f64>> = Vec::new();
+    for k in 0..generic_total {
+        let key = if generic_total == 1 { "inReal".to_string() } else { format!("inReal{k}") };
+        reals.push(abs_f64s(params, &key));
+    }
+    // No shipped function declares an integer input; carried so the arm is total.
+    let ints: Vec<Vec<i32>> = (0..generic_total).map(|_| Vec::new()).collect();
+
+    let mut rbuf: Vec<Vec<f64>> = (0..info.outputs.len()).map(|_| vec![0.0; n]).collect();
+    let mut ibuf: Vec<Vec<i32>> = (0..info.outputs.len()).map(|_| vec![0; n]).collect();
+
+    let (rc, lb, beg, nb) = {
+        let mut h = id.new_call(core);
+        // The first bind failure is ANSWERED, not swallowed. A discarded Err
+        // leaves the parameter at its constructor sentinel, which every function
+        // maps to that parameter's documented default -- and the only vectors that
+        // drive this path bind the defaults, so a binder that REJECTED the bind
+        // would have produced byte-identical output and a green gate.
+        let mut bind_err: Option<RetCode> = None;
+        let mut note = |r: Result<&mut abstract_api::ParamHolder<'_>, RetCode>| {
+            if let Err(e) = r { if bind_err.is_none() { bind_err = Some(e); } }
+        };
+        let mut gi = 0usize;
+        for (slot, inp) in info.inputs.iter().enumerate() {
+            match inp.kind {
+                InputType::Price => {
+                    note(h.set_price_input(slot, abs_opt(&po), abs_opt(&ph), abs_opt(&pl),
+                                           abs_opt(&pc), abs_opt(&pv), abs_opt(&pi)));
+                }
+                InputType::Real => { note(h.set_input(slot, &reals[gi])); gi += 1; }
+                InputType::Integer => { note(h.set_int_input(slot, &ints[gi])); gi += 1; }
+            }
+        }
+        for (k, opt) in info.opt_inputs.iter().enumerate() {
+            match opt.domain {
+                OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+                    if let Some(v) = params[opt.param_name].as_f64() { note(h.set_opt(k, v)); }
+                }
+                _ => {
+                    if let Some(v) = params[opt.param_name].as_i64() {
+                        note(h.set_opt(k, v as i32));
+                    }
+                }
+            }
+        }
+        for (k, buf) in rbuf.iter_mut().enumerate() {
+            if info.outputs[k].kind == OutputType::Real { note(h.set_output(k, buf)); }
+        }
+        for (k, buf) in ibuf.iter_mut().enumerate() {
+            if info.outputs[k].kind == OutputType::Integer { note(h.set_int_output(k, buf)); }
+        }
+
+        let lb = h.lookback().map_or(-1i64, |v| v as i64);
+        if let Some(e) = bind_err {
+            (retcode_to_int(e), lb, 0usize, 0usize)
+        } else {
+            match h.call(start, end) {
+                Ok(r) => (0i32, lb, r.beg_idx, r.nb_element),
+                Err(e) => (retcode_to_int(e), lb, 0usize, 0usize),
+            }
+        }
+    };
+
+    // `binder:1` says this reply came from the SHIPPED ParamHolder. The transport
+    // split below is chosen by sniffing request flags, so without a positive
+    // marker, adding want_hash to the driver would silently move the whole sweep
+    // back onto the per-function handler with every assertion still passing --
+    // the same vacuity shape the choice-list floor exists to catch, pointing the
+    // other way. test_abstract.c requires it of the Rust server.
+    let mut out = format!(
+        "{{\"binder\":1,\"lookback\":{lb},\"retCode\":{rc},\"outBegIdx\":{beg},\"outNBElement\":{nb}"
+    );
+    // Real and integer outputs are numbered from INDEPENDENT counters, matching
+    // the driver: MINMAXINDEX has two integer outputs, and one shared key would
+    // make the second overwrite the first.
+    let mut ri = 0usize;
+    let mut ii = 0usize;
+    for (k, o) in info.outputs.iter().enumerate() {
+        let is_real = o.kind == OutputType::Real;
+        let key = if is_real {
+            let s = if ri == 0 { "outReal".to_string() } else { format!("outReal{ri}") };
+            ri += 1;
+            s
+        } else {
+            let s = if ii == 0 { "outInteger".to_string() } else { format!("outInteger{ii}") };
+            ii += 1;
+            s
+        };
+        out.push_str(&format!(",\"{key}\":"));
+        if is_real {
+            out.push_str(&json_f64_array(&rbuf[k][..nb]));
+        } else {
+            let items: Vec<String> = ibuf[k][..nb].iter().map(ToString::to_string).collect();
+            out.push_str(&format!("[{}]", items.join(",")));
+        }
+    }
+    out.push('}');
+    out
+}
+
+/// The lookback tier, through the same binder.
+fn abs_lookback(core: &Core, params: &Value) -> Option<i64> {
+    let fname = params["funcName"].as_str().unwrap_or("");
+    let id = abstract_api::get_func_handle(fname)?;
+    let mut h = id.new_call(core);
+    for (k, opt) in id.info().opt_inputs.iter().enumerate() {
+        match opt.domain {
+            OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+                if let Some(v) = params[opt.param_name].as_f64() { let _ = h.set_opt(k, v); }
+            }
+            _ => {
+                if let Some(v) = params[opt.param_name].as_i64() { let _ = h.set_opt(k, v as i32); }
+            }
+        }
+    }
+    Some(h.lookback().map_or(-1i64, |v| v as i64))
+}
 fn main() {
     let mut core = Core::new();
     let mut ref_data = RefData::new();

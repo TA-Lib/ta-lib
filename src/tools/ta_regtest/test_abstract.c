@@ -1130,6 +1130,24 @@ static ErrorNumber abstract_verify_server_call(
         return TA_ABSTRACT_SERVER_ERROR;
     }
 
+    /* The Rust server answers abstract_call two ways: through the SHIPPED
+     * abstract_api::ParamHolder, or -- when the request carries gen_present /
+     * want_hash, which is --xlang-hash's seed transport -- by rerouting to the
+     * per-function handler. That selector is a payload heuristic, and both
+     * replies carry the same fields, so nothing would notice if this sweep drifted
+     * onto the reroute and stopped exercising the binder at all. Requiring the
+     * marker makes the binder path positively observable instead of merely
+     * probable. The other three servers have a single implementation and cannot
+     * drift this way. */
+    if( g_abstractLang && strcmp(g_abstractLang, "rust") == 0
+        && abstract_json_get_int(g_abstractRespBuf, "binder") != 1 )
+    {
+        printf("  ABSTRACT ERROR [%s]: reply did not come from the shipped Rust binder "
+               "(no \"binder\":1) — the transport split has drifted and this sweep is "
+               "testing the per-function handler instead\n", funcName);
+        return TA_ABSTRACT_CALL_MISMATCH;
+    }
+
     /* Compare structural results */
     int srvRetCode = abstract_json_get_int(g_abstractRespBuf, "retCode");
     if( srvRetCode != (int)crefRetCode )

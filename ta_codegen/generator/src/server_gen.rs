@@ -3859,8 +3859,8 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // Abstract dynamic-dispatch handlers (abstract_call, abstract_get_lookback,
     // abstract_for_each_func) + TA_FunctionDescriptionXML. Completes the Rust mirror
     // of C's ta_abstract serve path so the full test_abstract() drives the Rust
-    // server (numeric output comparison, not just metadata). abstract_call reroutes
-    // through dispatch(); abstract_get_lookback uses the generated abstract_lookback().
+    // server (numeric output comparison, not just metadata). Both dynamic arms
+    // bind through the SHIPPED abstract_api::ParamHolder -- see RUST_ABSTRACT_BINDER.
     s.push_str(RUST_ABSTRACT_DYNAMIC_HANDLERS);
 
     // Unknown method
@@ -3872,48 +3872,10 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    }\n");
     s.push_str("}\n\n");
 
-    // abstract_lookback — generic lookback dispatcher used by the abstract_get_lookback
-    // RPC (funcName + opt params -> Core::<fn>_lookback). Opt-param parsing mirrors the
-    // per-function arm exactly (same defaults/types), so the lookback matches c-ref's
-    // TA_GetLookback for the same parameters. Returns None for an unknown funcName.
-    s.push_str("fn abstract_lookback(core: &Core, func_name: &str, params: &Value) -> Option<usize> {\n");
-    s.push_str("    match func_name {\n");
-    for func in funcs {
-        let fn_name = func.name.to_lowercase();
-        s.push_str(&format!("        \"{}\" => {{\n", func.name));
-        for opt in &func.optional_inputs {
-            let default_val = opt.default.unwrap_or(0.0);
-            if opt.param_type == ParamType::Real {
-                s.push_str(&format!(
-                    "            let {} = params[\"{}\"].as_f64().unwrap_or({}) as f64;\n",
-                    opt.name,
-                    opt.name,
-                    format_default_f64(default_val)
-                ));
-            } else {
-                #[allow(clippy::cast_possible_truncation)]
-                let default_i = default_val as i64;
-                s.push_str(&format!(
-                    "            let {} = params[\"{}\"].as_i64().unwrap_or({}) as i32;\n",
-                    opt.name, opt.name, default_i
-                ));
-            }
-        }
-        let lb_args: Vec<String> = func
-            .optional_inputs
-            .iter()
-            .map(|o| o.name.clone())
-            .collect();
-        s.push_str(&format!(
-            "            Some(core.{}_lookback({}))\n",
-            fn_name,
-            lb_args.join(", ")
-        ));
-        s.push_str("        }\n");
-    }
-    s.push_str("        _ => None,\n");
-    s.push_str("    }\n");
-    s.push_str("}\n\n");
+    // The dynamic tier binds through the SHIPPED abstract_api::ParamHolder, so
+    // test_abstract.c drives the surface that ships rather than a copy that only
+    // exists in this file (issue #164 — the same correction D1 made for Java).
+    s.push_str(RUST_ABSTRACT_BINDER);
 
     // Main function
     s.push_str("fn main() {\n");
@@ -4058,6 +4020,184 @@ const RUST_ABSTRACT_METADATA_HANDLERS: &str = r#"        "TA_GetFuncInfo" => {
         }
 "#;
 
+/// The Rust server's ta_abstract dynamic tier, bound through the SHIPPED
+/// `abstract_api::ParamHolder` rather than a server-local dispatch.
+///
+/// Before this, `abstract_call` rerouted to the per-function handler and
+/// `abstract_get_lookback` used a generated 168-arm match reading JSON — so
+/// `test_abstract.c` proved the Rust *metadata* and nothing about a shipped
+/// binder, because there wasn't one. Now the gate drives what ships, which is the
+/// same correction D1 made for Java (issue #164).
+const RUST_ABSTRACT_BINDER: &str = r#"
+/// One input array. Delegates to `parse_f64_array` rather than reimplementing the
+/// number-array half: that function also decodes the lossless hex-of-IEEE-bits
+/// encoding (issue #115), which the per-function handlers accept and which the
+/// reroute this replaced therefore accepted too. Handling only decimals here would
+/// answer an empty slice for a hex payload, and an empty input slice reaches the
+/// guarded body's bounds assert and panics the process.
+fn abs_f64s(params: &Value, key: &str) -> Vec<f64> {
+    parse_f64_array(&params[key])
+}
+
+/// `None` for an absent component, so `set_price_input` sees exactly what the
+/// request carried — a component the function does not consume is accepted and
+/// ignored, as in C and the other binders.
+fn abs_opt(v: &[f64]) -> Option<&[f64]> {
+    if v.is_empty() { None } else { Some(v) }
+}
+
+/// Bind every declared parameter from the request and run the call, through the
+/// shipped binder. Answers the same shape the C server's ta_abstract path does.
+fn abs_call(core: &Core, params: &Value) -> String {
+    let fname = params["funcName"].as_str().unwrap_or("");
+    let Some(id) = abstract_api::get_func_handle(fname) else {
+        return format!("{{\"error\":\"Unknown function: {fname}\"}}");
+    };
+    let info = id.info();
+    // C answers TA_OUT_OF_RANGE_START_INDEX / _END_INDEX for these rather than
+    // clamping, and the driver compares retCodes.
+    let raw_start = params["startIdx"].as_i64().unwrap_or(0);
+    let raw_end = params["endIdx"].as_i64().unwrap_or(0);
+    if raw_start < 0 {
+        return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
+                       retcode_to_int(RetCode::OutOfRangeStartIndex));
+    }
+    if raw_end < 0 || raw_end < raw_start {
+        return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
+                       retcode_to_int(RetCode::OutOfRangeEndIndex));
+    }
+    let start = raw_start as usize;
+    let end = raw_end as usize;
+    let n = end - start + 1;
+
+    // Declared before the holder so they outlive the borrows it takes.
+    let po = abs_f64s(params, "inOpen");
+    let ph = abs_f64s(params, "inHigh");
+    let pl = abs_f64s(params, "inLow");
+    let pc = abs_f64s(params, "inClose");
+    let pv = abs_f64s(params, "inVolume");
+    let pi = abs_f64s(params, "inOpenInterest");
+
+    let generic_total = info.inputs.iter().filter(|i| i.kind != InputType::Price).count();
+    let mut reals: Vec<Vec<f64>> = Vec::new();
+    for k in 0..generic_total {
+        let key = if generic_total == 1 { "inReal".to_string() } else { format!("inReal{k}") };
+        reals.push(abs_f64s(params, &key));
+    }
+    // No shipped function declares an integer input; carried so the arm is total.
+    let ints: Vec<Vec<i32>> = (0..generic_total).map(|_| Vec::new()).collect();
+
+    let mut rbuf: Vec<Vec<f64>> = (0..info.outputs.len()).map(|_| vec![0.0; n]).collect();
+    let mut ibuf: Vec<Vec<i32>> = (0..info.outputs.len()).map(|_| vec![0; n]).collect();
+
+    let (rc, lb, beg, nb) = {
+        let mut h = id.new_call(core);
+        // The first bind failure is ANSWERED, not swallowed. A discarded Err
+        // leaves the parameter at its constructor sentinel, which every function
+        // maps to that parameter's documented default -- and the only vectors that
+        // drive this path bind the defaults, so a binder that REJECTED the bind
+        // would have produced byte-identical output and a green gate.
+        let mut bind_err: Option<RetCode> = None;
+        let mut note = |r: Result<&mut abstract_api::ParamHolder<'_>, RetCode>| {
+            if let Err(e) = r { if bind_err.is_none() { bind_err = Some(e); } }
+        };
+        let mut gi = 0usize;
+        for (slot, inp) in info.inputs.iter().enumerate() {
+            match inp.kind {
+                InputType::Price => {
+                    note(h.set_price_input(slot, abs_opt(&po), abs_opt(&ph), abs_opt(&pl),
+                                           abs_opt(&pc), abs_opt(&pv), abs_opt(&pi)));
+                }
+                InputType::Real => { note(h.set_input(slot, &reals[gi])); gi += 1; }
+                InputType::Integer => { note(h.set_int_input(slot, &ints[gi])); gi += 1; }
+            }
+        }
+        for (k, opt) in info.opt_inputs.iter().enumerate() {
+            match opt.domain {
+                OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+                    if let Some(v) = params[opt.param_name].as_f64() { note(h.set_opt(k, v)); }
+                }
+                _ => {
+                    if let Some(v) = params[opt.param_name].as_i64() {
+                        note(h.set_opt(k, v as i32));
+                    }
+                }
+            }
+        }
+        for (k, buf) in rbuf.iter_mut().enumerate() {
+            if info.outputs[k].kind == OutputType::Real { note(h.set_output(k, buf)); }
+        }
+        for (k, buf) in ibuf.iter_mut().enumerate() {
+            if info.outputs[k].kind == OutputType::Integer { note(h.set_int_output(k, buf)); }
+        }
+
+        let lb = h.lookback().map_or(-1i64, |v| v as i64);
+        if let Some(e) = bind_err {
+            (retcode_to_int(e), lb, 0usize, 0usize)
+        } else {
+            match h.call(start, end) {
+                Ok(r) => (0i32, lb, r.beg_idx, r.nb_element),
+                Err(e) => (retcode_to_int(e), lb, 0usize, 0usize),
+            }
+        }
+    };
+
+    // `binder:1` says this reply came from the SHIPPED ParamHolder. The transport
+    // split below is chosen by sniffing request flags, so without a positive
+    // marker, adding want_hash to the driver would silently move the whole sweep
+    // back onto the per-function handler with every assertion still passing --
+    // the same vacuity shape the choice-list floor exists to catch, pointing the
+    // other way. test_abstract.c requires it of the Rust server.
+    let mut out = format!(
+        "{{\"binder\":1,\"lookback\":{lb},\"retCode\":{rc},\"outBegIdx\":{beg},\"outNBElement\":{nb}"
+    );
+    // Real and integer outputs are numbered from INDEPENDENT counters, matching
+    // the driver: MINMAXINDEX has two integer outputs, and one shared key would
+    // make the second overwrite the first.
+    let mut ri = 0usize;
+    let mut ii = 0usize;
+    for (k, o) in info.outputs.iter().enumerate() {
+        let is_real = o.kind == OutputType::Real;
+        let key = if is_real {
+            let s = if ri == 0 { "outReal".to_string() } else { format!("outReal{ri}") };
+            ri += 1;
+            s
+        } else {
+            let s = if ii == 0 { "outInteger".to_string() } else { format!("outInteger{ii}") };
+            ii += 1;
+            s
+        };
+        out.push_str(&format!(",\"{key}\":"));
+        if is_real {
+            out.push_str(&json_f64_array(&rbuf[k][..nb]));
+        } else {
+            let items: Vec<String> = ibuf[k][..nb].iter().map(ToString::to_string).collect();
+            out.push_str(&format!("[{}]", items.join(",")));
+        }
+    }
+    out.push('}');
+    out
+}
+
+/// The lookback tier, through the same binder.
+fn abs_lookback(core: &Core, params: &Value) -> Option<i64> {
+    let fname = params["funcName"].as_str().unwrap_or("");
+    let id = abstract_api::get_func_handle(fname)?;
+    let mut h = id.new_call(core);
+    for (k, opt) in id.info().opt_inputs.iter().enumerate() {
+        match opt.domain {
+            OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+                if let Some(v) = params[opt.param_name].as_f64() { let _ = h.set_opt(k, v); }
+            }
+            _ => {
+                if let Some(v) = params[opt.param_name].as_i64() { let _ = h.set_opt(k, v as i32); }
+            }
+        }
+    }
+    Some(h.lookback().map_or(-1i64, |v| v as i64))
+}
+"#;
+
 /// Rust server match arms for the abstract dynamic-dispatch RPCs. Mirrors C's
 /// `ta_abstract_serve.c` (`handle_abstract_call`, `handle_abstract_get_lookback`,
 /// `handle_abstract_for_each_func`) plus `TA_FunctionDescriptionXML`, so the same
@@ -4075,12 +4215,24 @@ const RUST_ABSTRACT_DYNAMIC_HANDLERS: &str = r#"        "abstract_call" => {
             if fname.is_empty() {
                 return "{\"error\":\"Missing funcName\"}".to_string();
             }
-            let rerouted = format!("TA_{}", fname);
-            dispatch(core, ref_data, &rerouted, params)
+            // Two callers, two contracts. test_abstract.c drives the BINDER and
+            // wants values back; --xlang-hash drives the same RPC as its seed
+            // transport and wants the per-function handler's fuzz-generated
+            // inputs and out_hash, which is a statement about the FUNCTION, not
+            // about a binder. Route by what the request carries.
+            if params["gen_present"].as_i64().unwrap_or(0) != 0
+                || params["want_hash"].as_i64().unwrap_or(0) != 0
+            {
+                let rerouted = format!("TA_{}", fname);
+                dispatch(core, ref_data, &rerouted, params)
+            } else {
+                let _ = ref_data;
+                abs_call(core, params)
+            }
         }
         "abstract_get_lookback" => {
             let fname = params["funcName"].as_str().unwrap_or("");
-            match abstract_lookback(core, fname, params) {
+            match abs_lookback(core, params) {
                 Some(lb) => format!("{{\"lookback\":{}}}", lb),
                 None => format!("{{\"error\":\"Unknown function: {}\"}}", fname),
             }
