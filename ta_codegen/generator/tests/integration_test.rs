@@ -236,8 +236,8 @@ fn test_rust_sma_from_c_produces_valid_output() {
         "Missing sma_lookback function"
     );
     assert!(
-        output.contains("fn sma_unguarded("),
-        "Missing sma_unguarded function"
+        !output.contains("_unguarded"),
+        "no unguarded variant may be emitted"
     );
     assert!(
         output.contains("RetCode::Success"),
@@ -459,16 +459,11 @@ fn test_rust_generates_generic_variants() {
         "Missing sma function"
     );
 
-    // Unguarded function (concrete f64, get_unchecked)
+    // The guarded fn renders its own body with safe [] indexing (SMA declares no
+    // _private to delegate to).
     assert!(
-        output.contains("pub fn sma_unguarded("),
-        "Missing sma_unguarded function"
-    );
-
-    // Guarded function should render inline body with safe [] indexing (not delegate)
-    assert!(
-        !output.contains("self.sma_unguarded("),
-        "Guarded fn should NOT delegate to sma_unguarded — it renders its own body"
+        !output.contains("_unguarded"),
+        "the unguarded variant must not be emitted"
     );
 
     // Should NOT contain old 4-variant patterns
@@ -491,15 +486,14 @@ fn test_rust_mult_generates_generic_variants() {
     let func = load_mult();
     let output = backends::rust_lang::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
 
-    // MULT should have all 4 generic variants regardless of optional inputs
-    // 2-variant system: guarded + unguarded only, concrete f64
+    // One batch entry point, concrete f64.
     assert!(
         output.contains("pub fn mult("),
         "Missing mult function"
     );
     assert!(
-        output.contains("pub fn mult_unguarded("),
-        "Missing mult_unguarded function"
+        !output.contains("_unguarded"),
+        "the unguarded variant must not be emitted"
     );
     // Old variants should be gone
     assert!(

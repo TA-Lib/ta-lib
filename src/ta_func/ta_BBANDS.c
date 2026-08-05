@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -346,7 +346,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       return TA_ALLOC_ERR;
    }
    /* Calculate the middle band moving average. */
-   retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
+   retCode = TA_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       *outNBElement= 0;
@@ -357,7 +357,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
    /* Remember where the moving average begins, to realign it below. */
    maBegIdx = (int)*outBegIdx;
    /* Calculate the Standard Deviation into tempBuffer2. */
-   retCode = TA_STDDEV_Unguarded((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
+   retCode = TA_STDDEV((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
    if( retCode != TA_SUCCESS )
    {
       *outNBElement= 0;
@@ -383,234 +383,6 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
    }
    memmove(outRealMiddleBand,&tempBuffer1[shiftIdx],*outNBElement * sizeof(double));
    /* Now do a tight loop to calculate the upper/lower band at the same time. */
-   if( optInNbDevUp == optInNbDevDn )
-   {
-      for( i = 0; i < (int)*outNBElement; i += 1 )
-      {
-         tempReal = tempBuffer2[i] * optInNbDevUp;
-         tempReal2 = outRealMiddleBand[i];
-         outRealUpperBand[i] = tempReal2 + tempReal;
-         outRealLowerBand[i] = tempReal2 - tempReal;
-      }
-   } else 
-   {
-      for( i = 0; i < (int)*outNBElement; i += 1 )
-      {
-         tempReal2 = outRealMiddleBand[i];
-         outRealUpperBand[i] = fma(tempBuffer2[i], optInNbDevUp, tempReal2);
-         outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
-      }
-   }
-   free(tempBuffer1);
-   free(tempBuffer2);
-   return TA_SUCCESS;
-}
-
-TA_FMA_MULTIVERSION
-TA_LIB_API TA_RetCode TA_BBANDS_Unguarded( int    startIdx,
-                                           int    endIdx,
-                                           const double inReal[],
-                                           int optInTimePeriod,
-                                           double optInNbDevUp,
-                                           double optInNbDevDn,
-                                           TA_MAType optInMAType,
-                                           int          *outBegIdx,
-                                           int          *outNBElement,
-                                           double        outRealUpperBand[],
-                                           double        outRealMiddleBand[],
-                                           double        outRealLowerBand[] )
-{
-   TA_RetCode retCode;
-   int i;
-   int maBegIdx;
-   int shiftIdx;
-   double tempReal;
-   double tempReal2;
-   double *tempBuffer1;
-   double *tempBuffer2;
-
-   if( optInMAType == TA_MAType_SMA )
-   {
-      if( inReal == outRealUpperBand )
-      {
-         tempBuffer1 = outRealMiddleBand;
-         tempBuffer2 = outRealLowerBand;
-      } else if( inReal == outRealLowerBand )
-      {
-         tempBuffer1 = outRealMiddleBand;
-         tempBuffer2 = outRealUpperBand;
-      } else if( inReal == outRealMiddleBand )
-      {
-         tempBuffer1 = outRealLowerBand;
-         tempBuffer2 = outRealUpperBand;
-      } else 
-      {
-         tempBuffer1 = outRealMiddleBand;
-         tempBuffer2 = outRealUpperBand;
-      }
-      if( tempBuffer1 == inReal || tempBuffer2 == inReal )
-      {
-         return TA_BAD_PARAM;
-      }
-      double maTotal;
-      double shift;
-      double varTotal1;
-      double varTotal2;
-      double meanValue1;
-      double variance;
-      double _invPeriod;
-      double _tempReal;
-      int _i;
-      int _j;
-      int _outIdx;
-      int _trailingIdx;
-      int _windowStart;
-      int _lookbackTotal;
-      int _barsSinceReseed;
-      _lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < _lookbackTotal )
-      {
-         startIdx = _lookbackTotal;
-      }
-      if( startIdx > endIdx )
-      {
-         *outBegIdx= 0;
-         *outNBElement= 0;
-         return TA_SUCCESS;
-      }
-      _invPeriod = 1.0 / (double)optInTimePeriod;
-      _trailingIdx = startIdx - _lookbackTotal;
-      shift = inReal[_trailingIdx];
-      maTotal = 0.0;
-      varTotal1 = 0.0;
-      varTotal2 = 0.0;
-      for( _j = _trailingIdx; _j < startIdx; _j += 1 )
-      {
-         maTotal += inReal[_j];
-         _tempReal = inReal[_j] - shift;
-         varTotal1 += _tempReal;
-         _tempReal *= _tempReal;
-         varTotal2 += _tempReal;
-      }
-      _i = startIdx;
-      _outIdx = 0;
-      _barsSinceReseed = 32 * optInTimePeriod;
-      do
-      {
-         maTotal += inReal[_i];
-         _tempReal = inReal[_i] - shift;
-         varTotal1 += _tempReal;
-         _tempReal *= _tempReal;
-         varTotal2 += _tempReal;
-         meanValue1 = varTotal1 * _invPeriod;
-         variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-         tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
-         maTotal -= inReal[_trailingIdx];
-         _tempReal = inReal[_trailingIdx] - shift;
-         varTotal1 -= _tempReal;
-         _tempReal *= _tempReal;
-         varTotal2 -= _tempReal;
-         _trailingIdx += 1;
-         _barsSinceReseed -= 1;
-         if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 )
-         {
-            _barsSinceReseed = 32 * optInTimePeriod;
-            _windowStart = _i - _lookbackTotal;
-            _tempReal = 0.0;
-            for( _j = _windowStart; _j <= _i; _j += 1 )
-            {
-               _tempReal += inReal[_j];
-            }
-            shift = _tempReal * _invPeriod;
-            varTotal1 = 0.0;
-            varTotal2 = 0.0;
-            for( _j = _windowStart; _j <= _i; _j += 1 )
-            {
-               _tempReal = inReal[_j] - shift;
-               varTotal1 += _tempReal;
-               _tempReal *= _tempReal;
-               varTotal2 += _tempReal;
-            }
-            meanValue1 = varTotal1 * _invPeriod;
-            variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-            _tempReal = inReal[_windowStart] - shift;
-            varTotal1 -= _tempReal;
-            _tempReal *= _tempReal;
-            varTotal2 -= _tempReal;
-         }
-         if( !TA_IS_ZERO_OR_NEG(variance) )
-         {
-            tempBuffer2[_outIdx] = sqrt(variance);
-         } else 
-         {
-            tempBuffer2[_outIdx] = 0.0;
-         }
-         _outIdx += 1;
-         _i += 1;
-      } while( _i <= endIdx );
-      *outNBElement= _outIdx;
-      *outBegIdx= startIdx;
-      if( tempBuffer1 != outRealMiddleBand )
-      {
-         memcpy(outRealMiddleBand,tempBuffer1,*outNBElement * sizeof(double));
-      }
-      if( optInNbDevUp == optInNbDevDn )
-      {
-         for( i = 0; i < (int)*outNBElement; i += 1 )
-         {
-            tempReal = tempBuffer2[i] * optInNbDevUp;
-            tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempReal;
-            outRealLowerBand[i] = tempReal2 - tempReal;
-         }
-      } else 
-      {
-         for( i = 0; i < (int)*outNBElement; i += 1 )
-         {
-            tempReal = tempBuffer2[i];
-            tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = fma(tempReal, optInNbDevUp, tempReal2);
-            outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
-         }
-      }
-      return TA_SUCCESS;
-   }
-   tempBuffer1 = malloc((endIdx - startIdx + 1) * sizeof(double));
-   if( !tempBuffer1 )
-   {
-      return TA_ALLOC_ERR;
-   }
-   tempBuffer2 = malloc((endIdx - startIdx + 1) * sizeof(double));
-   if( !tempBuffer2 )
-   {
-      free(tempBuffer1);
-      return TA_ALLOC_ERR;
-   }
-   retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
-   if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
-   {
-      *outNBElement= 0;
-      free(tempBuffer1);
-      free(tempBuffer2);
-      return retCode;
-   }
-   maBegIdx = (int)*outBegIdx;
-   retCode = TA_STDDEV_Unguarded((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
-   if( retCode != TA_SUCCESS )
-   {
-      *outNBElement= 0;
-      free(tempBuffer1);
-      free(tempBuffer2);
-      return retCode;
-   }
-   if( (int)*outBegIdx > maBegIdx )
-   {
-      shiftIdx = (int)*outBegIdx - maBegIdx;
-   } else 
-   {
-      shiftIdx = 0;
-   }
-   memmove(outRealMiddleBand,&tempBuffer1[shiftIdx],*outNBElement * sizeof(double));
    if( optInNbDevUp == optInNbDevDn )
    {
       for( i = 0; i < (int)*outNBElement; i += 1 )
@@ -844,7 +616,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       free(tempBuffer1);
       return TA_ALLOC_ERR;
    }
-   retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
+   retCode = TA_S_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       *outNBElement= 0;
@@ -853,235 +625,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       return retCode;
    }
    maBegIdx = (int)*outBegIdx;
-   retCode = TA_S_STDDEV_Unguarded((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
-   if( retCode != TA_SUCCESS )
-   {
-      *outNBElement= 0;
-      free(tempBuffer1);
-      free(tempBuffer2);
-      return retCode;
-   }
-   if( (int)*outBegIdx > maBegIdx )
-   {
-      shiftIdx = (int)*outBegIdx - maBegIdx;
-   } else 
-   {
-      shiftIdx = 0;
-   }
-   memmove(outRealMiddleBand,&tempBuffer1[shiftIdx],*outNBElement * sizeof(double));
-   if( optInNbDevUp == optInNbDevDn )
-   {
-      for( i = 0; i < (int)*outNBElement; i += 1 )
-      {
-         tempReal = tempBuffer2[i] * optInNbDevUp;
-         tempReal2 = outRealMiddleBand[i];
-         outRealUpperBand[i] = tempReal2 + tempReal;
-         outRealLowerBand[i] = tempReal2 - tempReal;
-      }
-   } else 
-   {
-      for( i = 0; i < (int)*outNBElement; i += 1 )
-      {
-         tempReal2 = outRealMiddleBand[i];
-         outRealUpperBand[i] = fma(tempBuffer2[i], optInNbDevUp, tempReal2);
-         outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
-      }
-   }
-   free(tempBuffer1);
-   free(tempBuffer2);
-   return TA_SUCCESS;
-}
-
-TA_FMA_MULTIVERSION
-TA_RetCode TA_S_BBANDS_Unguarded( int    startIdx,
-                                  int    endIdx,
-                                  const float inReal[],
-                                  int optInTimePeriod,
-                                  double optInNbDevUp,
-                                  double optInNbDevDn,
-                                  TA_MAType optInMAType,
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  double        outRealUpperBand[],
-                                  double        outRealMiddleBand[],
-                                  double        outRealLowerBand[] )
-{
-   TA_RetCode retCode;
-   int i;
-   int maBegIdx;
-   int shiftIdx;
-   double tempReal;
-   double tempReal2;
-   double *tempBuffer1;
-   double *tempBuffer2;
-
-   if( optInMAType == TA_MAType_SMA )
-   {
-      if( 0 )
-      {
-         tempBuffer1 = outRealMiddleBand;
-         tempBuffer2 = outRealLowerBand;
-      } else if( 0 )
-      {
-         tempBuffer1 = outRealMiddleBand;
-         tempBuffer2 = outRealUpperBand;
-      } else if( 0 )
-      {
-         tempBuffer1 = outRealLowerBand;
-         tempBuffer2 = outRealUpperBand;
-      } else 
-      {
-         tempBuffer1 = outRealMiddleBand;
-         tempBuffer2 = outRealUpperBand;
-      }
-      if( 0 || 0 )
-      {
-         return TA_BAD_PARAM;
-      }
-      double maTotal;
-      double shift;
-      double varTotal1;
-      double varTotal2;
-      double meanValue1;
-      double variance;
-      double _invPeriod;
-      double _tempReal;
-      int _i;
-      int _j;
-      int _outIdx;
-      int _trailingIdx;
-      int _windowStart;
-      int _lookbackTotal;
-      int _barsSinceReseed;
-      _lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < _lookbackTotal )
-      {
-         startIdx = _lookbackTotal;
-      }
-      if( startIdx > endIdx )
-      {
-         *outBegIdx= 0;
-         *outNBElement= 0;
-         return TA_SUCCESS;
-      }
-      _invPeriod = 1.0 / (double)optInTimePeriod;
-      _trailingIdx = startIdx - _lookbackTotal;
-      shift = (double)inReal[_trailingIdx];
-      maTotal = 0.0;
-      varTotal1 = 0.0;
-      varTotal2 = 0.0;
-      for( _j = _trailingIdx; _j < startIdx; _j += 1 )
-      {
-         maTotal += (double)inReal[_j];
-         _tempReal = (double)inReal[_j] - shift;
-         varTotal1 += _tempReal;
-         _tempReal *= _tempReal;
-         varTotal2 += _tempReal;
-      }
-      _i = startIdx;
-      _outIdx = 0;
-      _barsSinceReseed = 32 * optInTimePeriod;
-      do
-      {
-         maTotal += (double)inReal[_i];
-         _tempReal = (double)inReal[_i] - shift;
-         varTotal1 += _tempReal;
-         _tempReal *= _tempReal;
-         varTotal2 += _tempReal;
-         meanValue1 = varTotal1 * _invPeriod;
-         variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-         tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
-         maTotal -= (double)inReal[_trailingIdx];
-         _tempReal = (double)inReal[_trailingIdx] - shift;
-         varTotal1 -= _tempReal;
-         _tempReal *= _tempReal;
-         varTotal2 -= _tempReal;
-         _trailingIdx += 1;
-         _barsSinceReseed -= 1;
-         if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 )
-         {
-            _barsSinceReseed = 32 * optInTimePeriod;
-            _windowStart = _i - _lookbackTotal;
-            _tempReal = 0.0;
-            for( _j = _windowStart; _j <= _i; _j += 1 )
-            {
-               _tempReal += (double)inReal[_j];
-            }
-            shift = _tempReal * _invPeriod;
-            varTotal1 = 0.0;
-            varTotal2 = 0.0;
-            for( _j = _windowStart; _j <= _i; _j += 1 )
-            {
-               _tempReal = (double)inReal[_j] - shift;
-               varTotal1 += _tempReal;
-               _tempReal *= _tempReal;
-               varTotal2 += _tempReal;
-            }
-            meanValue1 = varTotal1 * _invPeriod;
-            variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-            _tempReal = (double)inReal[_windowStart] - shift;
-            varTotal1 -= _tempReal;
-            _tempReal *= _tempReal;
-            varTotal2 -= _tempReal;
-         }
-         if( !TA_IS_ZERO_OR_NEG(variance) )
-         {
-            tempBuffer2[_outIdx] = sqrt(variance);
-         } else 
-         {
-            tempBuffer2[_outIdx] = 0.0;
-         }
-         _outIdx += 1;
-         _i += 1;
-      } while( _i <= endIdx );
-      *outNBElement= _outIdx;
-      *outBegIdx= startIdx;
-      if( tempBuffer1 != outRealMiddleBand )
-      {
-         memcpy(outRealMiddleBand,tempBuffer1,*outNBElement * sizeof(double));
-      }
-      if( optInNbDevUp == optInNbDevDn )
-      {
-         for( i = 0; i < (int)*outNBElement; i += 1 )
-         {
-            tempReal = tempBuffer2[i] * optInNbDevUp;
-            tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = tempReal2 + tempReal;
-            outRealLowerBand[i] = tempReal2 - tempReal;
-         }
-      } else 
-      {
-         for( i = 0; i < (int)*outNBElement; i += 1 )
-         {
-            tempReal = tempBuffer2[i];
-            tempReal2 = outRealMiddleBand[i];
-            outRealUpperBand[i] = fma(tempReal, optInNbDevUp, tempReal2);
-            outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
-         }
-      }
-      return TA_SUCCESS;
-   }
-   tempBuffer1 = malloc((endIdx - startIdx + 1) * sizeof(double));
-   if( !tempBuffer1 )
-   {
-      return TA_ALLOC_ERR;
-   }
-   tempBuffer2 = malloc((endIdx - startIdx + 1) * sizeof(double));
-   if( !tempBuffer2 )
-   {
-      free(tempBuffer1);
-      return TA_ALLOC_ERR;
-   }
-   retCode = TA_S_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,outBegIdx,outNBElement,tempBuffer1);
-   if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
-   {
-      *outNBElement= 0;
-      free(tempBuffer1);
-      free(tempBuffer2);
-      return retCode;
-   }
-   maBegIdx = (int)*outBegIdx;
-   retCode = TA_S_STDDEV_Unguarded((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
+   retCode = TA_S_STDDEV((int)*outBegIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,tempBuffer2);
    if( retCode != TA_SUCCESS )
    {
       *outNBElement= 0;
@@ -1272,7 +816,7 @@ TA_RetCode TA_BBANDS_OpenInternal( struct TA_BBANDS_Stream **stream, const doubl
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,&dummyBegIdx,&dummyNBElement,tempBuffer1);
+      retCode = TA_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,&dummyBegIdx,&dummyNBElement,tempBuffer1);
       if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
       {
          dummyNBElement = 0;
@@ -1296,7 +840,7 @@ TA_RetCode TA_BBANDS_OpenInternal( struct TA_BBANDS_Stream **stream, const doubl
             return subRc;
          }
       }
-      retCode = TA_STDDEV_Unguarded((int)dummyBegIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,tempBuffer2);
+      retCode = TA_STDDEV((int)dummyBegIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,tempBuffer2);
       if( retCode != TA_SUCCESS )
       {
          dummyNBElement = 0;
@@ -1472,7 +1016,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_OpenAndFill( TA_BBANDS_Stream **stream, const do
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,&dummyBegIdx,&dummyNBElement,tempBuffer1);
+      retCode = TA_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,&dummyBegIdx,&dummyNBElement,tempBuffer1);
       if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
       {
          dummyNBElement = 0;
@@ -1496,7 +1040,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_OpenAndFill( TA_BBANDS_Stream **stream, const do
             return subRc;
          }
       }
-      retCode = TA_STDDEV_Unguarded((int)dummyBegIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,tempBuffer2);
+      retCode = TA_STDDEV((int)dummyBegIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,tempBuffer2);
       if( retCode != TA_SUCCESS )
       {
          dummyNBElement = 0;

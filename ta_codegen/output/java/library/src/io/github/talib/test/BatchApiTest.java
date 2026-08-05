@@ -209,23 +209,26 @@ public class BatchApiTest {
             "aliased output arrays -> IllegalArgument");
     }
 
-    /** The unguarded tier is public, returns OutRange, and never throws. */
-    static void unguardedNeverThrows() {
-        double[] in = closes(100);
-        double[] out = new double[100];
-
-        OutRange guarded = Core.DEFAULT.sma(0, in.length - 1, in, 10, out);
-        double[] out2 = new double[100];
-        OutRange unguarded = Core.DEFAULT.smaUnguarded(0, in.length - 1, in, 10, out2);
-
-        check(guarded.equals(unguarded), "unguarded reports the same range as guarded");
-        boolean same = true;
-        for (int i = 0; i < guarded.count(); i++) {
-            if (Double.doubleToRawLongBits(out[i]) != Double.doubleToRawLongBits(out2[i])) {
-                same = false;
+    /**
+     * The public surface exposes no unguarded tier. Pinned by reflection over the
+     * shipped Core rather than by a string assertion on generator output.
+     */
+    static void noUnguardedTierOnThePublicSurface() {
+        int leaked = 0;
+        for (java.lang.reflect.Method m : Core.class.getMethods()) {
+            if (m.getName().endsWith("Unguarded") || m.getName().endsWith("UnguardedInternal")) {
+                leaked++;
             }
         }
-        check(guarded.count() > 0 && same, "unguarded is bit-identical to guarded on valid input");
+        check(leaked == 0, "no Unguarded method survives on the public Core surface");
+        // Non-vacuity: the reflection actually sees the surface it is asserting over.
+        int sma = 0;
+        for (java.lang.reflect.Method m : Core.class.getMethods()) {
+            if (m.getName().equals("sma")) {
+                sma++;
+            }
+        }
+        check(sma >= 2, "reflection sees the sma overloads it is filtering over");
     }
 
     /** The float overload adopts the identical shape (C's TA_S_* parity). */
@@ -261,7 +264,7 @@ public class BatchApiTest {
         cmoLeavesTheTailUntouched();
         shortRangeIsAnEmptySuccessNotAnException();
         misuseThrowsTheDocumentedException();
-        unguardedNeverThrows();
+        noUnguardedTierOnThePublicSurface();
         floatOverloadHasTheSameShape();
         outRangeValueSemantics();
 

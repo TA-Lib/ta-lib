@@ -74,6 +74,11 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   `TA_VAR`, `TA_SAR`, `TA_SAREXT`, `TA_MAMA`, `TA_T3` and the seven `TA_CDL*` patterns
   that take a penetration.
 
+### Removed
+- (#166) The `TA_*_Unguarded` / `TA_S_*_Unguarded` functions, and their Java `xxxUnguarded` and C# `XxxUnguarded` equivalents. Introduced in 0.7.1 as a faster tier that skipped parameter validation; measurement across four toolchains found it is not measurably faster at any range size (one was 20-45% slower) while costing 15.5% of the library's `.text`. Use the ordinary function — `TA_SMA`, `core.sma(..)`, `Sma(..)` — which returns the same values for the same valid inputs.
+- (#166) `include/ta_func_unguarded.h`. Half of it declared the functions above and the rest was never public API. `include/ta_func.h` already carries the complete stream surface.
+- (#166) `TA_EMA_Private` and `TA_S_EMA_Private` are no longer exported.
+
 ## [0.7.1] 2026-07-03
 ### Added
 - (#79) TA-Lib is now available as a GitHub Action: [setup-ta-lib](https://github.com/TA-Lib/setup-ta-lib). Thanks @mrjbq7 !

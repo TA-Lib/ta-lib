@@ -170,87 +170,6 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode trixUnguardedInternal( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-   {
-      double prevEMA1 = 0;
-      double prevEMA2 = 0;
-      double prevEMA3 = 0;
-      double tempReal = 0;
-      double optInK_1 = 0;
-      int i = 0;
-      int today = 0;
-      int outIdx = 0;
-      int lookbackEMA = 0;
-      int lookbackTotal = 0;
-      outNBElement.value = 0;
-      outBegIdx.value = 0;
-      lookbackEMA = emaLookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + rocRLookback(1);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         return RetCode.Success ;
-      }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         tempReal += prevEMA1;
-      }
-      prevEMA2 = tempReal / optInTimePeriod;
-      while( today <= startIdx - (lookbackEMA + 1) ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA2;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         tempReal += prevEMA2;
-      }
-      prevEMA3 = tempReal / optInTimePeriod;
-      while( today <= startIdx - 1 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
-      }
-      outIdx = 0;
-      while( today <= endIdx ) {
-         tempReal = prevEMA3;
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
-         if( tempReal != 0.0 ) {
-            outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
    RetCode trixInternal( int startIdx,
                          int endIdx,
                          float inReal[],
@@ -280,87 +199,6 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      outNBElement.value = 0;
-      outBegIdx.value = 0;
-      lookbackEMA = emaLookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + rocRLookback(1);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         return RetCode.Success ;
-      }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         tempReal += prevEMA1;
-      }
-      prevEMA2 = tempReal / optInTimePeriod;
-      while( today <= startIdx - (lookbackEMA + 1) ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA2;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         tempReal += prevEMA2;
-      }
-      prevEMA3 = tempReal / optInTimePeriod;
-      while( today <= startIdx - 1 ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
-      }
-      outIdx = 0;
-      while( today <= endIdx ) {
-         tempReal = prevEMA3;
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
-         if( tempReal != 0.0 ) {
-            outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
-   RetCode trixUnguardedInternal( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-   {
-      double prevEMA1 = 0;
-      double prevEMA2 = 0;
-      double prevEMA3 = 0;
-      double tempReal = 0;
-      double optInK_1 = 0;
-      int i = 0;
-      int today = 0;
-      int outIdx = 0;
-      int lookbackEMA = 0;
-      int lookbackTotal = 0;
       outNBElement.value = 0;
       outBegIdx.value = 0;
       lookbackEMA = emaLookback(optInTimePeriod);
@@ -482,34 +320,6 @@
     * 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum
     * oscillator that filters out price moves shorter than the chosen period.
     * Oscillates around zero; sign, zero-crossings and slope signal momentum
-    * direction. — <b>unchecked</b> variant of {@link Core#trix}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange trixUnguarded( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  int optInTimePeriod,
-                                  double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      trixUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum
-    * oscillator that filters out price moves shorter than the chosen period.
-    * Oscillates around zero; sign, zero-crossings and slope signal momentum
     * direction.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -561,35 +371,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("TRIX", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum
-    * oscillator that filters out price moves shorter than the chosen period.
-    * Oscillates around zero; sign, zero-crossings and slope signal momentum
-    * direction. — <b>unchecked</b> variant of {@link Core#trix}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange trixUnguarded( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  int optInTimePeriod,
-                                  double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      trixUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

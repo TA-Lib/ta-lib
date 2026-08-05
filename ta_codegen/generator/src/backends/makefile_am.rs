@@ -33,8 +33,7 @@ pub fn generate(funcs: &[FuncDef], out_path: &Path, root: &Path) {
         "\nlibta_funcdir=$(includedir)/ta-lib/\n\
          libta_func_HEADERS = ../../include/ta_defs.h \\\n\
          \t../../include/ta_libc.h \\\n\
-         \t../../include/ta_func.h \\\n\
-         \t../../include/ta_func_unguarded.h\n",
+         \t../../include/ta_func.h\n",
     );
 
     super::write_if_changed(out_path, &content, "Makefile.am", names.len());

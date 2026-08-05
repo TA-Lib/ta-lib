@@ -193,93 +193,6 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode adOscUnguardedInternal( int startIdx,
-                                   int endIdx,
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   double inVolume[],
-                                   int optInFastPeriod,
-                                   int optInSlowPeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
-   {
-      int today = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      int slowestPeriod = 0;
-      double high = 0;
-      double low = 0;
-      double close = 0;
-      double tmp = 0;
-      double slowEMA = 0;
-      double slowk = 0;
-      double one_minus_slowk = 0;
-      double fastEMA = 0;
-      double fastk = 0;
-      double one_minus_fastk = 0;
-      double ad = 0;
-      if( optInFastPeriod < optInSlowPeriod ) {
-         slowestPeriod = optInSlowPeriod;
-      } else {
-         slowestPeriod = optInFastPeriod;
-      }
-      lookbackTotal = emaLookback(slowestPeriod);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx.value = startIdx;
-      today = startIdx - lookbackTotal;
-      ad = 0.0;
-      fastk = 2.0 / ((double)optInFastPeriod + 1.0);
-      one_minus_fastk = 1.0 - fastk;
-      slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
-      one_minus_slowk = 1.0 - slowk;
-      high = inHigh[today];
-      low = inLow[today];
-      tmp = high - low;
-      close = inClose[today];
-      if( tmp > 0.0 ) {
-         ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
-      }
-      today += 1;
-      fastEMA = ad;
-      slowEMA = ad;
-      while( today < startIdx ) {
-         high = inHigh[today];
-         low = inLow[today];
-         tmp = high - low;
-         close = inClose[today];
-         if( tmp > 0.0 ) {
-            ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
-         }
-         today += 1;
-         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
-         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
-      }
-      outIdx = 0;
-      while( today <= endIdx ) {
-         high = inHigh[today];
-         low = inLow[today];
-         tmp = high - low;
-         close = inClose[today];
-         if( tmp > 0.0 ) {
-            ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
-         }
-         today += 1;
-         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
-         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
-         outReal[outIdx++] = fastEMA - slowEMA;
-      }
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
    RetCode adOscInternal( int startIdx,
                           int endIdx,
                           float inHigh[],
@@ -323,93 +236,6 @@
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInFastPeriod < optInSlowPeriod ) {
-         slowestPeriod = optInSlowPeriod;
-      } else {
-         slowestPeriod = optInFastPeriod;
-      }
-      lookbackTotal = emaLookback(slowestPeriod);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx.value = startIdx;
-      today = startIdx - lookbackTotal;
-      ad = 0.0;
-      fastk = 2.0 / ((double)optInFastPeriod + 1.0);
-      one_minus_fastk = 1.0 - fastk;
-      slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
-      one_minus_slowk = 1.0 - slowk;
-      high = (double)inHigh[today];
-      low = (double)inLow[today];
-      tmp = high - low;
-      close = (double)inClose[today];
-      if( tmp > 0.0 ) {
-         ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
-      }
-      today += 1;
-      fastEMA = ad;
-      slowEMA = ad;
-      while( today < startIdx ) {
-         high = (double)inHigh[today];
-         low = (double)inLow[today];
-         tmp = high - low;
-         close = (double)inClose[today];
-         if( tmp > 0.0 ) {
-            ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
-         }
-         today += 1;
-         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
-         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
-      }
-      outIdx = 0;
-      while( today <= endIdx ) {
-         high = (double)inHigh[today];
-         low = (double)inLow[today];
-         tmp = high - low;
-         close = (double)inClose[today];
-         if( tmp > 0.0 ) {
-            ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
-         }
-         today += 1;
-         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
-         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
-         outReal[outIdx++] = fastEMA - slowEMA;
-      }
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
-   RetCode adOscUnguardedInternal( int startIdx,
-                                   int endIdx,
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   float inVolume[],
-                                   int optInFastPeriod,
-                                   int optInSlowPeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
-   {
-      int today = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      int slowestPeriod = 0;
-      double high = 0;
-      double low = 0;
-      double close = 0;
-      double tmp = 0;
-      double slowEMA = 0;
-      double slowk = 0;
-      double one_minus_slowk = 0;
-      double fastEMA = 0;
-      double fastk = 0;
-      double one_minus_fastk = 0;
-      double ad = 0;
       if( optInFastPeriod < optInSlowPeriod ) {
          slowestPeriod = optInSlowPeriod;
       } else {
@@ -533,39 +359,6 @@
     * Chaikin A/D Oscillator: the difference between a fast and a slow EMA of
     * the Accumulation/Distribution line. Highlights momentum in
     * accumulation/distribution volume flow. Positive/rising suggests
-    * accumulation; negative/falling suggests distribution. — <b>unchecked</b>
-    * variant of {@link Core#adOsc}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange adOscUnguarded( int startIdx,
-                                   int endIdx,
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   double inVolume[],
-                                   int optInFastPeriod,
-                                   int optInSlowPeriod,
-                                   double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      adOscUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Chaikin A/D Oscillator: the difference between a fast and a slow EMA of
-    * the Accumulation/Distribution line. Highlights momentum in
-    * accumulation/distribution volume flow. Positive/rising suggests
     * accumulation; negative/falling suggests distribution.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -622,40 +415,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("ADOSC", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Chaikin A/D Oscillator: the difference between a fast and a slow EMA of
-    * the Accumulation/Distribution line. Highlights momentum in
-    * accumulation/distribution volume flow. Positive/rising suggests
-    * accumulation; negative/falling suggests distribution. — <b>unchecked</b>
-    * variant of {@link Core#adOsc}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange adOscUnguarded( int startIdx,
-                                   int endIdx,
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   float inVolume[],
-                                   int optInFastPeriod,
-                                   int optInSlowPeriod,
-                                   double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      adOscUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

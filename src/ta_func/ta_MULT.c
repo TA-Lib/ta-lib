@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -96,30 +96,6 @@ TA_LIB_API TA_RetCode TA_MULT( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_MULT_Unguarded( int    startIdx,
-                                         int    endIdx,
-                                         const double inReal0[],
-                                         const double inReal1[],
-                                         int          *outBegIdx,
-                                         int          *outNBElement,
-                                         double        outReal[] )
-{
-   int outIdx;
-   int i;
-
-   outIdx = 0;
-   i = startIdx;
-   while( i <= endIdx )
-   {
-      outReal[outIdx] = inReal0[i] * inReal1[i];
-      outIdx += 1;
-      i += 1;
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_MULT( int    startIdx,
                       int    endIdx,
                       const float inReal0[],
@@ -142,30 +118,6 @@ TA_RetCode TA_S_MULT( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   outIdx = 0;
-   i = startIdx;
-   while( i <= endIdx )
-   {
-      outReal[outIdx] = (double)inReal0[i] * (double)inReal1[i];
-      outIdx += 1;
-      i += 1;
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_MULT_Unguarded( int    startIdx,
-                                int    endIdx,
-                                const float inReal0[],
-                                const float inReal1[],
-                                int          *outBegIdx,
-                                int          *outNBElement,
-                                double        outReal[] )
-{
-   int outIdx;
-   int i;
 
    outIdx = 0;
    i = startIdx;

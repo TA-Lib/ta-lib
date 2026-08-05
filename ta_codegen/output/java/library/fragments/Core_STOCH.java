@@ -271,7 +271,7 @@
        * Some documentation will refer to the smoothed version as being
        * "K-Slow", but often this end up to be shorten to "K".
        */
-      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -283,7 +283,7 @@
       /* Calculate the %D which is simply a moving average of
        * the already smoothed %K.
        */
-      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+      retCode = movingAverageInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -305,130 +305,6 @@
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.
        */
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode stochUnguardedInternal( int startIdx,
-                                   int endIdx,
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   int optInFastK_Period,
-                                   int optInSlowK_Period,
-                                   MAType optInSlowK_MAType,
-                                   int optInSlowD_Period,
-                                   MAType optInSlowD_MAType,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outSlowK[],
-                                   double outSlowD[] )
-   {
-      RetCode retCode;
-      double lowest = 0;
-      double highest = 0;
-      double tmp = 0;
-      double diff = 0;
-      double[] tempBuffer;
-      int outIdx = 0;
-      int lowestIdx = 0;
-      int highestIdx = 0;
-      int lookbackTotal = 0;
-      int lookbackK = 0;
-      int lookbackKSlow = 0;
-      int lookbackDSlow = 0;
-      int trailingIdx = 0;
-      int today = 0;
-      int i = 0;
-      int bufferIsAllocated = 0;
-      lookbackK = optInFastK_Period - 1;
-      lookbackKSlow = movingAverageLookback(optInSlowK_Period, optInSlowK_MAType);
-      lookbackDSlow = movingAverageLookback(optInSlowD_Period, optInSlowD_MAType);
-      lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + lookbackK;
-      highestIdx = 0 - 1;
-      lowestIdx = highestIdx;
-      lowest = 0.0;
-      highest = lowest;
-      diff = highest;
-      bufferIsAllocated = 0;
-      if( outSlowK == inHigh || outSlowK == inLow || outSlowK == inClose ) {
-         tempBuffer = outSlowK;
-      } else {
-         bufferIsAllocated = 1;
-         tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
-      }
-      while( today <= endIdx ) {
-         tmp = inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-            diff = (highest - lowest) / 100.0;
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-            diff = (highest - lowest) / 100.0;
-         }
-         tmp = inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
-               }
-            }
-            diff = (highest - lowest) / 100.0;
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
-            diff = (highest - lowest) / 100.0;
-         }
-         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
-            tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
-         } else {
-            tempBuffer[outIdx++] = 0.0;
-         }
-         trailingIdx += 1;
-         today += 1;
-      }
-      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-         if( (bufferIsAllocated) != 0 ) {
-         }
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
-      System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
-      if( (bufferIsAllocated) != 0 ) {
-      }
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
@@ -560,7 +436,7 @@
          trailingIdx += 1;
          today += 1;
       }
-      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -568,131 +444,7 @@
          outNBElement.value = 0;
          return retCode ;
       }
-      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
-      System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
-      if( (bufferIsAllocated) != 0 ) {
-      }
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode stochUnguardedInternal( int startIdx,
-                                   int endIdx,
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   int optInFastK_Period,
-                                   int optInSlowK_Period,
-                                   MAType optInSlowK_MAType,
-                                   int optInSlowD_Period,
-                                   MAType optInSlowD_MAType,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outSlowK[],
-                                   double outSlowD[] )
-   {
-      RetCode retCode;
-      double lowest = 0;
-      double highest = 0;
-      double tmp = 0;
-      double diff = 0;
-      double[] tempBuffer;
-      int outIdx = 0;
-      int lowestIdx = 0;
-      int highestIdx = 0;
-      int lookbackTotal = 0;
-      int lookbackK = 0;
-      int lookbackKSlow = 0;
-      int lookbackDSlow = 0;
-      int trailingIdx = 0;
-      int today = 0;
-      int i = 0;
-      int bufferIsAllocated = 0;
-      lookbackK = optInFastK_Period - 1;
-      lookbackKSlow = movingAverageLookback(optInSlowK_Period, optInSlowK_MAType);
-      lookbackDSlow = movingAverageLookback(optInSlowD_Period, optInSlowD_MAType);
-      lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outIdx = 0;
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + lookbackK;
-      highestIdx = 0 - 1;
-      lowestIdx = highestIdx;
-      lowest = 0.0;
-      highest = lowest;
-      diff = highest;
-      bufferIsAllocated = 0;
-      if( false || false || false ) {
-         tempBuffer = outSlowK;
-      } else {
-         bufferIsAllocated = 1;
-         tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
-      }
-      while( today <= endIdx ) {
-         tmp = (double)inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = (double)inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-            diff = (highest - lowest) / 100.0;
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-            diff = (highest - lowest) / 100.0;
-         }
-         tmp = (double)inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = (double)inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
-               }
-            }
-            diff = (highest - lowest) / 100.0;
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
-            diff = (highest - lowest) / 100.0;
-         }
-         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
-            tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
-         } else {
-            tempBuffer[outIdx++] = 0.0;
-         }
-         trailingIdx += 1;
-         today += 1;
-      }
-      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-         if( (bufferIsAllocated) != 0 ) {
-         }
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+      retCode = movingAverageInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
       System.arraycopy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement.value * 1);
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -786,42 +538,6 @@
     * Slow Stochastic oscillator: locates the close within the high-low range
     * over a lookback period, then double-smooths it. Returns the Slow-%K and
     * Slow-%D lines. SlowK/SlowD &gt; 80 overbought, &lt; 20 oversold; %K
-    * crossing %D signals momentum shifts. — <b>unchecked</b> variant of
-    * {@link Core#stoch}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange stochUnguarded( int startIdx,
-                                   int endIdx,
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   int optInFastK_Period,
-                                   int optInSlowK_Period,
-                                   MAType optInSlowK_MAType,
-                                   int optInSlowD_Period,
-                                   MAType optInSlowD_MAType,
-                                   double outSlowK[],
-                                   double outSlowD[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      stochUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Slow Stochastic oscillator: locates the close within the high-low range
-    * over a lookback period, then double-smooths it. Returns the Slow-%K and
-    * Slow-%D lines. SlowK/SlowD &gt; 80 overbought, &lt; 20 oversold; %K
     * crossing %D signals momentum shifts.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -897,43 +613,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("STOCH", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Slow Stochastic oscillator: locates the close within the high-low range
-    * over a lookback period, then double-smooths it. Returns the Slow-%K and
-    * Slow-%D lines. SlowK/SlowD &gt; 80 overbought, &lt; 20 oversold; %K
-    * crossing %D signals momentum shifts. — <b>unchecked</b> variant of
-    * {@link Core#stoch}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange stochUnguarded( int startIdx,
-                                   int endIdx,
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   int optInFastK_Period,
-                                   int optInSlowK_Period,
-                                   MAType optInSlowK_MAType,
-                                   int optInSlowD_Period,
-                                   MAType optInSlowD_MAType,
-                                   double outSlowK[],
-                                   double outSlowD[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      stochUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
@@ -1341,7 +1020,7 @@
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInSlowK_Period, optInSlowK_MAType);
-      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -1356,7 +1035,7 @@
       /* Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub1 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, ((int)outNBElement.value - 1) + 1), 0, optInSlowD_Period, optInSlowD_MAType);
-      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
+      retCode = movingAverageInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -1614,7 +1293,7 @@
       /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInSlowK_Period, optInSlowK_MAType);
-      retCode = movingAverageUnguardedInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
+      retCode = movingAverageInternal(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -1629,7 +1308,7 @@
       /* Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub1 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, ((int)outNBElement.value - 1) + 1), 0, optInSlowD_Period, optInSlowD_MAType);
-      retCode = movingAverageUnguardedInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
+      retCode = movingAverageInternal(0, (int)outNBElement.value - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the

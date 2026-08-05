@@ -88,44 +88,6 @@
       }
       return RetCode.Success ;
    }
-   RetCode adUnguardedInternal( int startIdx,
-                                int endIdx,
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                double inVolume[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-   {
-      int nbBar = 0;
-      int currentBar = 0;
-      int outIdx = 0;
-      double high = 0;
-      double low = 0;
-      double close = 0;
-      double tmp = 0;
-      double ad = 0;
-      nbBar = endIdx - startIdx + 1;
-      outNBElement.value = nbBar;
-      outBegIdx.value = startIdx;
-      currentBar = startIdx;
-      outIdx = 0;
-      ad = 0.0;
-      while( nbBar != 0 ) {
-         high = inHigh[currentBar];
-         low = inLow[currentBar];
-         tmp = high - low;
-         close = inClose[currentBar];
-         if( tmp > 0.0 ) {
-            ad += (close - low - (high - close)) / tmp * (double)inVolume[currentBar];
-         }
-         outReal[outIdx++] = ad;
-         currentBar += 1;
-         nbBar -= 1;
-      }
-      return RetCode.Success ;
-   }
    RetCode adInternal( int startIdx,
                        int endIdx,
                        float inHigh[],
@@ -150,44 +112,6 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      nbBar = endIdx - startIdx + 1;
-      outNBElement.value = nbBar;
-      outBegIdx.value = startIdx;
-      currentBar = startIdx;
-      outIdx = 0;
-      ad = 0.0;
-      while( nbBar != 0 ) {
-         high = (double)inHigh[currentBar];
-         low = (double)inLow[currentBar];
-         tmp = high - low;
-         close = (double)inClose[currentBar];
-         if( tmp > 0.0 ) {
-            ad += (close - low - (high - close)) / tmp * (double)inVolume[currentBar];
-         }
-         outReal[outIdx++] = ad;
-         currentBar += 1;
-         nbBar -= 1;
-      }
-      return RetCode.Success ;
-   }
-   RetCode adUnguardedInternal( int startIdx,
-                                int endIdx,
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                float inVolume[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-   {
-      int nbBar = 0;
-      int currentBar = 0;
-      int outIdx = 0;
-      double high = 0;
-      double low = 0;
-      double close = 0;
-      double tmp = 0;
-      double ad = 0;
       nbBar = endIdx - startIdx + 1;
       outNBElement.value = nbBar;
       outBegIdx.value = startIdx;
@@ -262,36 +186,6 @@
     * Chaikin Accumulation/Distribution Line, a cumulative volume-flow
     * indicator. Sums a volume-weighted money-flow multiplier per bar to gauge
     * buying vs. selling pressure. Rising line = accumulation (buying pressure);
-    * falling = distribution. — <b>unchecked</b> variant of {@link Core#ad}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange adUnguarded( int startIdx,
-                                int endIdx,
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                double inVolume[],
-                                double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      adUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Chaikin Accumulation/Distribution Line, a cumulative volume-flow
-    * indicator. Sums a volume-weighted money-flow multiplier per bar to gauge
-    * buying vs. selling pressure. Rising line = accumulation (buying pressure);
     * falling = distribution.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -339,37 +233,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("AD", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Chaikin Accumulation/Distribution Line, a cumulative volume-flow
-    * indicator. Sums a volume-weighted money-flow multiplier per bar to gauge
-    * buying vs. selling pressure. Rising line = accumulation (buying pressure);
-    * falling = distribution. — <b>unchecked</b> variant of {@link Core#ad}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange adUnguarded( int startIdx,
-                                int endIdx,
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                float inVolume[],
-                                double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      adUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

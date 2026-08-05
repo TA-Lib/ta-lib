@@ -169,90 +169,6 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode cmouUnguardedInternal( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-   {
-      int outIdx = 0;
-      int today = 0;
-      int trailingIdx = 0;
-      int lookbackTotal = 0;
-      int i = 0;
-      double upSum = 0;
-      double downSum = 0;
-      double sum = 0;
-      double diff = 0;
-      double tempReal = 0;
-      double prevValue = 0;
-      double trailingValue = 0;
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
-      lookbackTotal = cmouLookback(optInTimePeriod);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         return RetCode.Success ;
-      }
-      today = startIdx - lookbackTotal;
-      trailingIdx = today + 1;
-      prevValue = inReal[today];
-      trailingValue = prevValue;
-      upSum = 0.0;
-      downSum = 0.0;
-      for( i = 0; i < optInTimePeriod; i += 1 ) {
-         today += 1;
-         tempReal = inReal[today];
-         diff = tempReal - prevValue;
-         prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-      }
-      outIdx = 0;
-      sum = upSum + downSum;
-      if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
-         outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
-      } else {
-         outReal[outIdx++] = 0.0;
-      }
-      today += 1;
-      while( today <= endIdx ) {
-         tempReal = inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
-         tempReal = inReal[today];
-         diff = tempReal - prevValue;
-         prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         sum = upSum + downSum;
-         if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
-            outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-         today += 1;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
    RetCode cmouInternal( int startIdx,
                          int endIdx,
                          float inReal[],
@@ -284,90 +200,6 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
-      lookbackTotal = cmouLookback(optInTimePeriod);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         return RetCode.Success ;
-      }
-      today = startIdx - lookbackTotal;
-      trailingIdx = today + 1;
-      prevValue = (double)inReal[today];
-      trailingValue = prevValue;
-      upSum = 0.0;
-      downSum = 0.0;
-      for( i = 0; i < optInTimePeriod; i += 1 ) {
-         today += 1;
-         tempReal = (double)inReal[today];
-         diff = tempReal - prevValue;
-         prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-      }
-      outIdx = 0;
-      sum = upSum + downSum;
-      if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
-         outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
-      } else {
-         outReal[outIdx++] = 0.0;
-      }
-      today += 1;
-      while( today <= endIdx ) {
-         tempReal = (double)inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
-         tempReal = (double)inReal[today];
-         diff = tempReal - prevValue;
-         prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         sum = upSum + downSum;
-         if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
-            outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-         today += 1;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
-   RetCode cmouUnguardedInternal( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-   {
-      int outIdx = 0;
-      int today = 0;
-      int trailingIdx = 0;
-      int lookbackTotal = 0;
-      int i = 0;
-      double upSum = 0;
-      double downSum = 0;
-      double sum = 0;
-      double diff = 0;
-      double tempReal = 0;
-      double prevValue = 0;
-      double trailingValue = 0;
       outBegIdx.value = 0;
       outNBElement.value = 0;
       lookbackTotal = cmouLookback(optInTimePeriod);
@@ -491,38 +323,6 @@
     * book *The New Technical Trader* (1994), and is the more common
     * implementation used by TradingView ({@code ta.cmo}), QuantConnect and
     * pandas-ta's default. See [{@code CMO}](/functions/cmo) for a smoothed
-    * variant of CMOU. — <b>unchecked</b> variant of {@link Core#cmou}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange cmouUnguarded( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  int optInTimePeriod,
-                                  double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      cmouUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Chande Momentum Oscillator: Tushar Chande's original momentum oscillator,
-    * computed from **plain moving-window sums** of the up-moves and down-moves
-    * over the period. Bounded in [-100,+100]; positive = net upward momentum,
-    * negative = net downward. CMOU is the version as defined by Chande in his
-    * book *The New Technical Trader* (1994), and is the more common
-    * implementation used by TradingView ({@code ta.cmo}), QuantConnect and
-    * pandas-ta's default. See [{@code CMO}](/functions/cmo) for a smoothed
     * variant of CMOU.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -567,39 +367,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("CMOU", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Chande Momentum Oscillator: Tushar Chande's original momentum oscillator,
-    * computed from **plain moving-window sums** of the up-moves and down-moves
-    * over the period. Bounded in [-100,+100]; positive = net upward momentum,
-    * negative = net downward. CMOU is the version as defined by Chande in his
-    * book *The New Technical Trader* (1994), and is the more common
-    * implementation used by TradingView ({@code ta.cmo}), QuantConnect and
-    * pandas-ta's default. See [{@code CMO}](/functions/cmo) for a smoothed
-    * variant of CMOU. — <b>unchecked</b> variant of {@link Core#cmou}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange cmouUnguarded( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  int optInTimePeriod,
-                                  double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      cmouUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

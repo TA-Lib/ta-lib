@@ -154,6 +154,13 @@ impl Core {
         if endIdx < startIdx {
             return RetCode::OutOfRangeStartIndex;
         }
+        let _assertLb = self.ad_lookback();
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inHigh.len());
+        assert!(_assertStart > endIdx || endIdx < inLow.len());
+        assert!(_assertStart > endIdx || endIdx < inClose.len());
+        assert!(_assertStart > endIdx || endIdx < inVolume.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut nbBar: usize = 0_usize;
         let mut currentBar: usize = 0_usize;
@@ -177,61 +184,6 @@ impl Core {
         //       For better precision, TA-Lib use double in all its
         //       its calculations.
         // Default return values
-        nbBar = endIdx - startIdx + 1;
-        (*outNBElement) = nbBar;
-        (*outBegIdx) = startIdx;
-        currentBar = startIdx;
-        outIdx = 0;
-        ad = 0.0;
-        while nbBar != 0 {
-            high = inHigh[currentBar];
-            low = inLow[currentBar];
-            tmp = high - low;
-            close = inClose[currentBar];
-            if tmp > 0.0 {
-                ad += (close - low - (high - close)) / tmp * (inVolume[currentBar] as f64);
-            }
-            outReal[outIdx] = ad;
-            outIdx += 1;
-            currentBar += 1;
-            nbBar -= 1;
-        }
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::ad`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::ad`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::ad`].
-    #[inline]
-    pub fn ad_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        inVolume: &[f64],
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut nbBar: usize = 0_usize;
-        let mut currentBar: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut high: f64 = 0.0_f64;
-        let mut low: f64 = 0.0_f64;
-        let mut close: f64 = 0.0_f64;
-        let mut tmp: f64 = 0.0_f64;
-        let mut ad: f64 = 0.0_f64;
-        assert!(endIdx < inHigh.len());
-        assert!(endIdx < inLow.len());
-        assert!(endIdx < inClose.len());
-        assert!(endIdx < inVolume.len());
-        let _assertLb = self.ad_lookback();
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         nbBar = endIdx - startIdx + 1;
         (*outNBElement) = nbBar;
         (*outBegIdx) = startIdx;

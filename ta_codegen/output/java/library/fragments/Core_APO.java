@@ -96,12 +96,12 @@
          optInFastPeriod = tempInteger;
       }
       /* Calculate the fast MA into the tempBuffer. */
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
       /* Calculate the slow MA into the output. */
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -111,43 +111,6 @@
        */
       offset = fastNb.value - outNBElement.value;
       /* Calculate (fast MA)-(slow MA) in the output. */
-      for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-         outReal[i] = tempBuffer[i + offset] - outReal[i];
-      }
-      return RetCode.Success ;
-   }
-   RetCode apoUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInFastPeriod,
-                                 int optInSlowPeriod,
-                                 MAType optInMAType,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      double[] tempBuffer;
-      RetCode retCode;
-      int tempInteger = 0;
-      MInteger fastBeg = new MInteger();
-      MInteger fastNb = new MInteger();
-      int offset = 0;
-      int i = 0;
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-      if( optInSlowPeriod < optInFastPeriod ) {
-         tempInteger = optInSlowPeriod;
-         optInSlowPeriod = optInFastPeriod;
-         optInFastPeriod = tempInteger;
-      }
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      offset = fastNb.value - outNBElement.value;
       for( i = 0; i < (int)outNBElement.value; i += 1 ) {
          outReal[i] = tempBuffer[i + offset] - outReal[i];
       }
@@ -192,48 +155,11 @@
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      offset = fastNb.value - outNBElement.value;
-      for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-         outReal[i] = tempBuffer[i + offset] - outReal[i];
-      }
-      return RetCode.Success ;
-   }
-   RetCode apoUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInFastPeriod,
-                                 int optInSlowPeriod,
-                                 MAType optInMAType,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      double[] tempBuffer;
-      RetCode retCode;
-      int tempInteger = 0;
-      MInteger fastBeg = new MInteger();
-      MInteger fastNb = new MInteger();
-      int offset = 0;
-      int i = 0;
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-      if( optInSlowPeriod < optInFastPeriod ) {
-         tempInteger = optInSlowPeriod;
-         optInSlowPeriod = optInFastPeriod;
-         optInFastPeriod = tempInteger;
-      }
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -305,36 +231,6 @@
     * Absolute Price Oscillator: the difference between a fast and a slow moving
     * average of the input, in price units. Measures short- vs long-term
     * momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
-    * otherwise. — <b>unchecked</b> variant of {@link Core#apo}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange apoUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInFastPeriod,
-                                 int optInSlowPeriod,
-                                 MAType optInMAType,
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      apoUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Absolute Price Oscillator: the difference between a fast and a slow moving
-    * average of the input, in price units. Measures short- vs long-term
-    * momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
     * otherwise.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -390,37 +286,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("APO", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Absolute Price Oscillator: the difference between a fast and a slow moving
-    * average of the input, in price units. Measures short- vs long-term
-    * momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
-    * otherwise. — <b>unchecked</b> variant of {@link Core#apo}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange apoUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInFastPeriod,
-                                 int optInSlowPeriod,
-                                 MAType optInMAType,
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      apoUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
@@ -561,7 +426,7 @@
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInFastPeriod, optInMAType);
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -569,7 +434,7 @@
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub1 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInSlowPeriod, optInMAType);
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -638,7 +503,7 @@
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInFastPeriod, optInMAType);
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -646,7 +511,7 @@
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub1 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInSlowPeriod, optInMAType);
-      retCode = movingAverageUnguardedInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
+      retCode = movingAverageInternal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }

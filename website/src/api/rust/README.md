@@ -67,7 +67,6 @@ The lookback is how many inputs are consumed before the first output.
 |--------|---------|
 | `core.sma_lookback(..) -> usize` | first valid output index |
 | `core.sma(..) -> RetCode` | guarded: validates parameters, then computes |
-| `core.sma_unguarded(..) -> RetCode` | no range checks — used internally for cross-indicator calls |
 
 The public API returns [`RetCode`](https://docs.rs/ta-lib) (`Success`, `BadParam`, `OutOfRangeStartIndex`, `OutOfRangeEndIndex`, `AllocErr`, `InternalError`); it also implements `std::error::Error`, so results compose with `?`.
 

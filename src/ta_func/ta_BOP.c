@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -109,37 +109,6 @@ TA_LIB_API TA_RetCode TA_BOP( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_BOP_Unguarded( int    startIdx,
-                                        int    endIdx,
-                                        const double inOpen[],
-                                        const double inHigh[],
-                                        const double inLow[],
-                                        const double inClose[],
-                                        int          *outBegIdx,
-                                        int          *outNBElement,
-                                        double        outReal[] )
-{
-   int outIdx;
-   int i;
-   double tempReal;
-
-   outIdx = 0;
-   for( i = startIdx; i <= endIdx; i += 1 )
-   {
-      tempReal = inHigh[i] - inLow[i];
-      if( TA_IS_ZERO_OR_NEG(tempReal) )
-      {
-         outReal[outIdx++] = 0.0;
-      } else 
-      {
-         outReal[outIdx++] = (inClose[i] - inOpen[i]) / tempReal;
-      }
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_BOP( int    startIdx,
                      int    endIdx,
                      const float inOpen[],
@@ -169,37 +138,6 @@ TA_RetCode TA_S_BOP( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   outIdx = 0;
-   for( i = startIdx; i <= endIdx; i += 1 )
-   {
-      tempReal = (double)inHigh[i] - (double)inLow[i];
-      if( TA_IS_ZERO_OR_NEG(tempReal) )
-      {
-         outReal[outIdx++] = 0.0;
-      } else 
-      {
-         outReal[outIdx++] = ((double)inClose[i] - (double)inOpen[i]) / tempReal;
-      }
-   }
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_BOP_Unguarded( int    startIdx,
-                               int    endIdx,
-                               const float inOpen[],
-                               const float inHigh[],
-                               const float inLow[],
-                               const float inClose[],
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] )
-{
-   int outIdx;
-   int i;
-   double tempReal;
 
    outIdx = 0;
    for( i = startIdx; i <= endIdx; i += 1 )

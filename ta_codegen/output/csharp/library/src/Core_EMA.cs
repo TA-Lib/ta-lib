@@ -240,20 +240,6 @@ public partial class Core
       /* Simply call the internal implementation of the EMA. */
       return EmaPrivate(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, out outBegIdx, out outNBElement, outReal) ;
    }
-   internal RetCode EmaUnguarded( int startIdx,
-                                  int endIdx,
-                                  double[] inReal,
-                                  int optInTimePeriod,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double optInK_1 = 0;
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      return EmaPrivate(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, out outBegIdx, out outNBElement, outReal) ;
-   }
    internal RetCode Ema( int startIdx,
                          int endIdx,
                          float[] inReal,
@@ -270,7 +256,7 @@ public partial class Core
       int today = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      double optInK_1 = (2.0/(double)((optInTimePeriod+1)));
+      double optInK_1 = 0.0;
       if( startIdx < 0 ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -282,52 +268,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = EmaLookback(optInTimePeriod);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx = startIdx;
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevMA = tempReal / optInTimePeriod;
-      while( today <= startIdx ) {
-         prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
-      }
-      outReal[0] = prevMA;
-      outIdx = 1;
-      while( today <= endIdx ) {
-         prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
-         outReal[outIdx++] = prevMA;
-      }
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode EmaUnguarded( int startIdx,
-                                  int endIdx,
-                                  float[] inReal,
-                                  int optInTimePeriod,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      double tempReal = 0;
-      double prevMA = 0;
-      int i = 0;
-      int today = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      double optInK_1 = (2.0/(double)((optInTimePeriod+1)));
+      optInK_1 = (2.0/(double)((optInTimePeriod+1)));
       lookbackTotal = EmaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -410,42 +351,6 @@ public partial class Core
    /// Exponential moving average that weights recent prices more heavily via a
    /// recursive smoothing factor. A core building block seeding or composing
    /// many other indicators. Reacts faster than SMA; price above/below EMA
-   /// suggests up/down trend. — <b>unchecked</b> variant of <c>Ema</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange EmaUnguarded( int startIdx,
-                                 int endIdx,
-                                 double[] inReal,
-                                 int optInTimePeriod,
-                                 double[] outReal )
-   {
-      EmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Exponential moving average that weights recent prices more heavily via a
-   /// recursive smoothing factor. A core building block seeding or composing
-   /// many other indicators. Reacts faster than SMA; price above/below EMA
    /// suggests up/down trend.
    /// </summary>
    /// <remarks>
@@ -495,45 +400,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("EMA", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Exponential moving average that weights recent prices more heavily via a
-   /// recursive smoothing factor. A core building block seeding or composing
-   /// many other indicators. Reacts faster than SMA; price above/below EMA
-   /// suggests up/down trend. — <b>unchecked</b> variant of <c>Ema</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inReal">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange EmaUnguarded( int startIdx,
-                                 int endIdx,
-                                 float[] inReal,
-                                 int optInTimePeriod,
-                                 double[] outReal )
-   {
-      EmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

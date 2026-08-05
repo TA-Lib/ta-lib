@@ -196,6 +196,13 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.mfi_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inHigh.len());
+        assert!(_assertStart > endIdx || endIdx < inLow.len());
+        assert!(_assertStart > endIdx || endIdx < inClose.len());
+        assert!(_assertStart > endIdx || endIdx < inVolume.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut posSumMF: f64 = 0.0_f64;
         let mut negSumMF: f64 = 0.0_f64;
@@ -285,134 +292,6 @@ impl Core {
             tempValue2 = tempValue1 - prevValue;
             // Dead-zone scaled to the two typical prices being compared (issue #107).
             // Captured before prevValue/tempValue1 are repurposed below.
-            tempValue3 = (tempValue1).abs() + (prevValue).abs();
-            prevValue = tempValue1;
-            tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
-                mflow_positive[mflow_Idx] = 0.0;
-                mflow_negative[mflow_Idx] = 0.0;
-            } else if tempValue2 < 0_f64 {
-                mflow_negative[mflow_Idx] = tempValue1;
-                negSumMF += tempValue1;
-                mflow_positive[mflow_Idx] = 0.0;
-            } else {
-                mflow_positive[mflow_Idx] = tempValue1;
-                posSumMF += tempValue1;
-                mflow_negative[mflow_Idx] = 0.0;
-            }
-            tempValue1 = posSumMF + negSumMF;
-            if tempValue1 < 1.0 {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
-            } else {
-                outReal[outIdx] = 100.0 * (posSumMF / tempValue1);
-                outIdx += 1;
-            }
-            mflow_Idx += 1;
-            if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
-        }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::mfi`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::mfi`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::mfi`].
-    #[inline]
-    pub fn mfi_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        inVolume: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut posSumMF: f64 = 0.0_f64;
-        let mut negSumMF: f64 = 0.0_f64;
-        let mut prevValue: f64 = 0.0_f64;
-        let mut tempValue1: f64 = 0.0_f64;
-        let mut tempValue2: f64 = 0.0_f64;
-        let mut tempValue3: f64 = 0.0_f64;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut mflow_positive: Vec<f64> = Vec::new();
-        let mut mflow_negative: Vec<f64> = Vec::new();
-        let mut mflow_Idx: usize = 0;
-        let mut maxIdx_mflow: usize = 49;
-        assert!(endIdx < inHigh.len());
-        assert!(endIdx < inLow.len());
-        assert!(endIdx < inClose.len());
-        assert!(endIdx < inVolume.len());
-        let _assertLb = self.mfi_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        if optInTimePeriod < 1 { return RetCode::AllocErr; }
-        mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
-        mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_mflow = ((optInTimePeriod) as usize) - 1;
-        mflow_Idx = 0;
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
-        lookbackTotal = (optInTimePeriod) as usize;
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            return RetCode::Success;
-        }
-        outIdx = 0;
-        today = startIdx - lookbackTotal;
-        prevValue = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-        posSumMF = 0.0;
-        negSumMF = 0.0;
-        today += 1;
-        // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod) as usize;
-        while i > 0 {
-            tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-            tempValue2 = tempValue1 - prevValue;
-            tempValue3 = (tempValue1).abs() + (prevValue).abs();
-            prevValue = tempValue1;
-            tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
-                mflow_positive[mflow_Idx] = 0.0;
-                mflow_negative[mflow_Idx] = 0.0;
-            } else if tempValue2 < 0_f64 {
-                mflow_negative[mflow_Idx] = tempValue1;
-                negSumMF += tempValue1;
-                mflow_positive[mflow_Idx] = 0.0;
-            } else {
-                mflow_positive[mflow_Idx] = tempValue1;
-                posSumMF += tempValue1;
-                mflow_negative[mflow_Idx] = 0.0;
-            }
-            mflow_Idx += 1;
-            if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
-            i -= 1;
-        }
-        tempValue1 = posSumMF + negSumMF;
-        if tempValue1 < 1.0 {
-            outReal[outIdx] = 0.0;
-            outIdx += 1;
-        } else {
-            outReal[outIdx] = 100.0 * (posSumMF / tempValue1);
-            outIdx += 1;
-        }
-        while today <= endIdx {
-            posSumMF -= mflow_positive[mflow_Idx];
-            negSumMF -= mflow_negative[mflow_Idx];
-            tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-            tempValue2 = tempValue1 - prevValue;
             tempValue3 = (tempValue1).abs() + (prevValue).abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];

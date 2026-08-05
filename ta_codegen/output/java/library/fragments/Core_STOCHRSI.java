@@ -142,62 +142,13 @@
       outBegIdx.value = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
       tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      retCode = rsiUnguardedInternal(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
+      retCode = rsiInternal(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
       if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
       }
-      retCode = stochFUnguardedInternal(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, outFastK, outFastD);
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      return RetCode.Success ;
-   }
-   RetCode stochRsiUnguardedInternal( int startIdx,
-                                      int endIdx,
-                                      double inReal[],
-                                      int optInTimePeriod,
-                                      int optInFastK_Period,
-                                      int optInFastD_Period,
-                                      MAType optInFastD_MAType,
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      double outFastK[],
-                                      double outFastD[] )
-   {
-      double[] tempRSIBuffer;
-      RetCode retCode;
-      int lookbackTotal = 0;
-      int lookbackSTOCHF = 0;
-      int tempArraySize = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
-      lookbackSTOCHF = stochFLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-      lookbackTotal = rsiLookback(optInTimePeriod) + lookbackSTOCHF;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx.value = startIdx;
-      tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
-      tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      retCode = rsiUnguardedInternal(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
-      if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      retCode = stochFUnguardedInternal(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, outFastK, outFastD);
+      retCode = stochFInternal(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -264,62 +215,13 @@
       outBegIdx.value = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
       tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      retCode = rsiUnguardedInternal(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
+      retCode = rsiInternal(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
       if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
       }
-      retCode = stochFUnguardedInternal(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, outFastK, outFastD);
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      return RetCode.Success ;
-   }
-   RetCode stochRsiUnguardedInternal( int startIdx,
-                                      int endIdx,
-                                      float inReal[],
-                                      int optInTimePeriod,
-                                      int optInFastK_Period,
-                                      int optInFastD_Period,
-                                      MAType optInFastD_MAType,
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      double outFastK[],
-                                      double outFastD[] )
-   {
-      double[] tempRSIBuffer;
-      RetCode retCode;
-      int lookbackTotal = 0;
-      int lookbackSTOCHF = 0;
-      int tempArraySize = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
-      lookbackSTOCHF = stochFLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-      lookbackTotal = rsiLookback(optInTimePeriod) + lookbackSTOCHF;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx.value = startIdx;
-      tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
-      tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      retCode = rsiUnguardedInternal(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
-      if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      retCode = stochFUnguardedInternal(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, outFastK, outFastD);
+      retCode = stochFInternal(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -401,38 +303,6 @@
     * Applies the Fast Stochastic (STOCHF) oscillator to an RSI series instead
     * of price, measuring where RSI sits within its recent min/max range.
     * Oscillates 0-100; high = RSI near its recent top, low = near its recent
-    * bottom. — <b>unchecked</b> variant of {@link Core#stochRsi}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange stochRsiUnguarded( int startIdx,
-                                      int endIdx,
-                                      double inReal[],
-                                      int optInTimePeriod,
-                                      int optInFastK_Period,
-                                      int optInFastD_Period,
-                                      MAType optInFastD_MAType,
-                                      double outFastK[],
-                                      double outFastD[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      stochRsiUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Applies the Fast Stochastic (STOCHF) oscillator to an RSI series instead
-    * of price, measuring where RSI sits within its recent min/max range.
-    * Oscillates 0-100; high = RSI near its recent top, low = near its recent
     * bottom.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -500,39 +370,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("STOCHRSI", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Applies the Fast Stochastic (STOCHF) oscillator to an RSI series instead
-    * of price, measuring where RSI sits within its recent min/max range.
-    * Oscillates 0-100; high = RSI near its recent top, low = near its recent
-    * bottom. — <b>unchecked</b> variant of {@link Core#stochRsi}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange stochRsiUnguarded( int startIdx,
-                                      int endIdx,
-                                      float inReal[],
-                                      int optInTimePeriod,
-                                      int optInFastK_Period,
-                                      int optInFastD_Period,
-                                      MAType optInFastD_MAType,
-                                      double outFastK[],
-                                      double outFastD[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      stochRsiUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
@@ -744,7 +581,7 @@
       /* Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       RsiStream sub0 = rsiOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx - lookbackSTOCHF, optInTimePeriod);
-      retCode = rsiUnguardedInternal(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
+      retCode = rsiInternal(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
       if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -753,7 +590,7 @@
       /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       StochFStream sub1 = stochFOpenInternal(java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-      retCode = stochFUnguardedInternal(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, sc_outFastK, sc_outFastD);
+      retCode = stochFInternal(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, sc_outFastK, sc_outFastD);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -854,7 +691,7 @@
       /* Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       RsiStream sub0 = rsiOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx - lookbackSTOCHF, optInTimePeriod);
-      retCode = rsiUnguardedInternal(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
+      retCode = rsiInternal(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
       if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -863,7 +700,7 @@
       /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       StochFStream sub1 = stochFOpenInternal(java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-      retCode = stochFUnguardedInternal(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, sc_outFastK, sc_outFastD);
+      retCode = stochFInternal(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, sc_outFastK, sc_outFastD);
       if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;

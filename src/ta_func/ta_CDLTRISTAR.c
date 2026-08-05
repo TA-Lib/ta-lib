@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -173,73 +173,6 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_CDLTRISTAR_Unguarded( int    startIdx,
-                                               int    endIdx,
-                                               const double inOpen[],
-                                               const double inHigh[],
-                                               const double inLow[],
-                                               const double inClose[],
-                                               int          *outBegIdx,
-                                               int          *outNBElement,
-                                               int        outInteger[] )
-{
-   double BodyPeriodTotal;
-   int i;
-   int outIdx;
-   int BodyTrailingIdx;
-   int lookbackTotal;
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
-   int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
-
-   lookbackTotal = TA_CDLTRISTAR_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   BodyPeriodTotal = 0;
-   BodyTrailingIdx = startIdx - 2 - BodyDoji_avgPeriod;
-   i = BodyTrailingIdx;
-   while( i < startIdx - 2 )
-   {
-      BodyPeriodTotal += TA_CANDLERANGE(BodyDoji,i);
-      i += 1;
-   }
-   i = startIdx;
-   outIdx = 0;
-   do
-   {
-      if( fabs(inClose[i - 2] - inOpen[i - 2]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) && fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) && fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) )
-      {
-         outInteger[outIdx] = 0;
-         if( ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && max(inOpen[i],inClose[i]) < max(inOpen[i - 1],inClose[i - 1]) )
-         {
-            outInteger[outIdx] = 0 - 100;
-         }
-         if( ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && min(inOpen[i],inClose[i]) > min(inOpen[i - 1],inClose[i - 1]) )
-         {
-            outInteger[outIdx] = 100;
-         }
-         outIdx += 1;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      BodyPeriodTotal += TA_CANDLERANGE(BodyDoji,i - 2) - TA_CANDLERANGE(BodyDoji,BodyTrailingIdx);
-      i += 1;
-      BodyTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_CDLTRISTAR( int    startIdx,
                             int    endIdx,
                             const float inOpen[],
@@ -274,73 +207,6 @@ TA_RetCode TA_S_CDLTRISTAR( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
-
-   lookbackTotal = TA_CDLTRISTAR_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   BodyPeriodTotal = 0;
-   BodyTrailingIdx = startIdx - 2 - BodyDoji_avgPeriod;
-   i = BodyTrailingIdx;
-   while( i < startIdx - 2 )
-   {
-      BodyPeriodTotal += TA_CANDLERANGE(BodyDoji,i);
-      i += 1;
-   }
-   i = startIdx;
-   outIdx = 0;
-   do
-   {
-      if( fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) && fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) )
-      {
-         outInteger[outIdx] = 0;
-         if( ((min((double)inOpen[i - 1],(double)inClose[i - 1]) > max((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0) && max((double)inOpen[i],(double)inClose[i]) < max((double)inOpen[i - 1],(double)inClose[i - 1]) )
-         {
-            outInteger[outIdx] = 0 - 100;
-         }
-         if( ((max((double)inOpen[i - 1],(double)inClose[i - 1]) < min((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0) && min((double)inOpen[i],(double)inClose[i]) > min((double)inOpen[i - 1],(double)inClose[i - 1]) )
-         {
-            outInteger[outIdx] = 100;
-         }
-         outIdx += 1;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      BodyPeriodTotal += TA_CANDLERANGE(BodyDoji,i - 2) - TA_CANDLERANGE(BodyDoji,BodyTrailingIdx);
-      i += 1;
-      BodyTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_CDLTRISTAR_Unguarded( int    startIdx,
-                                      int    endIdx,
-                                      const float inOpen[],
-                                      const float inHigh[],
-                                      const float inLow[],
-                                      const float inClose[],
-                                      int          *outBegIdx,
-                                      int          *outNBElement,
-                                      int        outInteger[] )
-{
-   double BodyPeriodTotal;
-   int i;
-   int outIdx;
-   int BodyTrailingIdx;
-   int lookbackTotal;
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
-   int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
 
    lookbackTotal = TA_CDLTRISTAR_Lookback();
    if( startIdx < lookbackTotal )

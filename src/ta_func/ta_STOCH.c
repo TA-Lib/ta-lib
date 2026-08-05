@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -318,7 +318,7 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
     * Some documentation will refer to the smoothed version as being
     * "K-Slow", but often this end up to be shorten to "K".
     */
-   retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
+   retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       if( bufferIsAllocated )
@@ -333,7 +333,7 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
    /* Calculate the %D which is simply a moving average of
     * the already smoothed %K.
     */
-   retCode = TA_MA_Unguarded(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
+   retCode = TA_MA(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
    /* Copy tempBuffer into the caller buffer.
     * (Calculation could not be done directly in the
     *  caller buffer because more input data then the
@@ -358,153 +358,6 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
    /* Note: Keep the outBegIdx relative to the
     *       caller input before returning.
     */
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_LIB_API TA_RetCode TA_STOCH_Unguarded( int    startIdx,
-                                          int    endIdx,
-                                          const double inHigh[],
-                                          const double inLow[],
-                                          const double inClose[],
-                                          int optInFastK_Period,
-                                          int optInSlowK_Period,
-                                          TA_MAType optInSlowK_MAType,
-                                          int optInSlowD_Period,
-                                          TA_MAType optInSlowD_MAType,
-                                          int          *outBegIdx,
-                                          int          *outNBElement,
-                                          double        outSlowK[],
-                                          double        outSlowD[] )
-{
-   TA_RetCode retCode;
-   double lowest;
-   double highest;
-   double tmp;
-   double diff;
-   double *tempBuffer;
-   int outIdx;
-   int lowestIdx;
-   int highestIdx;
-   int lookbackTotal;
-   int lookbackK;
-   int lookbackKSlow;
-   int lookbackDSlow;
-   int trailingIdx;
-   int today;
-   int i;
-   int bufferIsAllocated;
-
-   lookbackK = optInFastK_Period - 1;
-   lookbackKSlow = TA_MA_Lookback(optInSlowK_Period,optInSlowK_MAType);
-   lookbackDSlow = TA_MA_Lookback(optInSlowD_Period,optInSlowD_MAType);
-   lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outIdx = 0;
-   trailingIdx = startIdx - lookbackTotal;
-   today = trailingIdx + lookbackK;
-   highestIdx = 0 - 1;
-   lowestIdx = highestIdx;
-   lowest = 0.0;
-   highest = lowest;
-   diff = highest;
-   bufferIsAllocated = 0;
-   if( outSlowK == inHigh || outSlowK == inLow || outSlowK == inClose )
-   {
-      tempBuffer = outSlowK;
-   } else 
-   {
-      bufferIsAllocated = 1;
-      tempBuffer = malloc((endIdx - today + 1) * sizeof(double));
-   }
-   while( today <= endIdx )
-   {
-      tmp = inLow[today];
-      if( lowestIdx < trailingIdx )
-      {
-         lowestIdx = trailingIdx;
-         lowest = inLow[lowestIdx];
-         i = lowestIdx;
-         while( ++i <= today )
-         {
-            tmp = inLow[i];
-            if( tmp < lowest )
-            {
-               lowestIdx = i;
-               lowest = tmp;
-            }
-         }
-         diff = (highest - lowest) / 100.0;
-      } else if( tmp <= lowest )
-      {
-         lowestIdx = today;
-         lowest = tmp;
-         diff = (highest - lowest) / 100.0;
-      }
-      tmp = inHigh[today];
-      if( highestIdx < trailingIdx )
-      {
-         highestIdx = trailingIdx;
-         highest = inHigh[highestIdx];
-         i = highestIdx;
-         while( ++i <= today )
-         {
-            tmp = inHigh[i];
-            if( tmp > highest )
-            {
-               highestIdx = i;
-               highest = tmp;
-            }
-         }
-         diff = (highest - lowest) / 100.0;
-      } else if( tmp >= highest )
-      {
-         highestIdx = today;
-         highest = tmp;
-         diff = (highest - lowest) / 100.0;
-      }
-      if( !TA_IS_ZERO(diff) )
-      {
-         tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
-      } else 
-      {
-         tempBuffer[outIdx++] = 0.0;
-      }
-      trailingIdx += 1;
-      today += 1;
-   }
-   retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
-   if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
-   {
-      if( bufferIsAllocated )
-      {
-         free(tempBuffer);
-      }
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return retCode;
-   }
-   retCode = TA_MA_Unguarded(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
-   memmove(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
-   if( bufferIsAllocated )
-   {
-      free(tempBuffer);
-   }
-   if( retCode != TA_SUCCESS )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return retCode;
-   }
    *outBegIdx= startIdx;
    return TA_SUCCESS;
 }
@@ -663,7 +516,7 @@ TA_RetCode TA_S_STOCH( int    startIdx,
       trailingIdx += 1;
       today += 1;
    }
-   retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
+   retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       if( bufferIsAllocated )
@@ -674,154 +527,7 @@ TA_RetCode TA_S_STOCH( int    startIdx,
       *outNBElement= 0;
       return retCode;
    }
-   retCode = TA_MA_Unguarded(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
-   memmove(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
-   if( bufferIsAllocated )
-   {
-      free(tempBuffer);
-   }
-   if( retCode != TA_SUCCESS )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return retCode;
-   }
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_STOCH_Unguarded( int    startIdx,
-                                 int    endIdx,
-                                 const float inHigh[],
-                                 const float inLow[],
-                                 const float inClose[],
-                                 int optInFastK_Period,
-                                 int optInSlowK_Period,
-                                 TA_MAType optInSlowK_MAType,
-                                 int optInSlowD_Period,
-                                 TA_MAType optInSlowD_MAType,
-                                 int          *outBegIdx,
-                                 int          *outNBElement,
-                                 double        outSlowK[],
-                                 double        outSlowD[] )
-{
-   TA_RetCode retCode;
-   double lowest;
-   double highest;
-   double tmp;
-   double diff;
-   double *tempBuffer;
-   int outIdx;
-   int lowestIdx;
-   int highestIdx;
-   int lookbackTotal;
-   int lookbackK;
-   int lookbackKSlow;
-   int lookbackDSlow;
-   int trailingIdx;
-   int today;
-   int i;
-   int bufferIsAllocated;
-
-   lookbackK = optInFastK_Period - 1;
-   lookbackKSlow = TA_MA_Lookback(optInSlowK_Period,optInSlowK_MAType);
-   lookbackDSlow = TA_MA_Lookback(optInSlowD_Period,optInSlowD_MAType);
-   lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   outIdx = 0;
-   trailingIdx = startIdx - lookbackTotal;
-   today = trailingIdx + lookbackK;
-   highestIdx = 0 - 1;
-   lowestIdx = highestIdx;
-   lowest = 0.0;
-   highest = lowest;
-   diff = highest;
-   bufferIsAllocated = 0;
-   if( 0 || 0 || 0 )
-   {
-      tempBuffer = outSlowK;
-   } else 
-   {
-      bufferIsAllocated = 1;
-      tempBuffer = malloc((endIdx - today + 1) * sizeof(double));
-   }
-   while( today <= endIdx )
-   {
-      tmp = (double)inLow[today];
-      if( lowestIdx < trailingIdx )
-      {
-         lowestIdx = trailingIdx;
-         lowest = (double)inLow[lowestIdx];
-         i = lowestIdx;
-         while( ++i <= today )
-         {
-            tmp = (double)inLow[i];
-            if( tmp < lowest )
-            {
-               lowestIdx = i;
-               lowest = tmp;
-            }
-         }
-         diff = (highest - lowest) / 100.0;
-      } else if( tmp <= lowest )
-      {
-         lowestIdx = today;
-         lowest = tmp;
-         diff = (highest - lowest) / 100.0;
-      }
-      tmp = (double)inHigh[today];
-      if( highestIdx < trailingIdx )
-      {
-         highestIdx = trailingIdx;
-         highest = (double)inHigh[highestIdx];
-         i = highestIdx;
-         while( ++i <= today )
-         {
-            tmp = (double)inHigh[i];
-            if( tmp > highest )
-            {
-               highestIdx = i;
-               highest = tmp;
-            }
-         }
-         diff = (highest - lowest) / 100.0;
-      } else if( tmp >= highest )
-      {
-         highestIdx = today;
-         highest = tmp;
-         diff = (highest - lowest) / 100.0;
-      }
-      if( !TA_IS_ZERO(diff) )
-      {
-         tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
-      } else 
-      {
-         tempBuffer[outIdx++] = 0.0;
-      }
-      trailingIdx += 1;
-      today += 1;
-   }
-   retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,outBegIdx,outNBElement,tempBuffer);
-   if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
-   {
-      if( bufferIsAllocated )
-      {
-         free(tempBuffer);
-      }
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return retCode;
-   }
-   retCode = TA_MA_Unguarded(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
+   retCode = TA_MA(0,(int)*outNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,outBegIdx,outNBElement,outSlowD);
    memmove(outSlowK,&tempBuffer[lookbackDSlow],(int)*outNBElement * sizeof(double));
    if( bufferIsAllocated )
    {
@@ -1220,7 +926,7 @@ TA_RetCode TA_STOCH_OpenInternal( struct TA_STOCH_Stream **stream, const double 
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,&dummyBegIdx,&dummyNBElement,tempBuffer);
+      retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,&dummyBegIdx,&dummyNBElement,tempBuffer);
       if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
       {
          if( bufferIsAllocated )
@@ -1250,7 +956,7 @@ TA_RetCode TA_STOCH_OpenInternal( struct TA_STOCH_Stream **stream, const double 
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(0,(int)dummyNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD);
+      retCode = TA_MA(0,(int)dummyNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -1583,7 +1289,7 @@ TA_LIB_API TA_RetCode TA_STOCH_OpenAndFill( TA_STOCH_Stream **stream, const doub
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,&dummyBegIdx,&dummyNBElement,tempBuffer);
+      retCode = TA_MA(0,outIdx - 1,tempBuffer,optInSlowK_Period,optInSlowK_MAType,&dummyBegIdx,&dummyNBElement,tempBuffer);
       if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
       {
          if( bufferIsAllocated )
@@ -1613,7 +1319,7 @@ TA_LIB_API TA_RetCode TA_STOCH_OpenAndFill( TA_STOCH_Stream **stream, const doub
             return subRc;
          }
       }
-      retCode = TA_MA_Unguarded(0,(int)dummyNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD);
+      retCode = TA_MA(0,(int)dummyNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the

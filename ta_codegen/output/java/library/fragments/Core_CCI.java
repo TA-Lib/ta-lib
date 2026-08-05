@@ -154,76 +154,6 @@
       /* Free the circular buffer if it was dynamically allocated. */
       return RetCode.Success ;
    }
-   RetCode cciUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 double inHigh[],
-                                 double inLow[],
-                                 double inClose[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      double tempReal = 0;
-      double tempReal2 = 0;
-      double theAverage = 0;
-      double lastValue = 0;
-      int i = 0;
-      int j = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      double[] circBuffer;
-      int circBuffer_Idx = 0;
-      int maxIdx_circBuffer = (30)-1;
-      lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
-      circBuffer = new double[optInTimePeriod];
-      maxIdx_circBuffer = (optInTimePeriod)-1;
-      circBuffer_Idx = 0;
-      i = startIdx - lookbackTotal;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            circBuffer[circBuffer_Idx] = (inHigh[i] + inLow[i] + inClose[i]) / 3;
-            i += 1;
-            circBuffer_Idx++;
-            if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
-         }
-      }
-      outIdx = 0;
-      do {
-         lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
-         circBuffer[circBuffer_Idx] = lastValue;
-         theAverage = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
-            theAverage += circBuffer[j];
-         }
-         theAverage /= optInTimePeriod;
-         tempReal2 = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
-            tempReal2 += Math.abs(circBuffer[j] - theAverage);
-         }
-         tempReal = lastValue - theAverage;
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
-            outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-         circBuffer_Idx++;
-         if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
    RetCode cciInternal( int startIdx,
                         int endIdx,
                         float inHigh[],
@@ -256,76 +186,6 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
-      circBuffer = new double[optInTimePeriod];
-      maxIdx_circBuffer = (optInTimePeriod)-1;
-      circBuffer_Idx = 0;
-      i = startIdx - lookbackTotal;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            circBuffer[circBuffer_Idx] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
-            i += 1;
-            circBuffer_Idx++;
-            if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
-         }
-      }
-      outIdx = 0;
-      do {
-         lastValue = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
-         circBuffer[circBuffer_Idx] = lastValue;
-         theAverage = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
-            theAverage += circBuffer[j];
-         }
-         theAverage /= optInTimePeriod;
-         tempReal2 = 0;
-         for( j = 0; j < optInTimePeriod; j += 1 ) {
-            tempReal2 += Math.abs(circBuffer[j] - theAverage);
-         }
-         tempReal = lastValue - theAverage;
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
-            outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-         circBuffer_Idx++;
-         if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode cciUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 float inHigh[],
-                                 float inLow[],
-                                 float inClose[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      double tempReal = 0;
-      double tempReal2 = 0;
-      double theAverage = 0;
-      double lastValue = 0;
-      int i = 0;
-      int j = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      double[] circBuffer;
-      int circBuffer_Idx = 0;
-      int maxIdx_circBuffer = (30)-1;
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -434,37 +294,6 @@
     * Commodity Channel Index: measures the current typical price relative to
     * its simple moving average, scaled by mean absolute deviation. Momentum
     * oscillator flagging overbought/oversold extremes. CCI &gt; +100
-    * overbought; CCI &lt; -100 oversold. — <b>unchecked</b> variant of
-    * {@link Core#cci}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange cciUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inHigh[],
-                                 double inLow[],
-                                 double inClose[],
-                                 int optInTimePeriod,
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      cciUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Commodity Channel Index: measures the current typical price relative to
-    * its simple moving average, scaled by mean absolute deviation. Momentum
-    * oscillator flagging overbought/oversold extremes. CCI &gt; +100
     * overbought; CCI &lt; -100 oversold.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -517,38 +346,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("CCI", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Commodity Channel Index: measures the current typical price relative to
-    * its simple moving average, scaled by mean absolute deviation. Momentum
-    * oscillator flagging overbought/oversold extremes. CCI &gt; +100
-    * overbought; CCI &lt; -100 oversold. — <b>unchecked</b> variant of
-    * {@link Core#cci}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange cciUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inHigh[],
-                                 float inLow[],
-                                 float inClose[],
-                                 int optInTimePeriod,
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      cciUnguardedInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

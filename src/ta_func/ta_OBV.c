@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -112,41 +112,6 @@ TA_LIB_API TA_RetCode TA_OBV( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_OBV_Unguarded( int    startIdx,
-                                        int    endIdx,
-                                        const double inReal[],
-                                        const double inVolume[],
-                                        int          *outBegIdx,
-                                        int          *outNBElement,
-                                        double        outReal[] )
-{
-   int i;
-   int outIdx;
-   double prevReal;
-   double tempReal;
-   double prevOBV;
-
-   prevOBV = inVolume[startIdx];
-   prevReal = inReal[startIdx];
-   outIdx = 0;
-   for( i = startIdx; i <= endIdx; i += 1 )
-   {
-      tempReal = inReal[i];
-      if( tempReal > prevReal )
-      {
-         prevOBV += inVolume[i];
-      } else if( tempReal < prevReal )
-      {
-         prevOBV -= inVolume[i];
-      }
-      outReal[outIdx++] = prevOBV;
-      prevReal = tempReal;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_OBV( int    startIdx,
                      int    endIdx,
                      const float inReal[],
@@ -172,41 +137,6 @@ TA_RetCode TA_S_OBV( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   prevOBV = (double)inVolume[startIdx];
-   prevReal = (double)inReal[startIdx];
-   outIdx = 0;
-   for( i = startIdx; i <= endIdx; i += 1 )
-   {
-      tempReal = (double)inReal[i];
-      if( tempReal > prevReal )
-      {
-         prevOBV += (double)inVolume[i];
-      } else if( tempReal < prevReal )
-      {
-         prevOBV -= (double)inVolume[i];
-      }
-      outReal[outIdx++] = prevOBV;
-      prevReal = tempReal;
-   }
-   *outBegIdx= startIdx;
-   *outNBElement= outIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_OBV_Unguarded( int    startIdx,
-                               int    endIdx,
-                               const float inReal[],
-                               const float inVolume[],
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] )
-{
-   int i;
-   int outIdx;
-   double prevReal;
-   double tempReal;
-   double prevOBV;
 
    prevOBV = (double)inVolume[startIdx];
    prevReal = (double)inReal[startIdx];

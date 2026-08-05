@@ -18,7 +18,7 @@ ta_codegen/input/                (per-indicator .c logic + YAML metadata)
 backends            server_gen / bench_gen
   ↓                      ↓
 c.rs, rust_lang.rs,   JSON-RPC servers, bench binary,
-java.rs               include/ta_func_unguarded.h
+java.rs               src/ta_func/ta_func_stream_private.h
 ta_abstract_c.rs
   ↓
 src/ta_func/*.c          (C indicator code — generated IN PLACE)
@@ -57,8 +57,8 @@ touching all three.
 | `parser` | Parses YAML metadata (via raw serde structs) into `FuncDef`; parses `.c` source directly into IR `Statement`/`Expr` (no intermediate raw-struct stage for the logic) |
 | `ir` | Intermediate representation (`FuncDef`, `ParamType`, `Statement`, `Expr`, etc.) |
 | `extractor` | Extracts indicator definitions from C source files → YAML |
-| `backends/c.rs` | Generates C indicator implementations (guarded + unguarded variants) |
-| `backends/rust_lang.rs` | Generates Rust indicator implementations (concrete `f64`, guarded + unguarded variants) |
+| `backends/c.rs` | Generates C indicator implementations (guarded `TA_<N>` / `TA_S_<N>`, plus `TA_<N>_Private` where declared) |
+| `backends/rust_lang.rs` | Generates Rust indicator implementations (concrete `f64`, guarded entry point plus `_private` where declared) |
 | `backends/rust_doc.rs` | Renders each function's canonical `<name>.md` as rustdoc on the generated Rust methods (summary/formula/notes, `# Arguments` with YAML numbers injected, `# Errors`/`# Panics`, a runnable doctest, `#[doc(alias)]`, intra-doc `# See also` links) |
 | `backends/java.rs` | Generates Java Core class methods |
 | `backends/csharp.rs` | Generates the shipped C# indicators — one `Core_<NAME>.cs` (`public partial class Core`) per function; XML docs via `csharp_doc.rs`, condition folding shared with Java via `compat_fold.rs` |
@@ -68,7 +68,7 @@ touching all three.
 | `backends/price_bundle.rs` | Folds the expanded price components back into the single `TA_Input_Price` descriptor (`inPriceHLC` + flags). Shared by the C, Rust and Java abstract backends — that name and flags word are **public ABI** (wrappers read them; ta-lib-python renders them as `{'prices': [...]}`), so they are derived once, from the YAML declaration carried on each `Input` as a `PriceRef`, never re-inferred from argument names |
 | `backends/func_api_xml.rs` | Generates `ta_func_api.xml` metadata |
 | `backends/docs_site.rs` | Generates the ta-lib.org website (`website/src/functions/<name>.md` + `index.md`) from each function's `ta_codegen/input/<name>/<name>.md` — written directly into the VuePress site source tree (`website/`), not `ta_codegen/output/` |
-| `server_gen` | Generates JSON-RPC server wrappers + `include/ta_func_unguarded.h` |
+| `server_gen` | Generates JSON-RPC server wrappers + `src/ta_func/ta_func_stream_private.h` |
 | `bench_gen` | Generates direct-call benchmark binary |
 | `registry` | Function registry for tracking available indicators |
 
@@ -230,13 +230,11 @@ is concrete-`f64` only.
 |---------|---------|
 | `fn xxx_lookback(...) -> usize` | Lookback (first valid output index) |
 | `fn xxx(...)` | Guarded public API: validates params, pre-computes optimization values, delegates |
-| `fn xxx_unguarded(...)` | Cross-indicator calls: skips the validation prologue. Indexing stays safe (`#![forbid(unsafe_code)]`), so a violated precondition panics, never UB |
+| `fn xxx_private(...)` | Only where the definition declares one (EMA). Extra pre-computed params (EMA's `k`), no validation prologue — its only caller is the guarded body above it |
 
-Cross-indicator calls always use `_unguarded` to avoid double-validation.
-Functions with extra internal params (e.g. EMA's `k` factor) get an additional
-`fn xxx_private(...)` exposing them; the guarded/unguarded variants pre-compute
-the params and delegate to it. There are **no** `_unchecked` /
-`_unguarded_unchecked` variants.
+Cross-indicator calls target the **guarded** entry point, which carries the
+bounds-assert preamble; that preamble takes an empty-range escape so a call
+computing nothing cannot panic.
 
 ### Documentation (rustdoc)
 

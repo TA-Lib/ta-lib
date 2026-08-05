@@ -268,7 +268,7 @@
           * (ep is just used as a temp buffer here, the name
           *  of the parameter is not significant).
           */
-         retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+         retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -440,188 +440,6 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode sarExtUnguardedInternal( int startIdx,
-                                    int endIdx,
-                                    double inHigh[],
-                                    double inLow[],
-                                    double optInStartValue,
-                                    double optInOffsetOnReverse,
-                                    double optInAccelerationInitLong,
-                                    double optInAccelerationLong,
-                                    double optInAccelerationMaxLong,
-                                    double optInAccelerationInitShort,
-                                    double optInAccelerationShort,
-                                    double optInAccelerationMaxShort,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outReal[] )
-   {
-      RetCode retCode;
-      int isLong = 0;
-      int todayIdx = 0;
-      int outIdx = 0;
-      MInteger tempInt = new MInteger();
-      double newHigh = 0;
-      double newLow = 0;
-      double prevHigh = 0;
-      double prevLow = 0;
-      double afLong = 0;
-      double afShort = 0;
-      double ep = 0;
-      double sar = 0;
-      double[] ep_temp = new double[1];
-      if( startIdx < 1 ) {
-         startIdx = 1;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      afLong = optInAccelerationInitLong;
-      afShort = optInAccelerationInitShort;
-      if( afLong > optInAccelerationMaxLong ) {
-         optInAccelerationInitLong = optInAccelerationMaxLong;
-         afLong = optInAccelerationInitLong;
-      }
-      if( optInAccelerationLong > optInAccelerationMaxLong ) {
-         optInAccelerationLong = optInAccelerationMaxLong;
-      }
-      if( afShort > optInAccelerationMaxShort ) {
-         optInAccelerationInitShort = optInAccelerationMaxShort;
-         afShort = optInAccelerationInitShort;
-      }
-      if( optInAccelerationShort > optInAccelerationMaxShort ) {
-         optInAccelerationShort = optInAccelerationMaxShort;
-      }
-      if( optInStartValue == 0 ) {
-         retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
-         if( ep_temp[0] > 0 ) {
-            isLong = 0;
-         } else {
-            isLong = 1;
-         }
-         if( retCode != RetCode.Success ) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return retCode ;
-         }
-      } else if( optInStartValue > 0 ) {
-         isLong = 1;
-      } else {
-         isLong = 0;
-      }
-      outBegIdx.value = startIdx;
-      outIdx = 0;
-      todayIdx = startIdx;
-      newHigh = inHigh[todayIdx - 1];
-      newLow = inLow[todayIdx - 1];
-      if( optInStartValue == 0 ) {
-         if( isLong == 1 ) {
-            ep = inHigh[todayIdx];
-            sar = newLow;
-         } else {
-            ep = inLow[todayIdx];
-            sar = newHigh;
-         }
-      } else if( optInStartValue > 0 ) {
-         ep = inHigh[todayIdx];
-         sar = optInStartValue;
-      } else {
-         ep = inLow[todayIdx];
-         sar = Math.abs(optInStartValue);
-      }
-      newLow = inLow[todayIdx];
-      newHigh = inHigh[todayIdx];
-      while( todayIdx <= endIdx ) {
-         prevLow = newLow;
-         prevHigh = newHigh;
-         newLow = inLow[todayIdx];
-         newHigh = inHigh[todayIdx];
-         todayIdx += 1;
-         if( isLong == 1 ) {
-            if( newLow <= sar ) {
-               isLong = 0;
-               sar = ep;
-               if( sar < prevHigh ) {
-                  sar = prevHigh;
-               }
-               if( sar < newHigh ) {
-                  sar = newHigh;
-               }
-               if( optInOffsetOnReverse != 0.0 ) {
-                  sar += sar * optInOffsetOnReverse;
-               }
-               outReal[outIdx++] = 0 - sar;
-               afShort = optInAccelerationInitShort;
-               ep = newLow;
-               sar = Math.fma(afShort, ep - sar, sar);
-               if( sar < prevHigh ) {
-                  sar = prevHigh;
-               }
-               if( sar < newHigh ) {
-                  sar = newHigh;
-               }
-            } else {
-               outReal[outIdx++] = sar;
-               if( newHigh > ep ) {
-                  ep = newHigh;
-                  afLong += optInAccelerationLong;
-                  if( afLong > optInAccelerationMaxLong ) {
-                     afLong = optInAccelerationMaxLong;
-                  }
-               }
-               sar = Math.fma(afLong, ep - sar, sar);
-               if( sar > prevLow ) {
-                  sar = prevLow;
-               }
-               if( sar > newLow ) {
-                  sar = newLow;
-               }
-            }
-         } else if( newHigh >= sar ) {
-            isLong = 1;
-            sar = ep;
-            if( sar > prevLow ) {
-               sar = prevLow;
-            }
-            if( sar > newLow ) {
-               sar = newLow;
-            }
-            if( optInOffsetOnReverse != 0.0 ) {
-               sar -= sar * optInOffsetOnReverse;
-            }
-            outReal[outIdx++] = sar;
-            afLong = optInAccelerationInitLong;
-            ep = newHigh;
-            sar = Math.fma(afLong, ep - sar, sar);
-            if( sar > prevLow ) {
-               sar = prevLow;
-            }
-            if( sar > newLow ) {
-               sar = newLow;
-            }
-         } else {
-            outReal[outIdx++] = 0 - sar;
-            if( newLow < ep ) {
-               ep = newLow;
-               afShort += optInAccelerationShort;
-               if( afShort > optInAccelerationMaxShort ) {
-                  afShort = optInAccelerationMaxShort;
-               }
-            }
-            sar = Math.fma(afShort, ep - sar, sar);
-            if( sar < prevHigh ) {
-               sar = prevHigh;
-            }
-            if( sar < newHigh ) {
-               sar = newHigh;
-            }
-         }
-      }
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
    RetCode sarExtInternal( int startIdx,
                            int endIdx,
                            float inHigh[],
@@ -723,189 +541,7 @@
          optInAccelerationShort = optInAccelerationMaxShort;
       }
       if( optInStartValue == 0 ) {
-         retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
-         if( ep_temp[0] > 0 ) {
-            isLong = 0;
-         } else {
-            isLong = 1;
-         }
-         if( retCode != RetCode.Success ) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return retCode ;
-         }
-      } else if( optInStartValue > 0 ) {
-         isLong = 1;
-      } else {
-         isLong = 0;
-      }
-      outBegIdx.value = startIdx;
-      outIdx = 0;
-      todayIdx = startIdx;
-      newHigh = (double)inHigh[todayIdx - 1];
-      newLow = (double)inLow[todayIdx - 1];
-      if( optInStartValue == 0 ) {
-         if( isLong == 1 ) {
-            ep = (double)inHigh[todayIdx];
-            sar = newLow;
-         } else {
-            ep = (double)inLow[todayIdx];
-            sar = newHigh;
-         }
-      } else if( optInStartValue > 0 ) {
-         ep = (double)inHigh[todayIdx];
-         sar = optInStartValue;
-      } else {
-         ep = (double)inLow[todayIdx];
-         sar = Math.abs(optInStartValue);
-      }
-      newLow = (double)inLow[todayIdx];
-      newHigh = (double)inHigh[todayIdx];
-      while( todayIdx <= endIdx ) {
-         prevLow = newLow;
-         prevHigh = newHigh;
-         newLow = (double)inLow[todayIdx];
-         newHigh = (double)inHigh[todayIdx];
-         todayIdx += 1;
-         if( isLong == 1 ) {
-            if( newLow <= sar ) {
-               isLong = 0;
-               sar = ep;
-               if( sar < prevHigh ) {
-                  sar = prevHigh;
-               }
-               if( sar < newHigh ) {
-                  sar = newHigh;
-               }
-               if( optInOffsetOnReverse != 0.0 ) {
-                  sar += sar * optInOffsetOnReverse;
-               }
-               outReal[outIdx++] = 0 - sar;
-               afShort = optInAccelerationInitShort;
-               ep = newLow;
-               sar = Math.fma(afShort, ep - sar, sar);
-               if( sar < prevHigh ) {
-                  sar = prevHigh;
-               }
-               if( sar < newHigh ) {
-                  sar = newHigh;
-               }
-            } else {
-               outReal[outIdx++] = sar;
-               if( newHigh > ep ) {
-                  ep = newHigh;
-                  afLong += optInAccelerationLong;
-                  if( afLong > optInAccelerationMaxLong ) {
-                     afLong = optInAccelerationMaxLong;
-                  }
-               }
-               sar = Math.fma(afLong, ep - sar, sar);
-               if( sar > prevLow ) {
-                  sar = prevLow;
-               }
-               if( sar > newLow ) {
-                  sar = newLow;
-               }
-            }
-         } else if( newHigh >= sar ) {
-            isLong = 1;
-            sar = ep;
-            if( sar > prevLow ) {
-               sar = prevLow;
-            }
-            if( sar > newLow ) {
-               sar = newLow;
-            }
-            if( optInOffsetOnReverse != 0.0 ) {
-               sar -= sar * optInOffsetOnReverse;
-            }
-            outReal[outIdx++] = sar;
-            afLong = optInAccelerationInitLong;
-            ep = newHigh;
-            sar = Math.fma(afLong, ep - sar, sar);
-            if( sar > prevLow ) {
-               sar = prevLow;
-            }
-            if( sar > newLow ) {
-               sar = newLow;
-            }
-         } else {
-            outReal[outIdx++] = 0 - sar;
-            if( newLow < ep ) {
-               ep = newLow;
-               afShort += optInAccelerationShort;
-               if( afShort > optInAccelerationMaxShort ) {
-                  afShort = optInAccelerationMaxShort;
-               }
-            }
-            sar = Math.fma(afShort, ep - sar, sar);
-            if( sar < prevHigh ) {
-               sar = prevHigh;
-            }
-            if( sar < newHigh ) {
-               sar = newHigh;
-            }
-         }
-      }
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
-   RetCode sarExtUnguardedInternal( int startIdx,
-                                    int endIdx,
-                                    float inHigh[],
-                                    float inLow[],
-                                    double optInStartValue,
-                                    double optInOffsetOnReverse,
-                                    double optInAccelerationInitLong,
-                                    double optInAccelerationLong,
-                                    double optInAccelerationMaxLong,
-                                    double optInAccelerationInitShort,
-                                    double optInAccelerationShort,
-                                    double optInAccelerationMaxShort,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outReal[] )
-   {
-      RetCode retCode;
-      int isLong = 0;
-      int todayIdx = 0;
-      int outIdx = 0;
-      MInteger tempInt = new MInteger();
-      double newHigh = 0;
-      double newLow = 0;
-      double prevHigh = 0;
-      double prevLow = 0;
-      double afLong = 0;
-      double afShort = 0;
-      double ep = 0;
-      double sar = 0;
-      double[] ep_temp = new double[1];
-      if( startIdx < 1 ) {
-         startIdx = 1;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      afLong = optInAccelerationInitLong;
-      afShort = optInAccelerationInitShort;
-      if( afLong > optInAccelerationMaxLong ) {
-         optInAccelerationInitLong = optInAccelerationMaxLong;
-         afLong = optInAccelerationInitLong;
-      }
-      if( optInAccelerationLong > optInAccelerationMaxLong ) {
-         optInAccelerationLong = optInAccelerationMaxLong;
-      }
-      if( afShort > optInAccelerationMaxShort ) {
-         optInAccelerationInitShort = optInAccelerationMaxShort;
-         afShort = optInAccelerationInitShort;
-      }
-      if( optInAccelerationShort > optInAccelerationMaxShort ) {
-         optInAccelerationShort = optInAccelerationMaxShort;
-      }
-      if( optInStartValue == 0 ) {
-         retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+         retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -1109,44 +745,6 @@
     * over the initial state and separate acceleration factors for long and
     * short positions. Unlike SAR, it returns negative values while short so
     * reversals are distinguishable. Sign flip of the output marks a trend
-    * reversal (positive=long stop, negative=short stop). — <b>unchecked</b>
-    * variant of {@link Core#sarExt}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange sarExtUnguarded( int startIdx,
-                                    int endIdx,
-                                    double inHigh[],
-                                    double inLow[],
-                                    double optInStartValue,
-                                    double optInOffsetOnReverse,
-                                    double optInAccelerationInitLong,
-                                    double optInAccelerationLong,
-                                    double optInAccelerationMaxLong,
-                                    double optInAccelerationInitShort,
-                                    double optInAccelerationShort,
-                                    double optInAccelerationMaxShort,
-                                    double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      sarExtUnguardedInternal(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Extended Parabolic SAR (stop and reverse) giving the caller full control
-    * over the initial state and separate acceleration factors for long and
-    * short positions. Unlike SAR, it returns negative values while short so
-    * reversals are distinguishable. Sign flip of the output marks a trend
     * reversal (positive=long stop, negative=short stop).
     * <p><b>Formula</b>
     * <pre>{@code
@@ -1215,45 +813,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("SAREXT", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Extended Parabolic SAR (stop and reverse) giving the caller full control
-    * over the initial state and separate acceleration factors for long and
-    * short positions. Unlike SAR, it returns negative values while short so
-    * reversals are distinguishable. Sign flip of the output marks a trend
-    * reversal (positive=long stop, negative=short stop). — <b>unchecked</b>
-    * variant of {@link Core#sarExt}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange sarExtUnguarded( int startIdx,
-                                    int endIdx,
-                                    float inHigh[],
-                                    float inLow[],
-                                    double optInStartValue,
-                                    double optInOffsetOnReverse,
-                                    double optInAccelerationInitLong,
-                                    double optInAccelerationLong,
-                                    double optInAccelerationMaxLong,
-                                    double optInAccelerationInitShort,
-                                    double optInAccelerationShort,
-                                    double optInAccelerationMaxShort,
-                                    double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      sarExtUnguardedInternal(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
@@ -1650,7 +1209,7 @@
           * (ep is just used as a temp buffer here, the name
           *  of the parameter is not significant).
           */
-         retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+         retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -2005,7 +1564,7 @@
           * (ep is just used as a temp buffer here, the name
           *  of the parameter is not significant).
           */
-         retCode = minusDMUnguardedInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+         retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {

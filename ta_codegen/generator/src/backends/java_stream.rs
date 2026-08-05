@@ -416,7 +416,7 @@ pub fn generate(
     let mut stream_fma = fma::build_fma_var_sets(
         &func.private_body,
         &func.outputs,
-        &fma::UNGUARDED_INDEX_SEEDS,
+        &fma::INDEX_PARAM_SEEDS,
     );
     for input in streaming::input_array_names(func) {
         stream_fma.real_vars.insert(input);

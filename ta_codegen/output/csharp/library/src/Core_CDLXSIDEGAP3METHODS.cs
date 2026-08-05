@@ -144,44 +144,6 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlXSideGap3MethodsUnguarded( int startIdx,
-                                                  int endIdx,
-                                                  double[] inOpen,
-                                                  double[] inHigh,
-                                                  double[] inLow,
-                                                  double[] inClose,
-                                                  out int outBegIdx,
-                                                  out int outNBElement,
-                                                  int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int i = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      lookbackTotal = CdlXSideGap3MethodsLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) && inOpen[i] < Math.Max(inClose[i - 1], inOpen[i - 1]) && inOpen[i] > Math.Min(inClose[i - 1], inOpen[i - 1]) && inClose[i] < Math.Max(inClose[i - 2], inOpen[i - 2]) && inClose[i] > Math.Min(inClose[i - 2], inOpen[i - 2]) && (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (Math.Min(inOpen[i - 1], inClose[i - 1]) > Math.Max(inOpen[i - 2], inClose[i - 2])) || ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (Math.Max(inOpen[i - 1], inClose[i - 1]) < Math.Min(inOpen[i - 2], inClose[i - 2]))) ) {
-            outInteger[outIdx++] = ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
    internal RetCode CdlXSideGap3Methods( int startIdx,
                                          int endIdx,
                                          float[] inOpen,
@@ -203,44 +165,6 @@ public partial class Core
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = CdlXSideGap3MethodsLookback();
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) && (double)inOpen[i] < Math.Max((double)inClose[i - 1], (double)inOpen[i - 1]) && (double)inOpen[i] > Math.Min((double)inClose[i - 1], (double)inOpen[i - 1]) && (double)inClose[i] < Math.Max((double)inClose[i - 2], (double)inOpen[i - 2]) && (double)inClose[i] > Math.Min((double)inClose[i - 2], (double)inOpen[i - 2]) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (Math.Min((double)inOpen[i - 1], (double)inClose[i - 1]) > Math.Max((double)inOpen[i - 2], (double)inClose[i - 2])) || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (Math.Max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.Min((double)inOpen[i - 2], (double)inClose[i - 2]))) ) {
-            outInteger[outIdx++] = (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode CdlXSideGap3MethodsUnguarded( int startIdx,
-                                                  int endIdx,
-                                                  float[] inOpen,
-                                                  float[] inHigh,
-                                                  float[] inLow,
-                                                  float[] inClose,
-                                                  out int outBegIdx,
-                                                  out int outNBElement,
-                                                  int[] outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int i = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
       lookbackTotal = CdlXSideGap3MethodsLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -320,48 +244,6 @@ public partial class Core
    /// real-body gap, followed by an opposite-color candle that fills into the
    /// gap. Bullish (upside) when the first two candles are white, bearish
    /// (downside) when they are black. A hit signals trend continuation: +100
-   /// bullish (uptrend resumes), -100 bearish (downtrend resumes). —
-   /// <b>unchecked</b> variant of <c>CdlXSideGap3Methods</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlXSideGap3MethodsUnguarded( int startIdx,
-                                                 int endIdx,
-                                                 double[] inOpen,
-                                                 double[] inHigh,
-                                                 double[] inLow,
-                                                 double[] inClose,
-                                                 int[] outInteger )
-   {
-      CdlXSideGap3MethodsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A three-candle continuation pattern: two same-color candles separated by a
-   /// real-body gap, followed by an opposite-color candle that fills into the
-   /// gap. Bullish (upside) when the first two candles are white, bearish
-   /// (downside) when they are black. A hit signals trend continuation: +100
    /// bullish (uptrend resumes), -100 bearish (downtrend resumes).
    /// </summary>
    /// <remarks>
@@ -412,51 +294,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("CDLXSIDEGAP3METHODS", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// A three-candle continuation pattern: two same-color candles separated by a
-   /// real-body gap, followed by an opposite-color candle that fills into the
-   /// gap. Bullish (upside) when the first two candles are white, bearish
-   /// (downside) when they are black. A hit signals trend continuation: +100
-   /// bullish (uptrend resumes), -100 bearish (downtrend resumes). —
-   /// <b>unchecked</b> variant of <c>CdlXSideGap3Methods</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inHigh">See the guarded method.</param>
-   /// <param name="inLow">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="outInteger">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange CdlXSideGap3MethodsUnguarded( int startIdx,
-                                                 int endIdx,
-                                                 float[] inOpen,
-                                                 float[] inHigh,
-                                                 float[] inLow,
-                                                 float[] inClose,
-                                                 int[] outInteger )
-   {
-      CdlXSideGap3MethodsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

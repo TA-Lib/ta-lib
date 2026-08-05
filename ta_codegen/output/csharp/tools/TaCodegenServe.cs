@@ -1548,12 +1548,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AccbandsUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -1562,7 +1556,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal2\":"); sb.Append(FormatArray(outArr2, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -1595,19 +1588,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AcosUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -1649,19 +1635,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AdUnguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -1697,19 +1676,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AddUnguarded(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -1753,19 +1725,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AdOscUnguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -1806,19 +1771,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AdxUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -1858,19 +1816,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AdxrUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -1906,19 +1857,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.ApoUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -1957,12 +1901,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AroonUnguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -1970,7 +1908,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2007,19 +1944,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AroonOscUnguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2052,19 +1982,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AsinUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2097,19 +2020,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AtanUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2150,19 +2066,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AtrUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2196,19 +2105,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AvgDevUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2250,19 +2152,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.AvgPriceUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2303,12 +2198,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.BbandsUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -2317,7 +2206,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal2\":"); sb.Append(FormatArray(outArr2, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2354,19 +2242,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.BetaUnguarded(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2408,19 +2289,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.BopUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2460,19 +2334,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CciUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2514,19 +2381,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.Cdl2CrowsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2568,19 +2428,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.Cdl3BlackCrowsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2622,19 +2475,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.Cdl3InsideUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2676,19 +2522,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.Cdl3LineStrikeUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2730,19 +2569,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.Cdl3OutsideUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2784,19 +2616,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.Cdl3StarsInSouthUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2838,19 +2663,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.Cdl3WhiteSoldiersUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2893,19 +2711,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlAbandonedBabyUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -2947,19 +2758,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlAdvanceBlockUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3001,19 +2805,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlBeltHoldUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3055,19 +2852,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlBreakawayUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3109,19 +2899,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlClosingMarubozuUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3163,19 +2946,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlConcealBabysWallUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3217,19 +2993,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlCounterAttackUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3272,19 +3041,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlDarkCloudCoverUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3326,19 +3088,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlDojiUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3380,19 +3135,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlDojiStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3434,19 +3182,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlDragonflyDojiUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3488,19 +3229,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlEngulfingUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3543,19 +3277,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlEveningDojiStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3598,19 +3325,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlEveningStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3652,19 +3372,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlGapSideSideWhiteUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3706,19 +3419,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlGravestoneDojiUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3760,19 +3466,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlHammerUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3814,19 +3513,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlHangingManUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3868,19 +3560,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlHaramiUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3922,19 +3607,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlHaramiCrossUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -3976,19 +3654,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlHignWaveUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4030,19 +3701,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlHikkakeUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4084,19 +3748,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlHikkakeModUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4138,19 +3795,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlHomingPigeonUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4192,19 +3842,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlIdentical3CrowsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4246,19 +3889,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlInNeckUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4300,19 +3936,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlInvertedHammerUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4354,19 +3983,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlKickingUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4408,19 +4030,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlKickingByLengthUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4462,19 +4077,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlLadderBottomUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4516,19 +4124,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlLongLeggedDojiUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4570,19 +4171,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlLongLineUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4624,19 +4218,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlMarubozuUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4678,19 +4265,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlMatchingLowUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4733,19 +4313,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlMatHoldUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4788,19 +4361,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlMorningDojiStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4843,19 +4409,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlMorningStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4897,19 +4456,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlOnNeckUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -4951,19 +4503,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlPiercingUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5005,19 +4550,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlRickshawManUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5059,19 +4597,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlRiseFall3MethodsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5113,19 +4644,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlSeperatingLinesUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5167,19 +4691,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlShootingStarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5221,19 +4738,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlShortLineUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5275,19 +4785,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlSpinningTopUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5329,19 +4832,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlStalledPatternUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5383,19 +4879,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlStickSandwichUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5437,19 +4926,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlTakuriUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5491,19 +4973,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlTasukiGapUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5545,19 +5020,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlThrustingUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5599,19 +5067,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlTristarUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5653,19 +5114,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlUnique3RiverUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5707,19 +5161,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlUpsideGap2CrowsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5761,19 +5208,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CdlXSideGap3MethodsUnguarded(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5806,19 +5246,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CeilUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5861,19 +5294,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CmfUnguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5908,19 +5334,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CmoUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -5954,19 +5373,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CmouUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6003,19 +5415,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CorrelUnguarded(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6048,19 +5453,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CosUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6093,19 +5491,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.CoshUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6139,19 +5530,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.DemaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6187,19 +5571,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.DivUnguarded(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6240,19 +5617,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.DxUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6287,19 +5657,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.EmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6332,19 +5695,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.ExpUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6377,19 +5733,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.FloorUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6423,19 +5772,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.HmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6469,19 +5811,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.HtDcPeriodUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6515,19 +5850,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.HtDcPhaseUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6563,12 +5891,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.HtPhasorUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -6576,7 +5898,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6612,12 +5933,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.HtSineUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -6625,7 +5940,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6659,19 +5973,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.HtTrendlineUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6705,19 +6012,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.HtTrendModeUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6754,19 +6054,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.ImiUnguarded(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6801,19 +6094,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.KamaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6847,19 +6133,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.LinearRegUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6893,19 +6172,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.LinearRegAngleUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6939,19 +6211,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.LinearRegInterceptUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -6985,19 +6250,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.LinearRegSlopeUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7030,19 +6288,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.LnUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7075,19 +6326,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.Log10Unguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7122,19 +6366,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MovingAverageUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7174,12 +6411,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MacdUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -7188,7 +6419,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal2\":"); sb.Append(FormatArray(outArr2, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7231,12 +6461,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MacdExtUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -7245,7 +6469,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal2\":"); sb.Append(FormatArray(outArr2, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7283,12 +6506,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MacdFixUnguarded(startIdx, endIdx, inReal, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -7297,7 +6514,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal2\":"); sb.Append(FormatArray(outArr2, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7335,12 +6551,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MamaUnguarded(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outArr0, outArr1);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -7348,7 +6558,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7387,19 +6596,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MovingAverageVariablePeriodUnguarded(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7433,19 +6635,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MaxUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7479,19 +6674,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MaxIndexUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7527,19 +6715,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MedPriceUnguarded(startIdx, endIdx, inHigh, inLow, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7582,19 +6763,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MfiUnguarded(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7628,19 +6802,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MidPointUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7677,19 +6844,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MidPriceUnguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7723,19 +6883,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MinUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7769,19 +6922,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MinIndexUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7817,12 +6963,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MinMaxUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -7830,7 +6970,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7866,12 +7005,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MinMaxIndexUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -7879,7 +7012,6 @@ public class TaCodegenServe {
             sb.Append(",\"outInteger1\":"); sb.Append(FormatIntArray(outArr1, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7920,19 +7052,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MinusDIUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -7970,19 +7095,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MinusDMUnguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8016,19 +7134,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MomUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8064,19 +7175,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.MultUnguarded(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8117,19 +7221,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.NatrUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8165,19 +7262,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.NviUnguarded(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8213,19 +7303,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.ObvUnguarded(startIdx, endIdx, inReal, inVolume, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8266,19 +7349,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.PlusDIUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8316,19 +7392,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.PlusDMUnguarded(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8364,19 +7433,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.PpoUnguarded(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8412,19 +7474,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.PviUnguarded(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8460,19 +7515,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.PvoUnguarded(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8506,19 +7554,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.RocUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8552,19 +7593,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.RocPUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8598,19 +7632,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.RocRUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8644,19 +7671,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.RocR100Unguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8691,19 +7711,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.RsiUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8741,19 +7754,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.SarUnguarded(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8797,19 +7803,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.SarExtUnguarded(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8842,19 +7841,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.SinUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8887,19 +7879,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.SinhUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8933,19 +7918,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.SmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -8978,19 +7956,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.SqrtUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9025,19 +7996,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.StdDevUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9083,12 +8047,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.StochUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -9096,7 +8054,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9140,12 +8097,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.StochFUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -9153,7 +8104,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9192,12 +8142,6 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.StochRsiUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
@@ -9205,7 +8149,6 @@ public class TaCodegenServe {
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9241,19 +8184,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.SubUnguarded(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9287,19 +8223,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.SumUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9335,19 +8264,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.T3Unguarded(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9380,19 +8302,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.TanUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9425,19 +8340,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.TanhUnguarded(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9471,19 +8379,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.TemaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9522,19 +8423,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.TrueRangeUnguarded(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9568,19 +8462,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.TrimaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9614,19 +8501,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.TrixUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9660,19 +8540,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.TsfUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9711,19 +8584,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.TypPriceUnguarded(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9765,19 +8631,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.UltOscUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9812,19 +8671,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.VarianceUnguarded(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9861,19 +8713,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.VwmaUnguarded(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9912,19 +8757,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.WclPriceUnguarded(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -9964,19 +8802,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.WillRUnguarded(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -10010,19 +8841,12 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
         }
-        long _t0u = 0;
-        for (int _biu = 0; _biu <= bench_iters; _biu++) {
-            if (_biu == 1) _t0u = GetNanoTime();
-            rc = core.WmaUnguarded(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-        }
-        long elapsedNsUng = (GetNanoTime() - _t0u) / bench_iters;
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append($",\"timing_ns_unguarded\":{elapsedNsUng}");
         sb.Append("}");
         return sb.ToString();
     }

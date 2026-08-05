@@ -12,10 +12,9 @@
 //! the Rust and C# registries render, and `test_abstract.c` already diffs the
 //! server's copy against C.
 //!
-//! Scope is the guarded double-precision batch API — the same as the C and Rust
-//! abstract layers. Describing streaming handles, `Unguarded` variants and
-//! `float[]` overloads is new schema design no backend does yet, and is a
-//! deliberate follow-up.
+//! Scope is the double-precision batch API — the same as the C and Rust abstract
+//! layers. Describing streaming handles and `float[]` overloads is new schema
+//! design no backend does yet, and is a deliberate follow-up.
 
 use std::collections::HashMap;
 use std::fmt::Write as _;
@@ -443,10 +442,9 @@ fn functions_registry(rows: &[FuncRow]) -> String {
          \x20* }\n\
          \x20* }</pre>\n\
          \x20*\n\
-         \x20* <p>Scope is the guarded, double-precision batch API — the same surface C's\n\
+         \x20* <p>Scope is the double-precision batch API — the same surface C's\n\
          \x20* {@code ta_abstract} and Rust's {@code abstract_api} describe. Streaming\n\
-         \x20* handles, {@code Unguarded} variants and {@code float[]} overloads are not\n\
-         \x20* catalogued.\n\
+         \x20* handles and {@code float[]} overloads are not catalogued.\n\
          \x20*/\n\
          public final class Functions {\n\n\
          \x20   private Functions() { }\n\n",

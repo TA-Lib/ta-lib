@@ -215,6 +215,13 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.cmf_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inHigh.len());
+        assert!(_assertStart > endIdx || endIdx < inLow.len());
+        assert!(_assertStart > endIdx || endIdx < inClose.len());
+        assert!(_assertStart > endIdx || endIdx < inVolume.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut sumMFV: f64 = 0.0_f64;
         let mut sumVol: f64 = 0.0_f64;
@@ -298,125 +305,6 @@ impl Core {
             outIdx += 1;
         }
         // Now continue processing the remaining bars.
-        while today <= endIdx {
-            sumMFV -= mfv_flow[mfv_Idx];
-            sumVol -= mfv_volume[mfv_Idx];
-            high = inHigh[today];
-            low = inLow[today];
-            close = inClose[today];
-            tmp = high - low;
-            if tmp > 0.0 {
-                mfv = (close - low - (high - close)) / tmp * inVolume[today];
-            } else {
-                mfv = 0.0;
-            }
-            mfv_flow[mfv_Idx] = mfv;
-            mfv_volume[mfv_Idx] = inVolume[today];
-            sumMFV += mfv;
-            sumVol += inVolume[today];
-            today += 1;
-            if sumVol > 0.0 {
-                outReal[outIdx] = sumMFV / sumVol;
-                outIdx += 1;
-            } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
-            }
-            mfv_Idx += 1;
-            if mfv_Idx > maxIdx_mfv { mfv_Idx = 0; }
-        }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::cmf`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::cmf`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::cmf`].
-    #[inline]
-    pub fn cmf_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        inVolume: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut sumMFV: f64 = 0.0_f64;
-        let mut sumVol: f64 = 0.0_f64;
-        let mut high: f64 = 0.0_f64;
-        let mut low: f64 = 0.0_f64;
-        let mut close: f64 = 0.0_f64;
-        let mut tmp: f64 = 0.0_f64;
-        let mut mfv: f64 = 0.0_f64;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut mfv_flow: Vec<f64> = Vec::new();
-        let mut mfv_volume: Vec<f64> = Vec::new();
-        let mut mfv_Idx: usize = 0;
-        let mut maxIdx_mfv: usize = 49;
-        assert!(endIdx < inHigh.len());
-        assert!(endIdx < inLow.len());
-        assert!(endIdx < inClose.len());
-        assert!(endIdx < inVolume.len());
-        let _assertLb = self.cmf_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        (*outBegIdx) = 0;
-        (*outNBElement) = 0;
-        lookbackTotal = (optInTimePeriod - 1) as usize;
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            return RetCode::Success;
-        }
-        if optInTimePeriod < 1 { return RetCode::AllocErr; }
-        mfv_flow = vec![0.0_f64; (optInTimePeriod) as usize];
-        mfv_volume = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_mfv = ((optInTimePeriod) as usize) - 1;
-        mfv_Idx = 0;
-        outIdx = 0;
-        today = startIdx - lookbackTotal;
-        sumMFV = 0.0;
-        sumVol = 0.0;
-        // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod) as usize;
-        while i > 0 {
-            high = inHigh[today];
-            low = inLow[today];
-            close = inClose[today];
-            tmp = high - low;
-            if tmp > 0.0 {
-                mfv = (close - low - (high - close)) / tmp * inVolume[today];
-            } else {
-                mfv = 0.0;
-            }
-            mfv_flow[mfv_Idx] = mfv;
-            mfv_volume[mfv_Idx] = inVolume[today];
-            sumMFV += mfv;
-            sumVol += inVolume[today];
-            today += 1;
-            mfv_Idx += 1;
-            if mfv_Idx > maxIdx_mfv { mfv_Idx = 0; }
-            i -= 1;
-        }
-        if sumVol > 0.0 {
-            outReal[outIdx] = sumMFV / sumVol;
-            outIdx += 1;
-        } else {
-            outReal[outIdx] = 0.0;
-            outIdx += 1;
-        }
         while today <= endIdx {
             sumMFV -= mfv_flow[mfv_Idx];
             sumVol -= mfv_volume[mfv_Idx];

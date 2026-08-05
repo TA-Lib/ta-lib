@@ -98,10 +98,9 @@ Full syntax and the `ta_defs.h` vocabulary (`TA_IS_ZERO`,
 
 - A complete C function: full signature, `TA_RetCode` return, pointer/array outputs
   (`*outBegIdx = ...`, `outReal[outIdx] = ...`), `return TA_SUCCESS;`
-- Do **not** write parameter validation or the guarded/unguarded split — the generator
-  adds those
+- Do **not** write parameter validation — the generator adds it
 - Cross-indicator calls use the **bare lowercase name** (`sma(...)`,
-  `ema_lookback(...)`); the generator routes them to the unguarded variant per language
+  `ema_lookback(...)`); the generator resolves them per language
 
 ### 4. Write / adjust the documentation — `ta_codegen/input/<name>/<name>.md`
 
@@ -177,7 +176,7 @@ Each backend has the same structure:
 
 | Call in `<name>.c` | C | Rust | Java | C# |
 |---|---|---|---|---|
-| `sma(...)` | `TA_SMA_Unguarded(...)` | `self.sma_unguarded(...)` | `smaUnguarded(...)` | `SmaUnguarded(...)` |
+| `sma(...)` | `TA_SMA(...)` | `self.sma(...)` | `smaInternal(...)` | `Sma(...)` |
 | `sma_lookback(...)` | `TA_SMA_Lookback(...)` | `self.sma_lookback(...)` | `smaLookback(...)` | `SmaLookback(...)` |
 
 (C also emits single-precision `TA_S_*` variants automatically; there is no Rust `_s`

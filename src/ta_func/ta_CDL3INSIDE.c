@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -183,79 +183,6 @@ TA_LIB_API TA_RetCode TA_CDL3INSIDE( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_CDL3INSIDE_Unguarded( int    startIdx,
-                                               int    endIdx,
-                                               const double inOpen[],
-                                               const double inHigh[],
-                                               const double inLow[],
-                                               const double inClose[],
-                                               int          *outBegIdx,
-                                               int          *outNBElement,
-                                               int        outInteger[] )
-{
-   double BodyShortPeriodTotal;
-   double BodyLongPeriodTotal;
-   int i;
-   int outIdx;
-   int BodyShortTrailingIdx;
-   int BodyLongTrailingIdx;
-   int lookbackTotal;
-   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
-   int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
-   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
-   int BodyShort_rangeType = TA_Globals->candleSettings[TA_BodyShort].rangeType;
-   int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;
-   double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
-
-   lookbackTotal = TA_CDL3INSIDE_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   BodyLongPeriodTotal = 0;
-   BodyShortPeriodTotal = 0;
-   BodyLongTrailingIdx = startIdx - 2 - BodyLong_avgPeriod;
-   BodyShortTrailingIdx = startIdx - 1 - BodyShort_avgPeriod;
-   i = BodyLongTrailingIdx;
-   while( i < startIdx - 2 )
-   {
-      BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i);
-      i += 1;
-   }
-   i = BodyShortTrailingIdx;
-   while( i < startIdx - 1 )
-   {
-      BodyShortPeriodTotal += TA_CANDLERANGE(BodyShort,i);
-      i += 1;
-   }
-   i = startIdx;
-   outIdx = 0;
-   do
-   {
-      if( max(inClose[i - 1],inOpen[i - 1]) < max(inClose[i - 2],inOpen[i - 2]) && min(inClose[i - 1],inOpen[i - 1]) > min(inClose[i - 2],inOpen[i - 2]) && (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inClose[i] < inOpen[i - 2] || ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inClose[i] > inOpen[i - 2]) && fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i - 1) )
-      {
-         outInteger[outIdx++] = (0 - ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1)) * 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 2) - TA_CANDLERANGE(BodyLong,BodyLongTrailingIdx);
-      BodyShortPeriodTotal += TA_CANDLERANGE(BodyShort,i - 1) - TA_CANDLERANGE(BodyShort,BodyShortTrailingIdx);
-      i += 1;
-      BodyLongTrailingIdx += 1;
-      BodyShortTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_CDL3INSIDE( int    startIdx,
                             int    endIdx,
                             const float inOpen[],
@@ -295,79 +222,6 @@ TA_RetCode TA_S_CDL3INSIDE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
-
-   lookbackTotal = TA_CDL3INSIDE_Lookback();
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   BodyLongPeriodTotal = 0;
-   BodyShortPeriodTotal = 0;
-   BodyLongTrailingIdx = startIdx - 2 - BodyLong_avgPeriod;
-   BodyShortTrailingIdx = startIdx - 1 - BodyShort_avgPeriod;
-   i = BodyLongTrailingIdx;
-   while( i < startIdx - 2 )
-   {
-      BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i);
-      i += 1;
-   }
-   i = BodyShortTrailingIdx;
-   while( i < startIdx - 1 )
-   {
-      BodyShortPeriodTotal += TA_CANDLERANGE(BodyShort,i);
-      i += 1;
-   }
-   i = startIdx;
-   outIdx = 0;
-   do
-   {
-      if( max((double)inClose[i - 1],(double)inOpen[i - 1]) < max((double)inClose[i - 2],(double)inOpen[i - 2]) && min((double)inClose[i - 1],(double)inOpen[i - 1]) > min((double)inClose[i - 2],(double)inOpen[i - 2]) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i] < (double)inOpen[i - 2] || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inClose[i] > (double)inOpen[i - 2]) && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i - 1) )
-      {
-         outInteger[outIdx++] = (0 - (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1)) * 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 2) - TA_CANDLERANGE(BodyLong,BodyLongTrailingIdx);
-      BodyShortPeriodTotal += TA_CANDLERANGE(BodyShort,i - 1) - TA_CANDLERANGE(BodyShort,BodyShortTrailingIdx);
-      i += 1;
-      BodyLongTrailingIdx += 1;
-      BodyShortTrailingIdx += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_CDL3INSIDE_Unguarded( int    startIdx,
-                                      int    endIdx,
-                                      const float inOpen[],
-                                      const float inHigh[],
-                                      const float inLow[],
-                                      const float inClose[],
-                                      int          *outBegIdx,
-                                      int          *outNBElement,
-                                      int        outInteger[] )
-{
-   double BodyShortPeriodTotal;
-   double BodyLongPeriodTotal;
-   int i;
-   int outIdx;
-   int BodyShortTrailingIdx;
-   int BodyLongTrailingIdx;
-   int lookbackTotal;
-   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
-   int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
-   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
-   int BodyShort_rangeType = TA_Globals->candleSettings[TA_BodyShort].rangeType;
-   int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;
-   double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
 
    lookbackTotal = TA_CDL3INSIDE_Lookback();
    if( startIdx < lookbackTotal )

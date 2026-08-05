@@ -189,11 +189,6 @@ int main( int argc, char **argv )
             extern int g_hideGuarded;
             g_hideGuarded = 1;
          }
-         else if( strcmp(argv[i], "--no-unguarded") == 0 )
-         {
-            extern int g_hideUnguarded;
-            g_hideUnguarded = 1;
-         }
          else
          {
             printUsage();
@@ -720,7 +715,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_composite, "PVO,VWMA,CMF,HMA,COMPOSITE" );
    DO_TEST( test_func_cmf,       "CMF" );
    DO_TEST( test_func_cmou,      "CMOU" );
-   DO_TEST( test_func_variants,  "UNGUARDED,TA_S_,VARIANT" );
+   DO_TEST( test_func_variants,  "TA_S_,VARIANT" );
    DO_TEST( test_candle_precision, "CDLDOJI,CANDLE,VARIANT,PRECISION" );
 
    return TA_TEST_PASS; /* All tests succeeded. */

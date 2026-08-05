@@ -126,7 +126,7 @@
        * recursion.
        */
       if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
-         return macdUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+         return macdInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
       }
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
@@ -174,14 +174,14 @@
        * will start at the requested 'startIdx'.
        */
       tempInteger = startIdx - lookbackSignal;
-      retCode = movingAverageUnguardedInternal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
+      retCode = movingAverageInternal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
       }
       /* Calculate the fast MA. */
-      retCode = movingAverageUnguardedInternal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
+      retCode = movingAverageInternal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -203,7 +203,7 @@
        */
       System.arraycopy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
       /* Calculate the signal/trigger line. */
-      retCode = movingAverageUnguardedInternal(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, outMACDSignal);
+      retCode = movingAverageInternal(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, outMACDSignal);
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -214,98 +214,6 @@
          outMACDHist[i] = outMACD[i] - outMACDSignal[i];
       }
       /* All done! Indicate the output limits and return success. */
-      outBegIdx.value = startIdx;
-      outNBElement.value = outNbElement2.value;
-      return RetCode.Success ;
-   }
-   RetCode macdExtUnguardedInternal( int startIdx,
-                                     int endIdx,
-                                     double inReal[],
-                                     int optInFastPeriod,
-                                     MAType optInFastMAType,
-                                     int optInSlowPeriod,
-                                     MAType optInSlowMAType,
-                                     int optInSignalPeriod,
-                                     MAType optInSignalMAType,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outMACD[],
-                                     double outMACDSignal[],
-                                     double outMACDHist[] )
-   {
-      double[] slowMABuffer;
-      double[] fastMABuffer;
-      RetCode retCode;
-      int tempInteger = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement2 = new MInteger();
-      int lookbackTotal = 0;
-      int lookbackSignal = 0;
-      int lookbackLargest = 0;
-      int i = 0;
-      MAType tempMAType;
-      if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
-         return macdUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
-      }
-      if( optInSlowPeriod < optInFastPeriod ) {
-         tempInteger = optInSlowPeriod;
-         optInSlowPeriod = optInFastPeriod;
-         optInFastPeriod = tempInteger;
-         tempMAType = optInSlowMAType;
-         optInSlowMAType = optInFastMAType;
-         optInFastMAType = tempMAType;
-      }
-      lookbackLargest = movingAverageLookback(optInFastPeriod, optInFastMAType);
-      tempInteger = movingAverageLookback(optInSlowPeriod, optInSlowMAType);
-      if( tempInteger > lookbackLargest ) {
-         lookbackLargest = tempInteger;
-      }
-      lookbackSignal = movingAverageLookback(optInSignalPeriod, optInSignalMAType);
-      lookbackTotal = lookbackSignal + lookbackLargest;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      tempInteger = endIdx - startIdx + 1 + lookbackSignal;
-      fastMABuffer = new double[(int)(tempInteger * 1)];
-      slowMABuffer = new double[(int)(tempInteger * 1)];
-      tempInteger = startIdx - lookbackSignal;
-      retCode = movingAverageUnguardedInternal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      retCode = movingAverageUnguardedInternal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.BadParam ;
-      }
-      for( i = 0; i < outNbElement1.value; i += 1 ) {
-         fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
-      }
-      System.arraycopy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      retCode = movingAverageUnguardedInternal(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, outMACDSignal);
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      for( i = 0; i < outNbElement2.value; i += 1 ) {
-         outMACDHist[i] = outMACD[i] - outMACDSignal[i];
-      }
       outBegIdx.value = startIdx;
       outNBElement.value = outNbElement2.value;
       return RetCode.Success ;
@@ -363,7 +271,7 @@
          return RetCode.BadParam ;
       }
       if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
-         return macdUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+         return macdInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
       }
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
@@ -392,105 +300,13 @@
       fastMABuffer = new double[(int)(tempInteger * 1)];
       slowMABuffer = new double[(int)(tempInteger * 1)];
       tempInteger = startIdx - lookbackSignal;
-      retCode = movingAverageUnguardedInternal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
+      retCode = movingAverageInternal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
       }
-      retCode = movingAverageUnguardedInternal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.BadParam ;
-      }
-      for( i = 0; i < outNbElement1.value; i += 1 ) {
-         fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
-      }
-      System.arraycopy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      retCode = movingAverageUnguardedInternal(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, outMACDSignal);
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      for( i = 0; i < outNbElement2.value; i += 1 ) {
-         outMACDHist[i] = outMACD[i] - outMACDSignal[i];
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outNbElement2.value;
-      return RetCode.Success ;
-   }
-   RetCode macdExtUnguardedInternal( int startIdx,
-                                     int endIdx,
-                                     float inReal[],
-                                     int optInFastPeriod,
-                                     MAType optInFastMAType,
-                                     int optInSlowPeriod,
-                                     MAType optInSlowMAType,
-                                     int optInSignalPeriod,
-                                     MAType optInSignalMAType,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outMACD[],
-                                     double outMACDSignal[],
-                                     double outMACDHist[] )
-   {
-      double[] slowMABuffer;
-      double[] fastMABuffer;
-      RetCode retCode;
-      int tempInteger = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement2 = new MInteger();
-      int lookbackTotal = 0;
-      int lookbackSignal = 0;
-      int lookbackLargest = 0;
-      int i = 0;
-      MAType tempMAType;
-      if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
-         return macdUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
-      }
-      if( optInSlowPeriod < optInFastPeriod ) {
-         tempInteger = optInSlowPeriod;
-         optInSlowPeriod = optInFastPeriod;
-         optInFastPeriod = tempInteger;
-         tempMAType = optInSlowMAType;
-         optInSlowMAType = optInFastMAType;
-         optInFastMAType = tempMAType;
-      }
-      lookbackLargest = movingAverageLookback(optInFastPeriod, optInFastMAType);
-      tempInteger = movingAverageLookback(optInSlowPeriod, optInSlowMAType);
-      if( tempInteger > lookbackLargest ) {
-         lookbackLargest = tempInteger;
-      }
-      lookbackSignal = movingAverageLookback(optInSignalPeriod, optInSignalMAType);
-      lookbackTotal = lookbackSignal + lookbackLargest;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      tempInteger = endIdx - startIdx + 1 + lookbackSignal;
-      fastMABuffer = new double[(int)(tempInteger * 1)];
-      slowMABuffer = new double[(int)(tempInteger * 1)];
-      tempInteger = startIdx - lookbackSignal;
-      retCode = movingAverageUnguardedInternal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
-      if( retCode != RetCode.Success ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      retCode = movingAverageUnguardedInternal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
+      retCode = movingAverageInternal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -505,7 +321,7 @@
          fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
       }
       System.arraycopy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      retCode = movingAverageUnguardedInternal(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, outMACDSignal);
+      retCode = movingAverageInternal(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, outMACDSignal);
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -605,41 +421,6 @@
     * MACD variant where the fast, slow, and signal moving averages each use a
     * user-selectable MA type. Outputs the MACD line, its signal line, and their
     * difference (histogram). Hist sign change (MACD crossing its signal line)
-    * flags momentum shifts. — <b>unchecked</b> variant of {@link Core#macdExt}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange macdExtUnguarded( int startIdx,
-                                     int endIdx,
-                                     double inReal[],
-                                     int optInFastPeriod,
-                                     MAType optInFastMAType,
-                                     int optInSlowPeriod,
-                                     MAType optInSlowMAType,
-                                     int optInSignalPeriod,
-                                     MAType optInSignalMAType,
-                                     double outMACD[],
-                                     double outMACDSignal[],
-                                     double outMACDHist[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      macdExtUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * MACD variant where the fast, slow, and signal moving averages each use a
-    * user-selectable MA type. Outputs the MACD line, its signal line, and their
-    * difference (histogram). Hist sign change (MACD crossing its signal line)
     * flags momentum shifts.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -720,42 +501,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("MACDEXT", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * MACD variant where the fast, slow, and signal moving averages each use a
-    * user-selectable MA type. Outputs the MACD line, its signal line, and their
-    * difference (histogram). Hist sign change (MACD crossing its signal line)
-    * flags momentum shifts. — <b>unchecked</b> variant of {@link Core#macdExt}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange macdExtUnguarded( int startIdx,
-                                     int endIdx,
-                                     float inReal[],
-                                     int optInFastPeriod,
-                                     MAType optInFastMAType,
-                                     int optInSlowPeriod,
-                                     MAType optInSlowMAType,
-                                     int optInSignalPeriod,
-                                     MAType optInSignalMAType,
-                                     double outMACD[],
-                                     double outMACDSignal[],
-                                     double outMACDHist[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      macdExtUnguardedInternal(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
@@ -997,7 +742,7 @@
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), tempInteger, optInSlowPeriod, optInSlowMAType);
-      retCode = movingAverageUnguardedInternal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
+      retCode = movingAverageInternal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -1007,7 +752,7 @@
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub1 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), tempInteger, optInFastPeriod, optInFastMAType);
-      retCode = movingAverageUnguardedInternal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
+      retCode = movingAverageInternal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -1032,7 +777,7 @@
       /* Sub-stream 2: ma over `fastMABuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub2 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(fastMABuffer, 0, (outNbElement1.value - 1) + 1), 0, optInSignalPeriod, optInSignalMAType);
-      retCode = movingAverageUnguardedInternal(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, sc_outMACDSignal);
+      retCode = movingAverageInternal(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, sc_outMACDSignal);
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -1160,7 +905,7 @@
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub0 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), tempInteger, optInSlowPeriod, optInSlowMAType);
-      retCode = movingAverageUnguardedInternal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
+      retCode = movingAverageInternal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -1170,7 +915,7 @@
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub1 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), tempInteger, optInFastPeriod, optInFastMAType);
-      retCode = movingAverageUnguardedInternal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
+      retCode = movingAverageInternal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -1195,7 +940,7 @@
       /* Sub-stream 2: ma over `fastMABuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MovingAverageStream sub2 = movingAverageOpenInternal(java.util.Arrays.copyOfRange(fastMABuffer, 0, (outNbElement1.value - 1) + 1), 0, optInSignalPeriod, optInSignalMAType);
-      retCode = movingAverageUnguardedInternal(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, sc_outMACDSignal);
+      retCode = movingAverageInternal(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, sc_outMACDSignal);
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;

@@ -74,39 +74,6 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode pviUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 double inClose[],
-                                 double inVolume[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      int i = 0;
-      int outIdx = 0;
-      double prevPVI = 0;
-      double prevClose = 0;
-      double prevVolume = 0;
-      double tempClose = 0;
-      double tempVolume = 0;
-      prevPVI = 1000.0;
-      prevClose = inClose[startIdx];
-      prevVolume = inVolume[startIdx];
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempClose = inClose[i];
-         tempVolume = inVolume[i];
-         if( tempVolume > prevVolume && prevClose != 0.0 ) {
-            prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
-         }
-         outReal[outIdx++] = prevPVI;
-         prevClose = tempClose;
-         prevVolume = tempVolume;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
    RetCode pviInternal( int startIdx,
                         int endIdx,
                         float inClose[],
@@ -128,39 +95,6 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      prevPVI = 1000.0;
-      prevClose = (double)inClose[startIdx];
-      prevVolume = (double)inVolume[startIdx];
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempClose = (double)inClose[i];
-         tempVolume = (double)inVolume[i];
-         if( tempVolume > prevVolume && prevClose != 0.0 ) {
-            prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
-         }
-         outReal[outIdx++] = prevPVI;
-         prevClose = tempClose;
-         prevVolume = tempVolume;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      return RetCode.Success ;
-   }
-   RetCode pviUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 float inClose[],
-                                 float inVolume[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      int i = 0;
-      int outIdx = 0;
-      double prevPVI = 0;
-      double prevClose = 0;
-      double prevVolume = 0;
-      double tempClose = 0;
-      double tempVolume = 0;
       prevPVI = 1000.0;
       prevClose = (double)inClose[startIdx];
       prevVolume = (double)inVolume[startIdx];
@@ -234,36 +168,6 @@
     * days when volume rises versus the prior day, compounding that day's
     * percentage price change. The premise is that active, high-volume days
     * reflect the actions of the less-informed "crowd", so PVI is read as a
-    * proxy for that cohort's positioning. — <b>unchecked</b> variant of
-    * {@link Core#pvi}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange pviUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inClose[],
-                                 double inVolume[],
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      pviUnguardedInternal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Positive Volume Index: a running cumulative index that changes only on
-    * days when volume rises versus the prior day, compounding that day's
-    * percentage price change. The premise is that active, high-volume days
-    * reflect the actions of the less-informed "crowd", so PVI is read as a
     * proxy for that cohort's positioning.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -310,37 +214,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("PVI", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Positive Volume Index: a running cumulative index that changes only on
-    * days when volume rises versus the prior day, compounding that day's
-    * percentage price change. The premise is that active, high-volume days
-    * reflect the actions of the less-informed "crowd", so PVI is read as a
-    * proxy for that cohort's positioning. — <b>unchecked</b> variant of
-    * {@link Core#pvi}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange pviUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inClose[],
-                                 float inVolume[],
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      pviUnguardedInternal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

@@ -240,6 +240,13 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.adosc_lookback(optInFastPeriod, optInSlowPeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inHigh.len());
+        assert!(_assertStart > endIdx || endIdx < inLow.len());
+        assert!(_assertStart > endIdx || endIdx < inClose.len());
+        assert!(_assertStart > endIdx || endIdx < inVolume.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -336,148 +343,6 @@ impl Core {
             slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
         }
         // Perform the calculation for the requested range
-        outIdx = 0;
-        while today <= endIdx {
-            high = inHigh[today];
-            low = inLow[today];
-            tmp = high - low;
-            close = inClose[today];
-            if tmp > 0.0 {
-                ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
-            }
-            today += 1;
-            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
-            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
-            outReal[outIdx] = fastEMA - slowEMA;
-            outIdx += 1;
-        }
-        (*outNBElement) = outIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::adosc`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::adosc`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::adosc`].
-    #[inline]
-    pub fn adosc_unguarded(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        inVolume: &[f64],
-        optInFastPeriod: i32,
-        optInSlowPeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, adosc_unguarded_fma, adosc_unguarded_impl, (startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal));
-        #[cfg(not(target_arch = "x86_64"))]
-        self.adosc_unguarded_impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal)
-    }
-    #[cfg(target_arch = "x86_64")]
-    #[target_feature(enable = "fma")]
-    fn adosc_unguarded_fma(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        inVolume: &[f64],
-        optInFastPeriod: i32,
-        optInSlowPeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        self.adosc_unguarded_impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal)
-    }
-    #[inline(always)]
-    fn adosc_unguarded_impl(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        inVolume: &[f64],
-        mut optInFastPeriod: i32,
-        mut optInSlowPeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut today: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut slowestPeriod: usize = 0_usize;
-        let mut high: f64 = 0.0_f64;
-        let mut low: f64 = 0.0_f64;
-        let mut close: f64 = 0.0_f64;
-        let mut tmp: f64 = 0.0_f64;
-        let mut slowEMA: f64 = 0.0_f64;
-        let mut slowk: f64 = 0.0_f64;
-        let mut one_minus_slowk: f64 = 0.0_f64;
-        let mut fastEMA: f64 = 0.0_f64;
-        let mut fastk: f64 = 0.0_f64;
-        let mut one_minus_fastk: f64 = 0.0_f64;
-        let mut ad: f64 = 0.0_f64;
-        assert!(endIdx < inHigh.len());
-        assert!(endIdx < inLow.len());
-        assert!(endIdx < inClose.len());
-        assert!(endIdx < inVolume.len());
-        let _assertLb = self.adosc_lookback(optInFastPeriod, optInSlowPeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        if optInFastPeriod < optInSlowPeriod {
-            slowestPeriod = (optInSlowPeriod) as usize;
-        } else {
-            slowestPeriod = (optInFastPeriod) as usize;
-        }
-        lookbackTotal = self.ema_lookback((slowestPeriod) as i32);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        (*outBegIdx) = startIdx;
-        today = startIdx - lookbackTotal;
-        ad = 0.0;
-        fastk = 2.0 / ((optInFastPeriod as f64) + 1.0);
-        one_minus_fastk = 1.0 - fastk;
-        slowk = 2.0 / ((optInSlowPeriod as f64) + 1.0);
-        one_minus_slowk = 1.0 - slowk;
-        high = inHigh[today];
-        low = inLow[today];
-        tmp = high - low;
-        close = inClose[today];
-        if tmp > 0.0 {
-            ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
-        }
-        today += 1;
-        fastEMA = ad;
-        slowEMA = ad;
-        while today < startIdx {
-            high = inHigh[today];
-            low = inLow[today];
-            tmp = high - low;
-            close = inClose[today];
-            if tmp > 0.0 {
-                ad += (close - low - (high - close)) / tmp * (inVolume[today] as f64);
-            }
-            today += 1;
-            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
-            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
-        }
         outIdx = 0;
         while today <= endIdx {
             high = inHigh[today];

@@ -233,28 +233,28 @@ public static class BatchApiTest
             "aliased output arrays -> ArgumentException");
     }
 
-    /// <summary>The unguarded tier is public, returns OutRange, and never throws.</summary>
-    private static void UnguardedNeverThrows()
+    /// <summary>
+    /// The public surface exposes no unguarded tier. Pinned by reflection over the
+    /// shipped Core rather than by a string assertion on generator output.
+    /// </summary>
+    private static void NoUnguardedTierOnThePublicSurface()
     {
-        var core = new Core();
-        double[] input = Closes(100);
-        var output = new double[100];
-
-        OutRange guarded = core.Sma(0, input.Length - 1, input, 10, output);
-        var output2 = new double[100];
-        OutRange unguarded = core.SmaUnguarded(0, input.Length - 1, input, 10, output2);
-
-        Check(guarded.BegIdx == unguarded.BegIdx && guarded.Count == unguarded.Count,
-              "unguarded reports the same range as guarded");
-        bool same = true;
-        for (int i = 0; i < guarded.Count; i++)
+        int leaked = 0;
+        int sma = 0;
+        foreach (var m in typeof(Core).GetMethods())
         {
-            if (BitConverter.DoubleToInt64Bits(output[i]) != BitConverter.DoubleToInt64Bits(output2[i]))
+            if (m.Name.EndsWith("Unguarded", System.StringComparison.Ordinal))
             {
-                same = false;
+                leaked++;
+            }
+            if (m.Name == "Sma")
+            {
+                sma++;
             }
         }
-        Check(guarded.Count > 0 && same, "unguarded is bit-identical to guarded on valid input");
+        Check(leaked == 0, "no Unguarded method survives on the public Core surface");
+        // Non-vacuity: the reflection actually sees the surface it is asserting over.
+        Check(sma >= 2, "reflection sees the Sma overloads it is filtering over");
     }
 
     /// <summary>The float overload adopts the identical shape (C's TA_S_* parity).</summary>
@@ -335,7 +335,7 @@ public static class BatchApiTest
         CmoLeavesTheTailUntouched();
         ShortRangeIsAnEmptySuccessNotAnException();
         MisuseThrowsTheDocumentedException();
-        UnguardedNeverThrows();
+        NoUnguardedTierOnThePublicSurface();
         FloatOverloadHasTheSameShape();
         OutRangeValueSemantics();
         IntegerSentinelSelectsTheDocumentedDefault();

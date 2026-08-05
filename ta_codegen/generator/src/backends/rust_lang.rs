@@ -413,7 +413,8 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
 
     out.push_str(&gen_lookback(func, &snake, enums, registry, helpers));
 
-    // Guarded: validates params, delegates to unguarded
+    // Guarded public entry: validates params, then either renders the algorithm
+    // inline or delegates to `_private`.
     out.push_str(&fma_dispatch_wrap(
         gen_guarded_func(func, &snake, enums, registry, helpers),
         &snake,
@@ -472,33 +473,14 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         matype_map: build_matype_map(enums),
     };
 
-    // For functions with explicit _private:
-    // 1. Generate _private (extra params, private_body) — generic, handles f32/f64
-    // 2. Generate _unguarded (same signature as guarded, delegates to _private via body)
-    // For functions without _private:
-    // 1. Generate _unguarded (private_body = copy of body, same as before)
+    // `_private` holds the algorithm for the functions that declare one (Rust has
+    // no single-precision variant), and the guarded body above delegates to it.
+    // Functions without an explicit `_private` render the algorithm inline in the
+    // guarded body.
     if func.has_explicit_private {
-        // `_private` holds the algorithm (Rust has no single-precision variant) —
-        // keep its comments. The thin `_unguarded` delegate duplicates the guarded
-        // body, so strip its comments.
         out.push_str(&fma_dispatch_wrap(
             gen_private_func(&body_func, &snake, &ctx, enums, registry, helpers),
             &format!("{snake}_private"),
-        ));
-        let mut unguarded = func.clone();
-        unguarded.body = super::stmt_walk::strip_comments(&func.body);
-        out.push_str(&fma_dispatch_wrap(
-            gen_unguarded_func(&unguarded, &snake, &ctx, enums, registry, helpers),
-            &format!("{snake}_unguarded"),
-        ));
-    } else {
-        // `_unguarded` duplicates the guarded body — strip its comments so they
-        // appear only in the guarded variant.
-        let mut unguarded = body_func.clone();
-        unguarded.body = super::stmt_walk::strip_comments(&body_func.body);
-        out.push_str(&fma_dispatch_wrap(
-            gen_unguarded_func(&unguarded, &snake, &ctx, enums, registry, helpers),
-            &format!("{snake}_unguarded"),
         ));
     }
 
@@ -569,8 +551,9 @@ fn gen_lookback(
     out
 }
 
-/// Generate the guarded public function.
-/// Validates params, delegates to `{snake}_unguarded`.
+/// Generate the guarded public function — the batch entry point. Validates params,
+/// then renders the algorithm inline (or delegates to `{snake}_private` when the
+/// function declares one).
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 fn gen_guarded_func(
     func: &FuncDef,
@@ -625,9 +608,14 @@ fn gen_guarded_func(
         out.push_str("        }\n");
     }
 
+    // The bounds-assert preamble: the LLVM proof that elides per-access bounds
+    // checks in a `#![forbid(unsafe_code)]` crate. `guard_empty_range` keeps a
+    // call that computes nothing from panicking.
+    out.push_str(&emit_bounds_asserts(func, snake, true));
+
     if func.has_explicit_private {
-        // The guarded body already contains delegation to _unguarded with extra params.
-        // Render it directly (it includes pre-computation + delegation call).
+        // The guarded body contains the pre-computation plus the delegation call
+        // to `_private`. Render it directly.
         let mut g_index_vars = std::collections::HashSet::new();
         let mut g_real_vars = std::collections::HashSet::new();
         let mut g_vec_vars = std::collections::HashSet::new();
@@ -647,6 +635,8 @@ fn gen_guarded_func(
             .map(|o| o.name.clone())
             .collect();
         let g_ctx = RustRenderCtx {
+            // The guarded preamble is emitted once by gen_guarded_func above, not
+            // from the statement renderer — keep this false so it cannot double.
             bounds_asserts: false,
             index_vars: g_index_vars,
             real_vars: g_real_vars,
@@ -740,6 +730,8 @@ fn gen_guarded_func(
             .map(|o| o.name.clone())
             .collect();
         let g_ctx = RustRenderCtx {
+            // The guarded preamble is emitted once by gen_guarded_func above, not
+            // from the statement renderer — keep this false so it cannot double.
             bounds_asserts: false,
             index_vars: g_index_vars,
             real_vars: g_real_vars,
@@ -904,43 +896,82 @@ fn gen_private_func(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    gen_unguarded_or_private_func(func, snake, ctx, enums, registry, helpers, true)
+    gen_private_func_inner(func, snake, ctx, enums, registry, helpers)
 }
 
-/// Generate the unguarded function: same signature as guarded, no validation.
-/// For functions without _private: the real algorithm, with the same safe `[]`
-/// indexing the guarded body uses (the crate is `#![forbid(unsafe_code)]`).
-/// For functions with _private: delegates to _private (uses guarded body).
+/// Pre-loop bounds-assert preamble: give LLVM proof that `endIdx` is within all
+/// input/output array bounds. This enables loop unswitching and vectorization and
+/// lets LLVM elide the per-access bounds checks on the safe `[]` indexing in the
+/// body — no `unsafe` needed. O(1) per call.
+///
+/// Output arrays are sized by the caller for the elements actually written:
+/// `endIdx - max(startIdx, lookback) + 1`. Internal callers pass exactly-sized
+/// buffers with `startIdx` below the lookback (e.g. the re-based EMA chaining in
+/// TEMA/DEMA/T3 reached through MA/MACDEXT), so the bound uses the adjusted start.
+/// When the adjusted start exceeds `endIdx` the function writes nothing and any
+/// length is fine.
+///
+/// `guard_empty_range` makes the INPUT assertion take that same escape, and is set
+/// on the public guarded entry point only. A call whose lookback clamp pushes the
+/// start past `endIdx` returns `Success` with zero elements and touches neither
+/// array, so asserting on it would panic where the contract says success. On every
+/// call that *does* compute, the escape is false and the proof handed to LLVM is
+/// identical.
+fn emit_bounds_asserts(func: &FuncDef, snake: &str, guard_empty_range: bool) -> String {
+    let mut out = String::new();
+    let needs_start = guard_empty_range || !func.outputs.is_empty();
+    if needs_start {
+        let lb_args: Vec<String> =
+            func.optional_inputs.iter().map(|o| o.name.clone()).collect();
+        out.push_str(&format!(
+            "        let _assertLb = self.{snake}_lookback({});\n",
+            lb_args.join(", ")
+        ));
+        out.push_str(
+            "        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };\n",
+        );
+    }
+    let escape = if guard_empty_range { "_assertStart > endIdx || " } else { "" };
+    // Only assert on inputs the body actually reads. Four CDL patterns take an
+    // OHLC leg they never index (e.g. cdl3outside's inHigh/inLow), and asserting
+    // on those would reject a caller who legitimately passed a short or empty
+    // slice for a leg the algorithm ignores — while proving nothing to LLVM,
+    // which is the only reason the assert is here. Detected on the
+    // comment-stripped IR so a name mentioned only in prose cannot count.
+    let body_no_comments = super::stmt_walk::strip_comments(&func.body);
+    let body_repr = format!("{body_no_comments:?}");
+    for input in &func.inputs {
+        if !body_repr.contains(&format!("\"{}\"", input.name)) {
+            continue;
+        }
+        out.push_str(&format!(
+            "        assert!({escape}endIdx < {}.len());\n", input.name
+        ));
+    }
+    for output in &func.outputs {
+        out.push_str(&format!(
+            "        assert!(_assertStart > endIdx || endIdx - _assertStart < {}.len());\n",
+            output.name
+        ));
+    }
+    out
+}
+
+/// Render the `_private` body: the algorithm with the extra pre-computed params
+/// and no validation prologue.
 #[allow(clippy::too_many_lines)]
-fn gen_unguarded_func(
+fn gen_private_func_inner(
     func: &FuncDef,
     snake: &str,
     ctx: &RustRenderCtx,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
-) -> String {
-    gen_unguarded_or_private_func(func, snake, ctx, enums, registry, helpers, false)
-}
-
-#[allow(clippy::too_many_lines)]
-fn gen_unguarded_or_private_func(
-    func: &FuncDef,
-    snake: &str,
-    ctx: &RustRenderCtx,
-    enums: &HashMap<String, EnumDef>,
-    registry: &Registry,
-    helpers: &HelperRegistry,
-    is_private: bool,
 ) -> String {
     let mut out = String::new();
-    let func_name = if is_private {
-        format!("{snake}_private")
-    } else {
-        format!("{snake}_unguarded")
-    };
+    let func_name = format!("{snake}_private");
 
-    out.push_str(&super::rust_doc::unguarded_docs(func, snake, is_private));
+    out.push_str(&super::rust_doc::private_docs(func, snake));
 
     // Function signature — always pub fn (unsafe is contained internally)
     // #[inline] enables cross-module inlining for cross-indicator calls
@@ -950,16 +981,14 @@ fn gen_unguarded_or_private_func(
     out.push_str("        mut startIdx: usize,\n");
     out.push_str("        endIdx: usize,\n");
     out.push_str(&gen_generic_params(func));
-    // Extra params only on _private variant (e.g., EMA's k factor)
-    if is_private {
-        for (param_name, c_type) in &func.private_extra_params {
-            let rust_type = match c_type.as_str() {
-                "double" => "f64",
-                "int" => "i32",
-                other => panic!("Unknown C type '{other}' for extra param '{param_name}'"),
-            };
-            out.push_str(&format!("        {param_name}: {rust_type},\n"));
-        }
+    // Extra params carried only by `_private` (e.g. EMA's k factor)
+    for (param_name, c_type) in &func.private_extra_params {
+        let rust_type = match c_type.as_str() {
+            "double" => "f64",
+            "int" => "i32",
+            other => panic!("Unknown C type '{other}' for extra param '{param_name}'"),
+        };
+        out.push_str(&format!("        {param_name}: {rust_type},\n"));
     }
     out.push_str("        outBegIdx: &mut usize,\n");
     out.push_str("        outNBElement: &mut usize,\n");
@@ -1092,41 +1121,8 @@ fn gen_unguarded_or_private_func(
 
     let inline_counter = Cell::new(0);
 
-    // Emit the pre-loop bounds-assert preamble for the unguarded/private variants.
     if ctx.bounds_asserts {
-        // Pre-loop bounds assertions: give LLVM proof that endIdx is within all
-        // input/output array bounds. This enables loop unswitching and vectorization
-        // and lets LLVM elide the per-access bounds checks on the safe `[]` indexing
-        // in the body — no `unsafe` needed. O(1) per call.
-        for input in &func.inputs {
-            out.push_str(&format!(
-                "        assert!(endIdx < {}.len());\n", input.name
-            ));
-        }
-        // Output arrays are sized by the caller for the elements actually
-        // written: endIdx - max(startIdx, lookback) + 1. Internal callers pass
-        // exactly-sized buffers with startIdx below the lookback (e.g. the
-        // re-based EMA chaining in TEMA/DEMA/T3 reached through MA/MACDEXT),
-        // so the bound must use the adjusted start — still exactly the proof
-        // LLVM needs to elide the write bounds checks. When the adjusted start
-        // exceeds endIdx the function writes nothing and any length is fine.
-        if !func.outputs.is_empty() {
-            let lb_args: Vec<String> =
-                func.optional_inputs.iter().map(|o| o.name.clone()).collect();
-            out.push_str(&format!(
-                "        let _assertLb = self.{snake}_lookback({});\n",
-                lb_args.join(", ")
-            ));
-            out.push_str(
-                "        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };\n",
-            );
-            for output in &func.outputs {
-                out.push_str(&format!(
-                    "        assert!(_assertStart > endIdx || endIdx - _assertStart < {}.len());\n",
-                    output.name
-                ));
-            }
-        }
+        out.push_str(&emit_bounds_asserts(func, snake, false));
     }
 
     // Emit VarDecl initializations only when there's no body assignment for the same var

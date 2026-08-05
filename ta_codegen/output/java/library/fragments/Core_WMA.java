@@ -164,69 +164,6 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode wmaUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      int inIdx = 0;
-      int outIdx = 0;
-      int i = 0;
-      int trailingIdx = 0;
-      double periodSum = 0;
-      double periodSub = 0;
-      double tempReal = 0;
-      double trailingValue = 0;
-      double divider = 0;
-      int lookbackTotal = 0;
-      lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      if( optInTimePeriod == 1 ) {
-         outBegIdx.value = startIdx;
-         outNBElement.value = endIdx - startIdx + 1;
-         inIdx = startIdx;
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            outReal[i] = inReal[inIdx++];
-         }
-         return RetCode.Success ;
-      }
-      divider = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
-      outIdx = 0;
-      trailingIdx = startIdx - lookbackTotal;
-      periodSub = (double)0.0;
-      periodSum = periodSub;
-      inIdx = trailingIdx;
-      i = 1;
-      while( inIdx < startIdx ) {
-         tempReal = inReal[inIdx++];
-         periodSub += tempReal;
-         periodSum += tempReal * i;
-         i += 1;
-      }
-      trailingValue = 0.0;
-      while( inIdx <= endIdx ) {
-         tempReal = inReal[inIdx++];
-         periodSub += tempReal;
-         periodSub -= trailingValue;
-         periodSum += tempReal * optInTimePeriod;
-         trailingValue = inReal[trailingIdx++];
-         outReal[outIdx++] = periodSum / divider;
-         periodSum -= periodSub;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
    RetCode wmaInternal( int startIdx,
                         int endIdx,
                         float inReal[],
@@ -256,69 +193,6 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.Success ;
-      }
-      if( optInTimePeriod == 1 ) {
-         outBegIdx.value = startIdx;
-         outNBElement.value = endIdx - startIdx + 1;
-         inIdx = startIdx;
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            outReal[i] = (double)inReal[inIdx++];
-         }
-         return RetCode.Success ;
-      }
-      divider = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
-      outIdx = 0;
-      trailingIdx = startIdx - lookbackTotal;
-      periodSub = (double)0.0;
-      periodSum = periodSub;
-      inIdx = trailingIdx;
-      i = 1;
-      while( inIdx < startIdx ) {
-         tempReal = (double)inReal[inIdx++];
-         periodSub += tempReal;
-         periodSum += tempReal * i;
-         i += 1;
-      }
-      trailingValue = 0.0;
-      while( inIdx <= endIdx ) {
-         tempReal = (double)inReal[inIdx++];
-         periodSub += tempReal;
-         periodSub -= trailingValue;
-         periodSum += tempReal * optInTimePeriod;
-         trailingValue = (double)inReal[trailingIdx++];
-         outReal[outIdx++] = periodSum / divider;
-         periodSum -= periodSub;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      return RetCode.Success ;
-   }
-   RetCode wmaUnguardedInternal( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      int inIdx = 0;
-      int outIdx = 0;
-      int i = 0;
-      int trailingIdx = 0;
-      double periodSum = 0;
-      double periodSub = 0;
-      double tempReal = 0;
-      double trailingValue = 0;
-      double divider = 0;
-      int lookbackTotal = 0;
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -420,34 +294,6 @@
    /**
     * Linearly weighted moving average: each of the last N prices is weighted by
     * its position, oldest getting weight 1 and newest weight N. Smooths price
-    * while emphasizing recent bars. — <b>unchecked</b> variant of
-    * {@link Core#wma}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange wmaUnguarded( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInTimePeriod,
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      wmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Linearly weighted moving average: each of the last N prices is weighted by
-    * its position, oldest getting weight 1 and newest weight N. Smooths price
     * while emphasizing recent bars.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -499,35 +345,6 @@
       if( retCode != RetCode.Success ) {
          throw failure("WMA", retCode);
       }
-      return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   /**
-    * Linearly weighted moving average: each of the last N prices is weighted by
-    * its position, oldest getting weight 1 and newest weight N. Smooths price
-    * while emphasizing recent bars. — <b>unchecked</b> variant of
-    * {@link Core#wma}.
-    * <p>Validates nothing and never throws. The caller guarantees: non-negative
-    * {@code startIdx}, {@code endIdx >= startIdx}, non-null arrays, output
-    * arrays distinct from each other, and every optional parameter already
-    * resolved and within its documented range — a sentinel such as
-    * {@code Integer.MIN_VALUE} is <b>not</b> substituted here.
-    * <p>Breaking any of those yields an empty {@link OutRange} or undefined
-    * output rather than a diagnostic. (C and Rust return a status code from
-    * this tier, so their callers can detect it; this one has nowhere to report
-    * it.) Use the guarded method unless the arguments are already known good.
-    * <p>This is the {@code float[]} overload; see the guarded method.
-    *
-    * @return The range written, exactly as the guarded method reports it.
-    */
-   public OutRange wmaUnguarded( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInTimePeriod,
-                                 double outReal[] )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      wmaUnguardedInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/

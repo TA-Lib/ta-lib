@@ -146,50 +146,6 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode ImiUnguarded( int startIdx,
-                                  int endIdx,
-                                  double[] inOpen,
-                                  double[] inClose,
-                                  int optInTimePeriod,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int lookback = 0;
-      int outIdx = 0;
-      outIdx = 0;
-      lookback = ImiLookback(optInTimePeriod);
-      if( startIdx < lookback ) {
-         startIdx = lookback;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx = startIdx;
-      while( startIdx <= endIdx ) {
-         double upsum = 0.0;
-         double downsum = 0.0;
-         int i;
-         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
-            double close = inClose[i];
-            double open = inOpen[i];
-            if( close > open ) {
-               upsum += close - open;
-            } else {
-               downsum += open - close;
-            }
-            outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
-         }
-         startIdx += 1;
-         outIdx += 1;
-      }
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
    internal RetCode Imi( int startIdx,
                          int endIdx,
                          float[] inOpen,
@@ -214,50 +170,6 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      outIdx = 0;
-      lookback = ImiLookback(optInTimePeriod);
-      if( startIdx < lookback ) {
-         startIdx = lookback;
-      }
-      if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return RetCode.Success ;
-      }
-      outBegIdx = startIdx;
-      while( startIdx <= endIdx ) {
-         double upsum = 0.0;
-         double downsum = 0.0;
-         int i;
-         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
-            double close = (double)inClose[i];
-            double open = (double)inOpen[i];
-            if( close > open ) {
-               upsum += close - open;
-            } else {
-               downsum += open - close;
-            }
-            outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
-         }
-         startIdx += 1;
-         outIdx += 1;
-      }
-      outNBElement = outIdx;
-      return RetCode.Success ;
-   }
-   internal RetCode ImiUnguarded( int startIdx,
-                                  int endIdx,
-                                  float[] inOpen,
-                                  float[] inClose,
-                                  int optInTimePeriod,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  double[] outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      int lookback = 0;
-      int outIdx = 0;
       outIdx = 0;
       lookback = ImiLookback(optInTimePeriod);
       if( startIdx < lookback ) {
@@ -339,44 +251,6 @@ public partial class Core
    /// <summary>
    /// Intraday Momentum Index: an RSI-like 0-100 oscillator built from the
    /// open-to-close body of each bar. Over a rolling window it ratios cumulative
-   /// up-body moves against total up+down body moves. — <b>unchecked</b> variant
-   /// of <c>Imi</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange ImiUnguarded( int startIdx,
-                                 int endIdx,
-                                 double[] inOpen,
-                                 double[] inClose,
-                                 int optInTimePeriod,
-                                 double[] outReal )
-   {
-      ImiUnguarded(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Intraday Momentum Index: an RSI-like 0-100 oscillator built from the
-   /// open-to-close body of each bar. Over a rolling window it ratios cumulative
    /// up-body moves against total up+down body moves.
    /// </summary>
    /// <remarks>
@@ -425,47 +299,6 @@ public partial class Core
       if( retCode != RetCode.Success ) {
          throw Failure("IMI", retCode);
       }
-      return new OutRange(outBegIdx, outNBElement);
-   }
-   /// <summary>
-   /// Intraday Momentum Index: an RSI-like 0-100 oscillator built from the
-   /// open-to-close body of each bar. Over a rolling window it ratios cumulative
-   /// up-body moves against total up+down body moves. — <b>unchecked</b> variant
-   /// of <c>Imi</c>.
-   /// </summary>
-   /// <remarks>
-   /// Skips every parameter check. The caller guarantees: non-negative
-   /// <c>startIdx</c>, <c>endIdx &gt;= startIdx</c>, non-null arrays, output
-   /// arrays distinct from each other, and every optional parameter already
-   /// resolved and within its documented range — a sentinel such as
-   /// <c>int.MinValue</c> is <b>not</b> substituted here.
-   /// <para>
-   /// Breaking any of those yields an empty <see cref="OutRange"/>, silently
-   /// wrong output, or a runtime exception thrown from inside the calculation
-   /// (the CLR bounds-checks array access, so misuse never reaches C's undefined
-   /// behaviour — but it is not turned into a useful diagnostic either; C and
-   /// Rust return a status code from this tier, this one has nowhere to report
-   /// it). Use the guarded method unless the arguments are already known good.
-   /// </para>
-   /// <para>
-   /// This is the <c>float[]</c> overload; see the guarded method.
-   /// </para>
-   /// </remarks>
-   /// <param name="startIdx">See the guarded method.</param>
-   /// <param name="endIdx">See the guarded method.</param>
-   /// <param name="inOpen">See the guarded method.</param>
-   /// <param name="inClose">See the guarded method.</param>
-   /// <param name="optInTimePeriod">See the guarded method.</param>
-   /// <param name="outReal">See the guarded method.</param>
-   /// <returns>The range written, exactly as the guarded method reports it.</returns>
-   public OutRange ImiUnguarded( int startIdx,
-                                 int endIdx,
-                                 float[] inOpen,
-                                 float[] inClose,
-                                 int optInTimePeriod,
-                                 double[] outReal )
-   {
-      ImiUnguarded(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       return new OutRange(outBegIdx, outNBElement);
    }
 }

@@ -63,10 +63,6 @@ Misuse throws rather than returning an error code:
 | Two outputs sharing one array | `IllegalArgumentException` |
 | A null input or output array | `NullPointerException` |
 
-## Unguarded variants
-
-Every indicator also has an `xxxUnguarded` overload that skips all validation. It is the same computation and returns the same `OutRange`, but it **never throws and checks nothing** — the caller must guarantee valid indices, in-range parameters, non-null arrays, and distinct outputs. Violating that contract yields an empty `OutRange` or undefined output rather than a diagnostic. Use it only in hot paths where the arguments are already known good.
-
 ## `float` inputs
 
 Every indicator is overloaded for `float[]` inputs as well as `double[]` — the `float` overload widens each element to `double` before computing, so a result beyond `float` range still lands correctly in the `double` output. Use it to feed price data already stored as `float` without copying.

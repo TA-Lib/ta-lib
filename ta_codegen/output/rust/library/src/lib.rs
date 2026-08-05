@@ -58,10 +58,8 @@
 //! To change a setting, build a new `Core` (cloning is cheap); [`Core::to_builder()`]
 //! seeds a builder from an existing instance.
 //!
-//! Every indicator also has an `*_unguarded` variant that skips parameter
-//! validation for internal cross-indicator calls — prefer the checked methods.
-//! The crate is `#![forbid(unsafe_code)]`: misuse of an `*_unguarded` variant
-//! panics, it never triggers undefined behavior. On x86-64, the batch entry
+//! The crate is `#![forbid(unsafe_code)]`: a bounds violation panics, it never
+//! triggers undefined behavior. On x86-64, the batch entry
 //! points of indicators built on fused multiply-adds are compiled twice and the
 //! hardware-FMA clone is selected at runtime (the same dispatch the C library
 //! performs via `target_clones`); both paths are correctly rounded, so results

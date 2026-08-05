@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -163,101 +163,37 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
    switch( optInMAType )
    {
    case TA_MAType_SMA:
-      retCode = TA_SMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_SMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_EMA:
-      retCode = TA_EMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_EMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_WMA:
-      retCode = TA_WMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_WMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_DEMA:
-      retCode = TA_DEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_DEMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_TEMA:
-      retCode = TA_TEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_TEMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_TRIMA:
-      retCode = TA_TRIMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_TRIMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_KAMA:
-      retCode = TA_KAMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_KAMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_MAMA:
       /* The optInTimePeriod is ignored. FAMA is a nullable output
        * (issue #125): pass NULL to compute only the MAMA line into outReal.
        */
-      retCode = TA_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
+      retCode = TA_MAMA(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
       break;
    case TA_MAType_T3:
-      retCode = TA_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
+      retCode = TA_T3(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_HMA:
-      retCode = TA_HMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   default:
-      retCode = TA_BAD_PARAM;
-      break;
-   }
-   return retCode;
-}
-
-TA_LIB_API TA_RetCode TA_MA_Unguarded( int    startIdx,
-                                       int    endIdx,
-                                       const double inReal[],
-                                       int optInTimePeriod,
-                                       TA_MAType optInMAType,
-                                       int          *outBegIdx,
-                                       int          *outNBElement,
-                                       double        outReal[] )
-{
-   TA_RetCode retCode;
-   int nbElement;
-   int outIdx;
-   int todayIdx;
-
-   if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
-   {
-      nbElement = endIdx - startIdx + 1;
-      *outNBElement= nbElement;
-      for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 )
-      {
-         outReal[outIdx] = inReal[todayIdx];
-      }
-      *outBegIdx= startIdx;
-      return TA_SUCCESS;
-   }
-   switch( optInMAType )
-   {
-   case TA_MAType_SMA:
-      retCode = TA_SMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_EMA:
-      retCode = TA_EMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_WMA:
-      retCode = TA_WMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_DEMA:
-      retCode = TA_DEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_TEMA:
-      retCode = TA_TEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_TRIMA:
-      retCode = TA_TRIMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_KAMA:
-      retCode = TA_KAMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_MAMA:
-      retCode = TA_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
-      break;
-   case TA_MAType_T3:
-      retCode = TA_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_HMA:
-      retCode = TA_HMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_HMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    default:
       retCode = TA_BAD_PARAM;
@@ -310,98 +246,34 @@ TA_RetCode TA_S_MA( int    startIdx,
    switch( optInMAType )
    {
    case TA_MAType_SMA:
-      retCode = TA_S_SMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_S_SMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_EMA:
-      retCode = TA_S_EMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_S_EMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_WMA:
-      retCode = TA_S_WMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_S_WMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_DEMA:
-      retCode = TA_S_DEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_S_DEMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_TEMA:
-      retCode = TA_S_TEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_S_TEMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_TRIMA:
-      retCode = TA_S_TRIMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_S_TRIMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_KAMA:
-      retCode = TA_S_KAMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_S_KAMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_MAMA:
-      retCode = TA_S_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
+      retCode = TA_S_MAMA(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
       break;
    case TA_MAType_T3:
-      retCode = TA_S_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
+      retCode = TA_S_T3(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_HMA:
-      retCode = TA_S_HMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   default:
-      retCode = TA_BAD_PARAM;
-      break;
-   }
-   return retCode;
-}
-
-TA_RetCode TA_S_MA_Unguarded( int    startIdx,
-                              int    endIdx,
-                              const float inReal[],
-                              int optInTimePeriod,
-                              TA_MAType optInMAType,
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              double        outReal[] )
-{
-   TA_RetCode retCode;
-   int nbElement;
-   int outIdx;
-   int todayIdx;
-
-   if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
-   {
-      nbElement = endIdx - startIdx + 1;
-      *outNBElement= nbElement;
-      for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 )
-      {
-         outReal[outIdx] = (double)inReal[todayIdx];
-      }
-      *outBegIdx= startIdx;
-      return TA_SUCCESS;
-   }
-   switch( optInMAType )
-   {
-   case TA_MAType_SMA:
-      retCode = TA_S_SMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_EMA:
-      retCode = TA_S_EMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_WMA:
-      retCode = TA_S_WMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_DEMA:
-      retCode = TA_S_DEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_TEMA:
-      retCode = TA_S_TEMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_TRIMA:
-      retCode = TA_S_TRIMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_KAMA:
-      retCode = TA_S_KAMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_MAMA:
-      retCode = TA_S_MAMA_Unguarded(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
-      break;
-   case TA_MAType_T3:
-      retCode = TA_S_T3_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
-      break;
-   case TA_MAType_HMA:
-      retCode = TA_S_HMA_Unguarded(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      retCode = TA_S_HMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    default:
       retCode = TA_BAD_PARAM;

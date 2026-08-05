@@ -165,6 +165,10 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
+        let _assertLb = self.wma_lookback(optInTimePeriod);
+        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
+        assert!(_assertStart > endIdx || endIdx < inReal.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut inIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -270,86 +274,6 @@ impl Core {
             periodSum -= periodSub;
         }
         // Set output limits.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
-        return RetCode::Success;
-    }
-    /// Unguarded variant of [`Core::wma`], used for internal cross-indicator calls.
-    ///
-    /// Skips parameter validation; indexing stays safe. Every argument must satisfy the constraints
-    /// documented on [`Core::wma`]; an out-of-range parameter, an input slice not covering
-    /// `startIdx..=endIdx`, or an undersized output slice panics (never undefined behavior). Prefer
-    /// [`Core::wma`].
-    #[inline]
-    pub fn wma_unguarded(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInTimePeriod: i32,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
-        let mut inIdx: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut periodSum: f64 = 0.0_f64;
-        let mut periodSub: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut trailingValue: f64 = 0.0_f64;
-        let mut divider: f64 = 0.0_f64;
-        let mut lookbackTotal: usize = 0_usize;
-        assert!(endIdx < inReal.len());
-        let _assertLb = self.wma_lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        lookbackTotal = (optInTimePeriod - 1) as usize;
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return RetCode::Success;
-        }
-        if optInTimePeriod == 1 {
-            (*outBegIdx) = startIdx;
-            (*outNBElement) = endIdx - startIdx + 1;
-            inIdx = startIdx;
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-            i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                outReal[i] = ((inReal[{ let _v = inIdx; inIdx += 1; _v }]) as f64);
-                i += 1;
-            }
-            return RetCode::Success;
-        }
-        divider = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
-        outIdx = 0;
-        trailingIdx = startIdx - lookbackTotal;
-        periodSub = 0.0 as f64;
-        periodSum = periodSub;
-        inIdx = trailingIdx;
-        i = 1;
-        while inIdx < startIdx {
-            tempReal = inReal[{ let _v = inIdx; inIdx += 1; _v }];
-            periodSub += tempReal;
-            periodSum += tempReal * ((i) as f64);
-            i += 1;
-        }
-        trailingValue = 0.0;
-        while inIdx <= endIdx {
-            tempReal = inReal[{ let _v = inIdx; inIdx += 1; _v }];
-            periodSub += tempReal;
-            periodSub -= trailingValue;
-            periodSum += tempReal * ((optInTimePeriod) as f64);
-            trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            outReal[outIdx] = periodSum / divider;
-            outIdx += 1;
-            periodSum -= periodSub;
-        }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;

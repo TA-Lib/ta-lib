@@ -40,7 +40,7 @@
 #include "ta_func.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
-#include "ta_func_unguarded.h"
+#include "ta_func_stream_private.h"
 
 /* List of contributors:
  *
@@ -216,100 +216,6 @@ TA_LIB_API TA_RetCode TA_CCI( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_CCI_Unguarded( int    startIdx,
-                                        int    endIdx,
-                                        const double inHigh[],
-                                        const double inLow[],
-                                        const double inClose[],
-                                        int optInTimePeriod,
-                                        int          *outBegIdx,
-                                        int          *outNBElement,
-                                        double        outReal[] )
-{
-   double tempReal;
-   double tempReal2;
-   double theAverage;
-   double lastValue;
-   int i;
-   int j;
-   int outIdx;
-   int lookbackTotal;
-   double local_circBuffer[30];
-   double *circBuffer;
-   int circBuffer_Idx;
-   int maxIdx_circBuffer;
-
-   lookbackTotal = optInTimePeriod - 1;
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
-   if( (int)optInTimePeriod > (int)(sizeof(local_circBuffer)/sizeof(double)) )
-   {
-      circBuffer = TA_Malloc( sizeof(double)*optInTimePeriod );
-      if( !circBuffer )
-      {
-         return TA_ALLOC_ERR;
-      }
-   }
-   else
-   {
-      circBuffer = &local_circBuffer[0];
-   }
-   maxIdx_circBuffer = (optInTimePeriod-1);
-   circBuffer_Idx = 0;
-   i = startIdx - lookbackTotal;
-   if( optInTimePeriod > 1 )
-   {
-      while( i < startIdx )
-      {
-         circBuffer[circBuffer_Idx] = (inHigh[i] + inLow[i] + inClose[i]) / 3;
-         i += 1;
-         circBuffer_Idx++;
-         if( circBuffer_Idx > maxIdx_circBuffer ) circBuffer_Idx = 0;
-      }
-   }
-   outIdx = 0;
-   do
-   {
-      lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
-      circBuffer[circBuffer_Idx] = lastValue;
-      theAverage = 0;
-      for( j = 0; j < optInTimePeriod; j += 1 )
-      {
-         theAverage += circBuffer[j];
-      }
-      theAverage /= optInTimePeriod;
-      tempReal2 = 0;
-      for( j = 0; j < optInTimePeriod; j += 1 )
-      {
-         tempReal2 += fabs(circBuffer[j] - theAverage);
-      }
-      tempReal = lastValue - theAverage;
-      if( !TA_IS_ZERO(tempReal) && !TA_IS_ZERO(tempReal2) )
-      {
-         outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
-      } else 
-      {
-         outReal[outIdx++] = 0.0;
-      }
-      circBuffer_Idx++;
-      if( circBuffer_Idx > maxIdx_circBuffer ) circBuffer_Idx = 0;
-      i += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer );
-   return TA_SUCCESS;
-}
-
 TA_RetCode TA_S_CCI( int    startIdx,
                      int    endIdx,
                      const float inHigh[],
@@ -350,100 +256,6 @@ TA_RetCode TA_S_CCI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
-
-   lookbackTotal = optInTimePeriod - 1;
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_SUCCESS;
-   }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
-   if( (int)optInTimePeriod > (int)(sizeof(local_circBuffer)/sizeof(double)) )
-   {
-      circBuffer = TA_Malloc( sizeof(double)*optInTimePeriod );
-      if( !circBuffer )
-      {
-         return TA_ALLOC_ERR;
-      }
-   }
-   else
-   {
-      circBuffer = &local_circBuffer[0];
-   }
-   maxIdx_circBuffer = (optInTimePeriod-1);
-   circBuffer_Idx = 0;
-   i = startIdx - lookbackTotal;
-   if( optInTimePeriod > 1 )
-   {
-      while( i < startIdx )
-      {
-         circBuffer[circBuffer_Idx] = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
-         i += 1;
-         circBuffer_Idx++;
-         if( circBuffer_Idx > maxIdx_circBuffer ) circBuffer_Idx = 0;
-      }
-   }
-   outIdx = 0;
-   do
-   {
-      lastValue = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
-      circBuffer[circBuffer_Idx] = lastValue;
-      theAverage = 0;
-      for( j = 0; j < optInTimePeriod; j += 1 )
-      {
-         theAverage += circBuffer[j];
-      }
-      theAverage /= optInTimePeriod;
-      tempReal2 = 0;
-      for( j = 0; j < optInTimePeriod; j += 1 )
-      {
-         tempReal2 += fabs(circBuffer[j] - theAverage);
-      }
-      tempReal = lastValue - theAverage;
-      if( !TA_IS_ZERO(tempReal) && !TA_IS_ZERO(tempReal2) )
-      {
-         outReal[outIdx++] = tempReal / (0.015 * (tempReal2 / optInTimePeriod));
-      } else 
-      {
-         outReal[outIdx++] = 0.0;
-      }
-      circBuffer_Idx++;
-      if( circBuffer_Idx > maxIdx_circBuffer ) circBuffer_Idx = 0;
-      i += 1;
-   } while( i <= endIdx );
-   *outNBElement= outIdx;
-   *outBegIdx= startIdx;
-   if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer );
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_S_CCI_Unguarded( int    startIdx,
-                               int    endIdx,
-                               const float inHigh[],
-                               const float inLow[],
-                               const float inClose[],
-                               int optInTimePeriod,
-                               int          *outBegIdx,
-                               int          *outNBElement,
-                               double        outReal[] )
-{
-   double tempReal;
-   double tempReal2;
-   double theAverage;
-   double lastValue;
-   int i;
-   int j;
-   int outIdx;
-   int lookbackTotal;
-   double local_circBuffer[30];
-   double *circBuffer;
-   int circBuffer_Idx;
-   int maxIdx_circBuffer;
 
    lookbackTotal = optInTimePeriod - 1;
    if( startIdx < lookbackTotal )
