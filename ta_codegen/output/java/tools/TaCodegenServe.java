@@ -149179,6 +149179,21 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.accbandsInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149227,6 +149242,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.acosInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149286,6 +149309,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            rc = core.adInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                f_inVolume,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149335,6 +149375,17 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal0 = new float[inReal0.length];
+            for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
+            float[] f_inReal1 = new float[inReal1.length];
+            for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            rc = core.addInternal(
+                startIdx, endIdx,
+                f_inReal0,
+                f_inReal1,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149398,6 +149449,25 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            rc = core.adOscInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                f_inVolume,
+                optInFastPeriod,
+                optInSlowPeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149455,6 +149525,21 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.adxInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149511,6 +149596,21 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.adxrInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149561,6 +149661,17 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.apoInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInFastPeriod,
+                optInSlowPeriod,
+                optInMAType,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149613,6 +149724,18 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            rc = core.aroonInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0, outArr1);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149666,6 +149789,18 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            rc = core.aroonOscInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149710,6 +149845,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.asinInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149754,6 +149897,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.atanInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149811,6 +149962,21 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.atrInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149857,6 +150023,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.avgDevInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149916,6 +150091,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.avgPriceInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -149970,6 +150162,18 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.bbandsInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                optInNbDevUp,
+                optInNbDevDn,
+                optInMAType,
+                outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150025,6 +150229,18 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal0 = new float[inReal0.length];
+            for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
+            float[] f_inReal1 = new float[inReal1.length];
+            for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            rc = core.betaInternal(
+                startIdx, endIdx,
+                f_inReal0,
+                f_inReal1,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150084,6 +150300,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.bopInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150140,6 +150373,21 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cciInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150199,6 +150447,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdl2CrowsInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150258,6 +150523,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdl3BlackCrowsInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150317,6 +150599,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdl3InsideInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150376,6 +150675,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdl3LineStrikeInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150435,6 +150751,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdl3OutsideInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150494,6 +150827,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdl3StarsInSouthInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150553,6 +150903,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdl3WhiteSoldiersInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150614,6 +150981,24 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlAbandonedBabyInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInPenetration,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150673,6 +151058,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlAdvanceBlockInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150732,6 +151134,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlBeltHoldInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150791,6 +151210,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlBreakawayInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150850,6 +151286,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlClosingMarubozuInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150909,6 +151362,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlConcealBabysWallInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -150968,6 +151438,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlCounterAttackInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151029,6 +151516,24 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlDarkCloudCoverInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInPenetration,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151088,6 +151593,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlDojiInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151147,6 +151669,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlDojiStarInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151206,6 +151745,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlDragonflyDojiInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151265,6 +151821,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlEngulfingInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151326,6 +151899,24 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlEveningDojiStarInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInPenetration,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151387,6 +151978,24 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlEveningStarInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInPenetration,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151446,6 +152055,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlGapSideSideWhiteInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151505,6 +152131,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlGravestoneDojiInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151564,6 +152207,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlHammerInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151623,6 +152283,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlHangingManInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151682,6 +152359,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlHaramiInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151741,6 +152435,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlHaramiCrossInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151800,6 +152511,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlHignWaveInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151859,6 +152587,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlHikkakeInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151918,6 +152663,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlHikkakeModInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -151977,6 +152739,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlHomingPigeonInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152036,6 +152815,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlIdentical3CrowsInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152095,6 +152891,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlInNeckInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152154,6 +152967,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlInvertedHammerInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152213,6 +153043,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlKickingInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152272,6 +153119,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlKickingByLengthInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152331,6 +153195,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlLadderBottomInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152390,6 +153271,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlLongLeggedDojiInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152449,6 +153347,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlLongLineInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152508,6 +153423,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlMarubozuInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152567,6 +153499,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlMatchingLowInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152628,6 +153577,24 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlMatHoldInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInPenetration,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152689,6 +153656,24 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlMorningDojiStarInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInPenetration,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152750,6 +153735,24 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlMorningStarInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInPenetration,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152809,6 +153812,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlOnNeckInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152868,6 +153888,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlPiercingInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152927,6 +153964,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlRickshawManInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -152986,6 +154040,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlRiseFall3MethodsInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153045,6 +154116,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlSeperatingLinesInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153104,6 +154192,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlShootingStarInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153163,6 +154268,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlShortLineInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153222,6 +154344,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlSpinningTopInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153281,6 +154420,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlStalledPatternInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153340,6 +154496,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlStickSandwichInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153399,6 +154572,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlTakuriInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153458,6 +154648,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlTasukiGapInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153517,6 +154724,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlThrustingInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153576,6 +154800,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlTristarInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153635,6 +154876,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlUnique3RiverInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153694,6 +154952,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlUpsideGap2CrowsInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153753,6 +155028,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.cdlXSideGap3MethodsInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153797,6 +155089,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.ceilInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153858,6 +155158,24 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            rc = core.cmfInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                f_inVolume,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153905,6 +155223,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.cmoInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -153951,6 +155278,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.cmouInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154002,6 +155338,18 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal0 = new float[inReal0.length];
+            for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
+            float[] f_inReal1 = new float[inReal1.length];
+            for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            rc = core.correlInternal(
+                startIdx, endIdx,
+                f_inReal0,
+                f_inReal1,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154046,6 +155394,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.cosInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154090,6 +155446,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.coshInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154136,6 +155500,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.demaInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154185,6 +155558,17 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal0 = new float[inReal0.length];
+            for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
+            float[] f_inReal1 = new float[inReal1.length];
+            for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            rc = core.divInternal(
+                startIdx, endIdx,
+                f_inReal0,
+                f_inReal1,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154242,6 +155626,21 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.dxInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154289,6 +155688,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.emaInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154333,6 +155741,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.expInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154377,6 +155793,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.floorInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154423,6 +155847,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.hmaInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154468,6 +155901,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.htDcPeriodInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154513,6 +155954,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.htDcPhaseInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154559,6 +156008,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.htPhasorInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0, outArr1);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154607,6 +156064,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.htSineInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0, outArr1);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154654,6 +156119,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.htTrendlineInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154699,6 +156172,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.htTrendModeInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154750,6 +156231,18 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.imiInternal(
+                startIdx, endIdx,
+                f_inOpen,
+                f_inClose,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154797,6 +156290,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.kamaInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154843,6 +156345,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.linearRegInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154889,6 +156400,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.linearRegAngleInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154935,6 +156455,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.linearRegInterceptInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -154981,6 +156510,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.linearRegSlopeInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155025,6 +156563,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.lnInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155069,6 +156615,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.log10Internal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155117,6 +156671,16 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.movingAverageInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                optInMAType,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155169,6 +156733,17 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.macdInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInFastPeriod,
+                optInSlowPeriod,
+                optInSignalPeriod,
+                outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155231,6 +156806,20 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.macdExtInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInFastPeriod,
+                optInFastMAType,
+                optInSlowPeriod,
+                optInSlowMAType,
+                optInSignalPeriod,
+                optInSignalMAType,
+                outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155283,6 +156872,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.macdFixInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInSignalPeriod,
+                outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155337,6 +156935,16 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.mamaInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInFastLimit,
+                optInSlowLimit,
+                outBegIdx, outNBElement, outArr0, outArr1);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155394,6 +157002,20 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal0 = new float[inReal0.length];
+            for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
+            float[] f_inReal1 = new float[inReal1.length];
+            for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            rc = core.movingAverageVariablePeriodInternal(
+                startIdx, endIdx,
+                f_inReal0,
+                f_inReal1,
+                optInMinPeriod,
+                optInMaxPeriod,
+                optInMAType,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155440,6 +157062,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.maxInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155486,6 +157117,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.maxIndexInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155535,6 +157175,17 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            rc = core.medPriceInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155596,6 +157247,24 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            rc = core.mfiInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                f_inVolume,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155642,6 +157311,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.midPointInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155693,6 +157371,18 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            rc = core.midPriceInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155739,6 +157429,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.minInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155785,6 +157484,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.minIndexInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155832,6 +157540,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.minMaxInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0, outArr1);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155881,6 +157598,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.minMaxIndexInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0, outArr1);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155940,6 +157666,21 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.minusDIInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -155992,6 +157733,18 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            rc = core.minusDMInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156038,6 +157791,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.momInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156087,6 +157849,17 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal0 = new float[inReal0.length];
+            for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
+            float[] f_inReal1 = new float[inReal1.length];
+            for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            rc = core.multInternal(
+                startIdx, endIdx,
+                f_inReal0,
+                f_inReal1,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156144,6 +157917,21 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.natrInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156193,6 +157981,17 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            rc = core.nviInternal(
+                startIdx, endIdx,
+                f_inClose,
+                f_inVolume,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156242,6 +158041,17 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            rc = core.obvInternal(
+                startIdx, endIdx,
+                f_inReal,
+                f_inVolume,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156299,6 +158109,21 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.plusDIInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156351,6 +158176,18 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            rc = core.plusDMInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156401,6 +158238,17 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.ppoInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInFastPeriod,
+                optInSlowPeriod,
+                optInMAType,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156450,6 +158298,17 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            rc = core.pviInternal(
+                startIdx, endIdx,
+                f_inClose,
+                f_inVolume,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156500,6 +158359,17 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            rc = core.pvoInternal(
+                startIdx, endIdx,
+                f_inVolume,
+                optInFastPeriod,
+                optInSlowPeriod,
+                optInMAType,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156546,6 +158416,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.rocInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156592,6 +158471,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.rocPInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156638,6 +158526,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.rocRInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156684,6 +158581,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.rocR100Internal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156731,6 +158637,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.rsiInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156784,6 +158699,19 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            rc = core.sarInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                optInAcceleration,
+                optInMaximum,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156849,6 +158777,25 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            rc = core.sarExtInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                optInStartValue,
+                optInOffsetOnReverse,
+                optInAccelerationInitLong,
+                optInAccelerationLong,
+                optInAccelerationMaxLong,
+                optInAccelerationInitShort,
+                optInAccelerationShort,
+                optInAccelerationMaxShort,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156893,6 +158840,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.sinInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156937,6 +158892,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.sinhInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -156983,6 +158946,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.smaInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157027,6 +158999,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.sqrtInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157075,6 +159055,16 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.stdDevInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                optInNbDev,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157140,6 +159130,25 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.stochInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInFastK_Period,
+                optInSlowK_Period,
+                optInSlowK_MAType,
+                optInSlowD_Period,
+                optInSlowD_MAType,
+                outBegIdx, outNBElement, outArr0, outArr1);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157203,6 +159212,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.stochFInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInFastK_Period,
+                optInFastD_Period,
+                optInFastD_MAType,
+                outBegIdx, outNBElement, outArr0, outArr1);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157258,6 +159284,18 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.stochRsiInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                optInFastK_Period,
+                optInFastD_Period,
+                optInFastD_MAType,
+                outBegIdx, outNBElement, outArr0, outArr1);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157309,6 +159347,17 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal0 = new float[inReal0.length];
+            for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
+            float[] f_inReal1 = new float[inReal1.length];
+            for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
+            rc = core.subInternal(
+                startIdx, endIdx,
+                f_inReal0,
+                f_inReal1,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157355,6 +159404,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.sumInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157404,6 +159462,16 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.t3Internal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                optInVFactor,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157448,6 +159516,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.tanInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157492,6 +159568,14 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.tanhInternal(
+                startIdx, endIdx,
+                f_inReal,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157538,6 +159622,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.temaInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157592,6 +159685,20 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.trueRangeInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157638,6 +159745,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.trimaInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157684,6 +159800,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.trixInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157730,6 +159855,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.tsfInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157784,6 +159918,20 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.typPriceInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157844,6 +159992,23 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.ultOscInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInTimePeriod1,
+                optInTimePeriod2,
+                optInTimePeriod3,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157892,6 +160057,16 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.varianceInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                optInNbDev,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157943,6 +160118,18 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            rc = core.vwmaInternal(
+                startIdx, endIdx,
+                f_inReal,
+                f_inVolume,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -157997,6 +160184,20 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.wclPriceInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -158053,6 +160254,21 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.willRInternal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inClose,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {
@@ -158099,6 +160315,15 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            rc = core.wmaInternal(
+                startIdx, endIdx,
+                f_inReal,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+        }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.Success && outNBElement.value > 0) {

@@ -1441,13 +1441,20 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                       ? (double)params.server_total_ns / (double)params.timing_count
                       : 0.0;
 
-    /* ---- Float-variant pass (TA_S_) ----
-     * Every function at default params, C server only (the other backends
-     * have no single-precision API): single-precision current vs
-     * single-precision frozen reference. This is the systematic coverage
-     * for the 161 TA_S_ guarded entry points.
+    /* ---- Float-variant pass ----
+     * Every function at default params: the language's single-precision entry
+     * point against its OWN double entry point on float-widened inputs. That is
+     * PR #33's contract, it needs no oracle, and it holds per language.
+     *
+     * C, Java and C# all ship a float surface (TA_S_<N>, the float[] overload of
+     * the Java core, the float[] overload of the C# core) — 168 functions each.
+     * Rust is concrete f64 and has none, so it is the only exclusion.
+     *
+     * This ran C-only until the Java and C# servers gained a float path. While
+     * it did, a k-factor defect sat in all three float surfaces and only C's was
+     * reachable by any gate.
      */
-    if( params.codegenError == TA_TEST_PASS && strcmp(ctx->lang->name, "c") == 0 )
+    if( params.codegenError == TA_TEST_PASS && strcmp(ctx->lang->name, "rust") != 0 )
         run_float_leg(&params);
 
     /* ---- Large-period pass (Task 10) ----

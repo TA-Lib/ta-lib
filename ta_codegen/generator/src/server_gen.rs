@@ -2432,6 +2432,32 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // Timing capture
         s.push_str("        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;\n");
 
+        // Float-variant leg ("use_float":1): re-run through the float[] overload
+        // of the same core, over the same output buffers, so the response carries
+        // the single-precision result. Mirrors the C server's TA_S_ leg. Without
+        // it the 168 shipped float overloads have no value verification at all.
+        s.push_str("        if (jsonInt(json, \"use_float\") != 0) {\n");
+        for name in &input_names {
+            s.push_str(&format!(
+                "            float[] f_{name} = new float[{name}.length];\n\
+                 \x20           for (int _fi = 0; _fi < {name}.length; _fi++) f_{name}[_fi] = (float){name}[_fi];\n"
+            ));
+        }
+        s.push_str(&format!("            rc = core.{func_lower}Internal(\n"));
+        s.push_str("                startIdx, endIdx,\n");
+        for name in &input_names {
+            s.push_str(&format!("                f_{name},\n"));
+        }
+        for opt in &func.optional_inputs {
+            s.push_str(&format!("                {},\n", opt.name));
+        }
+        s.push_str("                outBegIdx, outNBElement");
+        for k in 0..outputs.len() {
+            s.push_str(&format!(", outArr{k}"));
+        }
+        s.push_str(");\n");
+        s.push_str("        }\n");
+
         // want_hash mode (server_verify / issue #115): digest of the GUARDED
         // output (like-for-like with the in-process C golden's TA_CallFunc),
         // returned before the value response is built.
@@ -3010,6 +3036,33 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str(&format!("            rc = core.{base}({call_args});\n"));
         s.push_str("        }\n");
         s.push_str("        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;\n");
+
+        // Float-variant leg ("use_float":1): re-run through the float[] overload
+        // of the same core, over the same output buffers, so the response carries
+        // the single-precision result. Mirrors the C server's TA_S_ leg. Without
+        // it the 168 shipped float overloads have no value verification at all.
+        {
+            let mut f_args = String::from("startIdx, endIdx");
+            for name in &input_names {
+                f_args.push_str(&format!(", f_{name}"));
+            }
+            for opt in &func.optional_inputs {
+                f_args.push_str(&format!(", {}", opt.name));
+            }
+            f_args.push_str(", out outBegIdx, out outNBElement");
+            for k in 0..outputs.len() {
+                f_args.push_str(&format!(", outArr{k}"));
+            }
+            s.push_str("        if (GetInt(p, \"use_float\", 0) != 0) {\n");
+            for name in &input_names {
+                s.push_str(&format!(
+                    "            var f_{name} = new float[{name}.Length];\n\
+                     \x20           for (int _fi = 0; _fi < {name}.Length; _fi++) f_{name}[_fi] = (float){name}[_fi];\n"
+                ));
+            }
+            s.push_str(&format!("            rc = core.{base}({f_args});\n"));
+            s.push_str("        }\n");
+        }
 
         // want_hash mode (server_verify / issue #115): digest of the GUARDED
         // output, returned before the value response is built.
