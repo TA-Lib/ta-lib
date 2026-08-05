@@ -127,7 +127,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, lib_src: &P
                 );
                 for (i, (v, name)) in values.iter().enumerate() {
                     assert_eq!(
-                        *v, i as i64,
+                        *v, i64::try_from(i).unwrap(),
                         "{}.{}: choice list is not dense from zero ({name} = {v} at position {i}).",
                         f.name, opt.param_name
                     );
