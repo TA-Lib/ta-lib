@@ -45,6 +45,21 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      # Restore the release packages from the asset pool BEFORE the pre-release
+      # gate. That gate verifies each package against the sha256 recorded in its
+      # digest, so it needs the real bytes on disk -- and the later asset-attach
+      # step reads the same dist/ directory, so this one fetch serves both.
+      #
+      # STRICT on purpose (no --allow-missing): on the release path a package the
+      # pool cannot produce means the release would ship without it. That has to
+      # stop the run, not warn.
+      - name: Fetch release packages from the asset pool
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py pull
+
       - name: Pre-release checks
         shell: bash
         run: |
@@ -177,9 +192,20 @@ jobs:
             console.log(`release_id: ${release_id}`);
 
             const files = fs.readdirSync(dist_dir);
+            const attached = [];
+            const failed = [];
             for (const file of files) {
               const filePath = path.join(dist_dir, file);
               const fileStat = fs.statSync(filePath);
+
+              // dist/digests/ is a directory of digest records, not a release asset.
+              // It used to fall through into the try below, fail inside
+              // createReadStream, and get swallowed by the catch -- logging an error
+              // on every single release for a file that was never meant to upload.
+              if (fileStat.isDirectory()) {
+                console.log(`Skipping directory: ${file}`);
+                continue;
+              }
 
               try {
                 // Check if the asset already exists and replace it if it does.
@@ -212,7 +238,19 @@ jobs:
                 });
 
                 console.log(`Uploaded asset: ${file}`);
+                attached.push(file);
               } catch (error) {
                 console.error(`Error processing file ${file}: ${error.message}`);
+                failed.push(file);
               }
+            }
+
+            // Previously every upload error was logged and then ignored, so a release
+            // could be published GREEN with assets missing or half-written -- the one
+            // outcome this workflow exists to prevent. Fail the step instead.
+            console.log(`Attached ${attached.length} asset(s): ${attached.join(', ')}`);
+            if (failed.length > 0) {
+              core.setFailed(
+                `Failed to attach ${failed.length} release asset(s): ${failed.join(', ')}`
+              );
             }

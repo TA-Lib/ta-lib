@@ -63,10 +63,20 @@ if __name__ == "__main__":
     if not os.path.exists(digests_dir):
         print(f"Error: Missing {digests_dir} directory.")
         exit(1)
-    # Iterate all files in dist/ and check if a digest exists for each.
-    for asset in os.listdir(dist_dir):
-        if os.path.isdir(path_join(dist_dir, asset)):
-            continue
+    # Iterate the AUTHORITATIVE expected-asset list, not os.listdir(dist_dir).
+    #
+    # Driving this loop from the directory listing made the entire release gate
+    # silently skippable: it `continue`d over directories, so once the packages
+    # stopped being committed to git and dist/ held nothing but digests/, the loop
+    # body became unreachable and every check below -- sources_digest, built_success,
+    # tests passed, hash match -- stopped running while the script still exited 0.
+    #
+    # get_release_assets() is maintainer-curated and never empty, so a missing or
+    # unbuilt asset is now a hard failure instead of one fewer iteration. The
+    # os.path.exists() check above guarantees the package files are on disk by the
+    # time we get here (CI fetches them from the asset pool first), so the hash
+    # comparison below still verifies real bytes.
+    for asset in expected_assets:
         digest_file = path_join(digests_dir, f"{asset}.digest")
         if not os.path.exists(digest_file):
             print(f"Error: Missing file [{asset}.digest]. Did you forget some re-build and/or tests steps?")

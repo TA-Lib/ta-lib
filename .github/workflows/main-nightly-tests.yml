@@ -43,6 +43,23 @@ jobs:
         run: |
           echo "PYTHON=python3" >> $GITHUB_ENV
 
+      # Restore the packages referenced by dist/digests/ BEFORE package.py runs.
+      # This is what lets main REUSE the artifact dev built and tested rather than
+      # rebuilding it: is_build_skipping_allowed() hashes the local file, so with no
+      # file the skip is denied and a manual dispatch (how a release is cut --
+      # README-DEVS.md step 6) would silently rebuild instead of reusing.
+      #
+      # Reading the pool needs no more than the contents:read this workflow already
+      # has: the pool is a PUBLISHED pre-release, so it is listable with a read token
+      # and its assets download anonymously. A draft pool would have required
+      # contents:write here, costing this workflow its read-only posture.
+      - name: Fetch dist packages from the asset pool (Linux)
+        if: runner.os == 'Linux'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py pull --allow-missing
+
       - name: Build dist assets (Linux)
         if: runner.os == 'Linux'
         env:
@@ -91,6 +108,14 @@ jobs:
         shell: cmd
         run: wix extension add --global WixToolset.UI.wixext/7.0.0 && wix extension list --global
 
+      # See the Linux fetch step above for why this must precede package.py.
+      - name: Fetch dist packages from the asset pool (Windows x64)
+        if: runner.os == 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: cmd
+        run: '%PYTHON% %GITHUB_WORKSPACE%\scripts\dist-pool.py pull --allow-missing'
+
       - name: Build dist assets (Windows x64)
         if: runner.os == 'Windows'
         env:
@@ -110,6 +135,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
+          # Still meaningful with the packages gitignored: dist/digests/ remains
+          # TRACKED, and package.py rewrites a digest whenever the rebuilt package
+          # differs materially from the recorded one. So a real divergence between
+          # main's sources and main's committed digests still shows up here.
           dist_changes=$(git status --porcelain dist/)
           ta_common_changes=$(git status --porcelain include/ta_common.h)
           if [ -n "$dist_changes" ] || [ -n "$ta_common_changes" ]; then
@@ -117,6 +146,18 @@ jobs:
             echo "The dev-nigthly-tests.yml should have updated these assets."
             exit 1
           fi
+
+      # The check above proves main's digests match main's sources. This proves the
+      # packages those digests NAME are actually retrievable -- the half that stopped
+      # being self-evident once the binaries left git. Strict (no --allow-missing):
+      # on main, a digest pointing at content the pool cannot produce means the next
+      # release would have nothing to attach, and that must be loud.
+      - name: Verify every referenced package exists in the asset pool
+        if: runner.os == 'Linux'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py verify
 
       # Soft check only: the website (website/src/install/README.md) is expected to lag briefly
       # after a release until dev-nightly syncs it and it merges to main. Surface

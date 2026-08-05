@@ -56,6 +56,24 @@ jobs:
         run: |
           echo "PYTHON=python3" >> $GITHUB_ENV
 
+      # Restore the packages referenced by dist/digests/ BEFORE package.py runs.
+      # The packages are no longer committed, so a fresh checkout has none of them,
+      # and package.py needs them on disk for two separate reasons:
+      #   1. is_build_skipping_allowed() hashes the local file. With no file there is
+      #      no skip, so main would REBUILD instead of reusing the artifact dev built
+      #      and tested -- silently breaking the property this whole design protects.
+      #   2. the compare_*_files helpers diff against the previous package to decide
+      #      whether anything actually changed. With no baseline every asset looks new
+      #      and churns on every run.
+      # --allow-missing: a pool miss here is self-healing (package.py rebuilds and the
+      # push step re-uploads), so it must not turn a recoverable state into a red build.
+      - name: Fetch dist packages from the asset pool (Linux)
+        if: runner.os == 'Linux'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py pull --allow-missing
+
       - name: Build dist assets (Linux)
         if: runner.os == 'Linux'
         env:
@@ -105,6 +123,14 @@ jobs:
         if: runner.os == 'Windows'
         shell: cmd
         run: wix extension add --global WixToolset.UI.wixext/7.0.0 && wix extension list --global
+
+      # See the Linux fetch step above for why this must precede package.py.
+      - name: Fetch dist packages from the asset pool (Windows x64)
+        if: runner.os == 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: cmd
+        run: '%PYTHON% %GITHUB_WORKSPACE%\scripts\dist-pool.py pull --allow-missing'
 
       - name: Build dist assets (Windows x64)
         if: runner.os == 'Windows'

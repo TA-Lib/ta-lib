@@ -103,7 +103,17 @@ def cmd_push(root_dir: str, dry_run: bool) -> int:
     return 1 if failures else 0
 
 
-def cmd_pull(root_dir: str, dry_run: bool) -> int:
+def cmd_pull(root_dir: str, dry_run: bool, allow_missing: bool = False) -> int:
+    """Fetch referenced packages into dist/.
+
+    Strict by default: a referenced package missing from the pool is an error, because
+    on the release path it means the release would be built from content nobody can
+    verify.
+
+    --allow-missing is for the nightlies, where a pool miss is recoverable: package.py
+    simply rebuilds the asset, re-tests it, and the following push re-uploads it. Failing
+    the nightly there would turn a self-healing condition into a red build.
+    """
     refs = _referenced(root_dir)
     if not refs:
         print("Info: no digest references pool content -- nothing to pull.")
@@ -123,8 +133,12 @@ def cmd_pull(root_dir: str, dry_run: bool) -> int:
         try:
             download_and_verify(sha, asset_file_name, dest, assets=assets)
         except PoolError as e:
-            print(f"Error: {e}")
-            failures += 1
+            if allow_missing:
+                print(f"Warning: {e}")
+                print(f"Warning: {asset_file_name} will be rebuilt from source.")
+            else:
+                print(f"Error: {e}")
+                failures += 1
 
     return 1 if failures else 0
 
@@ -164,12 +178,19 @@ def main() -> int:
     ap.add_argument("command", choices=["push", "pull", "verify"])
     ap.add_argument("--dry-run", action="store_true",
                     help="Show what would happen without any network call.")
+    ap.add_argument("--allow-missing", action="store_true",
+                    help="pull only: treat a package missing from the pool as a warning "
+                         "instead of an error. For the nightlies, where package.py can "
+                         "simply rebuild it. Never use on the release path.")
     args = ap.parse_args()
 
     root_dir = verify_git_repo()
-    handler = {"push": cmd_push, "pull": cmd_pull, "verify": cmd_verify}[args.command]
     try:
-        return handler(root_dir, args.dry_run)
+        if args.command == "pull":
+            return cmd_pull(root_dir, args.dry_run, allow_missing=args.allow_missing)
+        if args.command == "push":
+            return cmd_push(root_dir, args.dry_run)
+        return cmd_verify(root_dir, args.dry_run)
     except PoolError as e:
         print(f"Error: {e}")
         return 1

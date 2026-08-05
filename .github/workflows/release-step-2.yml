@@ -43,6 +43,16 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      # step-2 re-runs the same pre-release gate on a fresh checkout, so it needs the
+      # packages restored too -- without this the gate fails on a bare dist/.
+      # Strict: see release-step-1.yml.
+      - name: Fetch release packages from the asset pool
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py pull
+
       - name: Pre-release checks
         shell: bash
         run: |

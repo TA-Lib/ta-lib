@@ -104,3 +104,17 @@ ta_codegen/output/rust/target/
 
 # Local working notes — never commit (see to_be_deleted/ contents before deleting)
 to_be_deleted/
+
+# Release packages are NOT committed. They live in the content-addressed asset
+# pool (scripts/utilities/dist_pool.py), named by the sha256 that each
+# dist/digests/*.digest records. Committing them grew git history by ~35 MB/day:
+# .deb/.msi/.zip/.tar.gz are already compressed, so consecutive builds delta at
+# ~0% and every nightly added permanently-unique bytes (dist/ reached 91% of the
+# packed repo).
+#
+# dist/digests/ stays tracked -- it is the convergence signal AND the pool key.
+# These globs only match direct children of dist/, so the digests are unaffected.
+dist/*.deb
+dist/*.msi
+dist/*.zip
+dist/*.tar.gz
