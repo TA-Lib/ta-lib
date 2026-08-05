@@ -293,7 +293,7 @@ int main( int argc, char **argv )
          const char *const serverArgv[] = {serverPath, NULL};
          if( codegen_pipe_open(&abstractPipe, serverArgv) == TA_TEST_PASS )
          {
-            test_abstract_set_server(&abstractPipe);
+            test_abstract_set_server(&abstractPipe, "c");
             abstractPipeOpen = 1;
             printf( "  (with server verification)\n" );
             /* The control arm. C's server answers the metadata RPCs from the
@@ -311,7 +311,7 @@ int main( int argc, char **argv )
       retValue = test_abstract();
       if( retValue == TA_TEST_PASS )
          retValue = cMetaErr;
-      test_abstract_set_server(NULL);
+      test_abstract_set_server(NULL, NULL);
       if( abstractPipeOpen )
          codegen_pipe_close(&abstractPipe);
    }
@@ -347,7 +347,7 @@ int main( int argc, char **argv )
          {
             ErrorNumber e;
             printf( "Testing Abstract metadata parity (Rust server vs C)\n" );
-            test_abstract_set_server(&rustAbstractPipe);
+            test_abstract_set_server(&rustAbstractPipe, "rust");
             e = test_abstract_server_metadata(functionFilter);
             /* Full dynamic-dispatch path (abstract_call / abstract_get_lookback /
              * TA_FunctionDescriptionXML) against the Rust server, comparing output
@@ -357,7 +357,7 @@ int main( int argc, char **argv )
                printf( "Testing Abstract dynamic dispatch (Rust server vs C)\n" );
                e = test_abstract();
             }
-            test_abstract_set_server(NULL);
+            test_abstract_set_server(NULL, NULL);
             codegen_pipe_close(&rustAbstractPipe);
             if( retValue == TA_TEST_PASS && e != TA_TEST_PASS )
                retValue = e;
@@ -383,14 +383,14 @@ int main( int argc, char **argv )
       {
          ErrorNumber e;
          printf( "Testing Abstract metadata parity (Java server vs C)\n" );
-         test_abstract_set_server(&javaAbstractPipe);
+         test_abstract_set_server(&javaAbstractPipe, "java");
          e = test_abstract_server_metadata(functionFilter);
          if( e == TA_TEST_PASS )
          {
             printf( "Testing Abstract dynamic dispatch (Java server vs C)\n" );
             e = test_abstract();
          }
-         test_abstract_set_server(NULL);
+         test_abstract_set_server(NULL, NULL);
          codegen_pipe_close(&javaAbstractPipe);
          if( retValue == TA_TEST_PASS && e != TA_TEST_PASS )
             retValue = e;
@@ -420,14 +420,14 @@ int main( int argc, char **argv )
       {
          ErrorNumber e;
          printf( "Testing Abstract metadata parity (C# server vs C)\n" );
-         test_abstract_set_server(&csharpAbstractPipe);
+         test_abstract_set_server(&csharpAbstractPipe, "csharp");
          e = test_abstract_server_metadata(functionFilter);
          if( e == TA_TEST_PASS )
          {
             printf( "Testing Abstract dynamic dispatch (C# server vs C)\n" );
             e = test_abstract();
          }
-         test_abstract_set_server(NULL);
+         test_abstract_set_server(NULL, NULL);
          codegen_pipe_close(&csharpAbstractPipe);
          if( retValue == TA_TEST_PASS && e != TA_TEST_PASS )
             retValue = e;

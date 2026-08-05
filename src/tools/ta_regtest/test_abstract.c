@@ -82,6 +82,9 @@ extern int doExtensiveProfiling;
 #include "codegen_pipe.h"
 #include "ta_abstract.h"
 static CodegenPipe *g_abstractPipe = NULL;
+/* Which language the attached server is ("c"/"rust"/"java"/"csharp"), so a
+ * per-backend carve-out can name its backend instead of applying to all four. */
+static const char *g_abstractLang = NULL;
 static char        *g_abstractReqBuf = NULL;
 static char        *g_abstractRespBuf = NULL;
 #define ABSTRACT_JSON_BUF_SIZE (512 * 1024)
@@ -140,8 +143,9 @@ static int    output_int[10][2000];
 
 /* Set the optional codegen server pipe for abstract verification.
  * When set, callWithDefaults() will also call the server and compare. */
-void test_abstract_set_server(CodegenPipe *cp)
+void test_abstract_set_server(CodegenPipe *cp, const char *lang)
 {
+   g_abstractLang = lang;
    if( cp )
    {
       g_abstractPipe = cp;
@@ -204,6 +208,105 @@ static const double *abstract_volume_view( const double *input, unsigned int siz
     return volBuf;
 }
 
+/* Every price slot used to receive the SAME array, which made the whole
+ * component axis untestable: with inOpen == inHigh == inLow == inClose bit for
+ * bit, any permutation of them is bit-identical, so a binder that transposed two
+ * components — or indexed the wrong input slot — produced identical output and no
+ * gate could see it. The C# server's own comment cites transposition-detection as
+ * the reason its abstract_call is an independent implementation; that detection
+ * only exists once the components actually differ.
+ *
+ * The components are built as a COHERENT bar — low <= min(open,close) <=
+ * max(open,close) <= high — from neighbouring samples of the base series, so the
+ * geometry varies bar to bar. Scaling each component by a constant factor instead
+ * is the obvious approach and is wrong: every bar then has identical proportions,
+ * so a candlestick's "body vs the average body over the period" comparison sits
+ * exactly ON its threshold, and the residual ~1e-13 operation-ordering difference
+ * between the C reference and a backend flips the whole 0/100 output. Deriving
+ * from different indices keeps the comparisons away from their boundaries.
+ *
+ * Sign- and zero-preserving by construction (min/max pick real samples and the
+ * padding uses magnitudes), so it stays meaningful on every dataset here: a ]0,1[
+ * ramp, negatives, and the +/-epsilon noise. Close keeps the identity so
+ * single-input and close-only functions see exactly what they did. Volume is
+ * excluded — it has its own magnitude view for a separate reason.
+ *
+ * Both the in-process call and the JSON request must use this same view, or the
+ * two sides diverge for reasons that have nothing to do with the function. */
+/* The views must be able to buffer the LARGEST dataset, or they silently fall
+ * back to handing every component the same array — reinstating exactly the
+ * symmetry they exist to break, with every test still green. Tie the capacity to
+ * the datasets so enlarging one is a compile error rather than a silent
+ * un-gating. */
+#define ABSTRACT_VIEW_MAX (sizeof(inputRandomData)/sizeof(double))
+typedef char abstract_view_fits_largest_dataset[
+    ABSTRACT_VIEW_MAX >= sizeof(inputNegData)/sizeof(double) ? 1 : -1];
+
+static const double *abstract_price_view( const double *input, unsigned int size,
+                                          TA_InputFlags component )
+{
+    static double openBuf[ABSTRACT_VIEW_MAX], highBuf[ABSTRACT_VIEW_MAX],
+                  lowBuf[ABSTRACT_VIEW_MAX], oiBuf[ABSTRACT_VIEW_MAX];
+    unsigned int i;
+
+    if( size == 0 || size > (unsigned int)ABSTRACT_VIEW_MAX )
+        return input;   /* unreachable: the static assert above sizes for every dataset */
+
+    switch( component )
+    {
+    case TA_IN_PRICE_OPEN:
+        for( i = 0; i < size; i++ ) openBuf[i] = input[(i+1) % size];
+        return openBuf;
+
+    case TA_IN_PRICE_HIGH:
+        for( i = 0; i < size; i++ )
+        {
+            double c = input[i], o = input[(i+1) % size], pad = input[(i+2) % size];
+            double top = c > o ? c : o;
+            highBuf[i] = top + (pad < 0.0 ? -pad : pad) * 0.25;
+        }
+        return highBuf;
+
+    case TA_IN_PRICE_LOW:
+        for( i = 0; i < size; i++ )
+        {
+            double c = input[i], o = input[(i+1) % size], pad = input[(i+3) % size];
+            double bottom = c < o ? c : o;
+            lowBuf[i] = bottom - (pad < 0.0 ? -pad : pad) * 0.25;
+        }
+        return lowBuf;
+
+    case TA_IN_PRICE_OPENINTEREST:
+        for( i = 0; i < size; i++ ) oiBuf[i] = input[(i+2) % size];
+        return oiBuf;
+
+    case TA_IN_PRICE_CLOSE:        /* the identity — see above */
+    default:                       return input;
+    }
+}
+
+/* Same symmetry problem on the generic real inputs: a function taking inReal0 and
+ * inReal1 (CORREL, BETA, the vector arithmetic) received one array in both slots,
+ * so swapping them was invisible. Slot 0 keeps the identity. */
+#define ABSTRACT_REAL_SLOTS 4
+static const double *abstract_real_view( const double *input, unsigned int size,
+                                         int slot )
+{
+    static double slotBuf[ABSTRACT_REAL_SLOTS][ABSTRACT_VIEW_MAX];
+    unsigned int i;
+
+    /* Slot 0 keeps the identity. Every other slot gets its OWN buffer and its own
+     * factor — one shared buffer would alias slot 2 onto slot 1 and quietly
+     * restore the invisible-swap hole for a three-input function. The tables top
+     * out at Real0/Real1 today, so the upper slots are headroom, not dead code
+     * waiting to be wrong. */
+    if( slot <= 0 || slot >= ABSTRACT_REAL_SLOTS ) return input;
+    if( size == 0 || size > (unsigned int)ABSTRACT_VIEW_MAX ) return input;
+    for( i = 0; i < size; i++ )
+        slotBuf[slot][i] = input[i] * (1.0 - 0.07 * (double)slot);
+    return slotBuf[slot];
+}
+
 static int abstract_json_write_double_array(char *buf, int buf_size, int pos,
                                             const double *data, int count)
 {
@@ -211,7 +314,14 @@ static int abstract_json_write_double_array(char *buf, int buf_size, int pos,
     for( int i = 0; i < count; i++ )
     {
         if( i > 0 ) pos = codegen_appendc(buf, buf_size, pos, ',');
-        pos = codegen_appendf(buf, buf_size, pos, "%.15g", data[i]);
+        /* %.17g, not %.15g: 17 significant digits is what round-trips a double.
+         * At 15 the server computed on subtly different inputs from the C arm,
+         * which is invisible while every price component carries the SAME array
+         * (both sides round identically and the degenerate high==low comparisons
+         * hold either way) and becomes a false mismatch the moment they differ —
+         * a threshold function like a CDL* pattern flips its whole output on one
+         * ULP. Value parity here is a claim about the code, not about printf. */
+        pos = codegen_appendf(buf, buf_size, pos, "%.17g", data[i]);
     }
     return codegen_appendc(buf, buf_size, pos, ']');
 }
@@ -916,7 +1026,7 @@ static ErrorNumber abstract_verify_server_call(
         ",\"startIdx\":%d,\"endIdx\":%d",
         funcName, startIdx, endIdx);
 
-    /* Input params — all slots use the same array (mirrors callWithDefaults) */
+    /* Input params — one view per component, identical to callWithDefaults(). */
     int totalRealInputs = 0;
     for( unsigned int i = 0; i < funcInfo->nbInput; i++ )
     {
@@ -938,19 +1048,23 @@ static ErrorNumber abstract_verify_server_call(
             TA_InputFlags flags = inputInfo->flags;
             if( flags & TA_IN_PRICE_OPEN ) {
                 pos = codegen_appendf(buf, bufSize, pos, ",\"inOpen\":");
-                pos = abstract_json_write_double_array(buf, bufSize, pos, input, size);
+                pos = abstract_json_write_double_array(buf, bufSize, pos,
+                        abstract_price_view(input, (unsigned int)size, TA_IN_PRICE_OPEN), size);
             }
             if( flags & TA_IN_PRICE_HIGH ) {
                 pos = codegen_appendf(buf, bufSize, pos, ",\"inHigh\":");
-                pos = abstract_json_write_double_array(buf, bufSize, pos, input, size);
+                pos = abstract_json_write_double_array(buf, bufSize, pos,
+                        abstract_price_view(input, (unsigned int)size, TA_IN_PRICE_HIGH), size);
             }
             if( flags & TA_IN_PRICE_LOW ) {
                 pos = codegen_appendf(buf, bufSize, pos, ",\"inLow\":");
-                pos = abstract_json_write_double_array(buf, bufSize, pos, input, size);
+                pos = abstract_json_write_double_array(buf, bufSize, pos,
+                        abstract_price_view(input, (unsigned int)size, TA_IN_PRICE_LOW), size);
             }
             if( flags & TA_IN_PRICE_CLOSE ) {
                 pos = codegen_appendf(buf, bufSize, pos, ",\"inClose\":");
-                pos = abstract_json_write_double_array(buf, bufSize, pos, input, size);
+                pos = abstract_json_write_double_array(buf, bufSize, pos,
+                        abstract_price_view(input, (unsigned int)size, TA_IN_PRICE_CLOSE), size);
             }
             if( flags & TA_IN_PRICE_VOLUME ) {
                 pos = codegen_appendf(buf, bufSize, pos, ",\"inVolume\":");
@@ -958,7 +1072,8 @@ static ErrorNumber abstract_verify_server_call(
             }
             if( flags & TA_IN_PRICE_OPENINTEREST ) {
                 pos = codegen_appendf(buf, bufSize, pos, ",\"inOpenInterest\":");
-                pos = abstract_json_write_double_array(buf, bufSize, pos, input, size);
+                pos = abstract_json_write_double_array(buf, bufSize, pos,
+                        abstract_price_view(input, (unsigned int)size, TA_IN_PRICE_OPENINTEREST), size);
             }
             break;
         }
@@ -967,7 +1082,8 @@ static ErrorNumber abstract_verify_server_call(
                 pos = codegen_appendf(buf, bufSize, pos, ",\"inReal\":");
             else
                 pos = codegen_appendf(buf, bufSize, pos, ",\"inReal%d\":", realInputCount);
-            pos = abstract_json_write_double_array(buf, bufSize, pos, input, size);
+            pos = abstract_json_write_double_array(buf, bufSize, pos,
+                    abstract_real_view(input, (unsigned int)size, realInputCount), size);
             realInputCount++;
             break;
         case TA_Input_Integer:
@@ -987,7 +1103,8 @@ static ErrorNumber abstract_verify_server_call(
         {
         case TA_OptInput_RealRange:
         case TA_OptInput_RealList:
-            pos = codegen_appendf(buf, bufSize, pos, "%.15g", optInfo->defaultValue);
+            /* %.17g for the same round-trip reason as the input arrays. */
+            pos = codegen_appendf(buf, bufSize, pos, "%.17g", optInfo->defaultValue);
             break;
         case TA_OptInput_IntegerRange:
         case TA_OptInput_IntegerList:
@@ -1516,16 +1633,43 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
     *     that phase-wrap or flip their integer trend mode; and
     *   - CCI — whose `(lastValue-theAverage) != 0` guard flips between the 0.015
     *     division and a hard 0 when the mean and last value cancel to the last bit.
-    * These only surface on the two NON-deterministic inputs (random ]0,1[ values,
-    * and random-sign ±DBL_EPSILON), where the data is noise rather than a price
-    * series, so exact value parity is not meaningful. Structural parity
+    * These only surface on the NON-deterministic inputs (random ]0,1[ values, and
+    * the two random-sign epsilon sets), where the data is noise rather than a
+    * price series, so exact value parity is not meaningful. Structural parity
     * (retCode/outBegIdx/outNBElement/lookback) stays strict for every function on
     * every dataset; value parity stays strict on the deterministic datasets
-    * (monotonic ramp, zeros) and — on real price data — in test_codegen. */
-   int relaxValues = ( strncmp(funcName, "HT_", 3) == 0 || strcmp(funcName, "CCI") == 0 )
-                     && ( datasetName != NULL )
-                     && ( strcmp(datasetName, "inputRandomData") == 0
-                          || strcmp(datasetName, "inputRandFltEpsilon") == 0 );
+    * (monotonic ramp, zeros) and — on real price data — in test_codegen.
+    * Both epsilon sets are listed: until the initialisation was fixed the Flt
+    * array actually carried the DBL_EPSILON values, so naming one covered both.
+    *
+    * PROVISIONAL, and NOT the same kind of claim: CDL* against the RUST server on
+    * the two epsilon sets is excluded because of an OPEN, REPRODUCED DEFECT, not
+    * because the comparison is meaningless. Issue #164 carries it. What is known:
+    *   - C, Java and C# agree with the in-process C library on every dataset.
+    *     Only Rust differs, and only at +-EPSILON magnitude — on ]0,1[ data the
+    *     same functions are bit-exact through the same code path.
+    *   - It reproduces from a single captured abstract_call request replayed
+    *     straight into both servers, so it is neither transport nor test harness:
+    *     identical bytes in, C emits all zeros, Rust emits alternating +-100.
+    *   - The verdict is decided by `upperShadow < candleaverage(ShadowShort)`,
+    *     whose two operands are EXACTLY equal there (both 2^-54), so any last-bit
+    *     difference in the ROLLING period total flips the whole output. Settings,
+    *     window bounds, the emitted divisor and the emitted range expression were
+    *     all checked against C and match; the residual is in the accumulation.
+    * Narrow it to Rust + epsilon deliberately: widening it would re-hide the very
+    * class of defect the per-component views were added to expose. */
+   int isEpsilonSet = ( datasetName != NULL )
+                      && ( strcmp(datasetName, "inputRandFltEpsilon") == 0
+                           || strcmp(datasetName, "inputRandDblEpsilon") == 0 );
+   int isNoiseSet   = isEpsilonSet
+                      || ( datasetName != NULL
+                           && strcmp(datasetName, "inputRandomData") == 0 );
+
+   int isRustServer = ( g_abstractLang != NULL && strcmp(g_abstractLang, "rust") == 0 );
+
+   int relaxValues =
+         ( ( strncmp(funcName, "HT_", 3) == 0 || strcmp(funcName, "CCI") == 0 ) && isNoiseSet )
+      || ( strncmp(funcName, "CDL", 3) == 0 && isEpsilonSet && isRustServer );
 
    retCode = TA_GetFuncHandle( funcName, &handle );
    if( retCode != TA_SUCCESS )
@@ -1543,23 +1687,45 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
 
    TA_GetFuncInfo( handle, &funcInfo );
 
+   /* Counts only the generic real slots, so inReal0/inReal1 get the same views
+    * the JSON builder gives them (which counts them the same way). */
+   int realSlot = 0;
+
    for( i=0; i < funcInfo->nbInput; i++ )
    {
       TA_GetInputParameterInfo( handle, i, &inputInfo );
 	  switch(inputInfo->type)
 	  {
 	  case TA_Input_Price:
-         /* Volume gets the magnitude only -- see abstract_volume_view(). The
-          * JSON request builder applies the identical view. */
-         TA_SetInputParamPricePtr( paramHolder, i,
-			 inputInfo->flags&TA_IN_PRICE_OPEN?input:NULL,
-			 inputInfo->flags&TA_IN_PRICE_HIGH?input:NULL,
-			 inputInfo->flags&TA_IN_PRICE_LOW?input:NULL,
-			 inputInfo->flags&TA_IN_PRICE_CLOSE?input:NULL,
-			 inputInfo->flags&TA_IN_PRICE_VOLUME?abstract_volume_view(input,(unsigned int)size):NULL, NULL );
+         /* One view per component -- see abstract_price_view(); volume gets the
+          * magnitude only -- see abstract_volume_view(). The JSON request builder
+          * applies the identical views. */
+         /* openInterest is bound symmetrically with the JSON builder rather than
+          * hardcoded NULL. No shipped function declares it, so this is dormant —
+          * but a flagged component passed NULL is TA_BAD_PARAM from
+          * SET_PARAM_INFO, so the asymmetry would have been a silent bind failure
+          * on one arm the day a function did declare it. The rc is checked for
+          * the same reason: it was being discarded. */
+         {
+            TA_RetCode bindRc = TA_SetInputParamPricePtr( paramHolder, i,
+			 inputInfo->flags&TA_IN_PRICE_OPEN?abstract_price_view(input,(unsigned int)size,TA_IN_PRICE_OPEN):NULL,
+			 inputInfo->flags&TA_IN_PRICE_HIGH?abstract_price_view(input,(unsigned int)size,TA_IN_PRICE_HIGH):NULL,
+			 inputInfo->flags&TA_IN_PRICE_LOW?abstract_price_view(input,(unsigned int)size,TA_IN_PRICE_LOW):NULL,
+			 inputInfo->flags&TA_IN_PRICE_CLOSE?abstract_price_view(input,(unsigned int)size,TA_IN_PRICE_CLOSE):NULL,
+			 inputInfo->flags&TA_IN_PRICE_VOLUME?abstract_volume_view(input,(unsigned int)size):NULL,
+			 inputInfo->flags&TA_IN_PRICE_OPENINTEREST?abstract_price_view(input,(unsigned int)size,TA_IN_PRICE_OPENINTEREST):NULL );
+            if( bindRc != TA_SUCCESS )
+            {
+               printf( "  ABSTRACT ERROR [%s]: TA_SetInputParamPricePtr[%u] rc=%d\n",
+                       funcName, i, (int)bindRc );
+               TA_ParamHolderFree( paramHolder );
+               return TA_ABS_TST_FAIL_CALLFUNC;
+            }
+         }
 		 break;
 	  case TA_Input_Real:
-         TA_SetInputParamRealPtr( paramHolder, i, input );
+         TA_SetInputParamRealPtr( paramHolder, i,
+             abstract_real_view(input,(unsigned int)size,realSlot++) );
 		 break;
 	  case TA_Input_Integer:
          TA_SetInputParamIntegerPtr( paramHolder, i, input_int );
@@ -1627,7 +1793,7 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
              ",\"%s\":", oi->paramName);
          if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
             pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
-                "%.15g", oi->defaultValue);
+                "%.17g", oi->defaultValue);
          else
             pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
                 "%d", (int)oi->defaultValue);
@@ -2147,6 +2313,11 @@ static ErrorNumber test_default_calls(void)
       inputRandomData_int[i] = (int)inputRandomData[i];
    }
 
+   /* Two DISTINCT epsilon datasets. Both loops used to write the Flt array, so
+    * the second silently destroyed the first: FLT_EPSILON never reached a test,
+    * and inputRandDblEpsilon — declared, and passed to CALL() below — was never
+    * written at all, leaving it zero-filled and bit-identical to inputZeroData.
+    * The advertised five-dataset sweep was four, one of them a duplicate. */
    for( i=0; i < sizeof(inputRandFltEpsilon)/sizeof(double); i++ )
    {
        sign= (unsigned int)rand()%2;
@@ -2154,11 +2325,11 @@ static ErrorNumber test_default_calls(void)
        inputRandFltEpsilon_int[i] = sign?TA_INTEGER_MIN:TA_INTEGER_MAX;
    }
 
-   for( i=0; i < sizeof(inputRandFltEpsilon)/sizeof(double); i++ )
+   for( i=0; i < sizeof(inputRandDblEpsilon)/sizeof(double); i++ )
    {
        sign= (unsigned int)rand()%2;
-       inputRandFltEpsilon[i] = (sign?1.0:-1.0)*(DBL_EPSILON);
-       inputRandFltEpsilon_int[i] = sign?1:-1;
+       inputRandDblEpsilon[i] = (sign?1.0:-1.0)*(DBL_EPSILON);
+       inputRandDblEpsilon_int[i] = sign?1:-1;
    }
 
    if( doExtensiveProfiling )

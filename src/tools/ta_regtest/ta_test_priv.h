@@ -29,7 +29,7 @@ ErrorNumber test_abstract( void );
  * Pass NULL to disable. When set, test_abstract() also verifies
  * every TA_CallFunc against the server's abstract_call endpoint. */
 #include "codegen_pipe.h"
-void test_abstract_set_server(CodegenPipe *cp);
+void test_abstract_set_server(CodegenPipe *cp, const char *lang);
 
 /* Run abstract metadata parity (TA_GetFuncInfo + the three param-info getters)
  * for every function against the server set via test_abstract_set_server(),
