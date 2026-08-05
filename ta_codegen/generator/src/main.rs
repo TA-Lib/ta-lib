@@ -1965,11 +1965,26 @@ ta-lib-dispatch = { path = "../dispatch", version = "=0.1.1" }
     println!("  Scaffolding -> {}", lib_cargo_path.display());
 
     // --- tools/Cargo.toml (server/bench crate; depends on the library) ---
+    //
+    // `arbitrary_precision` is load-bearing, not a nicety. serde_json's default
+    // number parser scales the significand by an f64 power of ten, which is not
+    // correctly rounded: it returns 2.7755575615628914e-16 (the shortest repr of
+    // 1.25 * 2^-52) ONE ULP LOW. strtod, Double.parseDouble and double.Parse are
+    // all correctly rounded, so the Rust server alone was computing on different
+    // inputs than the other three, and every cross-language comparison that went
+    // over the decimal transport silently compared unequal data. The feature keeps
+    // the original text and defers to std's parser, which is exact.
+    //
+    // Found via CDLLONGLINE on the DBL_EPSILON dataset (#164): there
+    // `upperShadow` and `candleaverage(ShadowShort)` are EXACTLY equal, so one ULP
+    // on inHigh flips `<` and the whole output from 0 to -100. The shipped crate
+    // was always right — handed the same bits it answers 0, like C.
     let tools_toml = format!(
         "[package]\nname = \"ta-lib-tools\"\nversion = \"{crate_version}\"\nedition = \"2021\"\n\
          publish = false\n\n[[bin]]\nname = \"ta_codegen_serve\"\n\
          path = \"src/bin/ta_codegen_serve.rs\"\n\n[dependencies]\n\
-         ta-lib = {{ path = \"../library\" }}\nserde_json = \"1\"\n"
+         ta-lib = {{ path = \"../library\" }}\n\
+         serde_json = {{ version = \"1\", features = [\"arbitrary_precision\"] }}\n"
     );
     let tools_cargo_path = tools_dir.join("Cargo.toml");
     std::fs::write(&tools_cargo_path, tools_toml).unwrap();

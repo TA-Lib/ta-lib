@@ -10,4 +10,4 @@ path = "src/bin/ta_codegen_serve.rs"
 
 [dependencies]
 ta-lib = { path = "../library" }
-serde_json = "1"
+serde_json = { version = "1", features = ["arbitrary_precision"] }

@@ -2008,22 +2008,14 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
     * Both epsilon sets are listed: until the initialisation was fixed the Flt
     * array actually carried the DBL_EPSILON values, so naming one covered both.
     *
-    * PROVISIONAL, and NOT the same kind of claim: CDL* against the RUST server on
-    * the two epsilon sets is excluded because of an OPEN, REPRODUCED DEFECT, not
-    * because the comparison is meaningless. Issue #164 carries it. What is known:
-    *   - C, Java and C# agree with the in-process C library on every dataset.
-    *     Only Rust differs, and only at +-EPSILON magnitude — on ]0,1[ data the
-    *     same functions are bit-exact through the same code path.
-    *   - It reproduces from a single captured abstract_call request replayed
-    *     straight into both servers, so it is neither transport nor test harness:
-    *     identical bytes in, C emits all zeros, Rust emits alternating +-100.
-    *   - The verdict is decided by `upperShadow < candleaverage(ShadowShort)`,
-    *     whose two operands are EXACTLY equal there (both 2^-54), so any last-bit
-    *     difference in the ROLLING period total flips the whole output. Settings,
-    *     window bounds, the emitted divisor and the emitted range expression were
-    *     all checked against C and match; the residual is in the accumulation.
-    * Narrow it to Rust + epsilon deliberately: widening it would re-hide the very
-    * class of defect the per-component views were added to expose. */
+    * CDL* against the Rust server on these sets used to be excluded too, for a
+    * defect that turned out to be in the TEST SERVER, not the library: serde_json
+    * parsed 2.7755575615628914e-16 one ULP low, so the Rust server alone computed
+    * on different inputs than C/Java/C#. CDLLONGLINE exposed it because
+    * `upperShadow` and `candleaverage(ShadowShort)` are EXACTLY equal there, so
+    * one ULP flips the verdict. Fixed at the parser (tools/Cargo.toml enables
+    * serde_json's arbitrary_precision); the exclusion is gone and CDL* is held to
+    * the same strict value parity as everything else. */
    int isEpsilonSet = ( datasetName != NULL )
                       && ( strcmp(datasetName, "inputRandFltEpsilon") == 0
                            || strcmp(datasetName, "inputRandDblEpsilon") == 0 );
@@ -2031,11 +2023,8 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
                       || ( datasetName != NULL
                            && strcmp(datasetName, "inputRandomData") == 0 );
 
-   int isRustServer = ( g_abstractLang != NULL && strcmp(g_abstractLang, "rust") == 0 );
-
    int relaxValues =
-         ( ( strncmp(funcName, "HT_", 3) == 0 || strcmp(funcName, "CCI") == 0 ) && isNoiseSet )
-      || ( strncmp(funcName, "CDL", 3) == 0 && isEpsilonSet && isRustServer );
+         ( ( strncmp(funcName, "HT_", 3) == 0 || strcmp(funcName, "CCI") == 0 ) && isNoiseSet );
 
    retCode = TA_GetFuncHandle( funcName, &handle );
    if( retCode != TA_SUCCESS )
