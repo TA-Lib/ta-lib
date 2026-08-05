@@ -670,9 +670,6 @@ public class TaCodegenServe {
             }
     }
 
-    const int ABSTRACT_XML_LENGTH = 195183;
-    const ulong ABSTRACT_XML_CHECKSUM = 15640089UL;
-
     static string AbsStr(string? v) {
         if (v is null) return "\"\"";
         var b = new System.Text.StringBuilder("\"");
@@ -790,8 +787,17 @@ public class TaCodegenServe {
         return b.ToString();
     }
 
-    static string AbsDescriptionXml() =>
-        $"{{\"length\":{ABSTRACT_XML_LENGTH},\"checksum\":{ABSTRACT_XML_CHECKSUM}}}";
+    /* Measured at RUN TIME from the SHIPPED FunctionDescription. Baking the two
+       numbers at generation time made this leg unfailable: it compared C's real
+       bytes against constants derived from the same string C's own table is
+       built from (#164). Now both sides are real bytes. */
+    static string AbsDescriptionXml()
+    {
+        string xml = TALib.Metadata.FunctionDescription.Xml;
+        ulong checksum = 0;
+        foreach (char c in xml) checksum += (ulong)(c & 0xFF);
+        return $"{{\"length\":{xml.Length},\"checksum\":{checksum}}}";
+    }
 
     /* The JSON key the driver sends a required input under. Price bundles are
        sent one component per set bit; a lone real input keeps its own name,

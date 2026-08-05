@@ -51,6 +51,7 @@ import io.github.talib.Core;
 import io.github.talib.MAType;
 import io.github.talib.OutRange;
 import io.github.talib.metadata.FuncFlags;
+import io.github.talib.metadata.FunctionDescription;
 import io.github.talib.metadata.FunctionInfo;
 import io.github.talib.metadata.Functions;
 import io.github.talib.metadata.InputFlags;
@@ -599,6 +600,30 @@ public class MetadataTest {
             + withDistinct + ")");
     }
 
+    /**
+     * The shipped XML describes every registered function.
+     *
+     * <p>test_abstract.c compares its length and byte-sum against C's, which
+     * catches corruption but says nothing about what is inside. This says the
+     * document actually mentions each function, so a well-formed XML missing a
+     * whole entry fails here rather than only when its checksum happens to move.
+     */
+    static void functionDescriptionXmlDescribesEveryFunction() {
+        String xml = FunctionDescription.xml();
+        check(xml.startsWith("<?xml"), "the XML description is an XML document");
+        check(xml.contains("</FinancialFunctions>"), "the XML description is complete");
+        int found = 0;
+        for (FunctionInfo f : Functions.all()) {
+            if (xml.contains("<Abbreviation>" + f.name() + "</Abbreviation>")) {
+                found++;
+            } else {
+                check(false, "XML describes " + f.name());
+            }
+        }
+        check(found == Functions.all().size(),
+              "XML describes every function (" + found + "/" + Functions.all().size() + ")");
+    }
+
     private static double[][] newReal(FunctionInfo f) {
         double[][] a = new double[f.outputs().size()][];
         for (int i = 0; i < a.length; i++) {
@@ -624,6 +649,7 @@ public class MetadataTest {
         explicitParametersReachTheFunction();
         choiceListSentinelMatchesTheDefault();
         holderLookbackMatchesTheTypedApi();
+        functionDescriptionXmlDescribesEveryFunction();
         registryIsImmutable();
 
         if (failures == 0) {

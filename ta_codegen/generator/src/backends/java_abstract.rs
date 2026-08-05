@@ -48,13 +48,6 @@ fn js(s: &str) -> String {
 /// `funcs` are enumerated in name-sorted order (matching `rust_abstract`'s `FUNCS`).
 #[allow(clippy::implicit_hasher)]
 pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
-    // The XML content is byte-identical to what C's TA_FunctionDescriptionXML and
-    // the Rust server bake, so its length + unsigned-byte-sum are computed here at
-    // generation time and emitted as constants (the Java server does not embed it).
-    let xml = super::func_api_xml::generate_string(funcs);
-    let xml_len = xml.len();
-    let xml_checksum: u64 = xml.bytes().map(u64::from).sum();
-
     let mut s = String::new();
     s.push_str(META_CLASSES);
 
@@ -68,7 +61,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     }
     s.push_str("    }\n\n");
 
-    s.push_str(&emit_handlers(xml_len, xml_checksum));
+    s.push_str(&emit_handlers());
     s
 }
 
@@ -196,9 +189,9 @@ const META_CLASSES: &str = r"    // ---- ta_abstract metadata (issue #114) ----
     }
 ";
 
-/// The metadata RPC handler methods + a JSON string-escaper. `xml_len`/`xml_checksum`
-/// are baked in as constants (the XML content itself is not shipped in the server).
-fn emit_handlers(xml_len: usize, xml_checksum: u64) -> String {
+/// The metadata RPC handler methods + a JSON string-escaper. The XML facts are
+/// measured at run time from the shipped `FunctionDescription`, not baked here.
+fn emit_handlers() -> String {
     let mut s = String::new();
     s.push_str(
         r#"    // JSON string-escaper for metadata values (paramName/hint/... may contain quotes).
@@ -299,13 +292,19 @@ fn emit_handlers(xml_len: usize, xml_checksum: u64) -> String {
 
 "#,
     );
-    // TA_FunctionDescriptionXML: length + unsigned-byte-sum checksum (order-independent
-    // content check vs the C reference), baked at generation time.
-    let _ = writeln!(s, "    static final int ABSTRACT_XML_LENGTH = {xml_len};");
-    let _ = writeln!(s, "    static final long ABSTRACT_XML_CHECKSUM = {xml_checksum}L;");
+    // TA_FunctionDescriptionXML: length + unsigned-byte-sum checksum, computed at
+    // RUN TIME from the SHIPPED FunctionDescription.xml(). Baking the two numbers
+    // at generation time made this leg unfailable -- it compared C's real bytes
+    // against constants the generator derived from the same string C's own table
+    // is built from (#164). Now both sides are real bytes.
     s.push_str(
         "    static String handleFunctionDescriptionXML() {\n\
-        \x20       return \"{\\\"length\\\":\" + ABSTRACT_XML_LENGTH + \",\\\"checksum\\\":\" + ABSTRACT_XML_CHECKSUM + \"}\";\n\
+        \x20       String xml = io.github.talib.metadata.FunctionDescription.xml();\n\
+        \x20       long checksum = 0;\n\
+        \x20       for (int i = 0; i < xml.length(); i++) {\n\
+        \x20           checksum += xml.charAt(i) & 0xFF;\n\
+        \x20       }\n\
+        \x20       return \"{\\\"length\\\":\" + xml.length() + \",\\\"checksum\\\":\" + checksum + \"}\";\n\
         \x20   }\n\n",
     );
     s

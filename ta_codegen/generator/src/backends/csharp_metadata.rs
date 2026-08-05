@@ -58,6 +58,7 @@ const EMITTED: &[&str] = &[
     "FunctionCall.g.cs",
     "FunctionCatalog.g.cs",
     "CatalogFacts.g.cs",
+    "FunctionDescription.g.cs",
 ];
 
 /// Generate the whole `TALib.Metadata` namespace into `dir`
@@ -81,6 +82,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, dir: &Path)
     write(dir, "FunctionCall.g.cs", &function_call());
     write(dir, "FunctionCatalog.g.cs", &catalog(&rows, &by_name));
     write(dir, "CatalogFacts.g.cs", &catalog_facts(&rows));
+    write(dir, "FunctionDescription.g.cs", &function_description(funcs));
 
     println!("  C# metadata registry -> {} ({} functions)", dir.display(), rows.len());
 }
@@ -741,6 +743,43 @@ fn emit_list(s: &mut String, label: &str, items: &[String]) {
 // ---------------------------------------------------------------------------
 // CatalogFacts — the numbers the shipped test suite asserts against
 // ---------------------------------------------------------------------------
+
+/// `TA_FunctionDescriptionXML`'s analog, carrying the real XML.
+///
+/// The server used to answer the XML RPC with a `(length, checksum)` pair baked
+/// at generation time. `test_abstract.c` compares those numbers against C's
+/// actual bytes — but a constant the generator computed from the same string
+/// C's own table is built from is the generator agreeing with itself, and could
+/// not fail. C# now ships the XML the way Rust does (#164).
+///
+/// A verbatim literal: the XML is ASCII with no backslashes, so only `"` needs
+/// doubling, and C# has no per-literal size limit to work around.
+fn function_description(funcs: &[FuncDef]) -> String {
+    let xml = super::func_api_xml::generate_string(funcs);
+    assert!(
+        xml.is_ascii(),
+        "ta_func_api.xml is no longer ASCII; revisit the verbatim-literal encoding below"
+    );
+
+    let mut s = header();
+    let _ = writeln!(s, "namespace {NAMESPACE};\n");
+    s.push_str(
+        "/// <summary>\n\
+         /// The machine-readable description of every function, as XML.\n\
+         /// </summary>\n\
+         /// <remarks>\n\
+         /// The C# analog of C's <c>TA_FunctionDescriptionXML()</c>. Same bytes: both\n\
+         /// are emitted by one generator from one set of definitions.\n\
+         /// </remarks>\n\
+         public static class FunctionDescription\n{\n",
+    );
+    s.push_str("    /// <summary>The XML document, identical to C's.</summary>\n");
+    s.push_str("    public static string Xml => XmlText;\n\n");
+    s.push_str("    private const string XmlText = @\"");
+    s.push_str(&xml.replace('"', "\"\""));
+    s.push_str("\";\n}\n");
+    s
+}
 
 fn catalog_facts(rows: &[FuncRow]) -> String {
     let c = census(rows);

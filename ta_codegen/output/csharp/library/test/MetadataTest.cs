@@ -838,6 +838,38 @@ public static class MetadataTest
         }
     }
 
+    /// <summary>
+    /// The shipped XML describes every catalogued function.
+    /// </summary>
+    /// <remarks>
+    /// test_abstract.c compares its length and byte-sum against C's, which catches
+    /// corruption but says nothing about what is inside. This says the document
+    /// actually mentions each function, so a well-formed XML missing a whole entry
+    /// fails here rather than only when its checksum happens to move. (#164)
+    /// </remarks>
+    private static void FunctionDescriptionXmlDescribesEveryFunction()
+    {
+        string xml = FunctionDescription.Xml;
+        Check(xml.StartsWith("<?xml", StringComparison.Ordinal), "the XML description is an XML document");
+        Check(xml.Contains("</FinancialFunctions>", StringComparison.Ordinal),
+            "the XML description is complete");
+
+        FunctionCatalog c = FunctionCatalog.Default;
+        int found = 0;
+        for (int i = 0; i < c.Count; i++)
+        {
+            if (xml.Contains($"<Abbreviation>{c[i].Name}</Abbreviation>", StringComparison.Ordinal))
+            {
+                found++;
+            }
+            else
+            {
+                Check(false, $"XML describes {c[i].Name}");
+            }
+        }
+        Check(found == c.Count, $"XML describes every function ({found}/{c.Count})");
+    }
+
     public static int Run()
     {
         CatalogueIsComplete();
@@ -849,6 +881,7 @@ public static class MetadataTest
         BothCallPathsAgree();
         UnboundParametersTakeTheDocumentedDefault();
         MetadataTypesCannotBeConstructedOutside();
+        FunctionDescriptionXmlDescribesEveryFunction();
 
         if (_failures == 0)
         {

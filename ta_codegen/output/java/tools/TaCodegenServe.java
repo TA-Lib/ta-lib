@@ -148573,10 +148573,13 @@ public class TaCodegenServe {
         return b.toString();
     }
 
-    static final int ABSTRACT_XML_LENGTH = 195183;
-    static final long ABSTRACT_XML_CHECKSUM = 15640089L;
     static String handleFunctionDescriptionXML() {
-        return "{\"length\":" + ABSTRACT_XML_LENGTH + ",\"checksum\":" + ABSTRACT_XML_CHECKSUM + "}";
+        String xml = io.github.talib.metadata.FunctionDescription.xml();
+        long checksum = 0;
+        for (int i = 0; i < xml.length(); i++) {
+            checksum += xml.charAt(i) & 0xFF;
+        }
+        return "{\"length\":" + xml.length() + ",\"checksum\":" + checksum + "}";
     }
 
     static String handleRequest(String json) {

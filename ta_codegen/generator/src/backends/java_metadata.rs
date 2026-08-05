@@ -158,8 +158,81 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, lib_src: &P
     write(&dir, "Functions.java", &functions_registry(&rows));
     write(&dir, "ParamHolder.java", &param_holder_class());
     write(&dir, "Dispatch.java", &dispatch_class(&rows));
+    write(&dir, "FunctionDescription.java", &function_description_class(funcs));
 
     println!("  java metadata registry -> {} ({} functions)", dir.display(), rows.len());
+}
+
+/// `TA_FunctionDescriptionXML`'s analog, carrying the real XML.
+///
+/// The server used to answer the XML RPC with a `(length, checksum)` pair the
+/// generator baked at generation time. `test_abstract.c` compares those two
+/// numbers against C's actual bytes — but comparing a constant the generator
+/// computed from the same string C's table is built from is the generator
+/// agreeing with itself, and could not fail. Java now ships the XML the way
+/// Rust does, so the gate compares two real copies (#164).
+///
+/// Split across parts because a `CONSTANT_Utf8` entry is length-prefixed with a
+/// `u2`: one 195 KB literal does not fit in a class file. They are joined at
+/// runtime rather than with `+`, which javac would fold straight back into the
+/// single oversized constant.
+fn function_description_class(funcs: &[FuncDef]) -> String {
+    const CHUNK: usize = 50_000;
+    let xml = super::func_api_xml::generate_string(funcs);
+    let bytes: Vec<u8> = xml.bytes().collect();
+    assert!(bytes.is_ascii(), "ta_func_api.xml is no longer ASCII; the chunking below splits on bytes");
+
+    let mut s = header("MF,CC");
+    s.push_str(
+        "/**\n\
+         \x20* The machine-readable description of every function, as XML.\n\
+         \x20*\n\
+         \x20* <p>The Java analog of C's {@code TA_FunctionDescriptionXML()}. Same bytes:\n\
+         \x20* both are emitted by one generator from one set of definitions.\n\
+         \x20*/\n\
+         public final class FunctionDescription {\n\
+         \x20   private FunctionDescription() {\n\
+         \x20   }\n\n",
+    );
+
+    let parts: Vec<&[u8]> = bytes.chunks(CHUNK).collect();
+    for (i, part) in parts.iter().enumerate() {
+        let _ = write!(s, "    private static final String P{i} = \"");
+        for &b in *part {
+            match b {
+                b'"' => s.push_str("\\\""),
+                b'\\' => s.push_str("\\\\"),
+                b'\n' => s.push_str("\\n"),
+                b'\r' => s.push_str("\\r"),
+                b'\t' => s.push_str("\\t"),
+                _ => s.push(b as char),
+            }
+        }
+        s.push_str("\";\n\n");
+    }
+
+    let _ = writeln!(s, "    private static final String[] PARTS = {{");
+    for i in 0..parts.len() {
+        let _ = writeln!(s, "        P{i},");
+    }
+    s.push_str("    };\n\n");
+    s.push_str(
+        "    /**\n\
+         \x20    * The full XML description of every function.\n\
+         \x20    *\n\
+         \x20    * @return the XML document, identical to what C's\n\
+         \x20    *         {@code TA_FunctionDescriptionXML()} returns\n\
+         \x20    */\n\
+         \x20   public static String xml() {\n\
+         \x20       StringBuilder sb = new StringBuilder();\n\
+         \x20       for (String p : PARTS) {\n\
+         \x20           sb.append(p);\n\
+         \x20       }\n\
+         \x20       return sb.toString();\n\
+         \x20   }\n\
+         }\n",
+    );
+    s
 }
 
 fn write(dir: &Path, name: &str, body: &str) {

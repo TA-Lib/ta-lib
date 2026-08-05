@@ -1119,6 +1119,15 @@ fn build_servers(backend_filter: Option<&str>) {
                 print!("  Building Java server... ");
                 let java_dir = out_base.join("java/tools");
                 let class_dir = bin_dir.join("ta_codegen_java");
+                // Wipe first. javac's implicit compilation off --source-path does
+                // NOT reliably refresh a class that is already here, so an edited
+                // library source could leave the server running the previous
+                // build's bytes -- and every Java gate would agree with it,
+                // because they all drive this same classpath. Demonstrated by
+                // corrupting FunctionDescription.java: the abstract gate passed
+                // until this directory was removed by hand. The library test
+                // build (ta_codegen_java_lib, below) has always done this.
+                let _ = std::fs::remove_dir_all(&class_dir);
                 std::fs::create_dir_all(&class_dir).ok();
                 // The server's ta_abstract RPCs answer from the SHIPPED registry
                 // (io.github.talib.metadata), so the library's sources are on the

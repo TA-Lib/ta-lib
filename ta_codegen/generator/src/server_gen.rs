@@ -2964,16 +2964,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
 
     // The ta_abstract handlers. Fixed source: they read the shipped catalogue,
     // so there is no per-function generated code here at all.
-    {
-        let xml = crate::backends::func_api_xml::generate_string(funcs);
-        let xml_len = xml.len();
-        let xml_checksum: u64 = xml.bytes().map(u64::from).sum();
-        s.push_str(&format!(
-            "    const int ABSTRACT_XML_LENGTH = {xml_len};\n\
-             \x20   const ulong ABSTRACT_XML_CHECKSUM = {xml_checksum}UL;\n\n"
-        ));
-        s.push_str(CSHARP_ABSTRACT_HANDLERS);
-    }
+    s.push_str(CSHARP_ABSTRACT_HANDLERS);
 
     // ComputeLookback: parse a function's opt params (same JSON keys and 0/0.0
     // absent-field fallbacks as the per-function handlers) and call its guarded
@@ -5342,8 +5333,17 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         return b.ToString();
     }
 
-    static string AbsDescriptionXml() =>
-        $"{{\"length\":{ABSTRACT_XML_LENGTH},\"checksum\":{ABSTRACT_XML_CHECKSUM}}}";
+    /* Measured at RUN TIME from the SHIPPED FunctionDescription. Baking the two
+       numbers at generation time made this leg unfailable: it compared C's real
+       bytes against constants derived from the same string C's own table is
+       built from (#164). Now both sides are real bytes. */
+    static string AbsDescriptionXml()
+    {
+        string xml = TALib.Metadata.FunctionDescription.Xml;
+        ulong checksum = 0;
+        foreach (char c in xml) checksum += (ulong)(c & 0xFF);
+        return $"{{\"length\":{xml.Length},\"checksum\":{checksum}}}";
+    }
 
     /* The JSON key the driver sends a required input under. Price bundles are
        sent one component per set bit; a lone real input keeps its own name,
