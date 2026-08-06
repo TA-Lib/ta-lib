@@ -26,7 +26,10 @@ src/ta_abstract/         (ta_abstract introspection layer — generated IN PLACE
 ta_codegen/output/       (per-language products: library/ (shipped) + tools/ (server/bench))
   c/tools/               (server + bench + aggregation TUs; C library ships from src/)
   rust/library/ + rust/tools/  (ta-lib crate + server/bench — a Cargo workspace)
-  java/library/ + java/tools/  (shipped package + meta/  +  JSON-RPC server)
+  java/library/ + java/tools/ + java/fragments/  (shipped Maven project + JSON-RPC
+                               server + per-function method bodies: an intermediate
+                               that ships nowhere, re-rendered into Core.java from
+                               the IR and inlined into the server from disk)
   csharp/library/ + csharp/tools/  (shipped TALib package incl. src/metadata/ + managed JSON-RPC server)
 include/ta_func.h        (generated public header)
 ```

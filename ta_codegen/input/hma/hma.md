@@ -38,7 +38,7 @@ TA-Lib Definition: [`hma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 |--------|------|
 | C | [`ta_HMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_HMA.c) |
 | Rust | [`hma.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/hma.rs) |
-| Java | [`Core_HMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_HMA.java) |
+| Java | [`Core_HMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_HMA.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

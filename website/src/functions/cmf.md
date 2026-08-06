@@ -69,7 +69,7 @@ TA-Lib Definition: [`cmf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 |--------|------|
 | C | [`ta_CMF.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CMF.c) |
 | Rust | [`cmf.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cmf.rs) |
-| Java | [`Core_CMF.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CMF.java) |
+| Java | [`Core_CMF.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CMF.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

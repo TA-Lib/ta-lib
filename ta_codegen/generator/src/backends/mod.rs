@@ -222,8 +222,13 @@ impl LanguageBackend for JavaBackend {
     ) -> String {
         java::generate(func, enums, registry, helpers)
     }
+    /// A sibling of `library/` and `tools/`, not a child of either: nothing here
+    /// ships. The fragments are method bodies with no package, class or imports,
+    /// so they compile nowhere on their own — `java_shipped` re-renders them into
+    /// `Core.java` from the IR and `generate_server` below inlines them from disk.
+    /// Under `library/` they read as a second copy of the shipped source.
     fn out_subdir(&self) -> &'static str {
-        "java/library/fragments"
+        "java/fragments"
     }
     fn file_name(&self, func: &FuncDef) -> String {
         format!("Core_{}.java", func.name)
@@ -237,9 +242,9 @@ impl LanguageBackend for JavaBackend {
         enums: &HashMap<String, EnumDef>,
         out_base: &Path,
     ) {
-        // Per-function fragments (Core_<name>.java) live in the library; the
-        // server is a tools-layer that inlines them.
-        let frag_dir = out_base.join("java/library/fragments");
+        // Per-function fragments (Core_<name>.java) are a generator intermediate
+        // beside the library, not part of it; the server inlines them from disk.
+        let frag_dir = out_base.join("java/fragments");
         let tools_dir = out_base.join("java/tools");
         std::fs::create_dir_all(&tools_dir).unwrap();
         let template = server_gen::generate_java_server(funcs, enums);

@@ -38,7 +38,7 @@ TA-Lib Definition: [`cdlkickingbylength.c`](https://github.com/TA-Lib/ta-lib/blo
 |--------|------|
 | C | [`ta_CDLKICKINGBYLENGTH.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLKICKINGBYLENGTH.c) |
 | Rust | [`cdlkickingbylength.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlkickingbylength.rs) |
-| Java | [`Core_CDLKICKINGBYLENGTH.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/fragments/Core_CDLKICKINGBYLENGTH.java) |
+| Java | [`Core_CDLKICKINGBYLENGTH.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLKICKINGBYLENGTH.java) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
 

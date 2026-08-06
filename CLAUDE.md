@@ -372,7 +372,7 @@ ta-lib/
 ├── ta_codegen/output/        # Generated per-language products, each split library/ (shipped) + tools/ (server/bench)
 │   ├── c/tools/              # C server + bench (the C library ships from src/ — the backcompat exception)
 │   ├── rust/{library,tools}/ # library/ = ta-lib crate; tools/ = server/bench (a Cargo workspace)
-│   ├── java/{library,tools}/ # library/ = shipped io.github.talib package + generated metadata registry; tools/ = JSON-RPC server
+│   ├── java/{library,tools,fragments}/ # library/ = shipped io.github.talib package + generated metadata registry (the Maven project); tools/ = JSON-RPC server; fragments/ = per-function method bodies, a generator intermediate that ships nowhere
 │   └── csharp/{library,tools}/ # library/ = shipped TALib package (src/ generated incl. the TALib.Metadata registry, scaffolding hand-written); tools/ = managed JSON-RPC server
 ├── ta_codegen/generator/         # The Rust code generator (see its CLAUDE.md)
 ├── src/
