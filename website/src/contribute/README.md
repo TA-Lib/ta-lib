@@ -68,7 +68,12 @@ Stuck at any step? Ask on [Discord](https://discord.com/invite/Erb6SwsVbH) or co
 
 You are implementing a TA function for TA-Lib, following the steps above on behalf of a human contributor. Additional constraints and pointers:
 
-**Ground truth is the repository, not this page.** Read, in order: `CLAUDE.md` at the repo root, then `docs/ta_codegen_input_yaml.md`, `docs/ta_codegen_input_code.md` and `docs/ta_codegen_input_doc.md`. If this page and the repo disagree, the repo wins; it is versioned with the code. If you are Claude Code, the repo ships a `/new-ta-func` skill that automates this workflow; use it. It is an accelerator, not a requirement: everything it does is covered by this page and the repository docs.
+**Ground truth is the repository, not this page.** Read, in order:
+
+- `CLAUDE.md` at the repo root
+- In `docs/`: `ta_codegen_input_yaml.md`, then `ta_codegen_input_code.md`, then `ta_codegen_input_doc.md`
+
+If this page and the repo disagree, the repo wins; it is versioned with the code. If you are Claude Code, the repo ships a `/new-ta-func` skill that automates this workflow; use it. It is an accelerator, not a requirement: everything it does is covered by this page and the repository docs.
 
 **Invariants.** Violating any of these fails review:
 
