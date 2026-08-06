@@ -668,10 +668,14 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     }
 
     // Take over gen_code's Java role: generate the shipped Java library files into
-    // java/src/io/github/talib/ (the Rust/C# bindings have no canonical home
-    // and stay under ta_codegen/output/, but Java — like C — is a shipped product).
+    // java/library/src/main/java/io/github/talib/ (the Rust/C# bindings have no
+    // canonical home and stay under ta_codegen/output/, but Java — like C — is a
+    // shipped product). The Maven standard layout (src/main/java + src/test/java)
+    // is what pom.xml publishes from: it keeps the test package out of the shipped
+    // jar, the sources jar and the javadoc by directory, with no per-plugin
+    // exclusion list to keep in step.
     if backends_to_run.contains(&"java") {
-        let java_pkg = root.join("ta_codegen/output/java/library/src/io/github/talib");
+        let java_pkg = root.join("ta_codegen/output/java/library/src/main/java/io/github/talib");
         // FuncUnstId.java + MAType.java depend only on enums.yaml — always safe
         // to regenerate.
         backends::java_enums::generate(&enums, &java_pkg.join("FuncUnstId.java"));
@@ -692,7 +696,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
             backends::java_metadata::generate(
                 &generated_funcs,
                 &enums,
-                &root.join("ta_codegen/output/java/library/src"),
+                &root.join("ta_codegen/output/java/library/src/main/java"),
             );
         } else {
             println!(
@@ -1135,9 +1139,10 @@ fn build_servers(backend_filter: Option<&str>) {
                 // and the abstract gate never touched what ships (issue #164) --
                 // the reason #162's Java half went unseen while its C# twin, whose
                 // server does bind through the shipped FunctionCall, was caught.
-                // javac pulls in only what is referenced, so this does not drag
-                // the library's test sources into the server build.
-                let lib_src = out_base.join("java/library/src");
+                // The main source root only: under the Maven layout the test
+                // package lives in a sibling root, so it is not on the server's
+                // source path at all.
+                let lib_src = out_base.join("java/library/src/main/java");
                 match std::process::Command::new("javac")
                     .args([
                         // JDK 17 (LTS) floor: the spliced public wrappers return
@@ -1271,6 +1276,9 @@ fn build_servers(backend_filter: Option<&str>) {
 ///
 /// Returns `true` on success.
 fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
+    // Both Maven source roots: `src/main/java` (what ships) and `src/test/java`
+    // (the gate below runs it). One walk over `src/` covers both, and the javadoc
+    // pass filters the test root back out by path.
     let src_root = root.join("ta_codegen/output/java/library/src");
     if !src_root.exists() {
         println!("  Building Java library... SKIPPED (no {})", src_root.display());
@@ -1406,8 +1414,8 @@ fn discover_java_tests(sources: &[std::path::PathBuf]) -> Vec<String> {
 }
 
 /// JDK floor for everything Java this tool compiles, kept in one place so the
-/// server and the shipped library cannot drift apart. Mirrors `build.xml`'s
-/// `release="17"`.
+/// server and the shipped library cannot drift apart. Mirrors `pom.xml`'s
+/// `<maven.compiler.release>`.
 const JAVA_RELEASE: &str = "17";
 
 /// Recursively collect `.java` sources under `dir`, partitioning out the files

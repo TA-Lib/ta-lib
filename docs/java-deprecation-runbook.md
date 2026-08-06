@@ -1,16 +1,15 @@
 # Java Deprecation Runbook — retiring `/java` (`com.tictactec`) for a generated, Maven-published artifact
 
-**Status:** 🚧 **IN PROGRESS.** The API-shape work of `to_be_deleted/java-next-steps.md` landed
-2026-07-25/26 (immutable `Core` + builder, `OutRange`, the package rename, the generated metadata
-registry + call-by-name). What remains here is the *packaging* track: the `pom.xml`, the Maven
-Central publish, and retiring the checked-in `ta-lib.jar`. Note the root `java/` tree this document
-describes as "the shipped library" was deleted in `f00131f3` (2026-07-15) — the library now lives at
-`ta_codegen/output/java/library/`.
-*(Original status: 📝 PLANNED — decisions locked, implementation NOT STARTED, 2026-07-08.)* Coordinates,
-abstract-layer fate, build tool, website posture, and removal gating are all decided (see §6). No
-Java-build code has changed yet. The only thing done so far is a docs cosmetic: the website's
-per-function Java link now points at `ta_codegen/output/java/Core_<NAME>.java` instead of the
-un-renderable 3.2 MB `java/.../Core.java` monolith.
+**Status:** 🚧 **IN PROGRESS — Phase 1 COMPLETE (2026-08-05), Phase 2 blocked on maintainer
+credentials only.** The API-shape work landed 2026-07-25/26 (immutable `Core` + builder, `OutRange`,
+the package rename, the generated metadata registry + call-by-name). The packaging track landed
+2026-08-05: `ta_codegen/output/java/library/pom.xml`, the Maven standard layout, and the retirement
+of Ant (`build.xml`, `.classpath`) and the checked-in `ta-lib.jar`. `mvn package` produces the three
+required jars; **what remains is entirely account work** — namespace verification, a GPG key, and a
+Central Portal token (§5, Phase 2). Note the root `java/` tree this document describes as "the
+shipped library" was deleted in `f00131f3` (2026-07-15) — the library lives at
+`ta_codegen/output/java/library/`, and Phase 4 is therefore already done.
+*(Original status: 📝 PLANNED — decisions locked, implementation NOT STARTED, 2026-07-08.)*
 
 > This is a *careful, reversible, one-step-at-a-time*
 > plan. Every phase has a **green/red checkpoint** and a **rollback**. Do not proceed past a red
@@ -64,9 +63,14 @@ of `ta-lib.github.io`, so a future GitHub Pages site and the Maven namespace are
 
 **Migration for existing users:** `com.tictactec:ta-lib:0.4.0` **is** on Maven Central (see §7). It is
 immutable and stays resolvable forever, so nothing we publish can break existing pins — and nothing
-we publish is a drop-in replacement for it either. A **relocation POM** pointing at the new coordinate
-is *optional* and depends on still holding Sonatype rights to the `com.tictactec` namespace — details
-and fallback in §7.
+we publish is a drop-in replacement for it either. The relocation POM once considered here is
+**dropped** (maintainer, 2026-08-05): see §7.
+
+**Coordinate conflict scan (2026-08-05, Central search + repo1):** `io.github.ta-lib` and
+`io.github.talib` are both unclaimed (0 artifacts; `repo1.maven.org/maven2/io/github/ta-lib/` and
+`.../talib/` both 404). The only `ta-lib` artifactId anywhere on Central is `com.tictactec:ta-lib`,
+still one version, never forked or republished. No `talib` or `ta_lib` artifact exists. The nearest
+Java neighbour, `org.ta4j:ta4j-core`, shares no coordinate. Nothing blocks the chosen name.
 
 **Website / github.io note (why the GitHub anchor is safe):** the site stays at **ta-lib.org** — it is
 *hosted on* GitHub Pages (the `mkdocs gh-deploy` job pushes to the `gh-pages` branch of
@@ -94,6 +98,21 @@ dependency/publish story. The two modern choices are **Maven** and **Gradle**.
 
 Gradle's advantages (incremental builds, flexible DSL, multi-module graphs) don't apply to a single
 generated artifact and cost complexity. Pick Maven.
+
+**DONE 2026-08-05, with one amendment: the pom is hand-written, not generated.** "One `pom.xml` the
+generator writes" was the wrong call — it is a packaging manifest, not indicator output, and the C#
+sibling had already settled the question the other way (`TALib.csproj` is hand-written and committed;
+`ta_codegen` never opens it). Generating it would have meant teaching the generator plugin
+coordinates and GPG profiles it has no other reason to know. The one field that *must* not be
+hand-maintained is the version, and that already has an owner: `scripts/sync.py`'s `sync_versions()`
+rewrites it from the root `VERSION` file, exactly as it does for `CMakeLists.txt`, `conanfile.py`,
+`ta_version.c` and the Rust `Cargo.toml`.
+
+**Ant is retired in the same change.** `build.xml` and `.classpath` are deleted, as is the checked-in
+`ta-lib.jar` (233 KB, stale — it predated the package rename). Nothing ran Ant: the real gate is
+`ta_codegen build --backend=java`, which compiles both source roots, runs javadoc under
+`-Xdoclint:all,-missing`, and executes every discovered `*Test` class. Leaving a second build
+definition next to `pom.xml` would only have created a way for the two to disagree about what ships.
 
 ---
 
@@ -152,7 +171,10 @@ typed methods directly; anyone needing runtime introspection uses C `ta_abstract
 
 ---
 
-## 4. The gap to close (Phase 1 scope)
+## 4. The gap to close (Phase 1 scope) — ✅ CLOSED 2026-08-05
+
+*Historical: this was the Phase 1 worklist. Every item is done; the two marked below landed
+differently than planned (the abstract layer was reinstated, the pom is hand-written). See §5.*
 
 To make `output/java` a self-contained, buildable, publishable library, `ta_codegen` must generate:
 - **package declarations + an assembled `Core` class** (today the fragments have neither);
@@ -179,30 +201,61 @@ To make `output/java` a self-contained, buildable, publishable library, `ta_code
 - Announce the deprecation direction (this runbook; a changelog/README note).
 - **Checkpoint:** docs build clean, links resolve on GitHub. **Rollback:** revert the link change.
 
-### Phase 1 — Make `output/java` a complete buildable Maven project
-- Add Java shared-type templates under `ta_codegen/generator/templates/java/`.
-- Teach `ta_codegen` to emit package decls, an assembled `Core`, the shared types, `FuncUnstId`, and
-  a Maven `pom.xml`, all under the new package `io.github.talib`. No abstract layer (Decision B1).
-- **Checkpoint (RED until all green):** `mvn -q compile` succeeds; `TaCodegenServe` still builds and
-  `ta_regtest --codegen --language=java` is **161/0**; regen oracle shows only expected files moved;
-  C library + `include/` ABI untouched. **Rollback:** the new tree is additive — delete it; `/java`
-  is still the shipped path, nothing lost.
+### Phase 1 — Make `output/java` a complete buildable Maven project ✅ DONE 2026-08-05
+- ✅ Shared types, assembled `Core`, `FuncUnstId`, package decls — landed 2026-07-25/26.
+- ✅ `ta_codegen/output/java/library/pom.xml` — hand-written (see §2b), coordinates
+  `io.github.ta-lib:ta-lib`, all Central-required metadata, sources + javadoc jars, GPG signing and
+  `central-publishing-maven-plugin` behind a `release` profile so a plain `mvn package` needs no
+  credentials.
+- ✅ Maven standard layout: `src/main/java` (ships) + `src/test/java` (the suites). This is what keeps
+  the test package out of all three jars *structurally* — the flat `src/` alternative needed the same
+  exclusion repeated in the compiler, source and javadoc plugins, each failing silently if forgotten.
+- ✅ Ant retired: `build.xml`, `.classpath`, and the stale checked-in `ta-lib.jar` deleted.
+- ✅ `pom.xml` version joined `sync_versions()` in `scripts/utilities/versions.py`.
+- **Checkpoint (green):** `mvn package` builds `ta-lib-0.8.1{,-sources,-javadoc}.jar`;
+  `ta_codegen build --backend=java` green (server + library compile, javadoc doclint, 5 suites /
+  1192 checks); the main jar holds 211 classes and **zero** test classes; sources jar and javadoc
+  contain no test package; `Automatic-Module-Name: io.github.talib` present; entry timestamps pinned
+  by `project.build.outputTimestamp`.
 
-### Phase 2 — Publish the new coordinate
-- Publish `io.github.ta-lib:ta-lib:<version>` to Maven Central. Nothing is published under
-  `com.tictactec` (green field — see the note at the top).
-- **Checkpoint:** the artifact resolves from a clean consumer project and a smoke test calls
-  `rsi`/`sma`. **Rollback:** unpublish/stage only — never release a broken new artifact.
+### Phase 2 — Publish the new coordinate (NEXT — maintainer credentials only)
+Nothing is published under `com.tictactec` (green field, and §7 is now closed).
 
-### Phase 3 — Retire `/java`
+1. ✅ **Register the namespace — DONE 2026-08-05.** `io.github.ta-lib` is **Verified**. For the
+   record, because it is the one non-obvious step: `io.github.<user>` is auto-granted at signup but
+   **`io.github.<org>` is not** — `ta-lib` is an org, so it took the manual path (the Portal issues a
+   verification key; create a **public repo in the `TA-Lib` org named exactly that key**; verify;
+   delete the repo). Sonatype's docs say org namespaces are unavailable as *automatically registered*
+   namespaces, which reads like a refusal but is not — `resilience4j`, `openfeign`, `lsd-consulting`
+   and `unit-finance` are all GitHub orgs with live `io.github.<org>` namespaces, the last two
+   hyphenated exactly like ours.
+   Verification does not expire and is not re-checked; the proving repo is disposable. What the
+   namespace *is* anchored to is the org's identity — **never rename or transfer the `TA-Lib` org**.
+2. **Generate a GPG key** and publish it to a keyserver; `mvn -Prelease` signs with it. Expiry is an
+   editable property (`gpg --quick-set-expire <FPR> <period>`) and works even after the key has
+   expired, so the 2-year default is not a commitment; this key is set to `never` and relies on the
+   revocation certificate (`~/.gnupg/openpgp-revocs.d/<FPR>.rev`) instead. Losing the key entirely is
+   recoverable — Central binds the namespace to the *account*, not to a key, so a fresh key signs
+   future releases and already-published artifacts keep verifying against the old public key.
+3. **Mint a Central Portal user token** and put it in `~/.m2/settings.xml` under `<id>central</id>`
+   (the pom's `publishingServerId`). Shown once in a modal, never retrievable again — only
+   replaceable. This token, not the GPG key, is the credential that authorizes a release: a stolen
+   laptop means rotating *this* first (from any browser), since a signing key alone cannot publish.
+4. `mvn -Prelease deploy` from `ta_codegen/output/java/library/`. `autoPublish` is **false**: the
+   upload validates and sits pending in the Portal.
+5. **Checkpoint:** resolve `io.github.ta-lib:ta-lib:<version>` from a clean consumer project and call
+   `sma`/`rsi`. **Rollback:** drop the pending deployment in the Portal — nothing is public until
+   promoted by hand. Central is immutable, so a released bad artifact cannot be withdrawn; that is
+   the whole reason `autoPublish` is off.
+6. Drop the "Not yet released — estimated Q1 2027" banner from `website/src/api/java/README.md` and
+   `website/src/api/java/stream/README.md`, and add the `<dependency>` snippet.
+
+### Phase 3 — Announce
 - README + changelog notice pointing at the new coordinate.
-- Optional relocation POM on `com.tictactec:ta-lib` → `io.github.ta-lib:ta-lib`, as a signpost only:
-  the APIs differ, so a resolved build is not expected to compile unchanged.
-- Repoint any remaining docs/build references from `java/` to `ta_codegen/output/java/`.
-- **Checkpoint:** old-coordinate build resolves via relocation with a warning, not an error.
-  **Rollback:** remove the relocation POM / notices.
+- No relocation POM (§7).
+- **Checkpoint:** the website's Java page shows a coordinate that actually resolves.
 
-### Phase 4 — Remove `/java`
+### Phase 4 — Remove `/java` ✅ DONE (`f00131f3`, 2026-07-15)
 - **Gating (maintainer's call, 2026-07-08): remove `/java` as soon as the rebuild from
   `ta_codegen/output/java` is complete and verified** — not tied to a fixed time window. Once
   `output/java` is a complete, compiling, regtest-green replacement (Phase 1 green), delete the
@@ -216,10 +269,11 @@ To make `output/java` a self-contained, buildable, publishable library, `ta_code
 
 ---
 
-## 6. Decisions locked (2026-07-08, amended 2026-07-26)
+## 6. Decisions locked (2026-07-08, amended 2026-07-26 and 2026-08-05)
 - **Coordinates (A):** `io.github.ta-lib:ta-lib`, package `io.github.talib`, GitHub-org-verified.
   **Done** — the package rename landed 2026-07-26 (`e2b15dde`); the tree is at
-  `ta_codegen/output/java/library/src/io/github/talib/`.
+  `ta_codegen/output/java/library/src/main/java/io/github/talib/`. Both candidate namespaces were
+  confirmed unclaimed on 2026-08-05 (see §2).
 - **Abstract layer:** ~~B1 dropped~~ → **REVERSED and re-locked 2026-07-26: ship the *generated*
   registry.** The 2026-07-08 lock predates `java_abstract.rs` (#114, ~2026-07-15), which made the
   full-fidelity metadata table free — the cost fell from "hand-maintain a fourth copy" to "route an
@@ -233,10 +287,15 @@ To make `output/java` a self-contained, buildable, publishable library, `ta_code
   `record OutRange(begIdx, count)`.** `MInteger`/`RetCode` are now package-private internals; the
   public batch API returns `OutRange` and throws on misuse. A range shorter than the lookback stays
   a success with `count == 0`, exactly as in C.
-- **JDK floor: 17 (LTS)**, locked 2026-07-26. `OutRange` is a `record`. Enforced by `build.xml`'s
-  `release="17"` and `--release 17` on both javac calls in `ta_codegen build`; the Maven track
-  should carry `<maven.compiler.release>17</maven.compiler.release>`.
-- **Build tool (C):** Maven (`pom.xml`).
+- **JDK floor: 17 (LTS)**, locked 2026-07-26. `OutRange` is a `record`. Enforced by
+  `<maven.compiler.release>17</maven.compiler.release>` in `pom.xml` and `--release 17` on every
+  javac call in `ta_codegen build` (one constant, `JAVA_RELEASE` in `main.rs`).
+- **Build tool (C):** Maven (`pom.xml`) — **shipped 2026-08-05**, hand-written rather than generated,
+  Ant retired. See §2b.
+- **Source layout:** Maven standard (`src/main/java` + `src/test/java`), locked 2026-08-05. The test
+  package is excluded from the jar, sources jar and javadoc *by directory*, never by a plugin
+  exclusion list.
+- **Version ownership:** `scripts/sync.py` (`sync_versions()`), not the generator and not by hand.
 - **Website:** stays at `ta-lib.org`, hosted on GitHub Pages; `ta-lib.github.io/ta-lib` is the durable
   fallback (currently 301 → ta-lib.org). Not moving.
 - **`/java` removal:** gated on `output/java` rebuild being complete + verified, not on a time window.
@@ -250,14 +309,13 @@ Central search API). Consequences:
   anyone with it pinned. The new library is a separate coordinate; publishing it can't disturb `0.4.0`.
 - **The new artifact is a fresh listing**, `io.github.ta-lib:ta-lib`, versioned to match the library
   line (e.g. `0.7.x`), *not* a continuation of the `com.tictactec` `0.4.x` series.
-- **Relocation POM is optional and has a prerequisite.** A `<relocation>` POM would point old
-  users at the new coordinate (a signpost, not an API-compatible upgrade — the two libraries have
-  diverged), but it must be published as a *new version under the old coordinate* (e.g.
-  `com.tictactec:ta-lib:0.4.1`), which requires still holding **Sonatype publish rights to the
-  `com.tictactec` namespace** (originally verified via the `tictactec.com` domain, years ago).
-  - If that access still exists → publish a relocation POM in Phase 3 (cleanest).
-  - If it's lost/unrecoverable → skip it. `0.4.0` remains available and untouched; announce the move
-    via README/docs/changelog and the ta-lib.org site. No user breaks either way.
+- **Relocation POM: DROPPED (maintainer, 2026-08-05).** It would have to be published as a new
+  version under the old coordinate (`com.tictactec:ta-lib:0.4.1`), which needs Sonatype publish
+  rights to the `com.tictactec` namespace — verified against the `tictactec.com` domain years ago and
+  not worth recovering for a signpost. `0.4.0` remains available and untouched; the move is announced
+  via README/docs/changelog and ta-lib.org. No user breaks either way, and the two APIs have diverged
+  far enough that a resolved relocation would not have compiled unchanged anyway.
 
-**Follow-up for the maintainer:** do you still control the Sonatype/`com.tictactec` publishing
-account? Only needed to decide relocation-POM vs. docs-only announcement — not a blocker for anything.
+**The `com.tictactec` namespace is closed as a topic.** Publishing under `io.github.ta-lib` does not
+depend on it in any way. If the old credentials ever turn up, a relocation POM can still be added
+later — it is additive.

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <!-- Shipped TA-Lib Java library. Hand-written and committed; ta_codegen never
+       opens this file (the same arrangement as the C# TALib.csproj). What the
+       generator writes is the source underneath: Core.java's GENCODE section,
+       FuncUnstId.java, MAType.java and the io.github.talib.metadata registry.
+
+       The version below is NOT hand-maintained either: scripts/sync.py's
+       sync_versions() rewrites it from the repo-root VERSION file, alongside
+       CMakeLists.txt, conanfile.py, ta_version.c and the Rust Cargo.toml. Bump
+       VERSION, run scripts/sync.py; never edit the number here.
+
+       Maven standard layout is deliberate. src/test/java holds the junit-free
+       main() suites, and living in a separate source root is what keeps them out
+       of the jar, the sources jar and the javadoc: three exclusion lists that
+       would otherwise have to be kept in step by hand, each failing silently.
+
+       `mvn package` is the packaging path, not the test gate: the suites are run
+       by `ta_codegen build` with the java backend, which compiles both roots, executes
+       every discovered *Test class and runs javadoc under -Xdoclint. Surefire is
+       therefore left with nothing to do (no junit dependency in the tree). -->
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.github.ta-lib</groupId>
+  <artifactId>ta-lib</artifactId>
+  <version>0.8.1</version>
+  <packaging>jar</packaging>
+
+  <name>TA-Lib</name>
+  <description>Technical analysis library: 161 indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns) - the official Java port of TA-Lib, verified against the C reference.</description>
+  <url>https://ta-lib.org</url>
+  <inceptionYear>1999</inceptionYear>
+
+  <licenses>
+    <license>
+      <name>BSD-3-Clause</name>
+      <url>https://github.com/TA-Lib/ta-lib/blob/main/LICENSE</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Mario Fortier</name>
+      <email>mario4tier@users.noreply.github.com</email>
+      <url>https://github.com/mario4tier</url>
+      <organization>TA-Lib</organization>
+      <organizationUrl>https://github.com/TA-Lib</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/TA-Lib/ta-lib.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/TA-Lib/ta-lib.git</developerConnection>
+    <url>https://github.com/TA-Lib/ta-lib</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <issueManagement>
+    <system>GitHub Issues</system>
+    <url>https://github.com/TA-Lib/ta-lib/issues</url>
+  </issueManagement>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- JDK 17 (LTS). The public API returns `record OutRange` (Java 16+) and the
+         generated bodies call Math.fma (Java 9+, the cross-language FMA bit-parity
+         contract of PR #96). Kept in step with JAVA_RELEASE in the generator's
+         main.rs, which compiles the same sources for the JSON-RPC server. -->
+    <maven.compiler.release>17</maven.compiler.release>
+    <!-- Reproducible builds: pins every entry timestamp in the jars so two builds
+         of the same source produce byte-identical artifacts. Any fixed value works;
+         this one is the epoch the release line adopted it. -->
+    <project.build.outputTimestamp>2026-01-01T00:00:00Z</project.build.outputTimestamp>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.15.0</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.5.1</version>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <!-- Without this, JPMS derives the automatic module name from the
+                   artifactId and consumers get `ta.lib`. Naming it matches the
+                   package, and pins it: the derived name is not a stable promise,
+                   this one is. -->
+              <Automatic-Module-Name>io.github.talib</Automatic-Module-Name>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.4.0</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals><goal>jar-no-fork</goal></goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.12.0</version>
+        <configuration>
+          <!-- The same doclint the generator's build gate runs. `-missing` is off:
+               the streaming handles and internal cores are deliberately
+               undocumented. Everything else (a stray `<` in prose lifted from a
+               function's canonical .md, an unresolvable @see) fails the build
+               here rather than shipping. -->
+          <doclint>all,-missing</doclint>
+          <quiet>true</quiet>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals><goal>jar</goal></goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!-- Signing and publishing live behind a profile so a plain `mvn package`
+         needs neither a GPG key nor Central credentials. Release with:
+           mvn -Prelease deploy
+         `autoPublish` is false on purpose: the upload is validated and left
+         pending in the Central Portal, so a bad artifact is dropped rather than
+         released. Promote it by hand once verified. -->
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.8</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals><goal>sign</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.11.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <!-- Matches the <server><id> holding the Central Portal user token
+                   in ~/.m2/settings.xml. -->
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>false</autoPublish>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+</project>

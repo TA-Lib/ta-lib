@@ -95,7 +95,7 @@ ta_codegen/output/csharp/library/obj/
 ta_codegen/output/csharp/library/test/bin/
 ta_codegen/output/csharp/library/test/obj/
 ta_codegen/output/java/**/*.class
-ta_codegen/output/java/library/classes/
+ta_codegen/output/java/library/target/
 
 # Git worktrees
 .worktrees/

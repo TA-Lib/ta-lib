@@ -56,10 +56,14 @@ See `ta_codegen/generator/CLAUDE.md` for ta_codegen internals and
 No hand-coded string literals for type definitions or scaffolding in the codegen.
 Do not hand-edit **generated** files under `ta_codegen/output/` — they are
 overwritten on the next `generate`. Note some hand-written library source now
-lives under `output/` too (the Java shared types and tests under
-`output/java/library/src/io/github/talib/` — `CoreBuilder`, `OutRange`,
-`CandleSetting`, the `test/` suites, and `Core.java`'s scaffolding outside the
-GENCODE markers); the generator preserves those and never overwrites them.
+lives under `output/` too (the Java shared types under
+`output/java/library/src/main/java/io/github/talib/` — `CoreBuilder`, `OutRange`,
+`CandleSetting`, and `Core.java`'s scaffolding outside the GENCODE markers; the
+suites under `src/test/java/`; and `output/java/library/pom.xml`, hand-written
+like the C# `TALib.csproj`); the generator preserves those and never overwrites
+them. The Java tree is in Maven standard layout because `pom.xml` publishes it to
+Maven Central — the split source roots are what keep the test package out of the
+jar, the sources jar and the javadoc.
 
 ## Quick Reference Commands
 
