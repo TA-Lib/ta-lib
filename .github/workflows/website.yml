@@ -27,9 +27,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          # The theme's git plugin is disabled (git: false), so a shallow
-          # clone is fine; full history is not needed here.
-          fetch-depth: 1
+          # Full history is required: `plugins.git: false` only hides the
+          # contributors/last-updated UI — data.git.updatedTime is still
+          # populated, and the sitemap/seo plugins derive every page's
+          # lastmod, og:updated_time and JSON-LD dateModified from it. In a
+          # shallow clone `git log -1 -- <file>` yields the tip commit for
+          # every file, stamping all pages with the same deploy-time date.
+          fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6
