@@ -1,9 +1,7 @@
 ---
-title: CDLTASUKIGAP
-description: "A three-candle pattern: a real-body-gapping candle followed by an opposite-color candle that opens inside its body and closes back into the gap without filling it. An upside gap is a bullish continuation signal; a downside gap is a bearish continuation signal. Hit signals trend continuation: +100 bullish (in an uptrend), -100 bearish (in a downtrend)."
+title: "Tasuki Gap (CDLTASUKIGAP)"
+description: "A three-candle pattern: a real-body-gapping candle followed by an opposite-color candle that opens inside its body and closes back into the gap without…"
 ---
-
-# CDLTASUKIGAP
 
 ## Summary
 
@@ -26,7 +24,7 @@ A three-candle pattern: a real-body-gapping candle followed by an opposite-color
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Tasuki Gap, Upside/Downside Tasuki Gap
 
 ## See Also
 
-[CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite) · [CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods)
+[CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md) · [CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods.md)

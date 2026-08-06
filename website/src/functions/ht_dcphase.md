@@ -1,9 +1,7 @@
 ---
-title: HT_DCPHASE
-description: "Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in degrees) of the dominant market cycle, derived from a homodyne discriminator on a Hilbert-transformed, smoothed price. One real output per bar. Output is degrees, wrapped so it never exceeds 315 (can go negative)."
+title: "Hilbert Transform - Dominant Cycle Phase (HT_DCPHASE)"
+description: "Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in degrees) of the dominant market cycle, derived from a homodyne discriminator on a…"
 ---
-
-# HT_DCPHASE
 
 ## Summary
 
@@ -19,7 +17,7 @@ Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in degrees) of 
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -45,7 +43,7 @@ Hilbert Transform Dominant Cycle Phase
 
 ## See Also
 
-[HT_DCPERIOD](/functions/ht_dcperiod) · [HT_PHASOR](/functions/ht_phasor) · [HT_SINE](/functions/ht_sine) · [HT_TRENDLINE](/functions/ht_trendline) · [HT_TRENDMODE](/functions/ht_trendmode) · [MAMA](/functions/mama) · [WMA](/functions/wma)
+[HT_DCPERIOD](/functions/ht_dcperiod.md) · [HT_PHASOR](/functions/ht_phasor.md) · [HT_SINE](/functions/ht_sine.md) · [HT_TRENDLINE](/functions/ht_trendline.md) · [HT_TRENDMODE](/functions/ht_trendmode.md) · [MAMA](/functions/mama.md) · [WMA](/functions/wma.md)
 
 ## References
 

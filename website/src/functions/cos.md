@@ -1,9 +1,7 @@
 ---
-title: COS
+title: "Vector Trigonometric Cos (COS)"
 description: "Element-wise trigonometric cosine of the input series. Applies the C library cos() to each sample."
 ---
-
-# COS
 
 ## Summary
 
@@ -23,7 +21,7 @@ outReal[i] = cos(inReal[i])
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -49,4 +47,4 @@ Cosine, Vector Trigonometric Cos
 
 ## See Also
 
-[ACOS](/functions/acos) · [SIN](/functions/sin) · [TAN](/functions/tan) · [COSH](/functions/cosh)
+[ACOS](/functions/acos.md) · [SIN](/functions/sin.md) · [TAN](/functions/tan.md) · [COSH](/functions/cosh.md)

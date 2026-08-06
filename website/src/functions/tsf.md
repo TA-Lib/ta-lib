@@ -1,9 +1,7 @@
 ---
-title: TSF
-description: "Time Series Forecast: fits a least-squares linear regression line over the last N bars and projects it one x-step beyond LINEARREG. Same regression as LINEARREG but evaluated at x=period instead of x=period-1."
+title: "Time Series Forecast (TSF)"
+description: "Time Series Forecast: fits a least-squares linear regression line over the last N bars and projects it one x-step beyond LINEARREG."
 ---
-
-# TSF
 
 ## Summary
 
@@ -29,7 +27,7 @@ Fit y=b+m*x over window (x=0..N-1): m = (N*SumXY - SumX*SumY)/(SumX^2 - N*SumXSq
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -55,4 +53,4 @@ Time Series Forecast
 
 ## See Also
 
-[LINEARREG](/functions/linearreg) · [LINEARREG_SLOPE](/functions/linearreg_slope) · [LINEARREG_INTERCEPT](/functions/linearreg_intercept) · [LINEARREG_ANGLE](/functions/linearreg_angle)
+[LINEARREG](/functions/linearreg.md) · [LINEARREG_SLOPE](/functions/linearreg_slope.md) · [LINEARREG_INTERCEPT](/functions/linearreg_intercept.md) · [LINEARREG_ANGLE](/functions/linearreg_angle.md)

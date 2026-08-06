@@ -1,9 +1,7 @@
 ---
-title: TRIX
-description: "1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum oscillator that filters out price moves shorter than the chosen period. Oscillates around zero; sign, zero-crossings and slope signal momentum direction."
+title: "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA (TRIX)"
+description: "1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum oscillator that filters out price moves shorter than the chosen period."
 ---
-
-# TRIX
 
 ## Summary
 
@@ -33,7 +31,7 @@ E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * 
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Inherited from EMA, which TRIX computes internally; tunable via EMA's unstable period.
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from EMA, which TRIX computes internally; tunable via EMA's unstable period.
 
 | Display<br>Flags |
 | :-- |
@@ -59,7 +57,7 @@ Triple Exponential Average
 
 ## See Also
 
-[EMA](/functions/ema) · [ROC](/functions/roc) · [ROCR](/functions/rocr) · [TEMA](/functions/tema)
+[EMA](/functions/ema.md) · [ROC](/functions/roc.md) · [ROCR](/functions/rocr.md) · [TEMA](/functions/tema.md)
 
 ## References
 

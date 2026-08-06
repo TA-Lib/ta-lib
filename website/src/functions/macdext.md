@@ -1,9 +1,7 @@
 ---
-title: MACDEXT
-description: "MACD variant where the fast, slow, and signal moving averages each use a user-selectable MA type. Outputs the MACD line, its signal line, and their difference (histogram). Hist sign change (MACD crossing its signal line) flags momentum shifts."
+title: "MACD with controllable MA type (MACDEXT)"
+description: "MACD variant where the fast, slow, and signal moving averages each use a user-selectable MA type."
 ---
-
-# MACDEXT
 
 ## Summary
 
@@ -46,7 +44,7 @@ Hist = MACD - Signal
 
 ## Properties
 
-**Numerical Stability:** [Depends on MA Type](/functions/stability#depends-on-ma-type) — This function's default, SMA, is start-independent.
+**Numerical Stability:** [Depends on MA Type](/functions/stability.md#depends-on-ma-type) — This function's default, SMA, is start-independent.
 
 | Display<br>Flags |
 | :-- |
@@ -72,4 +70,4 @@ MACD Extended, MACD with controllable MA type
 
 ## See Also
 
-[MACD](/functions/macd) · [MACDFIX](/functions/macdfix) · [MA](/functions/ma) · [EMA](/functions/ema) · [APO](/functions/apo) · [PPO](/functions/ppo)
+[MACD](/functions/macd.md) · [MACDFIX](/functions/macdfix.md) · [MA](/functions/ma.md) · [EMA](/functions/ema.md) · [APO](/functions/apo.md) · [PPO](/functions/ppo.md)

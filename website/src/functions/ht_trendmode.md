@@ -1,9 +1,7 @@
 ---
-title: HT_TRENDMODE
-description: "Hilbert Transform classifier that labels each bar as trending (1) or cycling (0). Reuses the MAMA dominant-cycle/phase DSP plus a SineWave/trendline test to decide the market mode. 1 = trending market (favor trend-following); 0 = cycle/mean-reverting mode."
+title: "Hilbert Transform - Trend vs Cycle Mode (HT_TRENDMODE)"
+description: "Hilbert Transform classifier that labels each bar as trending (1) or cycling (0)."
 ---
-
-# HT_TRENDMODE
 
 ## Summary
 
@@ -19,7 +17,7 @@ Hilbert Transform classifier that labels each bar as trending (1) or cycling (0)
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -45,7 +43,7 @@ Hilbert Transform Trend vs Cycle Mode, Trend Mode
 
 ## See Also
 
-[HT_TRENDLINE](/functions/ht_trendline) · [HT_SINE](/functions/ht_sine) · [HT_DCPHASE](/functions/ht_dcphase) · [HT_DCPERIOD](/functions/ht_dcperiod) · [MAMA](/functions/mama)
+[HT_TRENDLINE](/functions/ht_trendline.md) · [HT_SINE](/functions/ht_sine.md) · [HT_DCPHASE](/functions/ht_dcphase.md) · [HT_DCPERIOD](/functions/ht_dcperiod.md) · [MAMA](/functions/mama.md)
 
 ## References
 

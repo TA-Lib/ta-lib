@@ -1,9 +1,7 @@
 ---
-title: MACDFIX
-description: "MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the classic fixed smoothing factors 0.15 and 0.075), exposing only the signal period. Signal-line crossovers and histogram sign flag momentum shifts."
+title: "Moving Average Convergence/Divergence Fix 12/26 (MACDFIX)"
+description: "MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the classic fixed smoothing factors 0.15 and 0.075), exposing only the signal period."
 ---
-
-# MACDFIX
 
 ## Summary
 
@@ -37,7 +35,7 @@ Hist = MACD - Signal
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Inherited from EMA, which MACDFIX computes internally; tunable via EMA's unstable period.
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from EMA, which MACDFIX computes internally; tunable via EMA's unstable period.
 
 | Display<br>Flags |
 | :-- |
@@ -63,4 +61,4 @@ Moving Average Convergence/Divergence Fix
 
 ## See Also
 
-[MACD](/functions/macd) · [MACDEXT](/functions/macdext) · [EMA](/functions/ema) · [APO](/functions/apo)
+[MACD](/functions/macd.md) · [MACDEXT](/functions/macdext.md) · [EMA](/functions/ema.md) · [APO](/functions/apo.md)

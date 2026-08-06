@@ -1,9 +1,7 @@
 ---
-title: BETA
-description: "Beta: the slope of a least-squares linear regression of one series' percentage returns (y, from inReal1) against another's (x, from inReal0) over a rolling window. Measures how much a security moves relative to a market index. Beta = 1 moves with the index; < 1 less volatile, > 1 more volatile."
+title: "Beta (BETA)"
+description: "Beta: the slope of a least-squares linear regression of one series' percentage returns (y, from inReal1) against another's (x, from inReal0) over a…"
 ---
-
-# BETA
 
 ## Summary
 
@@ -30,7 +28,7 @@ Per-bar returns: $x_i=(p^0_i-p^0_{i-1})/p^0_{i-1}$ from inReal0, $y_i=(p^1_i-p^1
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -56,4 +54,4 @@ Beta coefficient
 
 ## See Also
 
-[CORREL](/functions/correl) · [LINEARREG_SLOPE](/functions/linearreg_slope) · [VAR](/functions/var) · [STDDEV](/functions/stddev)
+[CORREL](/functions/correl.md) · [LINEARREG_SLOPE](/functions/linearreg_slope.md) · [VAR](/functions/var.md) · [STDDEV](/functions/stddev.md)

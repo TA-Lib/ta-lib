@@ -1,9 +1,7 @@
 ---
-title: BBANDS
-description: "Bollinger Bands: a moving-average middle band with upper and lower bands offset by a multiple of the standard deviation. Used to gauge relative price volatility."
+title: "Bollinger Bands (BBANDS)"
+description: "Bollinger Bands: a moving-average middle band with upper and lower bands offset by a multiple of the standard deviation."
 ---
-
-# BBANDS
 
 ## Summary
 
@@ -54,7 +52,7 @@ and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
 
 ## Properties
 
-**Numerical Stability:** [Depends on MA Type](/functions/stability#depends-on-ma-type) — This function's default, SMA, is start-independent.
+**Numerical Stability:** [Depends on MA Type](/functions/stability.md#depends-on-ma-type) — This function's default, SMA, is start-independent.
 
 | Display<br>Flags |
 | :-- |
@@ -80,7 +78,7 @@ Bollinger Bands
 
 ## See Also
 
-[MA](/functions/ma) · [STDDEV](/functions/stddev) · [SMA](/functions/sma)
+[MA](/functions/ma.md) · [STDDEV](/functions/stddev.md) · [SMA](/functions/sma.md)
 
 ## References
 

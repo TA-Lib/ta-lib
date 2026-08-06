@@ -1,9 +1,7 @@
 ---
-title: CDL3INSIDE
-description: "A three-candle reversal pattern: a long real body, then a short real body totally engulfed by it (a harami), then a third candle of opposite color to the first that closes past the first candle's open. Signals a bullish (three inside up) or bearish (three inside down) reversal. A hit is a reversal signal: +100 = three inside up (bullish, significant in a downtrend); -100 = three inside down (bearish, significant in an uptrend)."
+title: "Three Inside Up/Down (CDL3INSIDE)"
+description: "A three-candle reversal pattern: a long real body, then a short real body totally engulfed by it (a harami), then a third candle of opposite color to the…"
 ---
-
-# CDL3INSIDE
 
 ## Summary
 
@@ -26,7 +24,7 @@ A three-candle reversal pattern: a long real body, then a short real body totall
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Three Inside Up/Down, Three Inside, Three Inside Up, Three Inside Down
 
 ## See Also
 
-[CDLHARAMI](/functions/cdlharami) · [CDL3OUTSIDE](/functions/cdl3outside) · [CDLENGULFING](/functions/cdlengulfing)
+[CDLHARAMI](/functions/cdlharami.md) · [CDL3OUTSIDE](/functions/cdl3outside.md) · [CDLENGULFING](/functions/cdlengulfing.md)

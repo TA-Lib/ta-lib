@@ -1,9 +1,7 @@
 ---
-title: LOG10
+title: "Vector Log10 (LOG10)"
 description: "Vector base-10 logarithm. Applies log10 element-wise over each input value."
 ---
-
-# LOG10
 
 ## Summary
 
@@ -23,7 +21,7 @@ outReal[i] = log10(inReal[i])
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -49,4 +47,4 @@ Log Base 10, Common Logarithm
 
 ## See Also
 
-[LN](/functions/ln) · [EXP](/functions/exp)
+[LN](/functions/ln.md) · [EXP](/functions/exp.md)

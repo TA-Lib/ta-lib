@@ -1,9 +1,7 @@
 ---
-title: CDLPIERCING
-description: "Two-candle pattern: a long black candle followed by a long white candle that opens below the prior low and closes back above the midpoint of the prior black body. Bullish reversal signal. A hit (+100) is a bullish reversal signal."
+title: "Piercing Pattern (CDLPIERCING)"
+description: "Two-candle pattern: a long black candle followed by a long white candle that opens below the prior low and closes back above the midpoint of the prior…"
 ---
-
-# CDLPIERCING
 
 ## Summary
 
@@ -26,7 +24,7 @@ Two-candle pattern: a long black candle followed by a long white candle that ope
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Piercing Pattern, Piercing Line
 
 ## See Also
 
-[CDLDARKCLOUDCOVER](/functions/cdldarkcloudcover) · [CDLENGULFING](/functions/cdlengulfing) · [CDLMORNINGSTAR](/functions/cdlmorningstar)
+[CDLDARKCLOUDCOVER](/functions/cdldarkcloudcover.md) · [CDLENGULFING](/functions/cdlengulfing.md) · [CDLMORNINGSTAR](/functions/cdlmorningstar.md)

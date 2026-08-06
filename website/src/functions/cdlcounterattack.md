@@ -1,9 +1,7 @@
 ---
-title: CDLCOUNTERATTACK
-description: "A two-candle pattern of two long, opposite-colored real bodies whose closing prices are (nearly) equal. Emits a bullish signal when the second candle is white and a bearish signal when it is black (a reversal signal, though its trend context is not checked). A hit signals a reversal: +100 (white 2nd candle) bullish, -100 (black 2nd candle) bearish; significance depends on a prior trend the code does not check."
+title: "Counterattack (CDLCOUNTERATTACK)"
+description: "A two-candle pattern of two long, opposite-colored real bodies whose closing prices are (nearly) equal."
 ---
-
-# CDLCOUNTERATTACK
 
 ## Summary
 
@@ -26,7 +24,7 @@ A two-candle pattern of two long, opposite-colored real bodies whose closing pri
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Counterattack, Counterattack Lines, Meeting Lines
 
 ## See Also
 
-[CDLPIERCING](/functions/cdlpiercing) · [CDLDARKCLOUDCOVER](/functions/cdldarkcloudcover) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite)
+[CDLPIERCING](/functions/cdlpiercing.md) · [CDLDARKCLOUDCOVER](/functions/cdldarkcloudcover.md) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md)

@@ -1,9 +1,7 @@
 ---
-title: CDLMORNINGSTAR
-description: "A three-candle bottom-reversal pattern: a long black candle, a small-bodied star gapping down, then a white candle closing well up into the first candle's body. Bullish reversal signal. A hit signals a bullish reversal (most meaningful after a downtrend, which the code does not check)."
+title: "Morning Star (CDLMORNINGSTAR)"
+description: "A three-candle bottom-reversal pattern: a long black candle, a small-bodied star gapping down, then a white candle closing well up into the first…"
 ---
-
-# CDLMORNINGSTAR
 
 ## Summary
 
@@ -33,7 +31,7 @@ A three-candle bottom-reversal pattern: a long black candle, a small-bodied star
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -59,4 +57,4 @@ Morning Star
 
 ## See Also
 
-[CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar) · [CDLEVENINGSTAR](/functions/cdleveningstar) · [CDLABANDONEDBABY](/functions/cdlabandonedbaby) · [CDLDOJISTAR](/functions/cdldojistar)
+[CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar.md) · [CDLEVENINGSTAR](/functions/cdleveningstar.md) · [CDLABANDONEDBABY](/functions/cdlabandonedbaby.md) · [CDLDOJISTAR](/functions/cdldojistar.md)

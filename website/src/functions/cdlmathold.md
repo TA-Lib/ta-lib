@@ -1,9 +1,7 @@
 ---
-title: CDLMATHOLD
-description: "A five-candle bullish continuation pattern: a long white candle, an upside real-body-gapped small black candle, two more small falling candles that hold within the first body, and a final white candle closing above the reaction days' highs. Signals continuation of the prior uptrend. Hit = bullish continuation of the existing uptrend."
+title: "Mat Hold (CDLMATHOLD)"
+description: "A five-candle bullish continuation pattern: a long white candle, an upside real-body-gapped small black candle, two more small falling candles that hold…"
 ---
-
-# CDLMATHOLD
 
 ## Summary
 
@@ -33,7 +31,7 @@ A five-candle bullish continuation pattern: a long white candle, an upside real-
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -59,4 +57,4 @@ Mat Hold
 
 ## See Also
 
-[CDLRISEFALL3METHODS](/functions/cdlrisefall3methods) · [CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods)
+[CDLRISEFALL3METHODS](/functions/cdlrisefall3methods.md) · [CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods.md)

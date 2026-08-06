@@ -1,9 +1,7 @@
 ---
-title: TYPPRICE
+title: "Typical Price (TYPPRICE)"
 description: "Typical Price: the average of the high, low, and close of each bar. A single representative price per period."
 ---
-
-# TYPPRICE
 
 ## Summary
 
@@ -25,7 +23,7 @@ out[i] = (High[i] + Low[i] + Close[i]) / 3
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -51,4 +49,4 @@ Typical Price
 
 ## See Also
 
-[MEDPRICE](/functions/medprice) · [WCLPRICE](/functions/wclprice) · [AVGPRICE](/functions/avgprice)
+[MEDPRICE](/functions/medprice.md) · [WCLPRICE](/functions/wclprice.md) · [AVGPRICE](/functions/avgprice.md)

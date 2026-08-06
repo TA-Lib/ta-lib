@@ -1,9 +1,7 @@
 ---
-title: SMA
+title: "Simple Moving Average (SMA)"
 description: "Simple Moving Average: the unweighted arithmetic mean of the last N input values. Used to smooth a series."
 ---
-
-# SMA
 
 ## Summary
 
@@ -33,7 +31,7 @@ SMA_t = (1/N) * sum_{i=t-N+1}^{t} inReal_i
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -59,4 +57,4 @@ simple moving average
 
 ## See Also
 
-[EMA](/functions/ema) · [WMA](/functions/wma) · [MA](/functions/ma) · [DEMA](/functions/dema) · [TEMA](/functions/tema)
+[EMA](/functions/ema.md) · [WMA](/functions/wma.md) · [MA](/functions/ma.md) · [DEMA](/functions/dema.md) · [TEMA](/functions/tema.md)

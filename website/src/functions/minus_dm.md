@@ -1,9 +1,7 @@
 ---
-title: MINUS_DM
-description: "Minus Directional Movement, the downward component of Wilder's directional movement system. Measures Wilder-smoothed downward price motion over the period. Higher -DM indicates stronger downward directional movement."
+title: "Minus Directional Movement (MINUS_DM)"
+description: "Minus Directional Movement, the downward component of Wilder's directional movement system. Measures Wilder-smoothed downward price motion over the period."
 ---
-
-# MINUS_DM
 
 ## Summary
 
@@ -34,7 +32,7 @@ period>1: seed = sum of first (period-1) -DM1; then Wilder smooth each bar:
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -60,7 +58,7 @@ Minus Directional Movement, -DM
 
 ## See Also
 
-[PLUS_DM](/functions/plus_dm) · [MINUS_DI](/functions/minus_di) · [PLUS_DI](/functions/plus_di) · [DX](/functions/dx) · [ADX](/functions/adx) · [ADXR](/functions/adxr)
+[PLUS_DM](/functions/plus_dm.md) · [MINUS_DI](/functions/minus_di.md) · [PLUS_DI](/functions/plus_di.md) · [DX](/functions/dx.md) · [ADX](/functions/adx.md) · [ADXR](/functions/adxr.md)
 
 ## References
 

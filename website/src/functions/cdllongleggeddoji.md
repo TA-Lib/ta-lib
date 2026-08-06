@@ -1,9 +1,7 @@
 ---
-title: CDLLONGLEGGEDDOJI
-description: "Single-candle doji (open ~ close) with at least one long shadow. Signals market indecision, not a directional bias. Marks indecision/uncertainty; not inherently bullish or bearish despite the positive sign."
+title: "Long Legged Doji (CDLLONGLEGGEDDOJI)"
+description: "Single-candle doji (open ~ close) with at least one long shadow. Signals market indecision, not a directional bias."
 ---
-
-# CDLLONGLEGGEDDOJI
 
 ## Summary
 
@@ -30,7 +28,7 @@ One candle. Hit when: real body <= BodyDoji average (doji body) AND (lower shado
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -56,4 +54,4 @@ Long Legged Doji
 
 ## See Also
 
-[CDLDOJI](/functions/cdldoji) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji) · [CDLDRAGONFLYDOJI](/functions/cdldragonflydoji) · [CDLRICKSHAWMAN](/functions/cdlrickshawman)
+[CDLDOJI](/functions/cdldoji.md) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji.md) · [CDLDRAGONFLYDOJI](/functions/cdldragonflydoji.md) · [CDLRICKSHAWMAN](/functions/cdlrickshawman.md)

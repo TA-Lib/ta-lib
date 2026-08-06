@@ -1,9 +1,7 @@
 ---
-title: HT_TRENDLINE
-description: "Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag overlay whose averaging window adapts to the dominant cycle period measured via Hilbert-transform quadrature (I/Q) analysis of price."
+title: "Hilbert Transform - Instantaneous Trendline (HT_TRENDLINE)"
+description: "Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag overlay whose averaging window adapts to the dominant cycle period measured via…"
 ---
-
-# HT_TRENDLINE
 
 ## Summary
 
@@ -19,7 +17,7 @@ Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag overlay w
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -45,7 +43,7 @@ Hilbert Transform Instantaneous Trendline, Instantaneous Trendline
 
 ## See Also
 
-[HT_DCPERIOD](/functions/ht_dcperiod) · [HT_PHASOR](/functions/ht_phasor) · [MAMA](/functions/mama) · [WMA](/functions/wma)
+[HT_DCPERIOD](/functions/ht_dcperiod.md) · [HT_PHASOR](/functions/ht_phasor.md) · [MAMA](/functions/mama.md) · [WMA](/functions/wma.md)
 
 ## References
 

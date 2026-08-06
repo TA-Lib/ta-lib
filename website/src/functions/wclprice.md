@@ -1,9 +1,7 @@
 ---
-title: WCLPRICE
+title: "Weighted Close Price (WCLPRICE)"
 description: "Weighted Close Price: a per-bar price average giving the close double weight relative to high and low."
 ---
-
-# WCLPRICE
 
 ## Summary
 
@@ -25,7 +23,7 @@ $\text{WCLPRICE} = \dfrac{\text{High} + \text{Low} + 2\cdot\text{Close}}{4}$
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -51,4 +49,4 @@ Weighted Close Price, Weighted Close
 
 ## See Also
 
-[TYPPRICE](/functions/typprice) · [MEDPRICE](/functions/medprice) · [AVGPRICE](/functions/avgprice)
+[TYPPRICE](/functions/typprice.md) · [MEDPRICE](/functions/medprice.md) · [AVGPRICE](/functions/avgprice.md)

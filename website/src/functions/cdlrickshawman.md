@@ -1,9 +1,7 @@
 ---
-title: CDLRICKSHAWMAN
-description: "Single-candle doji with two long shadows whose body sits near the midpoint of the high-low range. It is a neutral indecision signal, not a directional (bullish/bearish) reversal. A hit marks market indecision/uncertainty; neutral, neither bullish nor bearish."
+title: "Rickshaw Man (CDLRICKSHAWMAN)"
+description: "Single-candle doji with two long shadows whose body sits near the midpoint of the high-low range."
 ---
-
-# CDLRICKSHAWMAN
 
 ## Summary
 
@@ -22,7 +20,7 @@ Single-candle doji with two long shadows whose body sits near the midpoint of th
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -48,4 +46,4 @@ Rickshaw Man
 
 ## See Also
 
-[CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji) · [CDLDOJI](/functions/cdldoji) · [CDLHIGHWAVE](/functions/cdlhighwave)
+[CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji.md) · [CDLDOJI](/functions/cdldoji.md) · [CDLHIGHWAVE](/functions/cdlhighwave.md)

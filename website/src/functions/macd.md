@@ -1,9 +1,7 @@
 ---
-title: MACD
-description: "Moving Average Convergence/Divergence: the difference between a fast and a slow EMA of the input, plus an EMA-smoothed signal line and their histogram. MACD crossing its signal line and histogram sign changes flag momentum shifts."
+title: "Moving Average Convergence/Divergence (MACD)"
+description: "Moving Average Convergence/Divergence: the difference between a fast and a slow EMA of the input, plus an EMA-smoothed signal line and their histogram."
 ---
-
-# MACD
 
 ## Summary
 
@@ -38,7 +36,7 @@ MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Si
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Inherited from EMA, which MACD computes internally; tunable via EMA's unstable period.
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from EMA, which MACD computes internally; tunable via EMA's unstable period.
 
 | Display<br>Flags |
 | :-- |
@@ -64,7 +62,7 @@ moving average convergence divergence, moving average convergence/divergence
 
 ## See Also
 
-[MACDEXT](/functions/macdext) · [MACDFIX](/functions/macdfix) · [EMA](/functions/ema) · [APO](/functions/apo)
+[MACDEXT](/functions/macdext.md) · [MACDFIX](/functions/macdfix.md) · [EMA](/functions/ema.md) · [APO](/functions/apo.md)
 
 ## References
 

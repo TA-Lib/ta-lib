@@ -1,9 +1,7 @@
 ---
-title: CDLMARUBOZU
-description: "Single candle with a long real body and no/very-short upper and lower shadows, so open and close sit at the range extremes. Bullish (white) or bearish (black) reversal/strength signal per the body color. +100 = white marubozu (strong buying pressure); -100 = black marubozu (strong selling pressure)."
+title: "Marubozu (CDLMARUBOZU)"
+description: "Single candle with a long real body and no/very-short upper and lower shadows, so open and close sit at the range extremes."
 ---
-
-# CDLMARUBOZU
 
 ## Summary
 
@@ -26,7 +24,7 @@ One candle at i. Match when: realbody(i) > BodyLong average AND upperShadow(i) <
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Marubozu, Shaven Head/Bottom
 
 ## See Also
 
-[CDLCLOSINGMARUBOZU](/functions/cdlclosingmarubozu) · [CDLLONGLINE](/functions/cdllongline) · [CDLBELTHOLD](/functions/cdlbelthold)
+[CDLCLOSINGMARUBOZU](/functions/cdlclosingmarubozu.md) · [CDLLONGLINE](/functions/cdllongline.md) · [CDLBELTHOLD](/functions/cdlbelthold.md)

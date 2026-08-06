@@ -1,9 +1,7 @@
 ---
-title: CDLONNECK
-description: "A two-candle on-neck pattern: a long black candle followed by a white candle that opens below the prior candle's low and closes right at that low. Bearish continuation signal. A hit is bearish (bearish continuation); the code does not verify the assumed prior downtrend."
+title: "On-Neck Pattern (CDLONNECK)"
+description: "A two-candle on-neck pattern: a long black candle followed by a white candle that opens below the prior candle's low and closes right at that low."
 ---
-
-# CDLONNECK
 
 ## Summary
 
@@ -30,7 +28,7 @@ Two candles. 1st: black (close<open) with long real body (realbody > BodyLong av
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -56,4 +54,4 @@ On-Neck Pattern, On-Neck Line
 
 ## See Also
 
-[CDLINNECK](/functions/cdlinneck) · [CDLTHRUSTING](/functions/cdlthrusting) · CDLMEETINGLINES
+[CDLINNECK](/functions/cdlinneck.md) · [CDLTHRUSTING](/functions/cdlthrusting.md) · CDLMEETINGLINES

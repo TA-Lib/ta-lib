@@ -1,9 +1,7 @@
 ---
-title: TANH
+title: "Vector Trigonometric Tanh (TANH)"
 description: "Vector hyperbolic tangent: applies tanh element-wise to the input series."
 ---
-
-# TANH
 
 ## Summary
 
@@ -23,7 +21,7 @@ outReal[i] = tanh(inReal[i])
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -49,4 +47,4 @@ Hyperbolic Tangent
 
 ## See Also
 
-[SINH](/functions/sinh) · [COSH](/functions/cosh) · [TAN](/functions/tan)
+[SINH](/functions/sinh.md) · [COSH](/functions/cosh.md) · [TAN](/functions/tan.md)

@@ -1,9 +1,7 @@
 ---
-title: SQRT
+title: "Vector Square Root (SQRT)"
 description: "Vector square root: applies the square-root function element-wise to each input value."
 ---
-
-# SQRT
 
 ## Summary
 
@@ -23,7 +21,7 @@ outReal[i] = sqrt(inReal[i])
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |

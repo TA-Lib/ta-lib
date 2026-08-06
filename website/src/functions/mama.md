@@ -1,9 +1,7 @@
 ---
-title: MAMA
-description: "MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is driven by the dominant-cycle phase rate measured with a Hilbert transform. Emits two lines, MAMA and its slower follower FAMA. MAMA crossing above FAMA is bullish; crossing below is bearish."
+title: "MESA Adaptive Moving Average (MAMA)"
+description: "MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is driven by the dominant-cycle phase rate measured with a Hilbert transform."
 ---
-
-# MAMA
 
 ## Summary
 
@@ -34,7 +32,7 @@ FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -60,7 +58,7 @@ MESA Adaptive Moving Average, Ehlers MAMA
 
 ## See Also
 
-[MA](/functions/ma) · [WMA](/functions/wma) · [HT_DCPERIOD](/functions/ht_dcperiod)
+[MA](/functions/ma.md) · [WMA](/functions/wma.md) · [HT_DCPERIOD](/functions/ht_dcperiod.md)
 
 ## References
 

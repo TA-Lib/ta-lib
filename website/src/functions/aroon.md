@@ -1,9 +1,7 @@
 ---
-title: AROON
-description: "Aroon reports how recently the highest high and lowest low occurred within a rolling window of length optInTimePeriod, as two 0-100 oscillators. Indicates trend strength and direction. Up near 100 = a very recent new high (strong uptrend); Down near 100 = a very recent new low. Up/Down crossovers signal trend shifts."
+title: "Aroon (AROON)"
+description: "Aroon reports how recently the highest high and lowest low occurred within a rolling window of length optInTimePeriod, as two 0-100 oscillators."
 ---
-
-# AROON
 
 ## Summary
 
@@ -31,7 +29,7 @@ Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -53,7 +51,7 @@ TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib
 
 ## See Also
 
-[AROONOSC](/functions/aroonosc) · [MINMAXINDEX](/functions/minmaxindex) · [MIN](/functions/min) · [MAX](/functions/max)
+[AROONOSC](/functions/aroonosc.md) · [MINMAXINDEX](/functions/minmaxindex.md) · [MIN](/functions/min.md) · [MAX](/functions/max.md)
 
 ## References
 

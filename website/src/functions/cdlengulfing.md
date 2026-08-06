@@ -1,9 +1,7 @@
 ---
-title: CDLENGULFING
-description: "A two-candle reversal pattern where the second candle's real body engulfs the first candle's opposite-colored real body. Bullish (white engulfs black) or bearish (black engulfs white) reversal signal. Bullish reversal at +100/+80, bearish at -100/-80; ideally after a downtrend (bullish) or uptrend (bearish), which the code does not verify."
+title: "Engulfing Pattern (CDLENGULFING)"
+description: "A two-candle reversal pattern where the second candle's real body engulfs the first candle's opposite-colored real body."
 ---
-
-# CDLENGULFING
 
 ## Summary
 
@@ -26,7 +24,7 @@ A two-candle reversal pattern where the second candle's real body engulfs the fi
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Engulfing Pattern, Engulfing, Bullish/Bearish Engulfing
 
 ## See Also
 
-[CDLHARAMI](/functions/cdlharami) · [CDLCOUNTERATTACK](/functions/cdlcounterattack) · [CDLHARAMICROSS](/functions/cdlharamicross)
+[CDLHARAMI](/functions/cdlharami.md) · [CDLCOUNTERATTACK](/functions/cdlcounterattack.md) · [CDLHARAMICROSS](/functions/cdlharamicross.md)

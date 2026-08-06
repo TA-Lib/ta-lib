@@ -1,9 +1,7 @@
 ---
-title: TRIMA
-description: "Triangular Moving Average: a double-smoothed moving average that weights prices toward the middle of the window most heavily. Equivalent to an SMA of an SMA, computed here via an incremental triangular-weighted running numerator."
+title: "Triangular Moving Average (TRIMA)"
+description: "Triangular Moving Average: a double-smoothed moving average that weights prices toward the middle of the window most heavily."
 ---
-
-# TRIMA
 
 ## Summary
 
@@ -34,7 +32,7 @@ Weights rise then fall (4-period: (1a+2b+2c+1d)/6; 5-period: (1a+2b+3c+2d+1e)/9)
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -60,4 +58,4 @@ Triangular Moving Average
 
 ## See Also
 
-[SMA](/functions/sma) · [WMA](/functions/wma) · [MA](/functions/ma)
+[SMA](/functions/sma.md) · [WMA](/functions/wma.md) · [MA](/functions/ma.md)

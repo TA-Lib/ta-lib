@@ -1,9 +1,7 @@
 ---
-title: CDLHOMINGPIGEON
-description: "Two-candle pattern: a long black candle followed by a small black candle whose real body sits inside the prior body. Bullish reversal signal. A hit signals a bullish reversal (meaningful in a downtrend, which the code does not verify)."
+title: "Homing Pigeon (CDLHOMINGPIGEON)"
+description: "Two-candle pattern: a long black candle followed by a small black candle whose real body sits inside the prior body. Bullish reversal signal."
 ---
-
-# CDLHOMINGPIGEON
 
 ## Summary
 
@@ -30,7 +28,7 @@ Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -56,4 +54,4 @@ Homing Pigeon
 
 ## See Also
 
-[CDLHARAMI](/functions/cdlharami) · [CDLMATCHINGLOW](/functions/cdlmatchinglow)
+[CDLHARAMI](/functions/cdlharami.md) · [CDLMATCHINGLOW](/functions/cdlmatchinglow.md)

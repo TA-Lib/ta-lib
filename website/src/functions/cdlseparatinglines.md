@@ -1,9 +1,7 @@
 ---
-title: CDLSEPARATINGLINES
-description: "A two-candle continuation pattern: the second candle opposes the first in color, opens at the same price as the first, and is a long-bodied belt hold. Bullish (white second candle) or bearish (black second candle) continuation signal. Trend continuation: +100 = bullish (white belt hold), -100 = bearish (black belt hold)."
+title: "Separating Lines (CDLSEPARATINGLINES)"
+description: "A two-candle continuation pattern: the second candle opposes the first in color, opens at the same price as the first, and is a long-bodied belt hold."
 ---
-
-# CDLSEPARATINGLINES
 
 ## Summary
 
@@ -30,7 +28,7 @@ Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -56,4 +54,4 @@ Separating Lines
 
 ## See Also
 
-[CDLBELTHOLD](/functions/cdlbelthold) · CDLMEETINGLINES
+[CDLBELTHOLD](/functions/cdlbelthold.md) · CDLMEETINGLINES

@@ -1,9 +1,7 @@
 ---
-title: MINMAXINDEX
+title: "Indexes of lowest and highest values over a specified period (MINMAXINDEX)"
 description: "Returns the absolute input indices of the lowest and highest values within each rolling window of optInTimePeriod bars. Index variant of MINMAX."
 ---
-
-# MINMAXINDEX
 
 ## Summary
 
@@ -34,7 +32,7 @@ For each t: outMaxIdx[t] = argmax_{i in [t-N+1, t]} inReal[i]; outMinIdx[t] = ar
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -60,4 +58,4 @@ Lowest/Highest Index
 
 ## See Also
 
-[MINMAX](/functions/minmax) · [MIN](/functions/min) · [MAX](/functions/max) · [MININDEX](/functions/minindex) · [MAXINDEX](/functions/maxindex)
+[MINMAX](/functions/minmax.md) · [MIN](/functions/min.md) · [MAX](/functions/max.md) · [MININDEX](/functions/minindex.md) · [MAXINDEX](/functions/maxindex.md)

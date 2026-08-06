@@ -1,9 +1,7 @@
 ---
-title: AVGPRICE
+title: "Average Price (AVGPRICE)"
 description: "Average Price: the arithmetic mean of each bar's open, high, low, and close. A price-transform overlap condensing OHLC into a single representative price."
 ---
-
-# AVGPRICE
 
 ## Summary
 
@@ -26,7 +24,7 @@ outReal[i] = (High[i] + Low[i] + Close[i] + Open[i]) / 4
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Average Price
 
 ## See Also
 
-[MEDPRICE](/functions/medprice) · [TYPPRICE](/functions/typprice) · [WCLPRICE](/functions/wclprice)
+[MEDPRICE](/functions/medprice.md) · [TYPPRICE](/functions/typprice.md) · [WCLPRICE](/functions/wclprice.md)

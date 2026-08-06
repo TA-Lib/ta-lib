@@ -1,9 +1,7 @@
 ---
-title: CDLINVERTEDHAMMER
-description: "Single-candle pattern: a small real body with a long upper shadow and little-to-no lower shadow that gaps down from the prior candle. Bullish reversal signal. A hit (+100) flags a potential bullish reversal."
+title: "Inverted Hammer (CDLINVERTEDHAMMER)"
+description: "Single-candle pattern: a small real body with a long upper shadow and little-to-no lower shadow that gaps down from the prior candle."
 ---
-
-# CDLINVERTEDHAMMER
 
 ## Summary
 
@@ -26,7 +24,7 @@ Single-candle pattern: a small real body with a long upper shadow and little-to-
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Inverted Hammer
 
 ## See Also
 
-[CDLHAMMER](/functions/cdlhammer) · [CDLSHOOTINGSTAR](/functions/cdlshootingstar) · [CDLHANGINGMAN](/functions/cdlhangingman)
+[CDLHAMMER](/functions/cdlhammer.md) · [CDLSHOOTINGSTAR](/functions/cdlshootingstar.md) · [CDLHANGINGMAN](/functions/cdlhangingman.md)

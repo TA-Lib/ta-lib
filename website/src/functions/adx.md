@@ -1,9 +1,7 @@
 ---
-title: ADX
-description: "Wilder's Average Directional Movement Index, a smoothed measure of trend strength derived from the directional indicators (+DI/-DI). Quantifies how strongly a market is trending, regardless of direction. Higher values indicate a stronger trend (a common convention treats >25 as trending); says nothing about direction."
+title: "Average Directional Movement Index (ADX)"
+description: "Wilder's Average Directional Movement Index, a smoothed measure of trend strength derived from the directional indicators (+DI/-DI)."
 ---
-
-# ADX
 
 ## Summary
 
@@ -35,7 +33,7 @@ Wilder's Average Directional Movement Index, a smoothed measure of trend strengt
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -61,7 +59,7 @@ Average Directional Movement Index, Average Directional Index
 
 ## See Also
 
-[ADXR](/functions/adxr) · [DX](/functions/dx) · [PLUS_DI](/functions/plus_di) · [MINUS_DI](/functions/minus_di) · [PLUS_DM](/functions/plus_dm) · [MINUS_DM](/functions/minus_dm) · [TRANGE](/functions/trange)
+[ADXR](/functions/adxr.md) · [DX](/functions/dx.md) · [PLUS_DI](/functions/plus_di.md) · [MINUS_DI](/functions/minus_di.md) · [PLUS_DM](/functions/plus_dm.md) · [MINUS_DM](/functions/minus_dm.md) · [TRANGE](/functions/trange.md)
 
 ## References
 

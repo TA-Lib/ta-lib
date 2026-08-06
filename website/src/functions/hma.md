@@ -1,15 +1,13 @@
 ---
-title: HMA
-description: "Hull Moving Average, published by Alan Hull in 2005: a moving average built to track price with far less lag than an [`SMA`](/functions/sma), [`WMA`](/functions/wma) or [`EMA`](/functions/ema) of the same length while staying smooth. It first removes lag by doubling a half-period [`WMA`](/functions/wma) and subtracting the full-period one — extrapolating the average toward current price — then smooths that de-lagged series with a final WMA over the square root of the period. HMA is also selectable as a moving-average type (`TA_MAType_HMA`) wherever an `optInMAType` parameter is accepted ([`MA`](/functions/ma), [`BBANDS`](/functions/bbands), [`STOCH`](/functions/stoch), [`MACDEXT`](/functions/macdext), ...)."
+title: "Hull Moving Average (HMA)"
+description: "Hull Moving Average, published by Alan Hull in 2005: a moving average built to track price with far less lag than an SMA, WMA or EMA of the same length…"
 ---
-
-# HMA
 
 ## Summary
 
-Hull Moving Average, published by Alan Hull in 2005: a moving average built to track price with far less lag than an [`SMA`](/functions/sma), [`WMA`](/functions/wma) or [`EMA`](/functions/ema) of the same length while staying smooth. It first removes lag by doubling a half-period [`WMA`](/functions/wma) and subtracting the full-period one — extrapolating the average toward current price — then smooths that de-lagged series with a final WMA over the square root of the period.
+Hull Moving Average, published by Alan Hull in 2005: a moving average built to track price with far less lag than an [`SMA`](/functions/sma.md), [`WMA`](/functions/wma.md) or [`EMA`](/functions/ema.md) of the same length while staying smooth. It first removes lag by doubling a half-period [`WMA`](/functions/wma.md) and subtracting the full-period one — extrapolating the average toward current price — then smooths that de-lagged series with a final WMA over the square root of the period.
 
-HMA is also selectable as a moving-average type (`TA_MAType_HMA`) wherever an `optInMAType` parameter is accepted ([`MA`](/functions/ma), [`BBANDS`](/functions/bbands), [`STOCH`](/functions/stoch), [`MACDEXT`](/functions/macdext), ...).
+HMA is also selectable as a moving-average type (`TA_MAType_HMA`) wherever an `optInMAType` parameter is accepted ([`MA`](/functions/ma.md), [`BBANDS`](/functions/bbands.md), [`STOCH`](/functions/stoch.md), [`MACDEXT`](/functions/macdext.md), ...).
 
 ## Formula
 
@@ -39,7 +37,7 @@ All three averages are the standard linearly-weighted moving average (TA-Lib's W
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -65,7 +63,7 @@ Hull Moving Average
 
 ## See Also
 
-[WMA](/functions/wma) · [MA](/functions/ma) · [SMA](/functions/sma) · [EMA](/functions/ema)
+[WMA](/functions/wma.md) · [MA](/functions/ma.md) · [SMA](/functions/sma.md) · [EMA](/functions/ema.md)
 
 ## References
 

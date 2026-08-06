@@ -1,9 +1,7 @@
 ---
-title: HT_DCPERIOD
-description: "Hilbert Transform estimate of the dominant cycle period (in bars) of the price series. Outputs the smoothed instantaneous cycle period. Output is the estimated dominant cycle length in bars (clamped to 6-50)."
+title: "Hilbert Transform - Dominant Cycle Period (HT_DCPERIOD)"
+description: "Hilbert Transform estimate of the dominant cycle period (in bars) of the price series. Outputs the smoothed instantaneous cycle period."
 ---
-
-# HT_DCPERIOD
 
 ## Summary
 
@@ -19,7 +17,7 @@ Hilbert Transform estimate of the dominant cycle period (in bars) of the price s
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -45,7 +43,7 @@ Hilbert Transform Dominant Cycle Period, Dominant Cycle Period
 
 ## See Also
 
-[HT_DCPHASE](/functions/ht_dcphase) · [HT_PHASOR](/functions/ht_phasor) · [HT_SINE](/functions/ht_sine) · [HT_TRENDMODE](/functions/ht_trendmode) · [MAMA](/functions/mama) · [WMA](/functions/wma)
+[HT_DCPHASE](/functions/ht_dcphase.md) · [HT_PHASOR](/functions/ht_phasor.md) · [HT_SINE](/functions/ht_sine.md) · [HT_TRENDMODE](/functions/ht_trendmode.md) · [MAMA](/functions/mama.md) · [WMA](/functions/wma.md)
 
 ## References
 

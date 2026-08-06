@@ -1,9 +1,7 @@
 ---
-title: SIN
+title: "Vector Trigonometric Sin (SIN)"
 description: "Vector trigonometric sine: applies sin() element-wise to each input value. Part of the Math Transform group."
 ---
-
-# SIN
 
 ## Summary
 
@@ -23,7 +21,7 @@ outReal[i] = sin(inReal[i])
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -49,4 +47,4 @@ sine
 
 ## See Also
 
-[COS](/functions/cos) · [TAN](/functions/tan) · [ASIN](/functions/asin)
+[COS](/functions/cos.md) · [TAN](/functions/tan.md) · [ASIN](/functions/asin.md)

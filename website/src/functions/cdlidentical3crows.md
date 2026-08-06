@@ -1,9 +1,7 @@
 ---
-title: CDLIDENTICAL3CROWS
-description: "A three-candle bearish reversal pattern: three consecutive declining black candles, each with a very short (or no) lower shadow, where each candle after the first opens at or very near the prior candle's close. A hit signals a bearish reversal (pattern is always bearish)."
+title: "Identical Three Crows (CDLIDENTICAL3CROWS)"
+description: "A three-candle bearish reversal pattern: three consecutive declining black candles, each with a very short (or no) lower shadow, where each candle after…"
 ---
-
-# CDLIDENTICAL3CROWS
 
 ## Summary
 
@@ -27,7 +25,7 @@ A three-candle bearish reversal pattern: three consecutive declining black candl
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -53,4 +51,4 @@ Identical Three Crows
 
 ## See Also
 
-[CDL3BLACKCROWS](/functions/cdl3blackcrows) · [CDL2CROWS](/functions/cdl2crows)
+[CDL3BLACKCROWS](/functions/cdl3blackcrows.md) · [CDL2CROWS](/functions/cdl2crows.md)

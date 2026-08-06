@@ -1,9 +1,7 @@
 ---
-title: ADD
+title: "Vector Arithmetic Add (ADD)"
 description: "Vector arithmetic addition. Outputs the element-wise sum of two input series."
 ---
-
-# ADD
 
 ## Summary
 
@@ -24,7 +22,7 @@ outReal[i] = inReal0[i] + inReal1[i]
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -50,4 +48,4 @@ Vector Add, Vector Arithmetic Add
 
 ## See Also
 
-[SUB](/functions/sub) · [MULT](/functions/mult) · [DIV](/functions/div)
+[SUB](/functions/sub.md) · [MULT](/functions/mult.md) · [DIV](/functions/div.md)

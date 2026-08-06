@@ -1,9 +1,7 @@
 ---
-title: FLOOR
+title: "Vector Floor (FLOOR)"
 description: "Vector floor: rounds each input value down to the nearest integer. Element-wise math transform."
 ---
-
-# FLOOR
 
 ## Summary
 
@@ -23,7 +21,7 @@ outReal[i] = floor(inReal[i])
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -45,4 +43,4 @@ TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib
 
 ## See Also
 
-[CEIL](/functions/ceil)
+[CEIL](/functions/ceil.md)

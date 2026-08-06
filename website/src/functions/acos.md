@@ -1,9 +1,7 @@
 ---
-title: ACOS
+title: "Vector Trigonometric ACos (ACOS)"
 description: "Vector trigonometric arc cosine: applies acos() to each input value. A Math Transform passthrough with zero lookback."
 ---
-
-# ACOS
 
 ## Summary
 
@@ -23,7 +21,7 @@ outReal[i] = acos(inReal[i])
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -49,4 +47,4 @@ Arc Cosine, Inverse Cosine, arccos
 
 ## See Also
 
-[COS](/functions/cos) · [ASIN](/functions/asin) · [ATAN](/functions/atan)
+[COS](/functions/cos.md) · [ASIN](/functions/asin.md) · [ATAN](/functions/atan.md)

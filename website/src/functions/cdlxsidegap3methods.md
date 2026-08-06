@@ -1,9 +1,7 @@
 ---
-title: CDLXSIDEGAP3METHODS
-description: "A three-candle continuation pattern: two same-color candles separated by a real-body gap, followed by an opposite-color candle that fills into the gap. Bullish (upside) when the first two candles are white, bearish (downside) when they are black. A hit signals trend continuation: +100 bullish (uptrend resumes), -100 bearish (downtrend resumes)."
+title: "Upside/Downside Gap Three Methods (CDLXSIDEGAP3METHODS)"
+description: "A three-candle continuation pattern: two same-color candles separated by a real-body gap, followed by an opposite-color candle that fills into the gap."
 ---
-
-# CDLXSIDEGAP3METHODS
 
 ## Summary
 
@@ -26,7 +24,7 @@ A three-candle continuation pattern: two same-color candles separated by a real-
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Upside/Downside Gap Three Methods, Upside Gap Three Methods, Downside Gap Three 
 
 ## See Also
 
-[CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite) · [CDLTASUKIGAP](/functions/cdltasukigap) · [CDLRISEFALL3METHODS](/functions/cdlrisefall3methods)
+[CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md) · [CDLTASUKIGAP](/functions/cdltasukigap.md) · [CDLRISEFALL3METHODS](/functions/cdlrisefall3methods.md)

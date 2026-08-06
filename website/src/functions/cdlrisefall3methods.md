@@ -1,9 +1,7 @@
 ---
-title: CDLRISEFALL3METHODS
-description: "A five-candle continuation pattern: a long candle, three small counter-color candles that stay partly within the first candle's high-low range, then a long same-color candle that resumes the trend. Bullish (rising) or bearish (falling) continuation signal. A hit signals trend continuation: +100 = bullish (rising three methods), -100 = bearish (falling three methods)."
+title: "Rising/Falling Three Methods (CDLRISEFALL3METHODS)"
+description: "A five-candle continuation pattern: a long candle, three small counter-color candles that stay partly within the first candle's high-low range, then a…"
 ---
-
-# CDLRISEFALL3METHODS
 
 ## Summary
 
@@ -28,7 +26,7 @@ A five-candle continuation pattern: a long candle, three small counter-color can
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -54,4 +52,4 @@ Rising/Falling Three Methods, Rising Three Methods, Falling Three Methods
 
 ## See Also
 
-[CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods) · [CDL3INSIDE](/functions/cdl3inside) · [CDL3OUTSIDE](/functions/cdl3outside)
+[CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods.md) · [CDL3INSIDE](/functions/cdl3inside.md) · [CDL3OUTSIDE](/functions/cdl3outside.md)

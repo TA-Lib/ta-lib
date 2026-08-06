@@ -1,9 +1,7 @@
 ---
-title: CDLABANDONEDBABY
-description: "A three-candle reversal pattern: a long body, then a gapped-away doji, then a body of opposite color that gaps back the other way and closes deep into the first body. Bullish (bottom) or bearish (top) reversal signal. Nonzero hit signals a reversal: +100 abandoned baby bottom (bullish), -100 abandoned baby top (bearish)."
+title: "Abandoned Baby (CDLABANDONEDBABY)"
+description: "A three-candle reversal pattern: a long body, then a gapped-away doji, then a body of opposite color that gaps back the other way and closes deep into…"
 ---
-
-# CDLABANDONEDBABY
 
 ## Summary
 
@@ -32,7 +30,7 @@ A three-candle reversal pattern: a long body, then a gapped-away doji, then a bo
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -58,4 +56,4 @@ Abandoned Baby
 
 ## See Also
 
-[CDLEVENINGDOJISTAR](/functions/cdleveningdojistar) · [CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar) · [CDLEVENINGSTAR](/functions/cdleveningstar) · [CDLMORNINGSTAR](/functions/cdlmorningstar)
+[CDLEVENINGDOJISTAR](/functions/cdleveningdojistar.md) · [CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar.md) · [CDLEVENINGSTAR](/functions/cdleveningstar.md) · [CDLMORNINGSTAR](/functions/cdlmorningstar.md)

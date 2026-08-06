@@ -1,9 +1,7 @@
 ---
-title: CMO
-description: "Chande Momentum Oscillator: bounded momentum measure from Wilder-smoothed average up-moves and down-moves. Identical to RSI except the numerator uses (gain-loss) instead of gain. Bounded in [-100,+100]; positive = net upward momentum, negative = net downward."
+title: "Chande Momentum Oscillator (CMO)"
+description: "Chande Momentum Oscillator: bounded momentum measure from Wilder-smoothed average up-moves and down-moves."
 ---
-
-# CMO
 
 ## Summary
 
@@ -33,7 +31,7 @@ d = P[t]-P[t-1]; over the initial period accumulate gain = sum of positive d, lo
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -59,7 +57,7 @@ Chande Momentum Oscillator
 
 ## See Also
 
-[RSI](/functions/rsi)
+[RSI](/functions/rsi.md)
 
 ## References
 

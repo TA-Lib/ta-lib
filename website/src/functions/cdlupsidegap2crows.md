@@ -1,9 +1,7 @@
 ---
-title: CDLUPSIDEGAP2CROWS
-description: "A three-candle bearish reversal pattern: a long white candle, then a small black candle gapping up (a gap between the real bodies), then a black candle that engulfs the second candle's real body but still closes above the first candle's close. Signals a bearish reversal. A hit (-100) is a bearish reversal signal, most meaningful in an uptrend."
+title: "Upside Gap Two Crows (CDLUPSIDEGAP2CROWS)"
+description: "A three-candle bearish reversal pattern: a long white candle, then a small black candle gapping up (a gap between the real bodies), then a black candle…"
 ---
-
-# CDLUPSIDEGAP2CROWS
 
 ## Summary
 
@@ -26,7 +24,7 @@ A three-candle bearish reversal pattern: a long white candle, then a small black
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Upside Gap Two Crows
 
 ## See Also
 
-[CDL2CROWS](/functions/cdl2crows) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite)
+[CDL2CROWS](/functions/cdl2crows.md) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md)

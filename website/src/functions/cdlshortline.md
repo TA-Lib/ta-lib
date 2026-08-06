@@ -1,9 +1,7 @@
 ---
-title: CDLSHORTLINE
-description: "Single-candle pattern: a short real body with short upper and lower shadows (a small-range candle). Not a directional signal — the output sign encodes candle color, not bullish/bearish sentiment. A hit only flags a small-range candle; the +/- sign is the candle's color (white/black), not a reversal or continuation call."
+title: "Short Line Candle (CDLSHORTLINE)"
+description: "Single-candle pattern: a short real body with short upper and lower shadows (a small-range candle)."
 ---
-
-# CDLSHORTLINE
 
 ## Summary
 
@@ -30,7 +28,7 @@ If matched: output = candle color * 100 (+100 white, -100 black); else 0.
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -56,4 +54,4 @@ Short Line Candle, Short Line
 
 ## See Also
 
-[CDLLONGLINE](/functions/cdllongline) · [CDLSPINNINGTOP](/functions/cdlspinningtop) · [CDLDOJI](/functions/cdldoji)
+[CDLLONGLINE](/functions/cdllongline.md) · [CDLSPINNINGTOP](/functions/cdlspinningtop.md) · [CDLDOJI](/functions/cdldoji.md)

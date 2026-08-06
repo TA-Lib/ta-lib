@@ -1,13 +1,11 @@
 ---
-title: PVO
-description: "Percentage Volume Oscillator: a variation of the [Percentage Price Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the **volume** series instead of price. It is the difference between a fast and slow moving average of volume, expressed as a percentage of the slow MA. Positive when short-term volume is above its longer-term average (rising participation), negative when below. The default periods (12, 26) match MACD and PPO."
+title: "Percentage Volume Oscillator (PVO)"
+description: "Percentage Volume Oscillator: a variation of the Percentage Price Oscillator (PPO, created by Gerald Appel) applied to the volume series instead of price."
 ---
-
-# PVO
 
 ## Summary
 
-Percentage Volume Oscillator: a variation of the [Percentage Price Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the **volume** series instead of price. It is the difference between a fast and slow moving average of volume, expressed as a percentage of the slow MA. Positive when short-term volume is above its longer-term average (rising participation), negative when below. The default periods (12, 26) match MACD and PPO.
+Percentage Volume Oscillator: a variation of the [Percentage Price Oscillator](/functions/ppo.md) (PPO, created by Gerald Appel) applied to the **volume** series instead of price. It is the difference between a fast and slow moving average of volume, expressed as a percentage of the slow MA. Positive when short-term volume is above its longer-term average (rising participation), negative when below. The default periods (12, 26) match MACD and PPO.
 
 ## Formula
 
@@ -35,7 +33,7 @@ The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volu
 
 ## Properties
 
-**Numerical Stability:** [Depends on MA Type](/functions/stability#depends-on-ma-type) — This function's default, EMA, has an initial unstable period.
+**Numerical Stability:** [Depends on MA Type](/functions/stability.md#depends-on-ma-type) — This function's default, EMA, has an initial unstable period.
 
 | Display<br>Flags |
 | :-- |
@@ -61,7 +59,7 @@ Percentage Volume Oscillator
 
 ## See Also
 
-[PPO](/functions/ppo) · [OBV](/functions/obv) · [MACD](/functions/macd)
+[PPO](/functions/ppo.md) · [OBV](/functions/obv.md) · [MACD](/functions/macd.md)
 
 ## References
 

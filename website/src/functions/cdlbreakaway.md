@@ -1,9 +1,7 @@
 ---
-title: CDLBREAKAWAY
-description: "A five-candle reversal pattern: a long first candle, a same-colored second candle that gaps away from it by its real body, two more candles extending the move, and an opposite-colored fifth candle that closes back inside the gap. Emits a bullish signal (bottom reversal) or bearish signal (top reversal). A hit signals a reversal: +100 bullish (bottom), -100 bearish (top)."
+title: "Breakaway (CDLBREAKAWAY)"
+description: "A five-candle reversal pattern: a long first candle, a same-colored second candle that gaps away from it by its real body, two more candles extending the…"
 ---
-
-# CDLBREAKAWAY
 
 ## Summary
 
@@ -26,7 +24,7 @@ A five-candle reversal pattern: a long first candle, a same-colored second candl
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Breakaway
 
 ## See Also
 
-[CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite) · [CDLRISEFALL3METHODS](/functions/cdlrisefall3methods) · [CDL3LINESTRIKE](/functions/cdl3linestrike)
+[CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md) · [CDLRISEFALL3METHODS](/functions/cdlrisefall3methods.md) · [CDL3LINESTRIKE](/functions/cdl3linestrike.md)

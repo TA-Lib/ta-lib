@@ -1,9 +1,7 @@
 ---
-title: OBV
+title: "On Balance Volume (OBV)"
 description: "On Balance Volume: a running cumulative total of volume, added on up-price bars and subtracted on down-price bars. Relates volume flow to price direction."
 ---
-
-# OBV
 
 ## Summary
 
@@ -24,7 +22,7 @@ OBV[i] = OBV[i-1] + (inReal[i] > inReal[i-1] ? V[i] : inReal[i] < inReal[i-1] ? 
 
 ## Properties
 
-**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent)
+**Numerical Stability:** [Path-Dependent](/functions/stability.md#path-dependent)
 
 | Display<br>Flags |
 | :-- |

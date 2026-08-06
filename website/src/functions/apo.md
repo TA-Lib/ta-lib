@@ -1,9 +1,7 @@
 ---
-title: APO
-description: "Absolute Price Oscillator: the difference between a fast and a slow moving average of the input, in price units. Measures short- vs long-term momentum. Positive when fast MA > slow MA (upward momentum); negative otherwise."
+title: "Absolute Price Oscillator (APO)"
+description: "Absolute Price Oscillator: the difference between a fast and a slow moving average of the input, in price units. Measures short- vs long-term momentum."
 ---
-
-# APO
 
 ## Summary
 
@@ -35,7 +33,7 @@ The standard form is exponential — APO with EMA and periods 12/26 is the fast-
 
 ## Properties
 
-**Numerical Stability:** [Depends on MA Type](/functions/stability#depends-on-ma-type) — This function's default, EMA, has an initial unstable period.
+**Numerical Stability:** [Depends on MA Type](/functions/stability.md#depends-on-ma-type) — This function's default, EMA, has an initial unstable period.
 
 | Display<br>Flags |
 | :-- |
@@ -61,7 +59,7 @@ Absolute Price Oscillator
 
 ## See Also
 
-[PPO](/functions/ppo) · [MACD](/functions/macd) · [MA](/functions/ma) · [EMA](/functions/ema) · [SMA](/functions/sma)
+[PPO](/functions/ppo.md) · [MACD](/functions/macd.md) · [MA](/functions/ma.md) · [EMA](/functions/ema.md) · [SMA](/functions/sma.md)
 
 ## References
 

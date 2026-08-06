@@ -1,9 +1,7 @@
 ---
-title: CEIL
+title: "Vector Ceil (CEIL)"
 description: "Vector ceiling: element-wise ceiling of each input value (smallest integer >= input)."
 ---
-
-# CEIL
 
 ## Summary
 
@@ -23,7 +21,7 @@ outReal[i] = ceil(inReal[i])
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -49,4 +47,4 @@ Vector Ceil, Ceiling
 
 ## See Also
 
-[FLOOR](/functions/floor)
+[FLOOR](/functions/floor.md)

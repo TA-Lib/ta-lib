@@ -1,9 +1,7 @@
 ---
-title: CDLHIKKAKE
-description: "A 3-bar pattern: an inside bar followed by a false breakout, optionally later confirmed by a follow-through bar. Signals a bullish or bearish reversal/continuation depending on the breakout direction. A false-breakout setup: positive = bullish, negative = bearish; magnitude 200 flags the confirming bar."
+title: "Hikkake Pattern (CDLHIKKAKE)"
+description: "A 3-bar pattern: an inside bar followed by a false breakout, optionally later confirmed by a follow-through bar."
 ---
-
-# CDLHIKKAKE
 
 ## Summary
 
@@ -22,7 +20,7 @@ A 3-bar pattern: an inside bar followed by a false breakout, optionally later co
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -48,4 +46,4 @@ Hikkake Pattern, Hikkake
 
 ## See Also
 
-[CDLHIKKAKEMOD](/functions/cdlhikkakemod) · [CDLHARAMI](/functions/cdlharami)
+[CDLHIKKAKEMOD](/functions/cdlhikkakemod.md) · [CDLHARAMI](/functions/cdlharami.md)

@@ -1,9 +1,7 @@
 ---
-title: AVGDEV
-description: "Rolling average absolute deviation of a series from its own simple moving average over the last N periods. Measures dispersion around the window mean. Higher values indicate greater spread; zero when all values in the window are equal."
+title: "Average Deviation (AVGDEV)"
+description: "Rolling average absolute deviation of a series from its own simple moving average over the last N periods. Measures dispersion around the window mean."
 ---
-
-# AVGDEV
 
 ## Summary
 
@@ -29,7 +27,7 @@ $mean_t = \frac{1}{N}\sum_{i=0}^{N-1} x_{t-i}$; $AVGDEV_t = \frac{1}{N}\sum_{i=0
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -55,4 +53,4 @@ Average Deviation, Mean Absolute Deviation, MAD
 
 ## See Also
 
-[STDDEV](/functions/stddev) · [VAR](/functions/var) · [SMA](/functions/sma)
+[STDDEV](/functions/stddev.md) · [VAR](/functions/var.md) · [SMA](/functions/sma.md)

@@ -1,9 +1,7 @@
 ---
-title: EXP
+title: "Vector Arithmetic Exp (EXP)"
 description: "Vector arithmetic exponential: applies the base-e exponential to each input value. Element-wise math transform."
 ---
-
-# EXP
 
 ## Summary
 
@@ -23,7 +21,7 @@ outReal[i] = exp(inReal[i]) = e^{inReal[i]}
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -49,4 +47,4 @@ exponential, e^x
 
 ## See Also
 
-[LN](/functions/ln) · [SQRT](/functions/sqrt)
+[LN](/functions/ln.md) · [SQRT](/functions/sqrt.md)

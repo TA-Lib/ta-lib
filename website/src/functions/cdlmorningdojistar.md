@@ -1,9 +1,7 @@
 ---
-title: CDLMORNINGDOJISTAR
-description: "A three-candle bullish reversal pattern: a long black candle, then a doji that gaps down, then a white candle closing well up into the first candle's body. It is the doji-star variant of the morning star. A hit (+100) signals a bullish reversal; most meaningful after a downtrend, which this function does not verify."
+title: "Morning Doji Star (CDLMORNINGDOJISTAR)"
+description: "A three-candle bullish reversal pattern: a long black candle, then a doji that gaps down, then a white candle closing well up into the first candle's body."
 ---
-
-# CDLMORNINGDOJISTAR
 
 ## Summary
 
@@ -33,7 +31,7 @@ A three-candle bullish reversal pattern: a long black candle, then a doji that g
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -59,4 +57,4 @@ Morning Doji Star
 
 ## See Also
 
-[CDLMORNINGSTAR](/functions/cdlmorningstar) · [CDLEVENINGDOJISTAR](/functions/cdleveningdojistar) · [CDLEVENINGSTAR](/functions/cdleveningstar) · [CDLDOJISTAR](/functions/cdldojistar)
+[CDLMORNINGSTAR](/functions/cdlmorningstar.md) · [CDLEVENINGDOJISTAR](/functions/cdleveningdojistar.md) · [CDLEVENINGSTAR](/functions/cdleveningstar.md) · [CDLDOJISTAR](/functions/cdldojistar.md)

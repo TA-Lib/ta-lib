@@ -1,9 +1,7 @@
 ---
-title: ATR
-description: "Wilder-smoothed average of the True Range over a period, measuring price volatility regardless of direction. Higher ATR means greater volatility; no directional bias."
+title: "Average True Range (ATR)"
+description: "Wilder-smoothed average of the True Range over a period, measuring price volatility regardless of direction."
 ---
-
-# ATR
 
 ## Summary
 
@@ -33,7 +31,7 @@ ATR_t = (ATR_{t-1} * (period-1) + TR_t) / period
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -59,7 +57,7 @@ Average True Range
 
 ## See Also
 
-[TRANGE](/functions/trange) · [NATR](/functions/natr) · [SMA](/functions/sma) · [EMA](/functions/ema)
+[TRANGE](/functions/trange.md) · [NATR](/functions/natr.md) · [SMA](/functions/sma.md) · [EMA](/functions/ema.md)
 
 ## References
 

@@ -1,9 +1,7 @@
 ---
-title: MAVP
-description: "Moving average whose period varies per bar, driven by a companion period series. For each bar it computes an MA of the selected type over the (clamped) period given by inPeriods."
+title: "Moving average with variable period (MAVP)"
+description: "Moving average whose period varies per bar, driven by a companion period series."
 ---
-
-# MAVP
 
 ## Summary
 
@@ -39,7 +37,7 @@ p_i = clamp((int)inPeriods[startIdx+i], optInMinPeriod, optInMaxPeriod); outReal
 
 ## Properties
 
-**Numerical Stability:** [Depends on MA Type](/functions/stability#depends-on-ma-type) — This function's default, SMA, is start-independent.
+**Numerical Stability:** [Depends on MA Type](/functions/stability.md#depends-on-ma-type) — This function's default, SMA, is start-independent.
 
 | Display<br>Flags |
 | :-- |
@@ -65,4 +63,4 @@ Moving Average Variable Period, Variable Period Moving Average
 
 ## See Also
 
-[MA](/functions/ma) · [SMA](/functions/sma) · [MAMA](/functions/mama) · [T3](/functions/t3)
+[MA](/functions/ma.md) · [SMA](/functions/sma.md) · [MAMA](/functions/mama.md) · [T3](/functions/t3.md)

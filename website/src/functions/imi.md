@@ -1,9 +1,7 @@
 ---
-title: IMI
-description: "Intraday Momentum Index: an RSI-like 0-100 oscillator built from the open-to-close body of each bar. Over a rolling window it ratios cumulative up-body moves against total up+down body moves."
+title: "Intraday Momentum Index (IMI)"
+description: "Intraday Momentum Index: an RSI-like 0-100 oscillator built from the open-to-close body of each bar."
 ---
-
-# IMI
 
 ## Summary
 
@@ -30,7 +28,7 @@ upsum = Σ(close-open) for bars with close>open; downsum = Σ(open-close) for ba
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -56,4 +54,4 @@ Intraday Momentum Index
 
 ## See Also
 
-[RSI](/functions/rsi)
+[RSI](/functions/rsi.md)

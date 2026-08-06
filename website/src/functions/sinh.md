@@ -1,9 +1,7 @@
 ---
-title: SINH
+title: "Vector Trigonometric Sinh (SINH)"
 description: "Element-wise hyperbolic sine of the input series. A vector math transform applying sinh() to each value."
 ---
-
-# SINH
 
 ## Summary
 
@@ -23,7 +21,7 @@ outReal[i] = sinh(inReal[i])
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -49,4 +47,4 @@ Hyperbolic Sine
 
 ## See Also
 
-[COSH](/functions/cosh) · [TANH](/functions/tanh)
+[COSH](/functions/cosh.md) · [TANH](/functions/tanh.md)

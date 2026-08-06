@@ -1,9 +1,7 @@
 ---
-title: MIN
+title: "Lowest value over a specified period (MIN)"
 description: "Rolling minimum: the lowest input value over the trailing period."
 ---
-
-# MIN
 
 ## Summary
 
@@ -29,7 +27,7 @@ outReal[i] = min(inReal[i-optInTimePeriod+1 .. i])
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -55,4 +53,4 @@ Lowest, Rolling Min, Min Value
 
 ## See Also
 
-[MAX](/functions/max) · [MININDEX](/functions/minindex) · [MINMAX](/functions/minmax)
+[MAX](/functions/max.md) · [MININDEX](/functions/minindex.md) · [MINMAX](/functions/minmax.md)

@@ -1,9 +1,7 @@
 ---
-title: SAREXT
-description: "Extended Parabolic SAR (stop and reverse) giving the caller full control over the initial state and separate acceleration factors for long and short positions. Unlike SAR, it returns negative values while short so reversals are distinguishable. Sign flip of the output marks a trend reversal (positive=long stop, negative=short stop)."
+title: "Parabolic SAR - Extended (SAREXT)"
+description: "Extended Parabolic SAR (stop and reverse) giving the caller full control over the initial state and separate acceleration factors for long and short…"
 ---
-
-# SAREXT
 
 ## Summary
 
@@ -37,7 +35,7 @@ SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's 
 
 ## Properties
 
-**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent)
+**Numerical Stability:** [Path-Dependent](/functions/stability.md#path-dependent)
 
 | Display<br>Flags |
 | :-- |
@@ -63,4 +61,4 @@ Parabolic SAR Extended, Extended Parabolic Stop and Reverse
 
 ## See Also
 
-[SAR](/functions/sar) · [MINUS_DM](/functions/minus_dm)
+[SAR](/functions/sar.md) · [MINUS_DM](/functions/minus_dm.md)

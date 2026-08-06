@@ -1,9 +1,7 @@
 ---
-title: KAMA
-description: "Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each bar to an efficiency ratio (directional move vs. total volatility). Reacts fast in trends and smooths in ranging markets. Flat KAMA = non-trending/ranging market. KAMA tracking price closely = efficient trend."
+title: "Kaufman Adaptive Moving Average (KAMA)"
+description: "Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each bar to an efficiency ratio (directional move vs. total volatility)."
 ---
-
-# KAMA
 
 ## Summary
 
@@ -35,7 +33,7 @@ KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -61,7 +59,7 @@ Kaufman Adaptive Moving Average, Kaufman's Adaptive Moving Average
 
 ## See Also
 
-[MAMA](/functions/mama) · [EMA](/functions/ema) · [MA](/functions/ma)
+[MAMA](/functions/mama.md) · [EMA](/functions/ema.md) · [MA](/functions/ma.md)
 
 ## References
 

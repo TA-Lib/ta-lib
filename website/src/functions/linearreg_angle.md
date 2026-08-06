@@ -1,9 +1,7 @@
 ---
-title: LINEARREG_ANGLE
-description: "The angle, in degrees, of the least-squares best-fit line over the last N points. It is the LINEARREG_SLOPE value passed through atan and converted to degrees. Positive angle = rising fit line, negative = falling; magnitude reflects steepness."
+title: "Linear Regression Angle (LINEARREG_ANGLE)"
+description: "The angle, in degrees, of the least-squares best-fit line over the last N points."
 ---
-
-# LINEARREG_ANGLE
 
 ## Summary
 
@@ -29,7 +27,7 @@ m = (N·SumXY − SumX·SumY) / (SumX² − N·SumXSqr), with SumX=N(N−1)/2, S
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -55,4 +53,4 @@ Linear Regression Angle, Least Squares Angle
 
 ## See Also
 
-[LINEARREG](/functions/linearreg) · [LINEARREG_SLOPE](/functions/linearreg_slope) · [LINEARREG_INTERCEPT](/functions/linearreg_intercept) · [TSF](/functions/tsf)
+[LINEARREG](/functions/linearreg.md) · [LINEARREG_SLOPE](/functions/linearreg_slope.md) · [LINEARREG_INTERCEPT](/functions/linearreg_intercept.md) · [TSF](/functions/tsf.md)

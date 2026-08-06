@@ -1,9 +1,7 @@
 ---
-title: BOP
-description: "Balance Of Power compares where the close sits relative to the open, normalized by the bar's high-low range. A per-bar oscillator with no smoothing. Positive: close above open (buyers dominated); negative: sellers dominated."
+title: "Balance Of Power (BOP)"
+description: "Balance Of Power compares where the close sits relative to the open, normalized by the bar's high-low range. A per-bar oscillator with no smoothing."
 ---
-
-# BOP
 
 ## Summary
 
@@ -26,7 +24,7 @@ BOP = (Close - Open) / (High - Low)
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |

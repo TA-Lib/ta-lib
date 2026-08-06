@@ -1,9 +1,7 @@
 ---
-title: MIDPOINT
-description: "Midpoint over a period: the average of the highest and lowest input values within the lookback window. A single-series overlap smoother (use MIDPRICE for separate high/low price bars)."
+title: "MidPoint over period (MIDPOINT)"
+description: "Midpoint over a period: the average of the highest and lowest input values within the lookback window."
 ---
-
-# MIDPOINT
 
 ## Summary
 
@@ -29,7 +27,7 @@ MIDPOINT = (Highest(inReal, period) + Lowest(inReal, period)) / 2
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -51,4 +49,4 @@ TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib
 
 ## See Also
 
-[MIDPRICE](/functions/midprice) · [MAX](/functions/max) · [MIN](/functions/min)
+[MIDPRICE](/functions/midprice.md) · [MAX](/functions/max.md) · [MIN](/functions/min.md)

@@ -1,9 +1,7 @@
 ---
-title: CDLKICKING
-description: "Two-candle pattern of two opposite-color marubozu (long bodies with very short shadows) separated by a price gap. A reversal signal whose direction is set by the second candle's color. Hit signals a reversal in the direction of the second candle: +100 bullish, -100 bearish."
+title: "Kicking (CDLKICKING)"
+description: "Two-candle pattern of two opposite-color marubozu (long bodies with very short shadows) separated by a price gap."
 ---
-
-# CDLKICKING
 
 ## Summary
 
@@ -22,7 +20,7 @@ Two-candle pattern of two opposite-color marubozu (long bodies with very short s
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -48,4 +46,4 @@ Kicking
 
 ## See Also
 
-[CDLKICKINGBYLENGTH](/functions/cdlkickingbylength) · [CDLMARUBOZU](/functions/cdlmarubozu) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite)
+[CDLKICKINGBYLENGTH](/functions/cdlkickingbylength.md) · [CDLMARUBOZU](/functions/cdlmarubozu.md) · [CDLGAPSIDESIDEWHITE](/functions/cdlgapsidesidewhite.md)

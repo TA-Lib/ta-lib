@@ -1,15 +1,13 @@
 ---
-title: VWMA
-description: "Volume Weighted Moving Average: the mean price over a trailing window of `optInTimePeriod` bars, each bar weighted by its own volume. Heavily traded bars pull the average toward their price; quiet bars barely move it. Read like any moving average — price above is strength, below is weakness. Against a plain [`SMA`](/functions/sma) of the same window it leads on high-volume moves and lags on low-volume drift, so the gap between the two lines measures how volume-confirmed a move is. It has no attributable inventor — charting-package folklore — and every published definition agrees, so there is no competing variant."
+title: "Volume Weighted Moving Average (VWMA)"
+description: "Volume Weighted Moving Average: the mean price over a trailing window of optInTimePeriod bars, each bar weighted by its own volume."
 ---
-
-# VWMA
 
 ## Summary
 
 Volume Weighted Moving Average: the mean price over a trailing window of `optInTimePeriod` bars, each bar weighted by its own volume. Heavily traded bars pull the average toward their price; quiet bars barely move it.
 
-Read like any moving average — price above is strength, below is weakness. Against a plain [`SMA`](/functions/sma) of the same window it leads on high-volume moves and lags on low-volume drift, so the gap between the two lines measures how volume-confirmed a move is.
+Read like any moving average — price above is strength, below is weakness. Against a plain [`SMA`](/functions/sma.md) of the same window it leads on high-volume moves and lags on low-volume drift, so the gap between the two lines measures how volume-confirmed a move is.
 
 It has no attributable inventor — charting-package folklore — and every published definition agrees, so there is no competing variant.
 
@@ -41,7 +39,7 @@ Equivalently, and bit-identically so in TA-Lib, SMA(P * V, N) / SMA(V, N) — th
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -67,7 +65,7 @@ Volume Weighted Moving Average
 
 ## See Also
 
-[SMA](/functions/sma) · [WMA](/functions/wma) · [MA](/functions/ma) · [OBV](/functions/obv)
+[SMA](/functions/sma.md) · [WMA](/functions/wma.md) · [MA](/functions/ma.md) · [OBV](/functions/obv.md)
 
 ## References
 

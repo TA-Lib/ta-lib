@@ -1,9 +1,7 @@
 ---
-title: CDLSHOOTINGSTAR
-description: "Single-candle pattern: a small real body with a long upper shadow and little-to-no lower shadow that gaps up from the prior candle's real body. Bearish reversal signal. A hit (-100) flags a bearish reversal at the top of an uptrend."
+title: "Shooting Star (CDLSHOOTINGSTAR)"
+description: "Single-candle pattern: a small real body with a long upper shadow and little-to-no lower shadow that gaps up from the prior candle's real body."
 ---
-
-# CDLSHOOTINGSTAR
 
 ## Summary
 
@@ -26,7 +24,7 @@ Single-candle pattern: a small real body with a long upper shadow and little-to-
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Shooting Star
 
 ## See Also
 
-[CDLINVERTEDHAMMER](/functions/cdlinvertedhammer) · [CDLHANGINGMAN](/functions/cdlhangingman) · [CDLHAMMER](/functions/cdlhammer) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji)
+[CDLINVERTEDHAMMER](/functions/cdlinvertedhammer.md) · [CDLHANGINGMAN](/functions/cdlhangingman.md) · [CDLHAMMER](/functions/cdlhammer.md) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji.md)

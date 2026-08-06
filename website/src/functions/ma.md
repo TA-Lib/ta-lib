@@ -1,9 +1,7 @@
 ---
-title: MA
-description: "Generic moving-average dispatcher that forwards the job to a concrete MA implementation selected by optInMAType. Single uniform interface over all TA-Lib moving averages."
+title: "Moving average (MA)"
+description: "Generic moving-average dispatcher that forwards the job to a concrete MA implementation selected by optInMAType."
 ---
-
-# MA
 
 ## Summary
 
@@ -37,7 +35,7 @@ outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
 
 ## Properties
 
-**Numerical Stability:** [Depends on MA Type](/functions/stability#depends-on-ma-type) — This function's default, SMA, is start-independent.
+**Numerical Stability:** [Depends on MA Type](/functions/stability.md#depends-on-ma-type) — This function's default, SMA, is start-independent.
 
 | Display<br>Flags |
 | :-- |
@@ -63,4 +61,4 @@ Moving Average, MovingAverage
 
 ## See Also
 
-[SMA](/functions/sma) · [EMA](/functions/ema) · [WMA](/functions/wma) · [DEMA](/functions/dema) · [TEMA](/functions/tema) · [TRIMA](/functions/trima) · [KAMA](/functions/kama) · [MAMA](/functions/mama) · [T3](/functions/t3) · [HMA](/functions/hma)
+[SMA](/functions/sma.md) · [EMA](/functions/ema.md) · [WMA](/functions/wma.md) · [DEMA](/functions/dema.md) · [TEMA](/functions/tema.md) · [TRIMA](/functions/trima.md) · [KAMA](/functions/kama.md) · [MAMA](/functions/mama.md) · [T3](/functions/t3.md) · [HMA](/functions/hma.md)

@@ -1,9 +1,7 @@
 ---
-title: TRANGE
-description: "True Range: the greatest of today's high-low span and the two gaps between yesterday's close and today's high/low. Base volatility measure used to build ATR/NATR. Larger values mean wider or gappier bars (higher volatility)."
+title: "True Range (TRANGE)"
+description: "True Range: the greatest of today's high-low span and the two gaps between yesterday's close and today's high/low."
 ---
-
-# TRANGE
 
 ## Summary
 
@@ -29,7 +27,7 @@ TR = max( high - low, |prevClose - high|, |prevClose - low| )
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -55,7 +53,7 @@ True Range, TR
 
 ## See Also
 
-[ATR](/functions/atr) · [NATR](/functions/natr)
+[ATR](/functions/atr.md) · [NATR](/functions/natr.md)
 
 ## References
 

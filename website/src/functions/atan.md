@@ -1,9 +1,7 @@
 ---
-title: ATAN
+title: "Vector Trigonometric ATan (ATAN)"
 description: "Vector trigonometric arc tangent: applies atan element-wise to each input. Pure math transform with no lookback."
 ---
-
-# ATAN
 
 ## Summary
 
@@ -23,7 +21,7 @@ outReal[i] = atan(inReal[i])  (radians, range (-pi/2, pi/2))
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -49,4 +47,4 @@ arctangent, arctan, inverse tangent
 
 ## See Also
 
-[TAN](/functions/tan) · [ACOS](/functions/acos) · [ASIN](/functions/asin)
+[TAN](/functions/tan.md) · [ACOS](/functions/acos.md) · [ASIN](/functions/asin.md)

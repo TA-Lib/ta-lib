@@ -1,9 +1,7 @@
 ---
-title: CDLHANGINGMAN
-description: "Single candle with a small real body, a long lower shadow, and little/no upper shadow, sitting at or near the highs of the prior candle. Bearish reversal signal. A hit is a bearish reversal signal (meaningful at the top of an uptrend)."
+title: "Hanging Man (CDLHANGINGMAN)"
+description: "Single candle with a small real body, a long lower shadow, and little/no upper shadow, sitting at or near the highs of the prior candle."
 ---
-
-# CDLHANGINGMAN
 
 ## Summary
 
@@ -26,7 +24,7 @@ Single candle with a small real body, a long lower shadow, and little/no upper s
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Hanging Man
 
 ## See Also
 
-[CDLHAMMER](/functions/cdlhammer) · [CDLINVERTEDHAMMER](/functions/cdlinvertedhammer) · [CDLSHOOTINGSTAR](/functions/cdlshootingstar) · [CDLTAKURI](/functions/cdltakuri)
+[CDLHAMMER](/functions/cdlhammer.md) · [CDLINVERTEDHAMMER](/functions/cdlinvertedhammer.md) · [CDLSHOOTINGSTAR](/functions/cdlshootingstar.md) · [CDLTAKURI](/functions/cdltakuri.md)

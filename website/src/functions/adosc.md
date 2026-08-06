@@ -1,9 +1,7 @@
 ---
-title: ADOSC
-description: "Chaikin A/D Oscillator: the difference between a fast and a slow EMA of the Accumulation/Distribution line. Highlights momentum in accumulation/distribution volume flow. Positive/rising suggests accumulation; negative/falling suggests distribution."
+title: "Chaikin A/D Oscillator (ADOSC)"
+description: "Chaikin A/D Oscillator: the difference between a fast and a slow EMA of the Accumulation/Distribution line."
 ---
-
-# ADOSC
 
 ## Summary
 
@@ -36,7 +34,7 @@ ADOSC = fastEMA - slowEMA
 
 ## Properties
 
-**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent) — It also computes EMA internally, so EMA's unstable period governs how many leading values are discarded.
+**Numerical Stability:** [Path-Dependent](/functions/stability.md#path-dependent) — It also computes EMA internally, so EMA's unstable period governs how many leading values are discarded.
 
 | Display<br>Flags |
 | :-- |
@@ -62,7 +60,7 @@ Chaikin A/D Oscillator, Chaikin Oscillator
 
 ## See Also
 
-[AD](/functions/ad) · [EMA](/functions/ema)
+[AD](/functions/ad.md) · [EMA](/functions/ema.md)
 
 ## References
 

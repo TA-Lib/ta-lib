@@ -1,9 +1,7 @@
 ---
-title: DX
-description: "Wilder's Directional Movement Index: the normalized spread between +DI and -DI. Measures the strength of directional (trending) movement, irrespective of direction. Higher DX = stronger trend (either direction); low DX = ranging market."
+title: "Directional Movement Index (DX)"
+description: "Wilder's Directional Movement Index: the normalized spread between +DI and -DI."
 ---
-
-# DX
 
 ## Summary
 
@@ -36,7 +34,7 @@ Seed +DM14, -DM14, TR14 as sums of the first (period-1) one-period values, then 
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -62,7 +60,7 @@ Directional Movement Index, DMI
 
 ## See Also
 
-[ADX](/functions/adx) · [ADXR](/functions/adxr) · [PLUS_DI](/functions/plus_di) · [MINUS_DI](/functions/minus_di) · [PLUS_DM](/functions/plus_dm) · [MINUS_DM](/functions/minus_dm) · [TRANGE](/functions/trange)
+[ADX](/functions/adx.md) · [ADXR](/functions/adxr.md) · [PLUS_DI](/functions/plus_di.md) · [MINUS_DI](/functions/minus_di.md) · [PLUS_DM](/functions/plus_dm.md) · [MINUS_DM](/functions/minus_dm.md) · [TRANGE](/functions/trange.md)
 
 ## References
 

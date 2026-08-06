@@ -1,9 +1,7 @@
 ---
-title: CDLMATCHINGLOW
-description: "A two-candle pattern of two consecutive black (bearish) candles with equal closes (within a tolerance). Treated as a bullish reversal signal. A hit signals a potential bullish reversal (shared support close after two down candles)."
+title: "Matching Low (CDLMATCHINGLOW)"
+description: "A two-candle pattern of two consecutive black (bearish) candles with equal closes (within a tolerance). Treated as a bullish reversal signal."
 ---
-
-# CDLMATCHINGLOW
 
 ## Summary
 
@@ -30,7 +28,7 @@ Two candles i-1, i. Candle i-1: black (close<open). Candle i: black (close<open)
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -56,4 +54,4 @@ Matching Low
 
 ## See Also
 
-CDLMATCHINGHIGH · [CDLHOMINGPIGEON](/functions/cdlhomingpigeon)
+CDLMATCHINGHIGH · [CDLHOMINGPIGEON](/functions/cdlhomingpigeon.md)

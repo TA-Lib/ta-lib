@@ -1,9 +1,7 @@
 ---
-title: MINMAX
-description: "Returns both the lowest and highest values of the input over a rolling window of the last optInTimePeriod bars. An overlap-study companion to MIN and MAX that computes both extrema in one pass."
+title: "Lowest and highest values over a specified period (MINMAX)"
+description: "Returns both the lowest and highest values of the input over a rolling window of the last optInTimePeriod bars."
 ---
-
-# MINMAX
 
 ## Summary
 
@@ -26,7 +24,7 @@ Returns both the lowest and highest values of the input over a rolling window of
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Highest Lowest
 
 ## See Also
 
-[MIN](/functions/min) · [MAX](/functions/max) · [MINMAXINDEX](/functions/minmaxindex) · [MININDEX](/functions/minindex) · [MAXINDEX](/functions/maxindex)
+[MIN](/functions/min.md) · [MAX](/functions/max.md) · [MINMAXINDEX](/functions/minmaxindex.md) · [MININDEX](/functions/minindex.md) · [MAXINDEX](/functions/maxindex.md)

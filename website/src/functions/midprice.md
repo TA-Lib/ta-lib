@@ -1,9 +1,7 @@
 ---
-title: MIDPRICE
-description: "Midpoint of the price range over a rolling window: the average of the highest high and lowest low across the last optInTimePeriod bars. An overlap-study line plotted on price."
+title: "Midpoint Price over period (MIDPRICE)"
+description: "Midpoint of the price range over a rolling window: the average of the highest high and lowest low across the last optInTimePeriod bars."
 ---
-
-# MIDPRICE
 
 ## Summary
 
@@ -30,7 +28,7 @@ MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod b
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -56,4 +54,4 @@ Midpoint Price
 
 ## See Also
 
-[MIDPOINT](/functions/midpoint) · [MEDPRICE](/functions/medprice)
+[MIDPOINT](/functions/midpoint.md) · [MEDPRICE](/functions/medprice.md)

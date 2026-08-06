@@ -217,7 +217,7 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 
 <a id="unstable_period"></a>
 <p>Take one bar and compute an indicator for it twice: once with a year of history before it, once with a decade. Do you get the same value? For many functions, always — they read a fixed number of bars and ignore everything older. Others are recursive, so their earliest values depend on how much history precedes them, converging as more bars are supplied — the Exponential Moving Average is the classic example. A few accumulate from the very first bar and never converge at all.</p>
-<p>Each function's documentation specifies which of the four <a href="/functions/stability">numerical-stability categories</a> applies to it.</p>
+<p>Each function's documentation specifies which of the four <a href="/functions/stability.html">numerical-stability categories</a> applies to it.</p>
 <p>See the <a href="/api/unstable-period/">Unstable Period</a> page for how to configure this.</p>
 
 ### 4.3 Candlestick Settings {#candle_settings}

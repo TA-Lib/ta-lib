@@ -1,9 +1,7 @@
 ---
-title: CDLTAKURI
-description: "Single-candle pattern: a doji whose open and close sit at the high (no/very short upper shadow) with a very long lower shadow, i.e. a dragonfly doji with an exceptionally long lower shadow. Emitted as a positive signal, but its directional meaning depends on the prevailing trend, which the code does not check. A hit marks a takuri (dragonfly-doji) line; a potential reversal only when read against the trend (typically a bottom/bullish reversal after a downtrend), which the code itself does not verify."
+title: "Takuri (Dragonfly Doji with very long lower shadow) (CDLTAKURI)"
+description: "Single-candle pattern: a doji whose open and close sit at the high (no/very short upper shadow) with a very long lower shadow, i.e. a dragonfly doji with…"
 ---
-
-# CDLTAKURI
 
 ## Summary
 
@@ -22,7 +20,7 @@ Single-candle pattern: a doji whose open and close sit at the high (no/very shor
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -48,4 +46,4 @@ Takuri, Takuri line
 
 ## See Also
 
-[CDLDRAGONFLYDOJI](/functions/cdldragonflydoji) · [CDLDOJI](/functions/cdldoji) · [CDLHAMMER](/functions/cdlhammer) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji)
+[CDLDRAGONFLYDOJI](/functions/cdldragonflydoji.md) · [CDLDOJI](/functions/cdldoji.md) · [CDLHAMMER](/functions/cdlhammer.md) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji.md)

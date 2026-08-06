@@ -1,9 +1,7 @@
 ---
-title: MFI
-description: "Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing positive vs negative money flow over a period. A volume-based analog of RSI. >80 overbought, <20 oversold."
+title: "Money Flow Index (MFI)"
+description: "Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing positive vs negative money flow over a period."
 ---
-
-# MFI
 
 ## Summary
 
@@ -36,7 +34,7 @@ TP = (High+Low+Close)/3; MF = TP*Volume, classed positive if TP>prevTP, negative
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -62,7 +60,7 @@ Money Flow Index
 
 ## See Also
 
-[RSI](/functions/rsi) · [AD](/functions/ad) · [ADOSC](/functions/adosc)
+[RSI](/functions/rsi.md) · [AD](/functions/ad.md) · [ADOSC](/functions/adosc.md)
 
 ## References
 

@@ -1,9 +1,7 @@
 ---
-title: CDLHARAMI
-description: "Two-candle pattern: a long real body followed by a short real body contained within the first candle's real body. A reversal signal whose direction is the opposite of the first candle's color. A hit signals a potential reversal opposite the 1st candle: positive (black 1st) is bullish, negative (white 1st) is bearish."
+title: "Harami Pattern (CDLHARAMI)"
+description: "Two-candle pattern: a long real body followed by a short real body contained within the first candle's real body."
 ---
-
-# CDLHARAMI
 
 ## Summary
 
@@ -26,7 +24,7 @@ Two-candle pattern: a long real body followed by a short real body contained wit
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Harami, Harami Pattern
 
 ## See Also
 
-[CDLHARAMICROSS](/functions/cdlharamicross) · [CDLENGULFING](/functions/cdlengulfing)
+[CDLHARAMICROSS](/functions/cdlharamicross.md) · [CDLENGULFING](/functions/cdlengulfing.md)

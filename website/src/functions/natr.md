@@ -1,9 +1,7 @@
 ---
-title: NATR
-description: "Average True Range expressed as a percentage of the current close, making volatility comparable across price levels and securities. Same computation as ATR, then normalized by close. Higher values mean greater relative volatility; unit is percent of price."
+title: "Normalized Average True Range (NATR)"
+description: "Average True Range expressed as a percentage of the current close, making volatility comparable across price levels and securities."
 ---
-
-# NATR
 
 ## Summary
 
@@ -32,7 +30,7 @@ ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -58,7 +56,7 @@ Normalized Average True Range
 
 ## See Also
 
-[ATR](/functions/atr) · [TRANGE](/functions/trange) · [SMA](/functions/sma)
+[ATR](/functions/atr.md) · [TRANGE](/functions/trange.md) · [SMA](/functions/sma.md)
 
 ## References
 

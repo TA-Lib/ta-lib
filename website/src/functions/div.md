@@ -1,9 +1,7 @@
 ---
-title: DIV
+title: "Vector Arithmetic Div (DIV)"
 description: "Element-wise division of two input series. Computes the quotient of corresponding values from two real inputs."
 ---
-
-# DIV
 
 ## Summary
 
@@ -24,7 +22,7 @@ outReal[i] = inReal0[i] / inReal1[i]
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -50,4 +48,4 @@ Vector Arithmetic Divide, Divide
 
 ## See Also
 
-[MULT](/functions/mult) · [ADD](/functions/add) · [SUB](/functions/sub)
+[MULT](/functions/mult.md) · [ADD](/functions/add.md) · [SUB](/functions/sub.md)

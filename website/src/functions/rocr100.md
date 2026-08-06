@@ -1,9 +1,7 @@
 ---
-title: ROCR100
-description: "Rate-of-change ratio scaled by 100: current price as a percentage of the price optInTimePeriod bars ago. Momentum measure centered at 100 and always positive. Above 100 = price rose vs n bars ago; below 100 = price fell."
+title: "Rate of change ratio 100 scale: (price/prevPrice)*100 (ROCR100)"
+description: "Rate-of-change ratio scaled by 100: current price as a percentage of the price optInTimePeriod bars ago."
 ---
-
-# ROCR100
 
 ## Summary
 
@@ -29,7 +27,7 @@ $ROCR100_t = \dfrac{price_t}{price_{t-n}} \times 100$, where $n$ = optInTimePeri
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -55,4 +53,4 @@ Rate of Change Ratio 100 Scale, MO
 
 ## See Also
 
-[ROCR](/functions/rocr) · [ROC](/functions/roc) · [ROCP](/functions/rocp) · [MOM](/functions/mom)
+[ROCR](/functions/rocr.md) · [ROC](/functions/roc.md) · [ROCP](/functions/rocp.md) · [MOM](/functions/mom.md)

@@ -1,9 +1,7 @@
 ---
-title: NVI
-description: "Negative Volume Index: a running cumulative index that changes only on days when volume falls versus the prior day, compounding that day's percentage price change. The premise is that quiet, low-volume days reflect the actions of well-informed \"smart money\", so NVI is read as a proxy for that cohort's positioning."
+title: "Negative Volume Index (NVI)"
+description: "Negative Volume Index: a running cumulative index that changes only on days when volume falls versus the prior day, compounding that day's percentage…"
 ---
-
-# NVI
 
 ## Summary
 
@@ -36,7 +34,7 @@ degenerate case of a zero previous close, which would otherwise divide by zero).
 
 ## Properties
 
-**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent)
+**Numerical Stability:** [Path-Dependent](/functions/stability.md#path-dependent)
 
 | Display<br>Flags |
 | :-- |

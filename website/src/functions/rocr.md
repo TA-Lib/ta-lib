@@ -1,9 +1,7 @@
 ---
-title: ROCR
-description: "Rate of Change Ratio: the ratio of the current price to the price optInTimePeriod bars ago. A momentum measure centered at 1. Always positive, centered at 1: >1 rising, <1 falling."
+title: "Rate of change ratio: (price/prevPrice) (ROCR)"
+description: "Rate of Change Ratio: the ratio of the current price to the price optInTimePeriod bars ago. A momentum measure centered at 1."
 ---
-
-# ROCR
 
 ## Summary
 
@@ -29,7 +27,7 @@ ROCR = price / price[t - optInTimePeriod]
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -55,4 +53,4 @@ Rate of Change Ratio
 
 ## See Also
 
-[ROC](/functions/roc) · [ROCP](/functions/rocp) · [ROCR100](/functions/rocr100) · [MOM](/functions/mom)
+[ROC](/functions/roc.md) · [ROCP](/functions/rocp.md) · [ROCR100](/functions/rocr100.md) · [MOM](/functions/mom.md)

@@ -1,9 +1,7 @@
 ---
-title: CDLHIGHWAVE
-description: "Single-candle pattern: a short real body with both a very long upper and a very long lower shadow. Signals market indecision; the output sign reports only candle color, not a bullish/bearish direction. A hit marks indecision (long-legged candle); not directional - sign encodes only the candle's color."
+title: "High-Wave Candle (CDLHIGHWAVE)"
+description: "Single-candle pattern: a short real body with both a very long upper and a very long lower shadow."
 ---
-
-# CDLHIGHWAVE
 
 ## Summary
 
@@ -26,7 +24,7 @@ One candle at index i. Hit when all hold: (1) short real body: real body < the B
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ High-Wave Candle, High Wave
 
 ## See Also
 
-[CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji) · [CDLSPINNINGTOP](/functions/cdlspinningtop) · [CDLRICKSHAWMAN](/functions/cdlrickshawman) · [CDLDOJI](/functions/cdldoji)
+[CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji.md) · [CDLSPINNINGTOP](/functions/cdlspinningtop.md) · [CDLRICKSHAWMAN](/functions/cdlrickshawman.md) · [CDLDOJI](/functions/cdldoji.md)

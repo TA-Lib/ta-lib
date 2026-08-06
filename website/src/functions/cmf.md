@@ -1,9 +1,7 @@
 ---
-title: CMF
-description: "Chaikin Money Flow: over a trailing window of `optInTimePeriod` bars, the sum of each bar's money flow volume divided by the sum of its volume. The result is a ratio in `[-1, +1]`. A bar's money flow volume is its volume scaled by where the close sat inside the bar's range: a close at the high contributes the full volume, a close at the low contributes minus the full volume, and a close at the midpoint contributes nothing. Summing that over a window and dividing by the window's volume answers \"over these N bars, what share of the traded volume closed near the top of its range?\" Above zero is accumulation, below zero is distribution, and the distance from zero measures conviction. Because the divisor is the window's own volume, the output is comparable across instruments and across time in a way a raw accumulation total is not. Created by Marc Chaikin, who also authored the [`AD`](/functions/ad) line this shares its per-bar multiplier with. CMF is that same multiplier summed over a fixed window and normalised, where AD accumulates it from the start of the series without bound."
+title: "Chaikin Money Flow (CMF)"
+description: "Chaikin Money Flow: over a trailing window of optInTimePeriod bars, the sum of each bar's money flow volume divided by the sum of its volume."
 ---
-
-# CMF
 
 ## Summary
 
@@ -13,7 +11,7 @@ A bar's money flow volume is its volume scaled by where the close sat inside the
 
 Above zero is accumulation, below zero is distribution, and the distance from zero measures conviction. Because the divisor is the window's own volume, the output is comparable across instruments and across time in a way a raw accumulation total is not.
 
-Created by Marc Chaikin, who also authored the [`AD`](/functions/ad) line this shares its per-bar multiplier with. CMF is that same multiplier summed over a fixed window and normalised, where AD accumulates it from the start of the series without bound.
+Created by Marc Chaikin, who also authored the [`AD`](/functions/ad.md) line this shares its per-bar multiplier with. CMF is that same multiplier summed over a fixed window and normalised, where AD accumulates it from the start of the series without bound.
 
 ## Formula
 
@@ -28,7 +26,7 @@ There is no seeding and no recursion, hence no unstable period. Each output depe
 ## Notes
 
 - The output is the raw ratio in `[-1, +1]`, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.
-- Each bar's close is expected to lie within its own `[low, high]`, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as [`AD`](/functions/ad) does.
+- Each bar's close is expected to lie within its own `[low, high]`, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as [`AD`](/functions/ad.md) does.
 - A bar whose high equals its low has no range for the close to sit inside, so it contributes exactly zero money flow volume rather than dividing by zero. Its volume still counts toward the divisor.
 - A window whose volume is entirely zero has no money flow to distribute and reports 0.0. Published references are silent here and other implementations divide by zero; TA-Lib does not return NaN from a successful call.
 - Bars where the low exceeds the high are malformed rather than degenerate, and also contribute zero.
@@ -53,7 +51,7 @@ There is no seeding and no recursion, hence no unstable period. Each output depe
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -79,7 +77,7 @@ Chaikin Money Flow
 
 ## See Also
 
-[AD](/functions/ad) · [ADOSC](/functions/adosc) · [MFI](/functions/mfi) · [OBV](/functions/obv)
+[AD](/functions/ad.md) · [ADOSC](/functions/adosc.md) · [MFI](/functions/mfi.md) · [OBV](/functions/obv.md)
 
 ## References
 

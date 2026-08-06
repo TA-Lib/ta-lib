@@ -1,9 +1,7 @@
 ---
-title: DEMA
+title: "Double Exponential Moving Average (DEMA)"
 description: "Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to reduce lag versus a plain EMA. Overlap Studies overlay on price."
 ---
-
-# DEMA
 
 ## Summary
 
@@ -33,7 +31,7 @@ EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2*EMA1 - EMA2
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period) — Inherited from EMA, which DEMA computes internally; tunable via EMA's unstable period.
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from EMA, which DEMA computes internally; tunable via EMA's unstable period.
 
 | Display<br>Flags |
 | :-- |
@@ -59,7 +57,7 @@ Double Exponential Moving Average
 
 ## See Also
 
-[EMA](/functions/ema) · [TEMA](/functions/tema) · [MA](/functions/ma)
+[EMA](/functions/ema.md) · [TEMA](/functions/tema.md) · [MA](/functions/ma.md)
 
 ## References
 

@@ -1,9 +1,7 @@
 ---
-title: CDLHIKKAKEMOD
-description: "A four-candle pattern: two successively narrower inside bars, then a breakout bar, with the second candle closing near one extreme of its range. Bullish or bearish reversal signal. Bullish (+) or bearish (-) reversal; per the code's note it is significant in a downtrend (bull) or uptrend (bear), context the code does not verify."
+title: "Modified Hikkake Pattern (CDLHIKKAKEMOD)"
+description: "A four-candle pattern: two successively narrower inside bars, then a breakout bar, with the second candle closing near one extreme of its range."
 ---
-
-# CDLHIKKAKEMOD
 
 ## Summary
 
@@ -26,7 +24,7 @@ A four-candle pattern: two successively narrower inside bars, then a breakout ba
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Modified Hikkake, Modified Hikkake Pattern
 
 ## See Also
 
-[CDLHIKKAKE](/functions/cdlhikkake)
+[CDLHIKKAKE](/functions/cdlhikkake.md)

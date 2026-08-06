@@ -1,9 +1,7 @@
 ---
-title: CDLLADDERBOTTOM
-description: "Five-candle bullish reversal pattern: three consecutively lower black candles, a fourth black candle with a non-very-short upper shadow, then a white candle that opens above the prior open and closes above the prior high. Signals a potential bottom reversal. A hit (+100) is a bullish reversal signal, most meaningful after a downtrend."
+title: "Ladder Bottom (CDLLADDERBOTTOM)"
+description: "Five-candle bullish reversal pattern: three consecutively lower black candles, a fourth black candle with a non-very-short upper shadow, then a white…"
 ---
-
-# CDLLADDERBOTTOM
 
 ## Summary
 
@@ -26,7 +24,7 @@ Five-candle bullish reversal pattern: three consecutively lower black candles, a
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Ladder Bottom
 
 ## See Also
 
-[CDL3BLACKCROWS](/functions/cdl3blackcrows) · [CDLMATCHINGLOW](/functions/cdlmatchinglow) · [CDLBREAKAWAY](/functions/cdlbreakaway)
+[CDL3BLACKCROWS](/functions/cdl3blackcrows.md) · [CDLMATCHINGLOW](/functions/cdlmatchinglow.md) · [CDLBREAKAWAY](/functions/cdlbreakaway.md)

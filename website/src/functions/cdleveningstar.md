@@ -1,9 +1,7 @@
 ---
-title: CDLEVENINGSTAR
-description: "A three-candle bearish reversal pattern: a long white candle, a short-bodied star gapping up, then a black candle closing well down into the first candle's body. A hit signals a bearish reversal (most significant in an uptrend)."
+title: "Evening Star (CDLEVENINGSTAR)"
+description: "A three-candle bearish reversal pattern: a long white candle, a short-bodied star gapping up, then a black candle closing well down into the first…"
 ---
-
-# CDLEVENINGSTAR
 
 ## Summary
 
@@ -33,7 +31,7 @@ A three-candle bearish reversal pattern: a long white candle, a short-bodied sta
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -59,4 +57,4 @@ Evening Star
 
 ## See Also
 
-[CDLEVENINGDOJISTAR](/functions/cdleveningdojistar) · [CDLMORNINGSTAR](/functions/cdlmorningstar) · [CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar) · CDLSTARSINSOUTH
+[CDLEVENINGDOJISTAR](/functions/cdleveningdojistar.md) · [CDLMORNINGSTAR](/functions/cdlmorningstar.md) · [CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar.md) · CDLSTARSINSOUTH

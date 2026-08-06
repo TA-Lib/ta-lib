@@ -1,9 +1,7 @@
 ---
-title: CDL3LINESTRIKE
-description: "A four-candle pattern: three same-color candles with consecutively higher (or lower) closes, each opening within or near the prior real body, then a fourth opposite-color candle that opens beyond the third close and closes past the first candle's open. TA-Lib emits a signed continuation-style signal keyed to the color of the first three candles. +100 = three-white (bullish) strike, -100 = three-black (bearish) strike; traditionally read as significant only inside a trend matching the first three candles."
+title: "Three-Line Strike (CDL3LINESTRIKE)"
+description: "A four-candle pattern: three same-color candles with consecutively higher (or lower) closes, each opening within or near the prior real body, then a…"
 ---
-
-# CDL3LINESTRIKE
 
 ## Summary
 
@@ -26,7 +24,7 @@ A four-candle pattern: three same-color candles with consecutively higher (or lo
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Three-Line Strike, 3-Line Strike
 
 ## See Also
 
-[CDL3WHITESOLDIERS](/functions/cdl3whitesoldiers) · [CDL3BLACKCROWS](/functions/cdl3blackcrows)
+[CDL3WHITESOLDIERS](/functions/cdl3whitesoldiers.md) · [CDL3BLACKCROWS](/functions/cdl3blackcrows.md)

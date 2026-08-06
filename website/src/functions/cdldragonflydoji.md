@@ -1,9 +1,7 @@
 ---
-title: CDLDRAGONFLYDOJI
-description: "Single-candle pattern: a doji (open and close nearly equal) sitting at the top of the range, with no meaningful upper shadow and a long lower shadow. A reversal signal, but its bullish/bearish meaning depends on the prior trend (the code does not judge direction). A hit marks a dragonfly doji; treated as a potential reversal, but direction (bullish/bearish) must be read from the trend it appears in."
+title: "Dragonfly Doji (CDLDRAGONFLYDOJI)"
+description: "Single-candle pattern: a doji (open and close nearly equal) sitting at the top of the range, with no meaningful upper shadow and a long lower shadow."
 ---
-
-# CDLDRAGONFLYDOJI
 
 ## Summary
 
@@ -30,7 +28,7 @@ Single candle. realbody <= BodyDoji average (doji body) AND upper shadow < Shado
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -56,4 +54,4 @@ Dragonfly Doji
 
 ## See Also
 
-[CDLDOJI](/functions/cdldoji) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji) · [CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji) · [CDLTAKURI](/functions/cdltakuri)
+[CDLDOJI](/functions/cdldoji.md) · [CDLGRAVESTONEDOJI](/functions/cdlgravestonedoji.md) · [CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji.md) · [CDLTAKURI](/functions/cdltakuri.md)

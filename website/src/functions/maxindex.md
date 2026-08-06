@@ -1,9 +1,7 @@
 ---
-title: MAXINDEX
+title: "Index of highest value over a specified period (MAXINDEX)"
 description: "Returns the index of the highest input value within a rolling window of optInTimePeriod bars. Same as MAX but outputs the location instead of the value."
 ---
-
-# MAXINDEX
 
 ## Summary
 
@@ -33,7 +31,7 @@ outInteger[i] = argmax_{j in [i-optInTimePeriod+1, i]} inReal[j]
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -59,4 +57,4 @@ Index of Highest Value, Highest Value Index, argmax
 
 ## See Also
 
-[MAX](/functions/max) · [MININDEX](/functions/minindex) · [MIN](/functions/min) · [MINMAXINDEX](/functions/minmaxindex)
+[MAX](/functions/max.md) · [MININDEX](/functions/minindex.md) · [MIN](/functions/min.md) · [MINMAXINDEX](/functions/minmaxindex.md)

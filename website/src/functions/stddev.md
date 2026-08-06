@@ -1,9 +1,7 @@
 ---
-title: STDDEV
+title: "Standard Deviation (STDDEV)"
 description: "Rolling standard deviation of a series over a window, scaled by a deviations multiplier. Delegates to VAR, then takes the square root."
 ---
-
-# STDDEV
 
 ## Summary
 
@@ -34,7 +32,7 @@ $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -60,4 +58,4 @@ Standard Deviation, SD, sigma
 
 ## See Also
 
-[VAR](/functions/var) · [BBANDS](/functions/bbands) · [SMA](/functions/sma)
+[VAR](/functions/var.md) · [BBANDS](/functions/bbands.md) · [SMA](/functions/sma.md)

@@ -1,9 +1,7 @@
 ---
-title: CDL2CROWS
-description: "Three-candle bearish reversal pattern: a long white candle, then a black candle gapping up, then a black candle that opens inside the second body and closes down inside the first white body. A hit (-100) signals a bearish reversal; significant in an uptrend, which this function does not verify."
+title: "Two Crows (CDL2CROWS)"
+description: "Three-candle bearish reversal pattern: a long white candle, then a black candle gapping up, then a black candle that opens inside the second body and…"
 ---
-
-# CDL2CROWS
 
 ## Summary
 
@@ -26,7 +24,7 @@ Three-candle bearish reversal pattern: a long white candle, then a black candle 
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Two Crows
 
 ## See Also
 
-[CDLUPSIDEGAP2CROWS](/functions/cdlupsidegap2crows) · [CDLIDENTICAL3CROWS](/functions/cdlidentical3crows)
+[CDLUPSIDEGAP2CROWS](/functions/cdlupsidegap2crows.md) · [CDLIDENTICAL3CROWS](/functions/cdlidentical3crows.md)

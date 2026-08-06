@@ -1,9 +1,7 @@
 ---
-title: MEDPRICE
+title: "Median Price (MEDPRICE)"
 description: "Median Price: the midpoint of each bar's high and low. A price-transform overlay."
 ---
-
-# MEDPRICE
 
 ## Summary
 
@@ -24,7 +22,7 @@ $MEDPRICE_i = (High_i + Low_i) / 2$
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -50,4 +48,4 @@ Median Price
 
 ## See Also
 
-[MIDPRICE](/functions/midprice) · [AVGPRICE](/functions/avgprice) · [TYPPRICE](/functions/typprice) · [WCLPRICE](/functions/wclprice)
+[MIDPRICE](/functions/midprice.md) · [AVGPRICE](/functions/avgprice.md) · [TYPPRICE](/functions/typprice.md) · [WCLPRICE](/functions/wclprice.md)

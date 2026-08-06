@@ -1,9 +1,7 @@
 ---
-title: RSI
-description: "Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from the ratio of average gains to average losses over the period. Used to gauge overbought/oversold conditions. >70 overbought, <30 oversold."
+title: "Relative Strength Index (RSI)"
+description: "Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from the ratio of average gains to average losses over the period."
 ---
-
-# RSI
 
 ## Summary
 
@@ -46,7 +44,7 @@ where $X$ is the input series and $n$ the period.
 
 ## Properties
 
-**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
 | Display<br>Flags |
 | :-- |
@@ -72,7 +70,7 @@ relative strength index
 
 ## See Also
 
-[CMO](/functions/cmo) · [STOCHRSI](/functions/stochrsi)
+[CMO](/functions/cmo.md) · [STOCHRSI](/functions/stochrsi.md)
 
 ## References
 

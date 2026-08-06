@@ -1,9 +1,7 @@
 ---
-title: CDLSPINNINGTOP
-description: "Single-candle pattern: a small real body with both an upper and a lower shadow longer than the body. Signals indecision; the code does not classify it as bullish or bearish. A hit marks indecision (small body, both shadows long); the sign only reports candle color, not direction."
+title: "Spinning Top (CDLSPINNINGTOP)"
+description: "Single-candle pattern: a small real body with both an upper and a lower shadow longer than the body."
 ---
-
-# CDLSPINNINGTOP
 
 ## Summary
 
@@ -26,7 +24,7 @@ One candle where: upper shadow > real body AND lower shadow > real body AND real
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Spinning Top
 
 ## See Also
 
-[CDLDOJI](/functions/cdldoji) · [CDLHIGHWAVE](/functions/cdlhighwave) · [CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji)
+[CDLDOJI](/functions/cdldoji.md) · [CDLHIGHWAVE](/functions/cdlhighwave.md) · [CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji.md)

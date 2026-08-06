@@ -1,9 +1,7 @@
 ---
-title: CDLCONCEALBABYSWALL
-description: "A four-candle pattern: two black marubozus, then a black candle that gaps down but pokes its upper shadow into the prior body, then a larger black candle fully engulfing the third. Bullish reversal signal. A hit signals a bullish reversal."
+title: "Concealing Baby Swallow (CDLCONCEALBABYSWALL)"
+description: "A four-candle pattern: two black marubozus, then a black candle that gaps down but pokes its upper shadow into the prior body, then a larger black candle…"
 ---
-
-# CDLCONCEALBABYSWALL
 
 ## Summary
 
@@ -26,7 +24,7 @@ A four-candle pattern: two black marubozus, then a black candle that gaps down b
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Concealing Baby Swallow
 
 ## See Also
 
-[CDLMARUBOZU](/functions/cdlmarubozu) · [CDLENGULFING](/functions/cdlengulfing)
+[CDLMARUBOZU](/functions/cdlmarubozu.md) · [CDLENGULFING](/functions/cdlengulfing.md)

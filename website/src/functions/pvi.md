@@ -1,9 +1,7 @@
 ---
-title: PVI
-description: "Positive Volume Index: a running cumulative index that changes only on days when volume rises versus the prior day, compounding that day's percentage price change. The premise is that active, high-volume days reflect the actions of the less-informed \"crowd\", so PVI is read as a proxy for that cohort's positioning."
+title: "Positive Volume Index (PVI)"
+description: "Positive Volume Index: a running cumulative index that changes only on days when volume rises versus the prior day, compounding that day's percentage…"
 ---
-
-# PVI
 
 ## Summary
 
@@ -36,7 +34,7 @@ degenerate case of a zero previous close, which would otherwise divide by zero).
 
 ## Properties
 
-**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent)
+**Numerical Stability:** [Path-Dependent](/functions/stability.md#path-dependent)
 
 | Display<br>Flags |
 | :-- |

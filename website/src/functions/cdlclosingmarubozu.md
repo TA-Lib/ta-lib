@@ -1,9 +1,7 @@
 ---
-title: CDLCLOSINGMARUBOZU
-description: "Single-candle pattern: a long real body whose closing end has no or very short shadow, so the close sits at the candle's extreme. Non-directional strong bar that emits +100 for a white body and -100 for a black body. White (+100) is bullish, black (-100) is bearish; a strong directional bar, not a defined reversal/continuation signal."
+title: "Closing Marubozu (CDLCLOSINGMARUBOZU)"
+description: "Single-candle pattern: a long real body whose closing end has no or very short shadow, so the close sits at the candle's extreme."
 ---
-
-# CDLCLOSINGMARUBOZU
 
 ## Summary
 
@@ -26,7 +24,7 @@ One candle. Requires: (1) long real body: real body > the BodyLong average; AND 
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Closing Marubozu
 
 ## See Also
 
-[CDLMARUBOZU](/functions/cdlmarubozu) · [CDLLONGLINE](/functions/cdllongline) · [CDLBELTHOLD](/functions/cdlbelthold)
+[CDLMARUBOZU](/functions/cdlmarubozu.md) · [CDLLONGLINE](/functions/cdllongline.md) · [CDLBELTHOLD](/functions/cdlbelthold.md)

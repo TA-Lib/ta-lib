@@ -1,9 +1,7 @@
 ---
-title: WILLR
-description: "Williams' %R momentum oscillator over a rolling period, bounded in [-100, 0]. Measures where the current close sits relative to the high-low range of the last N bars. Near 0 = close at period high (overbought); near -100 = close at period low (oversold)."
+title: "Williams' %R (WILLR)"
+description: "Williams' %R momentum oscillator over a rolling period, bounded in [-100, 0]."
 ---
-
-# WILLR
 
 ## Summary
 
@@ -31,7 +29,7 @@ Williams' %R momentum oscillator over a rolling period, bounded in [-100, 0]. Me
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -57,4 +55,4 @@ Williams %R, Williams Percent R, %R
 
 ## See Also
 
-[STOCH](/functions/stoch) · [STOCHF](/functions/stochf) · [MINMAX](/functions/minmax)
+[STOCH](/functions/stoch.md) · [STOCHF](/functions/stochf.md) · [MINMAX](/functions/minmax.md)

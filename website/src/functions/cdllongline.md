@@ -1,9 +1,7 @@
 ---
-title: CDLLONGLINE
-description: "A single-candle pattern: a long real body with short upper and short lower shadow. The signal direction follows the candle color (bullish if white, bearish if black). Signals strong directional conviction on the bar: +100 white/bullish, -100 black/bearish. Not intrinsically a reversal or continuation signal."
+title: "Long Line Candle (CDLLONGLINE)"
+description: "A single-candle pattern: a long real body with short upper and short lower shadow."
 ---
-
-# CDLLONGLINE
 
 ## Summary
 
@@ -22,7 +20,7 @@ A single-candle pattern: a long real body with short upper and short lower shado
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -48,4 +46,4 @@ Long Line Candle, Long Line
 
 ## See Also
 
-[CDLSHORTLINE](/functions/cdlshortline) · [CDLCLOSINGMARUBOZU](/functions/cdlclosingmarubozu) · [CDLMARUBOZU](/functions/cdlmarubozu) · [CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji)
+[CDLSHORTLINE](/functions/cdlshortline.md) · [CDLCLOSINGMARUBOZU](/functions/cdlclosingmarubozu.md) · [CDLMARUBOZU](/functions/cdlmarubozu.md) · [CDLLONGLEGGEDDOJI](/functions/cdllongleggeddoji.md)

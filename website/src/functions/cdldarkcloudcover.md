@@ -1,9 +1,7 @@
 ---
-title: CDLDARKCLOUDCOVER
-description: "A two-candle bearish reversal pattern: a long white candle followed by a black candle that opens above the prior high and closes deep into the prior white body past a penetration threshold. Signals a potential top. A hit (-100) is a bearish reversal signal, most meaningful after an uptrend."
+title: "Dark Cloud Cover (CDLDARKCLOUDCOVER)"
+description: "A two-candle bearish reversal pattern: a long white candle followed by a black candle that opens above the prior high and closes deep into the prior…"
 ---
-
-# CDLDARKCLOUDCOVER
 
 ## Summary
 
@@ -32,7 +30,7 @@ A two-candle bearish reversal pattern: a long white candle followed by a black c
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -58,4 +56,4 @@ Dark Cloud Cover
 
 ## See Also
 
-[CDLPIERCING](/functions/cdlpiercing) · [CDLENGULFING](/functions/cdlengulfing) · [CDLONNECK](/functions/cdlonneck)
+[CDLPIERCING](/functions/cdlpiercing.md) · [CDLENGULFING](/functions/cdlengulfing.md) · [CDLONNECK](/functions/cdlonneck.md)

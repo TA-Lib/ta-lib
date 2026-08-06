@@ -1,9 +1,7 @@
 ---
-title: MULT
+title: "Vector Arithmetic Mult (MULT)"
 description: "Element-wise multiplication of two input series. Produces outReal[i] = inReal0[i] * inReal1[i]."
 ---
-
-# MULT
 
 ## Summary
 
@@ -24,7 +22,7 @@ outReal[i] = inReal0[i] * inReal1[i]
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -50,4 +48,4 @@ Vector Multiply, Vector Arithmetic Mult, Element-wise Product
 
 ## See Also
 
-[ADD](/functions/add) · [SUB](/functions/sub) · [DIV](/functions/div)
+[ADD](/functions/add.md) · [SUB](/functions/sub.md) · [DIV](/functions/div.md)

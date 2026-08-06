@@ -1,9 +1,7 @@
 ---
-title: MOM
-description: "Momentum: current price minus the price optInTimePeriod bars ago. The absolute (unnormalized) rate of change. Positive = price rose over the period, negative = fell; centered at zero."
+title: "Momentum (MOM)"
+description: "Momentum: current price minus the price optInTimePeriod bars ago. The absolute (unnormalized) rate of change."
 ---
-
-# MOM
 
 ## Summary
 
@@ -29,7 +27,7 @@ MOM[i] = inReal[i] - inReal[i - optInTimePeriod]
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -55,4 +53,4 @@ Momentum
 
 ## See Also
 
-[ROC](/functions/roc) · [ROCP](/functions/rocp) · [ROCR](/functions/rocr) · [ROCR100](/functions/rocr100)
+[ROC](/functions/roc.md) · [ROCP](/functions/rocp.md) · [ROCR](/functions/rocr.md) · [ROCR100](/functions/rocr100.md)

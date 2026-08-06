@@ -1,9 +1,7 @@
 ---
-title: CDLINNECK
-description: "A two-candle in-neck pattern: a long black candle followed by a white candle that opens below the prior low and closes just barely into the prior body (near the prior close). It is a bearish continuation signal. A hit signals bearish continuation (the down move is expected to resume)."
+title: "In-Neck Pattern (CDLINNECK)"
+description: "A two-candle in-neck pattern: a long black candle followed by a white candle that opens below the prior low and closes just barely into the prior body…"
 ---
-
-# CDLINNECK
 
 ## Summary
 
@@ -30,7 +28,7 @@ Two candles. First: black (close1 < open1) with a long real body (realbody > can
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -56,4 +54,4 @@ In-Neck Pattern, In-Neck Line
 
 ## See Also
 
-[CDLONNECK](/functions/cdlonneck) · [CDLTHRUSTING](/functions/cdlthrusting) · [CDLMATCHINGLOW](/functions/cdlmatchinglow)
+[CDLONNECK](/functions/cdlonneck.md) · [CDLTHRUSTING](/functions/cdlthrusting.md) · [CDLMATCHINGLOW](/functions/cdlmatchinglow.md)

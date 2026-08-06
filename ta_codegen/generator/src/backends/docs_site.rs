@@ -97,15 +97,119 @@ fn transform_page(
     let injected = inject_parameters(body, func, enums);
     let with_flags = inject_flags(&injected, func, enums, stability);
     let linked = linkify_see_also(&with_flags, known);
-    let pruned = strip_empty_sections(&linked);
+    let normalized = normalize_function_links(&linked);
+    let pruned = strip_empty_sections(&normalized);
+    let deheaded = strip_title_heading(&pruned, name);
+    // The mnemonic alone (`SMA`) is not what anyone searches for; the expanded name is.
+    // `hint` carries it ("Simple Moving Average"), so the page titles itself with both.
+    let title = match func.hint.as_deref() {
+        Some(h) if !h.is_empty() && h != name => format!("{h} ({name})"),
+        _ => name.clone(),
+    };
     let mut out = String::from("---\n");
-    out.push_str(&format!("title: {name}\n"));
+    out.push_str(&format!("title: {title:?}\n"));
     if !desc.is_empty() {
-        out.push_str(&format!("description: {desc:?}\n"));
+        let meta = truncate_description(&strip_inline_markdown(&desc), DESCRIPTION_MAX);
+        out.push_str(&format!("description: {meta:?}\n"));
     }
     out.push_str("---\n\n");
-    out.push_str(&pruned);
+    out.push_str(&deheaded);
     out
+}
+
+/// Cap for the generated `<meta name="description">`. Search engines display roughly
+/// this much; the authored summaries ran to 1094 characters, all of it emitted verbatim.
+const DESCRIPTION_MAX: usize = 155;
+
+/// Rewrite every `/functions/<name>` cross-link in a page body to the `.md` form
+/// `linkify_see_also` documents. `## See Also` is generated, but the authored prose in
+/// `input/<name>/<name>.md` links to siblings by hand (13 of them across 5 pages), and an
+/// extensionless target there lands on a non-canonical URL just the same. Rewriting here
+/// rather than editing those five files keeps the rule in one place: an author can write
+/// either form and the site stays canonical.
+///
+/// Idempotent, and the bare `/functions/` index link is left alone (the slug is required).
+fn normalize_function_links(body: &str) -> String {
+    let re = regex::Regex::new(r"\]\(/functions/([a-z0-9_]+)(#[A-Za-z0-9_-]+)?\)")
+        .expect("function link re");
+    re.replace_all(body, "](/functions/$1.md$2)").into_owned()
+}
+
+/// Drop the body's leading `# <NAME>` heading. The theme already renders an `<h1>` from
+/// the front-matter `title:`, so leaving this in emitted two `<h1>` on every page — and
+/// now that `title:` is the expanded name, the two would not even agree.
+fn strip_title_heading(body: &str, name: &str) -> String {
+    let want = format!("# {name}");
+    let mut lines = body.lines();
+    for line in lines.by_ref() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        if line.trim() != want {
+            // Not the shape we expected — leave the page exactly as authored.
+            return body.to_string();
+        }
+        break;
+    }
+    let mut out: String = lines.skip_while(|l| l.trim().is_empty()).collect::<Vec<_>>().join("\n");
+    out.push('\n');
+    out
+}
+
+/// Strip inline markdown so a summary can be served as a plain-text
+/// `<meta name="description">`. The authored summaries carry `**bold**`, `` `code` ``,
+/// `*emphasis*` and `[label](url)` links, every one of which reached the meta tag verbatim.
+///
+/// Emphasis is unwrapped only where the `*` reads as a delimiter — opening at
+/// start-of-string or after whitespace/`(`, closing at end or before whitespace/punctuation
+/// — so the literal multiplication in `LINEARREG_SLOPE`'s `y = b + m*x` survives.
+fn strip_inline_markdown(s: &str) -> String {
+    let link = regex::Regex::new(r"\[([^\]]*)\]\([^)]*\)").expect("link re");
+    let bold = regex::Regex::new(r"\*\*([^*]+)\*\*").expect("bold re");
+    let em = regex::Regex::new(r"(^|[\s(])\*([^*\s][^*]*)\*($|[\s).,;:!?])").expect("em re");
+    let s = link.replace_all(s, "$1");
+    let s = bold.replace_all(&s, "$1");
+    let s = em.replace_all(&s, "$1$2$3");
+    s.replace('`', "").split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// Trim a description to `max` characters, preferring a sentence boundary and falling
+/// back to a word boundary with an ellipsis. Returns the input unchanged when it fits.
+///
+/// A sentence ends at `.`/`!`/`?` followed by a space and a capital, which keeps `e.g.`
+/// and the `[-100,+100]` style ranges from splitting mid-clause.
+fn truncate_description(s: &str, max: usize) -> String {
+    if s.chars().count() <= max {
+        return s.to_string();
+    }
+    let bytes = s.as_bytes();
+    let mut cut = 0usize;
+    for (i, c) in s.char_indices() {
+        if !matches!(c, '.' | '!' | '?') {
+            continue;
+        }
+        let after = i + c.len_utf8();
+        let ends_here = after >= s.len();
+        let boundary = ends_here
+            || (bytes.get(after) == Some(&b' ')
+                && s[after + 1..].chars().next().is_some_and(char::is_uppercase));
+        if boundary {
+            if s[..after].chars().count() > max {
+                break;
+            }
+            cut = after;
+        }
+    }
+    if cut > 0 {
+        return s[..cut].to_string();
+    }
+    // No sentence fits: hard-cut on the last word boundary that leaves room for the ellipsis.
+    let limit = s
+        .char_indices()
+        .nth(max - 1)
+        .map_or(s.len(), |(i, _)| i);
+    let end = s[..limit].rfind(' ').unwrap_or(limit);
+    format!("{}…", s[..end].trim_end_matches([',', ';', ':', '-']).trim_end())
 }
 
 /// Drop any `## Section` whose body is blank. The input pages carry `## Notes` as an
@@ -260,7 +364,7 @@ fn stability_line(
     all: &HashMap<String, Stability>,
 ) -> String {
     let st = all.get(&func.name).cloned().unwrap_or_default();
-    let link = |anchor: &str, label: &str| format!("[{label}](/functions/stability#{anchor})");
+    let link = |anchor: &str, label: &str| format!("[{label}](/functions/stability.md#{anchor})");
 
     let (state, mut reason) = if st.path_dependent {
         // Path-dependence subsumes an unstable period -- nothing converges either way -- but
@@ -691,12 +795,16 @@ fn named_bullets(lines: &[&str]) -> Vec<(String, String)> {
         .collect()
 }
 
-/// Turn `## See Also` entries (`ADX · DX · …`) into source-root-absolute, extensionless
-/// links (`/functions/<name>`) to sibling pages, leaving any non-function token untouched.
-/// Absolute (not bare-relative) so VuePress resolves them even though the pages are served
-/// from a symlink outside the site source root; extensionless (not `.md`/`.html`) so
-/// VuePress renders a real `<a>` server-side — the `.md` form only hydrates client-side
-/// (empty `<!---->` in SSR), and the `.html` form does the same.
+/// Turn `## See Also` entries (`ADX · DX · …`) into source-root-absolute `.md` links
+/// (`/functions/<name>.md`) to sibling pages, leaving any non-function token untouched.
+///
+/// Absolute, not bare-relative: relative resolution used to escape the site source root.
+/// `.md`, not extensionless: VuePress rewrites a `.md` target to the built `/functions/
+/// <name>.html` and marks it `class="route-link"`, so the href matches the page's own
+/// `<link rel=canonical>` and clicks navigate client-side. The extensionless form emits a
+/// plain `<a>` VuePress does not recognise as an internal route, and points every internal
+/// link at a non-canonical URL that only resolves because GitHub Pages happens to retry
+/// with `.html` appended — behaviour no other static host shares.
 fn linkify_see_also(body: &str, known: &HashSet<&str>) -> String {
     let mut lines: Vec<String> = body.lines().map(String::from).collect();
     for i in 0..lines.len() {
@@ -711,7 +819,7 @@ fn linkify_see_also(body: &str, known: &HashSet<&str>) -> String {
                     .map(|tok| {
                         let n = tok.trim();
                         if known.contains(n) {
-                            format!("[{n}](/functions/{})", n.to_lowercase())
+                            format!("[{n}](/functions/{}.md)", n.to_lowercase())
                         } else {
                             n.to_string()
                         }
@@ -748,7 +856,8 @@ fn build_stability_page(
     let mut s = String::from(
         "---\ntitle: Numerical Stability\ndescription: \"What it means for an indicator to be start-independent, to carry an initial unstable period, to depend on the MA type selected, or to be path-dependent.\"\n---\n\n",
     );
-    s.push_str("# Numerical Stability\n\n");
+    // No `# Numerical Stability` here: the theme renders an `<h1>` from `title:` above, and
+    // emitting one in the body too gave every page two identical `<h1>`.
     s.push_str(
         "The [Function Documentation](/functions/) specifies which of the four categories below \
          applies to each function. They answer a single \
@@ -807,7 +916,7 @@ fn build_stability_page(
                 ),
             };
             let linked = if known.contains(name.as_str()) {
-                format!("[{name}](/functions/{})", name.to_lowercase())
+                format!("[{name}](/functions/{}.md)", name.to_lowercase())
             } else {
                 format!("`{name}`")
             };
@@ -823,10 +932,10 @@ fn build_stability_page(
          converges. Unlike an unstable period, there is no warm-up you can discard: the \
          difference persists for the whole series.\n\n\
          Two Examples:\n\n\
-         - [AD](/functions/ad) adds each bar's money-flow volume to a running total that begins \
+         - [AD](/functions/ad.md) adds each bar's money-flow volume to a running total that begins \
          at zero on your first bar. Only the differences between bars carry meaning; the \
          absolute level is an artifact of the start date.\n\
-         - [SAR](/functions/sar) is a state machine: it reads the first two bars to decide \
+         - [SAR](/functions/sar.md) is a state machine: it reads the first two bars to decide \
          whether the trend starts long or short, then carries that direction, the extreme \
          price, and an acceleration factor forward. Start a day earlier and it can pick the \
          opposite direction, putting the stop on the other side of price for the rest of the \
@@ -843,10 +952,12 @@ fn build_index(funcs: &[&FuncDef]) -> String {
     for f in funcs {
         by_group.entry(f.group.as_str()).or_default().push(f);
     }
+    // `title:` drives the `<h1>`, the `<title>` and the sidebar label all three, so it stays
+    // the bare "Functions": the theme already appends "| TA-Lib.org" to the `<title>`, and
+    // "TA-Lib Functions | TA-Lib.org" would say the brand twice.
     let mut s = String::from(
-        "---\ntitle: Functions\ndescription: \"All TA-Lib technical analysis functions, grouped by category.\"\n---\n\n",
+        "---\ntitle: Functions\ndescription: \"Every TA-Lib technical analysis function, grouped by category — formula, inputs, outputs and source for each.\"\n---\n\n",
     );
-    s.push_str("# TA-Lib Functions\n\n");
     s.push_str(
         "All technical-analysis functions, grouped by category. Each page documents the \
          formula, inputs, outputs, and links to the C / Rust / Java source.\n",
@@ -856,7 +967,7 @@ fn build_index(funcs: &[&FuncDef]) -> String {
         for f in fns {
             let dir = f.name.to_lowercase();
             let hint = f.hint.as_deref().unwrap_or("");
-            s.push_str(&format!("- [{}](/functions/{dir}) — {hint}\n", f.name));
+            s.push_str(&format!("- [{}](/functions/{dir}.md) — {hint}\n", f.name));
         }
     }
     s
@@ -1123,7 +1234,7 @@ mod tests {
         let line = stability_line(&f, &enums, &all);
         assert_eq!(
             line,
-            "**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)",
+            "**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)",
             "the plain case is the bare state: what it means belongs on the reference page"
         );
 
@@ -1145,7 +1256,7 @@ mod tests {
         all.insert("EMA".to_string(), Stability { intrinsic: true, ..Stability::default() });
         assert_eq!(
             stability_line(&f, &enums, &all),
-            "**Numerical Stability:** [Initial Unstable Period](/functions/stability#initial-unstable-period)"
+            "**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)"
         );
 
         // Combination: unstable regardless *and* MA-type dependent -> both stated.
@@ -1173,7 +1284,7 @@ mod tests {
         let line = stability_line(&f, &enums, &all);
         assert_eq!(
             line,
-            "**Numerical Stability:** [Path-Dependent](/functions/stability#path-dependent)",
+            "**Numerical Stability:** [Path-Dependent](/functions/stability.md#path-dependent)",
             "no trailing prose when there is nothing specific to this function to say"
         );
 

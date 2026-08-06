@@ -1,9 +1,7 @@
 ---
-title: AROONOSC
-description: "Aroon Oscillator: AroonUp minus AroonDown over a lookback window. Measures trend direction and strength on a -100..+100 scale. Positive when the high is more recent than the low (up-trend); negative when the low is more recent (down-trend)."
+title: "Aroon Oscillator (AROONOSC)"
+description: "Aroon Oscillator: AroonUp minus AroonDown over a lookback window. Measures trend direction and strength on a -100..+100 scale."
 ---
-
-# AROONOSC
 
 ## Summary
 
@@ -34,7 +32,7 @@ highestIdx/lowestIdx = bar index of the highest high / lowest low in the last (p
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -60,7 +58,7 @@ Aroon Oscillator
 
 ## See Also
 
-[AROON](/functions/aroon) · [MINMAX](/functions/minmax)
+[AROON](/functions/aroon.md) · [MINMAX](/functions/minmax.md)
 
 ## References
 

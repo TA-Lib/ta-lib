@@ -1,9 +1,7 @@
 ---
-title: VAR
-description: "Rolling population variance of a real series over a given period. Measures dispersion of values around their mean. Higher values indicate greater dispersion; 0 means constant input."
+title: "Variance (VAR)"
+description: "Rolling population variance of a real series over a given period. Measures dispersion of values around their mean."
 ---
-
-# VAR
 
 ## Summary
 
@@ -35,7 +33,7 @@ $\mathrm{VAR} = \frac{1}{n}\sum x_i^2 - \left(\frac{1}{n}\sum x_i\right)^2$, ove
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -61,4 +59,4 @@ Variance
 
 ## See Also
 
-[STDDEV](/functions/stddev)
+[STDDEV](/functions/stddev.md)

@@ -1,9 +1,7 @@
 ---
-title: LINEARREG_INTERCEPT
-description: "Returns the y-intercept (b) of the least-squares regression line fitted over the last optInTimePeriod values. Part of the linear-regression family (LINEARREG, SLOPE, ANGLE, TSF)."
+title: "Linear Regression Intercept (LINEARREG_INTERCEPT)"
+description: "Returns the y-intercept (b) of the least-squares regression line fitted over the last optInTimePeriod values."
 ---
-
-# LINEARREG_INTERCEPT
 
 ## Summary
 
@@ -31,7 +29,7 @@ b = (SumY − m·SumX) / period   ← output
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -57,4 +55,4 @@ Linear Regression Intercept
 
 ## See Also
 
-[LINEARREG](/functions/linearreg) · [LINEARREG_SLOPE](/functions/linearreg_slope) · [LINEARREG_ANGLE](/functions/linearreg_angle) · [TSF](/functions/tsf)
+[LINEARREG](/functions/linearreg.md) · [LINEARREG_SLOPE](/functions/linearreg_slope.md) · [LINEARREG_ANGLE](/functions/linearreg_angle.md) · [TSF](/functions/tsf.md)

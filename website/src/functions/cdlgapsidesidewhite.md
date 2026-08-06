@@ -1,9 +1,7 @@
 ---
-title: CDLGAPSIDESIDEWHITE
-description: "A three-candle pattern: a first candle followed by two white candles of similar body size that both gap the same direction (up or down) from the first candle's real body and open at about the same level. It is a continuation signal whose sign reports the gap direction; the code does not verify a prior trend. A hit signals continuation in the gap's direction: +100 with an upside gap is bullish, -100 with a downside gap is bearish."
+title: "Up/Down-gap side-by-side white lines (CDLGAPSIDESIDEWHITE)"
+description: "A three-candle pattern: a first candle followed by two white candles of similar body size that both gap the same direction (up or down) from the first…"
 ---
-
-# CDLGAPSIDESIDEWHITE
 
 ## Summary
 
@@ -26,7 +24,7 @@ A three-candle pattern: a first candle followed by two white candles of similar 
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Up/Down-gap side-by-side white lines, Gapping side-by-side white lines
 
 ## See Also
 
-[CDLTASUKIGAP](/functions/cdltasukigap) · [CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods)
+[CDLTASUKIGAP](/functions/cdltasukigap.md) · [CDLXSIDEGAP3METHODS](/functions/cdlxsidegap3methods.md)

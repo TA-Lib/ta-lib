@@ -1,9 +1,7 @@
 ---
-title: CDLTRISTAR
-description: "A three-candle pattern of three consecutive doji where the middle doji is a star (its body gaps away from the first). Bullish or bearish reversal signal. +100 = bullish reversal (middle doji gapped down), -100 = bearish reversal (middle doji gapped up)."
+title: "Tristar Pattern (CDLTRISTAR)"
+description: "A three-candle pattern of three consecutive doji where the middle doji is a star (its body gaps away from the first)."
 ---
-
-# CDLTRISTAR
 
 ## Summary
 
@@ -26,7 +24,7 @@ A three-candle pattern of three consecutive doji where the middle doji is a star
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Tristar Pattern, Tri-Star
 
 ## See Also
 
-[CDLDOJI](/functions/cdldoji) · [CDLDOJISTAR](/functions/cdldojistar) · [CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar) · [CDLEVENINGDOJISTAR](/functions/cdleveningdojistar)
+[CDLDOJI](/functions/cdldoji.md) · [CDLDOJISTAR](/functions/cdldojistar.md) · [CDLMORNINGDOJISTAR](/functions/cdlmorningdojistar.md) · [CDLEVENINGDOJISTAR](/functions/cdleveningdojistar.md)

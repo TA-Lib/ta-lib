@@ -1,9 +1,7 @@
 ---
-title: CDL3WHITESOLDIERS
-description: "A three-candle pattern of consecutive white candles with progressively higher closes, each opening within/near the prior body and each with a very short upper shadow. It is a bullish reversal signal. A hit (+100) is bullish, signaling a reversal (most meaningful in a downtrend, which the code does not verify)."
+title: "Three Advancing White Soldiers (CDL3WHITESOLDIERS)"
+description: "A three-candle pattern of consecutive white candles with progressively higher closes, each opening within/near the prior body and each with a very short…"
 ---
-
-# CDL3WHITESOLDIERS
 
 ## Summary
 
@@ -26,7 +24,7 @@ A three-candle pattern of consecutive white candles with progressively higher cl
 
 ## Properties
 
-**Numerical Stability:** [Start-Independent](/functions/stability#start-independent)
+**Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
 | Display<br>Flags |
 | :-- |
@@ -52,4 +50,4 @@ Three Advancing White Soldiers, Three White Soldiers
 
 ## See Also
 
-[CDL3BLACKCROWS](/functions/cdl3blackcrows) · [CDLADVANCEBLOCK](/functions/cdladvanceblock) · [CDLIDENTICAL3CROWS](/functions/cdlidentical3crows)
+[CDL3BLACKCROWS](/functions/cdl3blackcrows.md) · [CDLADVANCEBLOCK](/functions/cdladvanceblock.md) · [CDLIDENTICAL3CROWS](/functions/cdlidentical3crows.md)
