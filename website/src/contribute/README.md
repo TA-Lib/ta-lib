@@ -6,7 +6,7 @@ description: "How to contribute a new TA function to TA-Lib: agree the spec in t
 # How to Contribute a New TA Function
 
 ::: tip Just want to request a function, not implement it?
-Check the [New TA Functions board](https://github.com/orgs/TA-Lib/projects/1). If the function you want is not already there, open a [GitHub issue](https://github.com/TA-Lib/ta-lib/issues) naming the function and a published reference for its formula, and it will be added to the board for anyone to pick up.
+Then add it to the [New TA Functions board](https://github.com/orgs/TA-Lib/projects/1) and someone else might implement it for you.
 :::
 
 TA-Lib development is **human-driven specs, AI-driven code**.
