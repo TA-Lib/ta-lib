@@ -28,7 +28,7 @@ TA-Lib Definition: [`wclprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | Rust | [`wclprice.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/wclprice.rs) |
 | Java | [`Core_WCLPRICE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_WCLPRICE.java) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

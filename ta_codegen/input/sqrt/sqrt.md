@@ -26,7 +26,7 @@ TA-Lib Definition: [`sqrt.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Rust | [`sqrt.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/sqrt.rs) |
 | Java | [`Core_SQRT.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SQRT.java) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

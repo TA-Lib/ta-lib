@@ -42,7 +42,7 @@ TA-Lib Definition: [`vwma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Rust | [`vwma.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/vwma.rs) |
 | Java | [`Core_VWMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_VWMA.java) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

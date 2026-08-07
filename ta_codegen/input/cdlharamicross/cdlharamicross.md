@@ -29,7 +29,7 @@ TA-Lib Definition: [`cdlharamicross.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | Rust | [`cdlharamicross.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlharamicross.rs) |
 | Java | [`Core_CDLHARAMICROSS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLHARAMICROSS.java) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

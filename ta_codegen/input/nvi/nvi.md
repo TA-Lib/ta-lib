@@ -39,7 +39,7 @@ TA-Lib Definition: [`nvi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Rust | [`nvi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/nvi.rs) |
 | Java | [`Core_NVI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_NVI.java) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

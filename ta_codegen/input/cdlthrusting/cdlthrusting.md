@@ -30,7 +30,7 @@ TA-Lib Definition: [`cdlthrusting.c`](https://github.com/TA-Lib/ta-lib/blob/main
 | Rust | [`cdlthrusting.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlthrusting.rs) |
 | Java | [`Core_CDLTHRUSTING.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLTHRUSTING.java) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 
