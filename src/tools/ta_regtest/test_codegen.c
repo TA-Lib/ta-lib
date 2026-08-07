@@ -108,6 +108,45 @@ int codegen_lang_needs_transcendental_tol(const char *lang)
     return strcmp(lang, "java") == 0 || strcmp(lang, "csharp") == 0;
 }
 
+/* Which languages can be ASKED whether TA_INTEGER_DEFAULT on an enum:MAType
+ * parameter selects the declared default. C, Rust and C# type that parameter as
+ * an integer (a C# enum is an int with names), so the sentinel reaches their
+ * validation and the substitution is what maps it back (#162). Java's MAType is
+ * a real enum and Core takes MAType: the value is unrepresentable rather than
+ * mishandled, its server would die constructing one
+ * (MAType.values()[Integer.MIN_VALUE] throws), and substituting server-side
+ * would only manufacture a green. Withheld vectors are counted and printed.
+ *
+ * Lives up here with its sibling capability predicates because it has TWO
+ * consumers: --xlang-hash's parameter vectors and the sentinel float leg
+ * (#170). Same reason codegen_lang_needs_transcendental_tol is one definition. */
+static int codegen_lang_can_pass_enum_sentinel(const char *lang)
+{
+    if( !lang ) return 1;
+    return strcmp(lang, "java") != 0;
+}
+
+/* ---- Default-sentinel float leg counters (issue #170) ----
+ * The sentinel pass is a SUBSET of the float leg, so it gets its own counters
+ * rather than folding into g_floatLegCompared: a small subset behind a big
+ * aggregate can be switched off entirely while the aggregate's floor stays
+ * green on the cases that still run (the #162 lesson). Per LANGUAGE, because
+ * the interesting failure — one server erroring on every sentinel request — is
+ * invisible in a total that another server keeps non-zero.
+ *
+ * `eligible` counts functions that reached the pass with at least one slot
+ * actually carrying a sentinel; it is what makes the floor precise under
+ * --function= filters that select only parameterless functions. */
+static long g_floatSentinelCompared[NUM_LANGUAGES];
+static long g_floatSentinelEligible[NUM_LANGUAGES];
+/* Of the comparisons, those that actually diffed OUTPUT ELEMENTS. A pass whose
+ * two halves both answer "success, zero elements" compares retCode and nothing
+ * else, so counting it as coverage would be the empty-output vacuity every
+ * sibling gate here guards against. This, not `compared`, is what the floor
+ * tests. */
+static long g_floatSentinelWithOutput[NUM_LANGUAGES];
+static long g_floatSentinelEnumWithheld = 0;
+
 /* One line per language per kind of skipped leg, so the coverage a language
  * cannot take is stated in the log instead of quietly vanishing. */
 #define MAX_COMPAT_NOTES (NUM_LANGUAGES * 4)
@@ -354,6 +393,11 @@ static TA_FuncUnstId get_unst_id(const char *funcName)
 
 /* ---- Generic CodegenRangeTestParam (Task 6) ---- */
 
+/* Widest optional-parameter list any pass may drive at once. Sizes
+ * CodegenRangeTestParam::optOverride[] below; the ref differential sweep
+ * (which introduced it) refuses functions with more than this many. */
+#define SWEEP_MAX_OPT 16
+
 typedef struct {
     /* ta_abstract function metadata */
     const TA_FuncInfo *funcInfo;
@@ -382,6 +426,12 @@ typedef struct {
 
     /* Codegen pipe (language server under test) */
     CodegenPipe *cp;
+    /* Which language `cp` speaks: its ALL_LANGUAGES name and index. The pipe
+     * alone does not say, and the sentinel float leg needs both — the name to
+     * decide whether that language's optional-parameter surface can carry the
+     * enum sentinel, the index for its per-language non-vacuity counters. */
+    const char *langName;
+    int         langIndex;
     /* Reference oracle pipe (ta_ref_serve) — fills the comparison baseline */
     CodegenPipe *refCp;
     char *requestBuf;
@@ -399,7 +449,7 @@ typedef struct {
      * large-period) value. Stored as double; integer params truncate on
      * emission. Takes precedence over useLargePeriod. */
     int    optOverrideActive;
-    double optOverride[16];
+    double optOverride[SWEEP_MAX_OPT];
 
     /* Float-variant leg: build_json_request adds "use_float":1, routing the
      * servers through the single-precision TA_S_ API. Comparisons then use
@@ -424,7 +474,7 @@ typedef struct {
 
 /* Forward declaration: defined with the sweep further below, used by the
  * per-function default pass as well. */
-static void run_float_leg(CodegenRangeTestParam *p);
+static void run_float_leg(CodegenRangeTestParam *p, int withSentinel);
 
 /* ---- Large-period stress coverage (Task 10) ----
  * The default codegen sweep uses each opt param's default (e.g. period 14), so a
@@ -1366,6 +1416,8 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     params.nbBars      = (int)ctx->history->nbBars;
     params.unstId      = get_unst_id(funcInfo->name);
     params.cp          = ctx->cp;
+    params.langName    = ctx->lang->name;
+    params.langIndex   = ctx->langIndex;
     params.refCp       = ctx->refCp;
     params.requestBuf  = ctx->requestBuf;
     params.responseBuf = ctx->responseBuf;
@@ -1394,7 +1446,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         if( !strstr(ctx->refFuncList, needle) )
         {
             if( strcmp(ctx->lang->name, "rust") != 0 )
-                run_float_leg(&params);
+                run_float_leg(&params, 1);
             if( params.codegenError != TA_TEST_PASS )
             {
                 printf("CODEGEN FAILED (code=%d)  (TA_%s is post-reference: "
@@ -1490,11 +1542,15 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * This ran C-only until the Java and C# servers gained a float path. While
      * it did, a k-factor defect sat in all three float surfaces and only C's was
      * reachable by any gate.
+     *
+     * withSentinel=1: this is the pass that reaches Java and C#, so it is where
+     * the default-parameter sentinel has to be sent (issue #170). It runs after
+     * the timing snapshot above, so the extra calls do not skew the reported ns.
      */
     if( strcmp(ctx->lang->name, "rust") != 0 )
         g_floatCapableLangTested = 1;
     if( params.codegenError == TA_TEST_PASS && strcmp(ctx->lang->name, "rust") != 0 )
-        run_float_leg(&params);
+        run_float_leg(&params, 1);
 
     /* ---- Large-period pass (Task 10) ----
      * Re-run the codegen value comparison with every IntegerRange opt param pushed
@@ -1666,7 +1722,9 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
  * hand-written group with its own pinned expected values.
  */
 
-#define SWEEP_MAX_OPT 16
+/* SWEEP_MAX_OPT is defined with CodegenRangeTestParam, which sizes
+ * optOverride[] by it — the two were always coupled (sweep_one_function bails
+ * on nbOptInput > SWEEP_MAX_OPT precisely so the writes fit), just not visibly. */
 
 /* --- Post-freeze enum values (issue #139) --------------------------------
  * TA_MAType_HMA (9) exists only in the current library: the frozen oracles
@@ -1782,15 +1840,109 @@ static void sweep_compare_guarded(CodegenRangeTestParam *p)
     }
 }
 
-/* Float-variant leg: re-run the current request through the TA_S_ API on
- * BOTH servers ("use_float":1) and diff single-precision against
- * single-precision. The frozen reference library exports the guarded TA_S_
- * functions, so ta_ref_serve provides a true S baseline. Widened epsilon:
- * float carries ~1e-7 relative noise per reordered operation chain. */
-static void run_float_leg(CodegenRangeTestParam *p)
+/* Everything a float-leg pass overwrites in *p, so the leg can be a no-op on
+ * the caller's state.
+ *
+ * Every pass calls parse_ref_baseline(), which rewrites lastRetCode /
+ * lastBegIdx / lastNbElement and the output buffers — the exact fields
+ * sweep_compare_guarded() diffs the in-process guarded call against — and the
+ * sentinel pass additionally rewrites optOverride[]. Before this snapshot the
+ * leg was safe only because it happened to be the LAST statement of
+ * sweep_run_variant(); an extra pass inserted anywhere else produced
+ *
+ *     SWEEP GUARDED MISMATCH [TA_ACCBANDS]: guarded=2/250 vs ref=19/233
+ *
+ * — the guarded call at the swept period 3 against a baseline the extra pass
+ * had left holding the default period 20. That is an ordering constraint no
+ * signature states, so it is removed rather than documented (issue #170).
+ *
+ * File-static, like this file's other big scratch (sweepGuardedReal): ~10KB,
+ * and the structs that reach here are main() locals on a 1MB Windows stack.
+ * Not reentrant — nothing calls the leg from inside the leg. */
+static struct {
+    TA_RetCode lastRetCode;
+    TA_Integer lastBegIdx;
+    TA_Integer lastNbElement;
+    TA_Real    real[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
+    TA_Integer integer[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
+    int        optOverrideActive;
+    double     optOverride[SWEEP_MAX_OPT];
+    /* Request-shaping flags and the timing accumulators compare_codegen_output_
+     * generic() adds to. Snapshotted rather than zeroed on the way out so this
+     * really is "everything the leg touches" — a later reader should not have to
+     * re-derive which of these the callers happen to leave at zero. */
+    int        useFloat;
+    int        widenFloatInputs;
+    double     epsilonScale;
+    long long  server_total_ns;
+    int        timing_count;
+} g_floatLegSaved;
+
+static void float_leg_save_state(const CodegenRangeTestParam *p)
 {
-    if( p->codegenError != TA_TEST_PASS )
-        return;
+    unsigned int o;
+    g_floatLegSaved.lastRetCode       = p->lastRetCode;
+    g_floatLegSaved.lastBegIdx        = p->lastBegIdx;
+    g_floatLegSaved.lastNbElement     = p->lastNbElement;
+    g_floatLegSaved.optOverrideActive = p->optOverrideActive;
+    g_floatLegSaved.useFloat          = p->useFloat;
+    g_floatLegSaved.widenFloatInputs  = p->widenFloatInputs;
+    g_floatLegSaved.epsilonScale      = p->epsilonScale;
+    g_floatLegSaved.server_total_ns   = p->server_total_ns;
+    g_floatLegSaved.timing_count      = p->timing_count;
+    memcpy(g_floatLegSaved.optOverride, p->optOverride,
+           sizeof(g_floatLegSaved.optOverride));
+    for( o = 0; o < p->funcInfo->nbOutput && o < MAX_OUTPUTS; o++ )
+    {
+        if( p->outRealBufs[o] )
+            memcpy(g_floatLegSaved.real[o], p->outRealBufs[o],
+                   MAX_NB_TEST_ELEMENT * sizeof(TA_Real));
+        if( p->outIntBufs[o] )
+            memcpy(g_floatLegSaved.integer[o], p->outIntBufs[o],
+                   MAX_NB_TEST_ELEMENT * sizeof(TA_Integer));
+    }
+}
+
+static void float_leg_restore_state(CodegenRangeTestParam *p)
+{
+    unsigned int o;
+    p->lastRetCode       = g_floatLegSaved.lastRetCode;
+    p->lastBegIdx        = g_floatLegSaved.lastBegIdx;
+    p->lastNbElement     = g_floatLegSaved.lastNbElement;
+    p->optOverrideActive = g_floatLegSaved.optOverrideActive;
+    p->useFloat          = g_floatLegSaved.useFloat;
+    p->widenFloatInputs  = g_floatLegSaved.widenFloatInputs;
+    p->epsilonScale      = g_floatLegSaved.epsilonScale;
+    p->server_total_ns   = g_floatLegSaved.server_total_ns;
+    p->timing_count      = g_floatLegSaved.timing_count;
+    memcpy(p->optOverride, g_floatLegSaved.optOverride,
+           sizeof(g_floatLegSaved.optOverride));
+    for( o = 0; o < p->funcInfo->nbOutput && o < MAX_OUTPUTS; o++ )
+    {
+        if( p->outRealBufs[o] )
+            memcpy(p->outRealBufs[o], g_floatLegSaved.real[o],
+                   MAX_NB_TEST_ELEMENT * sizeof(TA_Real));
+        if( p->outIntBufs[o] )
+            memcpy(p->outIntBufs[o], g_floatLegSaved.integer[o],
+                   MAX_NB_TEST_ELEMENT * sizeof(TA_Integer));
+    }
+}
+
+/* One float-leg pass at whatever parameter vector p->optOverride* currently
+ * selects: the language's single-precision entry point against its OWN double
+ * one, on float-widened inputs. Returns 1 when an acknowledged comparison
+ * happened, 0 when the server could not answer at all.
+ *
+ * `strict` makes an error response from the double half a FAILURE instead of a
+ * skip, and `what` labels the pass in that message. Only the sentinel pass sets
+ * it: the resolved-default pass has already proven this server answers this
+ * function, so an error can then only mean the sentinel did not resolve.
+ *
+ * The float half needs no `strict` equivalent — an error response carries no
+ * "used_float", so the acknowledgment check below already fails it. */
+static int float_leg_pass(CodegenRangeTestParam *p, int strict, const char *what)
+{
+    int compared = 0;
 
     /* TA_S_<F>(float) is now bit-identical to TA_<F>((double)float) (the
      * single-precision variants widen every float input read, PR #33). Verify
@@ -1806,9 +1958,9 @@ static void run_float_leg(CodegenRangeTestParam *p)
     /* Baseline: double variant on the float-widened inputs. */
     p->useFloat = 0;
     build_json_request(p, 0, p->nbBars - 1);
-    if( codegen_pipe_call(p->cp, p->requestBuf, p->responseBuf,
-                          JSON_BUF_SIZE) == TA_TEST_PASS
-        && !json_is_error(p->responseBuf) )
+    int callOk = (codegen_pipe_call(p->cp, p->requestBuf, p->responseBuf,
+                                    JSON_BUF_SIZE) == TA_TEST_PASS);
+    if( callOk && !json_is_error(p->responseBuf) )
     {
         parse_ref_baseline(p);
 
@@ -1829,25 +1981,159 @@ static void run_float_leg(CodegenRangeTestParam *p)
             const char *ack = json_find_field(p->responseBuf, "used_float", &len);
             if( !ack || strtol(ack, NULL, 10) != 1 )
             {
-                printf("CODEGEN FLOAT LEG NOT TAKEN [TA_%s]: server did not acknowledge "
+                printf("CODEGEN FLOAT LEG NOT TAKEN [TA_%s]%s: server did not acknowledge "
                        "use_float — the leg would have passed while comparing the double "
-                       "result against itself\n", p->funcInfo->name);
+                       "result against itself\n", p->funcInfo->name, what);
                 p->codegenError = TA_CODEGEN_OUTPUT_MISMATCH;
             }
             else
             {
-                g_floatLegCompared++;
+                compared = 1;
                 for( unsigned int o = 0; o < p->funcInfo->nbOutput; o++ )
                     compare_codegen_output_generic(p, o);
             }
         }
         if( p->codegenError != TA_TEST_PASS )
-            printf("  (mismatch above is the FLOAT (TA_S_) leg: TA_S_ vs TA_ on widened inputs)\n");
+            printf("  (mismatch above is the FLOAT (TA_S_) leg%s: TA_S_ vs TA_ on widened inputs)\n",
+                   what);
+    }
+    else if( strict )
+    {
+        printf("CODEGEN FLOAT LEG REJECTED [TA_%s]%s: %s where the resolved-default "
+               "request on the same function succeeded\n",
+               p->funcInfo->name, what,
+               callOk ? "the server answered with an error"
+                      : "the server call failed (pipe closed?)");
+        p->codegenError = TA_CODEGEN_RETCODE_MISMATCH;
     }
 
     p->useFloat = 0;
     p->widenFloatInputs = 0;
     p->epsilonScale = 0.0;
+    return compared;
+}
+
+/* Put every optional parameter at its "use the declared default" sentinel.
+ * Returns how many slots actually carry one.
+ *
+ * The single exclusion is a CHOICE-LIST parameter on a language whose
+ * optional-parameter surface cannot represent the value — Java, whose Core
+ * takes a real MAType enum and whose generated test server dies constructing
+ * one from Integer.MIN_VALUE (#162). That slot is left at its explicit default
+ * and counted; the function's other parameters still ride the sentinel, which
+ * is strictly more coverage than skipping the function. */
+static int float_leg_set_sentinels(CodegenRangeTestParam *p)
+{
+    unsigned int i;
+    int nbSent = 0;
+
+    /* optOverrideActive makes build_json_request read optOverride[i] for EVERY
+     * optional parameter, so a function wider than the array would send it off
+     * the end. The ref sweep holds the same invariant by refusing such a
+     * function up front; here it cannot be a silent skip — that would drop the
+     * function's sentinel coverage without saying so. Widest shipped function is
+     * SAREXT at 8, so this is a guard against a future definition, not a live
+     * case. */
+    if( p->funcInfo->nbOptInput > SWEEP_MAX_OPT )
+    {
+        printf("CODEGEN FLOAT SENTINEL OVERFLOW [TA_%s]: %u optional parameters "
+               "exceeds SWEEP_MAX_OPT (%d) — raise it, do not skip the function\n",
+               p->funcInfo->name, p->funcInfo->nbOptInput, SWEEP_MAX_OPT);
+        p->codegenError = TA_CODEGEN_OUTPUT_MISMATCH;
+        return 0;
+    }
+
+    for( i = 0; i < p->funcInfo->nbOptInput; i++ )
+    {
+        const TA_OptInputParameterInfo *optInfo;
+        TA_GetOptInputParameterInfo(p->funcInfo->handle, i, &optInfo);
+
+        switch( optInfo->type )
+        {
+        case TA_OptInput_IntegerRange:
+            p->optOverride[i] = (double)TA_INTEGER_DEFAULT;
+            nbSent++;
+            break;
+        case TA_OptInput_IntegerList:
+            if( codegen_lang_can_pass_enum_sentinel(p->langName) )
+            {
+                p->optOverride[i] = (double)TA_INTEGER_DEFAULT;
+                nbSent++;
+            }
+            else
+            {
+                p->optOverride[i] = optInfo->defaultValue;
+                g_floatSentinelEnumWithheld++;
+            }
+            break;
+        case TA_OptInput_RealRange:
+        case TA_OptInput_RealList:
+            p->optOverride[i] = TA_REAL_DEFAULT;
+            nbSent++;
+            break;
+        default:
+            p->optOverride[i] = optInfo->defaultValue;
+            break;
+        }
+    }
+    p->optOverrideActive = 1;
+    return nbSent;
+}
+
+/* Float-variant leg: re-run the current request through the TA_S_ API on the
+ * server under test ("use_float":1) and diff single-precision against its own
+ * double result.
+ *
+ * withSentinel adds a SECOND pass with every optional parameter set to
+ * TA_INTEGER_DEFAULT / TA_REAL_DEFAULT (issue #170). Both halves of that pass
+ * carry the sentinel, so the property under test is "each tier substitutes the
+ * SAME declared default" — self-contained, no oracle, and it holds for the
+ * post-reference functions that have no ta_ref_serve baseline.
+ *
+ * That vector is the one that exposed the TA_S_EMA defect fixed in 2e9767397:
+ * the float body derived EMA's k factor from the raw sentinel because the
+ * initialiser ran before the prologue substituted it, while the double tier
+ * delegated to TA_EMA_Private after validation and was right. The same defect
+ * was live in Java's float emaInternal and C#'s float Ema, where no gate could
+ * see it — reaching only resolved defaults, this leg could not have caught it.
+ *
+ * Not asserted here: float(sentinel) == float(default). A body that mishandles
+ * the sentinel diverges from its own double tier (the pair check above) or is
+ * rejected outright (the `strict` arm), and the double tier's own
+ * sentinel-selects-the-default contract is gated by --xlang-hash (#148).
+ *
+ * The sweep passes withSentinel=0: it is C-only, already varies parameters, and
+ * a per-variant sentinel pass would re-send one identical request each time. */
+static void run_float_leg(CodegenRangeTestParam *p, int withSentinel)
+{
+    if( p->codegenError != TA_TEST_PASS )
+        return;
+
+    float_leg_save_state(p);
+
+    if( float_leg_pass(p, 0, "") )
+    {
+        g_floatLegCompared++;
+
+        if( withSentinel && p->codegenError == TA_TEST_PASS
+            && p->langIndex >= 0 && p->langIndex < (int)NUM_LANGUAGES )
+        {
+            /* A function with no sentinel-able optional parameter has nothing
+             * to add here — the pass would repeat the request just made. */
+            if( float_leg_set_sentinels(p) > 0 )
+            {
+                g_floatSentinelEligible[p->langIndex]++;
+                if( float_leg_pass(p, 1, " [default-sentinel]") )
+                {
+                    g_floatSentinelCompared[p->langIndex]++;
+                    if( p->lastNbElement > 0 )
+                        g_floatSentinelWithOutput[p->langIndex]++;
+                }
+            }
+        }
+    }
+
+    float_leg_restore_state(p);
 }
 
 /* Run one variant: ta_ref_serve fills the baseline, the language server is
@@ -1874,7 +2160,7 @@ static int sweep_run_variant(CodegenRangeTestParam *p)
     if( p->codegenError == TA_TEST_PASS )
         sweep_compare_guarded(p);
     if( p->sweepFloatLeg )
-        run_float_leg(p);
+        run_float_leg(p, 0);
     return 1;
 }
 
@@ -1918,6 +2204,8 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     params.nbBars      = (int)ctx->history->nbBars;
     params.unstId      = get_unst_id(funcInfo->name);
     params.cp          = ctx->cp;
+    params.langName    = ctx->lang->name;
+    params.langIndex   = ctx->langIndex;
     params.refCp       = ctx->refCp;
     params.requestBuf  = ctx->requestBuf;
     params.responseBuf = ctx->responseBuf;
@@ -3555,7 +3843,7 @@ static void fuzz_add_out_of_range(const TA_OptInputParameterInfo *oi,
  * [TA_REAL_MIN, TA_REAL_MAX] reals get no range check, so this is their only
  * contract) and choice lists alike. Excluding IntegerList here is what hid #162.
  * Java cannot take the choice-list vector at all; it is exempted per SERVER
- * instead — see xlang_lang_can_pass_enum_sentinel. */
+ * instead — see codegen_lang_can_pass_enum_sentinel. */
 static void fuzz_add_default_sentinel(const TA_OptInputParameterInfo *oi,
                                       double cand[FUZZ_MAX_CAND],
                                       char candKind[FUZZ_MAX_CAND],
@@ -4417,27 +4705,13 @@ typedef struct {
                                    * can CARRY the integer default sentinel on a
                                    * choice-list parameter, so the #162 sentinel
                                    * leg is a real assertion there. 0 = it cannot
-                                   * — see xlang_lang_can_pass_enum_sentinel. */
+                                   * — see codegen_lang_can_pass_enum_sentinel. */
     CodegenPipe        cp;
     int                open;      /* 1 once the subprocess is up              */
     long long          cases;     /* cases compared against the golden        */
     long long          mism;      /* real bitwise/tolerance mismatches        */
     int                restarts;  /* recovered subprocess crashes             */
 } XlangServer;
-
-/* Which languages can be ASKED whether TA_INTEGER_DEFAULT on an enum:MAType
- * parameter selects the declared default. C, Rust and C# type that parameter as
- * an integer (a C# enum is an int with names), so the sentinel reaches their
- * validation and the substitution is what maps it back (#162). Java's MAType is
- * a real enum and Core takes MAType: the value is unrepresentable rather than
- * mishandled, its server would die constructing one
- * (MAType.values()[Integer.MIN_VALUE] throws), and substituting server-side
- * would only manufacture a green. Withheld vectors are counted and printed. */
-static int xlang_lang_can_pass_enum_sentinel(const char *lang)
-{
-    if( !lang ) return 1;
-    return strcmp(lang, "java") != 0;
-}
 
 /* 1 when this parameter vector puts the default sentinel on a CHOICE-LIST
  * parameter. Only one parameter is varied per vector and the all-defaults vector
@@ -5472,7 +5746,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
         servers[s].tolTranscendental =
             codegen_lang_needs_transcendental_tol(servers[s].name);
         servers[s].enumSentinel =
-            xlang_lang_can_pass_enum_sentinel(servers[s].name);
+            codegen_lang_can_pass_enum_sentinel(servers[s].name);
     }
 
     XlangCtx ctx;
@@ -6065,14 +6339,63 @@ ErrorNumber test_codegen(const TA_History *history,
         return TA_CODEGEN_OUTPUT_MISMATCH;
     }
 
-    printf("\n=============================================\n");
-    if( g_floatCapableLangTested )
-        printf("All %d language(s) passed codegen verification (float leg: %ld "
-               "acknowledged comparison(s))\n", langsTested, g_floatLegCompared);
-    else
-        printf("All %d language(s) passed codegen verification (no float leg: "
-               "Rust has no single-precision surface)\n", langsTested);
-    printf("=============================================\n");
+    /* Non-vacuity for the default-sentinel pass (#170), PER LANGUAGE. A total
+     * would stay green while one server answered every sentinel request with an
+     * error and compared nothing, because the others keep it non-zero — and one
+     * server silently opting out is exactly the shape of the hole this closes.
+     * `eligible` (functions that reached the pass with a sentinel-able
+     * parameter) rather than a bare count, so a --function= filter naming only
+     * parameterless functions is a legitimate zero rather than a failure. */
+    {
+        long sentinelTotal = 0, sentinelEligible = 0;
+        for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
+        {
+            if( g_floatSentinelEligible[li] > 0 && g_floatSentinelWithOutput[li] == 0 )
+            {
+                printf("\nCODEGEN FAILED: the default-sentinel float leg compared "
+                       "no output for %s — %ld function(s) reached it, %ld produced an "
+                       "acknowledged comparison, none of them any output element\n",
+                       ALL_LANGUAGES[li].display, g_floatSentinelEligible[li],
+                       g_floatSentinelCompared[li]);
+                return TA_CODEGEN_OUTPUT_MISMATCH;
+            }
+            sentinelTotal    += g_floatSentinelWithOutput[li];
+            sentinelEligible += g_floatSentinelEligible[li];
+        }
+
+        /* The per-language floor above is silent when NOTHING is eligible
+         * anywhere — which is what a bug making float_leg_set_sentinels always
+         * return 0 would look like. On an unfiltered run that is impossible on
+         * its face: 79 of the shipped functions carry an optional parameter. So
+         * assert it, and only there, since --function= may legitimately select
+         * none. */
+        if( functionFilter == NULL && g_floatCapableLangTested
+            && sentinelEligible == 0 )
+        {
+            printf("\nCODEGEN FAILED: the default-sentinel float leg found no "
+                   "eligible function in an unfiltered run — every shipped "
+                   "function appeared to have no optional parameter, so the leg "
+                   "asserted nothing anywhere\n");
+            return TA_CODEGEN_OUTPUT_MISMATCH;
+        }
+
+        printf("\n=============================================\n");
+        if( g_floatCapableLangTested )
+        {
+            printf("All %d language(s) passed codegen verification (float leg: %ld "
+                   "acknowledged comparison(s))\n", langsTested, g_floatLegCompared);
+            printf("  default-sentinel pass: %ld comparison(s) with output over %ld "
+                   "eligible function-language pair(s)", sentinelTotal, sentinelEligible);
+            if( g_floatSentinelEnumWithheld > 0 )
+                printf(", %ld choice-list slot(s) withheld (see "
+                       "codegen_lang_can_pass_enum_sentinel)", g_floatSentinelEnumWithheld);
+            printf("\n");
+        }
+        else
+            printf("All %d language(s) passed codegen verification (no float leg: "
+                   "Rust has no single-precision surface)\n", langsTested);
+        printf("=============================================\n");
+    }
 
     /* Write report files */
     write_timing_report("ta_regtest_timing.jsonl");
