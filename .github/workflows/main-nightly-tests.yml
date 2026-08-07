@@ -18,6 +18,7 @@ jobs:
   test:
     name: Test ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
     strategy:
       matrix:
         os: [ubuntu-latest, windows-2022]
@@ -60,18 +61,20 @@ jobs:
         shell: bash
         run: $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py pull --allow-missing
 
+      - name: Install dist build tooling (Linux)
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/apt-install
+        with:
+          packages: >-
+            automake libtool autogen openjdk-21-jdk
+            gcc-multilib gcc-i686-linux-gnu gcc-aarch64-linux-gnu
+
       - name: Build dist assets (Linux)
         if: runner.os == 'Linux'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          sudo apt update
-          sudo apt install -y automake libtool autogen
-          sudo apt install -y openjdk-21-jdk
-          sudo apt install -y gcc-multilib
-          sudo apt install -y gcc-i686-linux-gnu
-          sudo apt install -y gcc-aarch64-linux-gnu
           $PYTHON $GITHUB_WORKSPACE/scripts/package.py
           $PYTHON $GITHUB_WORKSPACE/scripts/test-dist.py
 
@@ -180,6 +183,7 @@ jobs:
     # silently skip this release gate — it has its own checkout+build.
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout main branch
@@ -210,6 +214,7 @@ jobs:
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout main branch
@@ -223,10 +228,9 @@ jobs:
           python-version: "3.x"
 
       - name: Install JDK
-        shell: bash
-        run: |
-          sudo apt update
-          sudo apt install -y openjdk-21-jdk
+        uses: ./.github/actions/apt-install
+        with:
+          packages: openjdk-21-jdk
 
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6

@@ -1,0 +1,42 @@
+name: apt-install
+description: >-
+  Install Debian packages on a hosted runner, hardened against the ways apt
+  stalls there. Every nightly job that needs a toolchain goes through this, so
+  the hardening lives in one place instead of being re-typed per job.
+
+inputs:
+  packages:
+    description: Space-separated package list (one apt-get call installs them all).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        # No tty on a runner: a package that prompts would block until the job
+        # timeout rather than fail.
+        DEBIAN_FRONTEND: noninteractive
+        # Via env, not ${{ }} inside run: keeps the package list out of the
+        # script text that the shell parses.
+        PACKAGES: ${{ inputs.packages }}
+      run: |
+        set -euo pipefail
+
+        # The image's own unattended-upgrades run holds /var/lib/dpkg/lock-frontend
+        # for the first minutes after boot. Stopping the timers is best-effort --
+        # DPkg::Lock::Timeout below is what actually bounds the wait.
+        sudo systemctl stop apt-daily.service apt-daily-upgrade.service 2>/dev/null || true
+        sudo systemctl stop unattended-upgrades.service 2>/dev/null || true
+
+        # apt-get, not apt: apt has no stable CLI for scripts and says so on stderr.
+        # Acquire::Retries    - a stalled Azure mirror retries instead of hanging.
+        # DPkg::Lock::Timeout - wait for a held lock, then FAIL; the default is to
+        #                       wait forever, which is how a 12-minute job becomes
+        #                       a 6-hour one.
+        APT_OPTS=(-o Acquire::Retries=3 -o DPkg::Lock::Timeout=600)
+
+        sudo apt-get update "${APT_OPTS[@]}"
+        # Unquoted on purpose: PACKAGES is a space-separated list to be split.
+        # shellcheck disable=SC2086
+        sudo apt-get install -y --no-install-recommends "${APT_OPTS[@]}" $PACKAGES

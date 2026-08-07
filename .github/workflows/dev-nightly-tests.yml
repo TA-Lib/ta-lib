@@ -26,6 +26,7 @@ jobs:
   test:
     name: Test ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
     permissions:
       contents: write
     env:
@@ -74,18 +75,20 @@ jobs:
         shell: bash
         run: $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py pull --allow-missing
 
+      - name: Install dist build tooling (Linux)
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/apt-install
+        with:
+          packages: >-
+            automake libtool autogen openjdk-21-jdk
+            gcc-multilib gcc-i686-linux-gnu gcc-aarch64-linux-gnu
+
       - name: Build dist assets (Linux)
         if: runner.os == 'Linux'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          sudo apt update
-          sudo apt install -y automake libtool autogen
-          sudo apt install -y openjdk-21-jdk
-          sudo apt install -y gcc-multilib
-          sudo apt install -y gcc-i686-linux-gnu
-          sudo apt install -y gcc-aarch64-linux-gnu
           $PYTHON $GITHUB_WORKSPACE/scripts/package.py
           $PYTHON $GITHUB_WORKSPACE/scripts/test-dist.py
 
@@ -228,6 +231,7 @@ jobs:
   test-macos:
     name: Test macos-latest (clang, ARM64)
     runs-on: macos-latest
+    timeout-minutes: 90
 
     steps:
       - name: Checkout dev Branch
@@ -259,6 +263,7 @@ jobs:
     name: "xlang: all langs vs pre-cutover C"
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
@@ -273,10 +278,9 @@ jobs:
           python-version: "3.x"
 
       - name: Install JDK
-        shell: bash
-        run: |
-          sudo apt update
-          sudo apt install -y openjdk-21-jdk
+        uses: ./.github/actions/apt-install
+        with:
+          packages: openjdk-21-jdk
 
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
@@ -308,6 +312,7 @@ jobs:
     name: "synth-gate: unshipped generator surface, all langs"
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
@@ -322,10 +327,9 @@ jobs:
           python-version: "3.x"
 
       - name: Install JDK
-        shell: bash
-        run: |
-          sudo apt update
-          sudo apt install -y openjdk-21-jdk
+        uses: ./.github/actions/apt-install
+        with:
+          packages: openjdk-21-jdk
 
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
@@ -354,6 +358,7 @@ jobs:
     name: Rust tests (debug profile — overflow gate)
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
@@ -402,6 +407,7 @@ jobs:
   clippy:
     name: Rust clippy + generator tests
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
@@ -452,6 +458,7 @@ jobs:
     # silently skip this release gate — it has its own checkout+build.
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
@@ -492,6 +499,7 @@ jobs:
   arm64-linux:
     name: arm64 Linux (GCC, baseline FMA — oracle contraction gate)
     runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
@@ -508,10 +516,9 @@ jobs:
       # The arm64 images carry a smaller toolset than their x86-64 counterparts,
       # so nothing here is assumed preinstalled the way ubuntu-latest allows.
       - name: Install build tooling
-        shell: bash
-        run: |
-          sudo apt update
-          sudo apt install -y build-essential cmake
+        uses: ./.github/actions/apt-install
+        with:
+          packages: build-essential cmake
 
       - name: Install Rust
         shell: bash
@@ -573,6 +580,7 @@ jobs:
   arm64-csharp:
     name: arm64 Linux (C# bitwise parity — managed FMA on aarch64)
     runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
@@ -588,10 +596,9 @@ jobs:
       # The arm64 images carry a smaller toolset than their x86-64 counterparts,
       # so nothing is assumed preinstalled the way ubuntu-latest allows.
       - name: Install build tooling
-        shell: bash
-        run: |
-          sudo apt update
-          sudo apt install -y build-essential cmake
+        uses: ./.github/actions/apt-install
+        with:
+          packages: build-essential cmake
 
       - name: Install Rust
         shell: bash
@@ -633,6 +640,7 @@ jobs:
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
@@ -646,10 +654,9 @@ jobs:
           python-version: "3.x"
 
       - name: Install JDK
-        shell: bash
-        run: |
-          sudo apt update
-          sudo apt install -y openjdk-21-jdk
+        uses: ./.github/actions/apt-install
+        with:
+          packages: openjdk-21-jdk
 
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
@@ -672,6 +679,7 @@ jobs:
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
@@ -730,6 +738,7 @@ jobs:
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
@@ -771,6 +780,7 @@ jobs:
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
@@ -798,6 +808,7 @@ jobs:
     name: Conan package build
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
@@ -825,6 +836,7 @@ jobs:
     name: ta_codegen output up-to-date
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout dev Branch
