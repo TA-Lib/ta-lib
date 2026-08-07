@@ -7,6 +7,10 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <ctype.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #ifdef __APPLE__
 #include <mach/mach_time.h>
 #endif
@@ -191,7 +195,21 @@
 
 
 static long long get_nanotime(void) {
-#ifdef __APPLE__
+#if defined(_WIN32)
+    /* No clock_gettime in the MSVC CRT. QueryPerformanceCounter is the
+     * monotonic counter here; its frequency is fixed for the lifetime of the
+     * process, so one query is enough. Scaling ticks->ns as (t/f)*1e9 would
+     * truncate to whole seconds, and t*1e9 overflows a signed 64-bit at
+     * ~9.2e9 ticks (roughly an hour at a 10 MHz QPC), so split the tick count
+     * into whole seconds plus a remainder before scaling.
+     */
+    static LARGE_INTEGER freq = {0};
+    LARGE_INTEGER now;
+    if( freq.QuadPart == 0 ) QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&now);
+    return (long long)((now.QuadPart / freq.QuadPart) * 1000000000LL
+         + ((now.QuadPart % freq.QuadPart) * 1000000000LL) / freq.QuadPart);
+#elif defined(__APPLE__)
     static mach_timebase_info_data_t info = {0, 0};
     if( info.denom == 0 ) mach_timebase_info(&info);
     uint64_t t = mach_absolute_time();
@@ -235,12 +253,37 @@ static int g_outIntBuf0[MAX_POINTS];
 static int g_outIntBuf1[MAX_POINTS];
 
 
+/* strtok_r and strcasestr are POSIX; the MSVC CRT has neither. strtok_s is the
+ * same call with the same reentrancy contract, and the case-insensitive search
+ * is short enough to spell out rather than reach for a platform extension.
+ */
+#if defined(_WIN32)
+#define bench_strtok_r(str, delim, save) strtok_s((str), (delim), (save))
+#else
+#define bench_strtok_r(str, delim, save) strtok_r((str), (delim), (save))
+#endif
+
+static const char *bench_strcasestr(const char *hay, const char *needle) {
+    if( !*needle ) return hay;
+    for( ; *hay; hay++ )
+    {
+        const char *h = hay, *n = needle;
+        while( *h && *n && tolower((unsigned char)*h) == tolower((unsigned char)*n) )
+        {
+            h++;
+            n++;
+        }
+        if( !*n ) return hay;
+    }
+    return NULL;
+}
+
 static int func_matches(const char *filter, const char *name) {
     if( !filter || !*filter ) return 1;
     char buf[512]; strncpy(buf, filter, sizeof(buf)-1); buf[sizeof(buf)-1]='\0';
     char *saveptr = NULL;
-    for( char *tok = strtok_r(buf, ",", &saveptr); tok; tok = strtok_r(NULL, ",", &saveptr) )
-        if( strcasestr(name, tok) ) return 1;
+    for( char *tok = bench_strtok_r(buf, ",", &saveptr); tok; tok = bench_strtok_r(NULL, ",", &saveptr) )
+        if( bench_strcasestr(name, tok) ) return 1;
     return 0;
 }
 
