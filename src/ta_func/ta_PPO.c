@@ -344,11 +344,6 @@ TA_RetCode TA_PPO_OpenInternal( struct TA_PPO_Stream **stream, const double inRe
          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
          return TA_ALLOC_ERR;
       }
-      if( !tempBuffer )
-      {
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
-         return TA_ALLOC_ERR;
-      }
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */
@@ -490,11 +485,6 @@ TA_LIB_API TA_RetCode TA_PPO_OpenAndFill( TA_PPO_Stream **stream, const double i
       int i;
       /* Allocate an intermediate buffer. */
       tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
-      if( !tempBuffer )
-      {
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
-         return TA_ALLOC_ERR;
-      }
       if( !tempBuffer )
       {
          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );

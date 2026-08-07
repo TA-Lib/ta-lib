@@ -1283,6 +1283,39 @@ fn malloc_null_check_block(name: &str, call: Expr, cleanup: &str) -> Statement {
     }
 }
 
+/// The pointer a NULL check tests: `!x`, `x == NULL`, `x == 0`. An unrecognized
+/// spelling (`NULL == x`, a cast) yields `None`, which keeps both blocks — the
+/// pre-existing duplicate, never a dropped check.
+fn null_check_var(cond: &Expr) -> Option<&str> {
+    match cond {
+        Expr::Not(inner) => match inner.as_ref() {
+            Expr::Var(v) => Some(v.as_str()),
+            _ => None,
+        },
+        Expr::BinOp(lhs, crate::ir::BinOp::Eq, rhs) => match (lhs.as_ref(), rhs.as_ref()) {
+            (Expr::Var(v), Expr::Var(n)) if n == "NULL" => Some(v.as_str()),
+            (Expr::Var(v), Expr::IntLiteral(0)) => Some(v.as_str()),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+/// Whether a rewritten `then` body exits with `TA_ALLOC_ERR`. Both shapes are
+/// accepted: the bare `Return`, and the cleanup `Block` the early-return arm
+/// wraps it in (children are rewritten before their parent, so in practice the
+/// wrapped one is what arrives here). Only `Block` is descended into — a return
+/// nested inside a further conditional is not an unconditional exit.
+fn returns_alloc_err(body: &[Statement]) -> bool {
+    body.iter().any(|s| match s {
+        Statement::Return {
+            value: Some(Expr::Var(v)),
+        } => matches!(v.as_str(), "ALLOC_ERR" | "TA_ALLOC_ERR"),
+        Statement::Block { body } => returns_alloc_err(body),
+        _ => false,
+    })
+}
+
 /// The transcribed (region, tail) statement lists for the composed Open:
 /// out-meta pointers to dummies, output arrays renamed to scratch, early
 /// returns mapped (success -> BAD_PARAM) with the cleanup prepended, final
@@ -1305,6 +1338,15 @@ fn build_composed_open_bodies(
     // its own intermediates explicitly.
     let cleanup_for_malloc = cleanup_owned.clone();
     let allocated_before: std::cell::RefCell<Vec<String>> = std::cell::RefCell::new(Vec::new());
+    // "Control cannot reach here with this pointer NULL." Set ONLY by the
+    // injection below, so an allocation form the alloc arms do not recognize
+    // leaves the pointer unproven and its source check is kept. Killed by any
+    // other write to the pointer, and by every statement that is not a leaf
+    // (see the default arm), so a proof established inside a branch cannot
+    // escape it. Every kill errs toward keeping a redundant block; only the
+    // reverse could drop a live check.
+    let proven: std::cell::RefCell<std::collections::BTreeSet<String>> =
+        std::cell::RefCell::new(std::collections::BTreeSet::new());
     let malloc_cleanup = move |name: &str| -> String {
         let prior: String =
             allocated_before
@@ -1327,6 +1369,7 @@ fn build_composed_open_bodies(
                 ..
             } if intermediates.contains(&v) && streaming::expr_allocates(&value) => {
                 let cu = malloc_cleanup(&v);
+                proven.borrow_mut().insert(v.clone());
                 Some(malloc_null_check_block(&v, value, &cu))
             }
             // Declaration-with-initializer form
@@ -1337,7 +1380,47 @@ fn build_composed_open_bodies(
                 ..
             } if intermediates.contains(&name) && streaming::expr_allocates(&init) => {
                 let cu = malloc_cleanup(&name);
+                proven.borrow_mut().insert(name.clone());
                 Some(malloc_null_check_block(&name, init, &cu))
+            }
+            // Any OTHER write to a pointer already proven non-NULL invalidates
+            // the proof (`tempBuffer = someOtherBuffer;` re-points it). Below
+            // both alloc arms, so an allocating write still injects and re-proves.
+            Statement::Assign {
+                target: Expr::Var(ref v),
+                ..
+            }
+            | Statement::VarDecl { name: ref v, .. }
+                if proven.borrow().contains(v) =>
+            {
+                proven.borrow_mut().remove(v);
+                Some(s)
+            }
+            // The source's OWN NULL check for a pointer already proven
+            // non-NULL — every composed input that allocates an intermediate
+            // writes one today. The injected check carries the cascading
+            // `free()` of everything allocated before it that the source's does
+            // not, so the source's is redundant on every path reaching it and
+            // renders as a second, unreachable copy of the same block. Keyed on
+            // the proof, not on adjacency: an intervening comment or an
+            // `x == NULL` spelling must not resurrect the duplicate.
+            //
+            // An `else` arm is required to be empty — dropping the `If` drops
+            // the `else` with it, and that would be a silent loss rather than a
+            // redundancy. No input has one.
+            //
+            // ORDER: must precede the non-leaf default at the bottom, which
+            // would otherwise swallow every `If` before this arm is reached.
+            Statement::If {
+                ref condition,
+                ref then_body,
+                ref else_body,
+                ..
+            } if else_body.is_empty()
+                && null_check_var(condition).is_some_and(|v| proven.borrow().contains(v))
+                && returns_alloc_err(then_body) =>
+            {
+                None
             }
             Statement::Return { value } => {
                 let mapped = match value {
@@ -1356,7 +1439,29 @@ fn build_composed_open_bodies(
                     ],
                 })
             }
-            other => Some(other),
+            // Statements that cannot contain a nested body: the proof carries
+            // straight across them.
+            Statement::Assign { .. }
+            | Statement::VarDecl { .. }
+            | Statement::UnrollHint { .. }
+            | Statement::Break
+            | Statement::Continue
+            | Statement::Expr(_)
+            | Statement::CircBuf(_)
+            | Statement::Comment(_) => Some(s),
+            // Everything else has a body, and `rewrite_stmts` hands `fs` such a
+            // statement only AFTER its children — so anything proven inside was
+            // proven on a single path and must not outlive it. Blunt: it also
+            // discards proofs established BEFORE the statement, which do
+            // dominate it. That is the safe direction (a kept redundant block,
+            // never a dropped live check), and writing it as the DEFAULT rather
+            // than as a list of body-bearing variants is what keeps it safe
+            // when a new `Statement` variant is added — an unknown statement
+            // clears rather than silently letting a proof leak out of a branch.
+            other => {
+                proven.borrow_mut().clear();
+                Some(other)
+            }
         }
     };
     let region: Vec<Statement> = cp.region.clone();

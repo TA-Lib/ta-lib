@@ -7531,6 +7531,51 @@ fn test_c_adxr_open_frees_withheld_buffer_on_oom_paths() {
     assert!(close.contains("TA_Free( stream->lagRingMirror_adx );"));
 }
 
+/// A composed Open must emit ONE null-check block per allocated intermediate,
+/// not two (issue #169). Every one of these inputs writes its own `if( !x )`
+/// after the malloc, and the generator injects one as well — the injected one
+/// carries the cascading `free()` of the prior intermediates, so it is the
+/// keeper and the transcribed one is dropped. Nothing else in the suite would
+/// notice the duplicate coming back: the OOM test below uses `find()`, which
+/// matches the first copy either way, so a regression would show up only in a
+/// `git diff` of the generated C.
+#[test]
+fn test_c_composed_open_emits_one_null_check_per_intermediate() {
+    for (indicator, buffers) in [
+        ("adxr", &["adx"][..]),
+        ("apo", &["tempBuffer"]),
+        ("bbands", &["tempBuffer1", "tempBuffer2"]),
+        ("macdext", &["fastMABuffer", "slowMABuffer"]),
+        ("ppo", &["tempBuffer"]),
+        ("pvo", &["tempBuffer"]),
+        ("stoch", &["tempBuffer"]),
+        ("stochf", &["tempBuffer"]),
+        ("stochrsi", &["tempRSIBuffer"]),
+    ] {
+        let (mut func, enums) = load_indicator(indicator);
+        func.streaming = true;
+        let registry = make_registry();
+        let helpers = HelperRegistry::empty();
+        let c = backends::c::generate(&func, &enums, &registry, &helpers);
+        let upper = indicator.to_uppercase();
+        let open_at = c
+            .find(&format!("TA_RetCode TA_{upper}_Open"))
+            .unwrap_or_else(|| panic!("{upper} composed Open"));
+        // OpenInternal and OpenAndFill each transcribe the region, so every
+        // buffer is checked exactly twice across the two — never four times.
+        let opens = &c[open_at..];
+        for buf in buffers {
+            let n = opens.matches(&format!("if( !{buf} )")).count();
+            assert_eq!(
+                n, 2,
+                "{upper}: `{buf}` must be null-checked once per composed Open \
+                 (2 across OpenInternal + OpenAndFill), found {n} — the source's \
+                 own check is being emitted alongside the injected one again"
+            );
+        }
+    }
+}
+
 /// Pin the BBANDS composed Open's allocation-failure cleanup. The general
 /// (non-SMA) path allocates TWO intermediates — `tempBuffer1` for the moving
 /// average, then `tempBuffer2` for the standard deviation. If `tempBuffer2`'s

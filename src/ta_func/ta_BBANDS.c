@@ -786,21 +786,10 @@ TA_RetCode TA_BBANDS_OpenInternal( struct TA_BBANDS_Stream **stream, const doubl
          TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
          return TA_ALLOC_ERR;
       }
-      if( !tempBuffer1 )
-      {
-         TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
-         return TA_ALLOC_ERR;
-      }
       tempBuffer2 = malloc((endIdx - startIdx + 1) * sizeof(double));
       if( !tempBuffer2 )
       {
          free( tempBuffer1 ); TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
-         return TA_ALLOC_ERR;
-      }
-      if( !tempBuffer2 )
-      {
-         free(tempBuffer1);
-         TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
          return TA_ALLOC_ERR;
       }
       /* Calculate the middle band moving average. */
@@ -986,21 +975,10 @@ TA_LIB_API TA_RetCode TA_BBANDS_OpenAndFill( TA_BBANDS_Stream **stream, const do
          TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
          return TA_ALLOC_ERR;
       }
-      if( !tempBuffer1 )
-      {
-         TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
-         return TA_ALLOC_ERR;
-      }
       tempBuffer2 = malloc((endIdx - startIdx + 1) * sizeof(double));
       if( !tempBuffer2 )
       {
          free( tempBuffer1 ); TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
-         return TA_ALLOC_ERR;
-      }
-      if( !tempBuffer2 )
-      {
-         free(tempBuffer1);
-         TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
          return TA_ALLOC_ERR;
       }
       /* Calculate the middle band moving average. */
