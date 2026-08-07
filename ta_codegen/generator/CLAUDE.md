@@ -59,7 +59,6 @@ touching all three.
 |--------|---------|
 | `parser` | Parses YAML metadata (via raw serde structs) into `FuncDef`; parses `.c` source directly into IR `Statement`/`Expr` (no intermediate raw-struct stage for the logic) |
 | `ir` | Intermediate representation (`FuncDef`, `ParamType`, `Statement`, `Expr`, etc.) |
-| `naming` | **The identifier gate.** Validates every name the input tree defines (function, arguments, locals, `CIRCBUF` ids, helpers) against the *union* of what all four backends forbid, before any output is written. Each backend contributes its own keyword list (`c::RESERVED_WORDS`, ...) and its own name mangling via `LanguageBackend::reserved_words` / `rendered_name`, or overrides `check_name` outright. One backend objecting is enough — `base` is a C# keyword and nothing else's, `synchronized` is Java's alone, so a C-only build would ship a name three other languages cannot compile |
 | `extractor` | Extracts indicator definitions from C source files → YAML |
 | `backends/c.rs` | Generates C indicator implementations (guarded `TA_<N>` / `TA_S_<N>`, plus `TA_<N>_Private` where declared) |
 | `backends/rust_lang.rs` | Generates Rust indicator implementations (concrete `f64`, guarded entry point plus `_private` where declared) |

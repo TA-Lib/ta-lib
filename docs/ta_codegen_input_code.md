@@ -103,36 +103,6 @@ Return values are the real `ta_defs.h` codes: `TA_SUCCESS`, `TA_BAD_PARAM`,
 `TA_ALLOC_ERR`. The generator maps these to each language's enum
 (`RetCode::Success` in Rust, `RetCode.Success` in Java, etc.).
 
-## Naming
-
-Every name you write here is rendered into C, Rust, Java and C#, so it has to be
-a legal identifier in **all four** — and the intersection is smaller than any one
-of them. `base` is ordinary C and a C# keyword; `synchronized` is ordinary C, C#
-and Rust, and a Java keyword; `loop` is ordinary everywhere but Rust.
-
-`generate` checks this before it writes anything and names the offending backend:
-
-```
-error: SMA: local variable `base`: `base` is a reserved word in the csharp backend
-```
-
-The rules, in full:
-
-- ASCII letters, digits and `_` only; no leading digit.
-- No leading `__`, and no `_` followed by an upper-case letter — C reserves both
-  to the implementation (C11 7.1.3).
-- Not a keyword of C, C++ (the public prototypes in `include/ta_func.h` sit
-  inside an `extern "C"` block), Rust, Java or C#. The lists live with each
-  backend in `ta_codegen/generator/src/backends/`; the gate itself is
-  `src/naming.rs`.
-
-Contextual keywords are fine — `value`, `from` and `record` are legal identifiers
-in the languages that give them meaning, and the lists leave them out on purpose.
-
-Function names are checked *after* each backend mangles them, so the verdict can
-differ from the same word used as a local: an indicator named `BASE` is fine
-(`TA_BASE` / `base` / `base` / `Base`), one named `LOOP` is not (Rust's `loop`).
-
 ## Control flow & expressions
 
 Standard C: `if` / `else if` / `else`, `while`, `for`, `switch` / `case`; the
