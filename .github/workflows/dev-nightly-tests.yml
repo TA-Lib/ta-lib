@@ -296,6 +296,15 @@ jobs:
           # Benchmarks are skipped: CI timing is noise.
           python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen
 
+      # The benchmark CORPUS, not the benchmark. --verify-corpus checks every
+      # shape is reproducible and produces valid OHLC — deterministic, so unlike
+      # the timings it belongs in CI. It rides this job because regtest.py's
+      # build step already put ta_bench in bin/. A shape that stops generating
+      # valid data silently changes what every bench measures (#147).
+      - name: Verify the benchmark input corpus
+        shell: bash
+        run: cd bin && ./ta_bench --verify-corpus --points=100000
+
   # Synthetic-function gate. The cross-language job above verifies the SHIPPED
   # functions; this one verifies generator surface no shipped function uses
   # (bitwise operators, integer truthiness, do-while, switch-on-expression, ...).
