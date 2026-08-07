@@ -1253,6 +1253,113 @@ fn composed_open_expr_fn(outputs: &[String]) -> impl Fn(Expr) -> Expr + '_ {
     }
 }
 
+/// Drop a source NULL check that the injected one already covers.
+///
+/// [`malloc_null_check_block`] emits `alloc; if(!x){ cleanup; return ALLOC_ERR; }`
+/// for every allocating intermediate. When the input `.c` checked the same
+/// allocation itself — STOCH, ADXR, BBANDS and six more do — that check is
+/// transcribed right after the injected block and the pair renders identically,
+/// the second one unreachable.
+///
+/// It has to be dropped here rather than in the statement map: the map is 1:1
+/// and cannot see that the `If` it is looking at follows an injection for the
+/// same variable. Suppressing the INJECTED block instead would be wrong — it
+/// carries a cascading `free()` of every intermediate allocated before it
+/// (`ta_BBANDS.c` frees `tempBuffer1` when `tempBuffer2` fails) that the source
+/// check does not have.
+fn drop_duplicate_null_checks(stmts: Vec<Statement>) -> Vec<Statement> {
+    /// `if( !x ) { ... }` -> `x`
+    fn null_check_var(s: &Statement) -> Option<&str> {
+        let Statement::If {
+            condition: Expr::Not(inner),
+            ..
+        } = s
+        else {
+            return None;
+        };
+        match inner.as_ref() {
+            Expr::Var(v) => Some(v.as_str()),
+            _ => None,
+        }
+    }
+    /// The variable an injected block checks, taken from its trailing `If`.
+    fn injected_block_var(s: &Statement) -> Option<&str> {
+        let Statement::Block { body } = s else {
+            return None;
+        };
+        null_check_var(body.last()?)
+    }
+
+    let mut out: Vec<Statement> = Vec::with_capacity(stmts.len());
+    for s in stmts {
+        let s = recurse(s);
+        if let (Some(prev), Some(cur)) = (out.last().and_then(injected_block_var), null_check_var(&s))
+        {
+            if prev == cur {
+                continue;
+            }
+        }
+        out.push(s);
+    }
+    return out;
+
+    fn recurse(s: Statement) -> Statement {
+        match s {
+            Statement::Block { body } => Statement::Block {
+                body: drop_duplicate_null_checks(body),
+            },
+            Statement::If {
+                condition,
+                then_body,
+                else_body,
+                cond_comments,
+            } => Statement::If {
+                condition,
+                then_body: drop_duplicate_null_checks(then_body),
+                else_body: drop_duplicate_null_checks(else_body),
+                cond_comments,
+            },
+            Statement::While { condition, body } => Statement::While {
+                condition,
+                body: drop_duplicate_null_checks(body),
+            },
+            Statement::DoWhile { condition, body } => Statement::DoWhile {
+                condition,
+                body: drop_duplicate_null_checks(body),
+            },
+            Statement::For { var, count, body } => Statement::For {
+                var,
+                count,
+                body: drop_duplicate_null_checks(body),
+            },
+            Statement::ForC {
+                init,
+                condition,
+                update,
+                body,
+            } => Statement::ForC {
+                init,
+                condition,
+                update,
+                body: drop_duplicate_null_checks(body),
+            },
+            Statement::Switch {
+                expr,
+                cases,
+                default,
+            } => Statement::Switch {
+                expr,
+                cases: cases
+                    .into_iter()
+                    .map(|(k, v)| (k, drop_duplicate_null_checks(v)))
+                    .collect(),
+                default: drop_duplicate_null_checks(default),
+            },
+            other => other,
+        }
+    }
+}
+
 /// `name = malloc(...); if (!name) { cleanup; return ALLOC_ERR; }` — the batch
 /// bodies malloc intermediate series without a NULL check (a pre-existing batch
 /// defect that surfaces as UB on this NEW API surface). The `= malloc` is
@@ -1365,8 +1472,8 @@ fn build_composed_open_bodies(
         tail.pop();
     }
     (
-        streaming::rewrite_stmts(&region, &fe, &fs),
-        streaming::rewrite_stmts(&tail, &fe, &fs),
+        drop_duplicate_null_checks(streaming::rewrite_stmts(&region, &fe, &fs)),
+        drop_duplicate_null_checks(streaming::rewrite_stmts(&tail, &fe, &fs)),
     )
 }
 

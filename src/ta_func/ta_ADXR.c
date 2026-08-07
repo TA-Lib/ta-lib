@@ -342,11 +342,6 @@ TA_RetCode TA_ADXR_OpenInternal( struct TA_ADXR_Stream **stream, const double in
          TA_ADX_Close( sub0 ); TA_Free( sc_outReal );
          return TA_ALLOC_ERR;
       }
-      if( !adx )
-      {
-         TA_ADX_Close( sub0 ); TA_Free( sc_outReal );
-         return TA_ALLOC_ERR;
-      }
       /* Compute ADX over a range that starts (period-1) bars earlier, so each
        * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
        */
@@ -480,11 +475,6 @@ TA_LIB_API TA_RetCode TA_ADXR_OpenAndFill( TA_ADXR_Stream **stream, const double
          return TA_BAD_PARAM;
       }
       adx = malloc((endIdx - startIdx + optInTimePeriod) * sizeof(double));
-      if( !adx )
-      {
-         TA_ADX_Close( sub0 ); TA_Free( sc_outReal );
-         return TA_ALLOC_ERR;
-      }
       if( !adx )
       {
          TA_ADX_Close( sub0 ); TA_Free( sc_outReal );

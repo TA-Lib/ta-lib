@@ -616,25 +616,10 @@ TA_RetCode TA_MACDEXT_OpenInternal( struct TA_MACDEXT_Stream **stream, const dou
          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
          return TA_ALLOC_ERR;
       }
-      if( !fastMABuffer )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
-         return TA_ALLOC_ERR;
-      }
       slowMABuffer = malloc(tempInteger * sizeof(double));
       if( !slowMABuffer )
       {
          free( fastMABuffer ); TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
-         return TA_ALLOC_ERR;
-      }
-      if( !slowMABuffer )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         free(fastMABuffer);
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
          return TA_ALLOC_ERR;
       }
       /* Calculate the slow MA.
@@ -895,25 +880,10 @@ TA_LIB_API TA_RetCode TA_MACDEXT_OpenAndFill( TA_MACDEXT_Stream **stream, const 
          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
          return TA_ALLOC_ERR;
       }
-      if( !fastMABuffer )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
-         return TA_ALLOC_ERR;
-      }
       slowMABuffer = malloc(tempInteger * sizeof(double));
       if( !slowMABuffer )
       {
          free( fastMABuffer ); TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
-         return TA_ALLOC_ERR;
-      }
-      if( !slowMABuffer )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         free(fastMABuffer);
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
          return TA_ALLOC_ERR;
       }
       /* Calculate the slow MA.

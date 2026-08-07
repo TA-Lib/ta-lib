@@ -429,13 +429,6 @@ TA_RetCode TA_STOCHRSI_OpenInternal( struct TA_STOCHRSI_Stream **stream, const d
          TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
          return TA_ALLOC_ERR;
       }
-      if( !tempRSIBuffer )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
-         return TA_ALLOC_ERR;
-      }
       /* Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
@@ -605,13 +598,6 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_OpenAndFill( TA_STOCHRSI_Stream **stream, cons
       tempRSIBuffer = malloc(tempArraySize * sizeof(double));
       if( !tempRSIBuffer )
       {
-         TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
-         return TA_ALLOC_ERR;
-      }
-      if( !tempRSIBuffer )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
          TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); TA_Free( sc_outFastK ); TA_Free( sc_outFastD );
          return TA_ALLOC_ERR;
       }

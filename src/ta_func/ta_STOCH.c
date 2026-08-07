@@ -851,11 +851,6 @@ TA_RetCode TA_STOCH_OpenInternal( struct TA_STOCH_Stream **stream, const double 
             TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
             return TA_ALLOC_ERR;
          }
-         if( !tempBuffer )
-         {
-            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
-            return TA_ALLOC_ERR;
-         }
       }
       /* Do the K calculation */
       while( today <= endIdx )
@@ -1214,11 +1209,6 @@ TA_LIB_API TA_RetCode TA_STOCH_OpenAndFill( TA_STOCH_Stream **stream, const doub
       {
          bufferIsAllocated = 1;
          tempBuffer = malloc((endIdx - today + 1) * sizeof(double));
-         if( !tempBuffer )
-         {
-            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
-            return TA_ALLOC_ERR;
-         }
          if( !tempBuffer )
          {
             TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
