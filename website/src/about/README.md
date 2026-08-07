@@ -6,8 +6,6 @@ description: "Who builds TA-Lib: the administrators, feature contributors, wrapp
 externalLinkIcon: false
 ---
 
-# About Us
-
 TA-Lib has been built and refined by an open community of traders, engineers and researchers for more than two decades.
 
 This page credits the people whose work is recorded across the source tree and the wider ecosystem.

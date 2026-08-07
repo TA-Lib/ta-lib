@@ -4,8 +4,6 @@ description: "Rust streaming API for live feeds: a stream handle carries indicat
 toc: false
 ---
 
-# Rust Streaming API
-
 ::: warning Not yet released
 The Rust API is not yet released. Estimated release: **Q1 2027**.
 :::

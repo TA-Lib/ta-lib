@@ -4,8 +4,6 @@ description: "Install the TA-Lib C/C++ libraries and headers: Windows installer,
 toc: false
 ---
 
-# Install C/C++
-
 Instructions for installing the shared/static libraries and headers on your system.
 
 Latest release is [0.7.1 on Github](https://github.com/ta-lib/ta-lib/releases/latest)

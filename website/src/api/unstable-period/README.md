@@ -1,10 +1,8 @@
 ---
 title: Unstable Period
-description: "TA_SetUnstablePeriod controls how many warm-up bars TA-Lib discards from recursive indicators such as EMA, RSI and ADX before reporting their output."
+description: "How many warm-up bars TA-Lib discards from recursive indicators such as EMA, RSI and ADX before reporting their output, and how to set it in C and Rust."
 toc: false
 ---
-
-# Unstable Period
 
 Some indicators need a warm-up before their output settles. The *unstable period* setting controls how many of those warm-up bars TA-Lib discards instead of reporting them.
 
@@ -26,18 +24,22 @@ There are three distinct approaches, from the most common to the most rigorous:
 
 ## API
 
+`id` selects which function to affect. The period sets how many warm-up bars that
+function discards — the larger the value, the later the first output. The default,
+`0`, discards nothing: you get every value the function can compute.
+
+The setting follows the function wherever it runs: whether you call it directly, or
+another indicator uses it internally. The EMA id therefore affects EMA itself and
+every indicator built on one, such as MACD and DEMA.
+
+::: code-tabs#lang
+
+@tab C
+
 ```c
 TA_RetCode   TA_SetUnstablePeriod( TA_FuncUnstId id, unsigned int unstablePeriod );
 unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );
-```
 
-`id` selects which function to affect.
-
-`unstablePeriod` sets how many warm-up bars that function discards — the larger the value, the later the first output. The default, `0`, discards nothing: you get every value the function can compute.
-
-The setting follows the function wherever it runs: whether you call it directly, or another indicator uses it internally. `TA_FUNC_UNST_EMA` therefore affects `TA_EMA` and every indicator built on an EMA, such as `TA_MACD` and `TA_DEMA`.
-
-```c
 /* Strip 30 extra bars from every EMA-based calculation: */
 TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 30 );
 
@@ -45,19 +47,51 @@ TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 30 );
 TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 30 );
 ```
 
-Like the other global settings, choose the unstable period **once, from a single thread**, before making concurrent calls (see [multi-threading](/api/#multithreading)).
+Ids are spelled `TA_FUNC_UNST_<NAME>`.
+
+Being a global, choose the unstable period **once, from a single thread**, before
+making concurrent calls (see [multi-threading](/api/#multithreading)).
+
+@tab Rust
+
+```rust
+use ta_lib::{Core, FuncUnstId};
+
+// Strip 30 extra bars from every EMA-based calculation:
+let core = Core::builder()
+    .unstable_period(FuncUnstId::Ema, 30)
+    .build();
+
+// Apply the same unstable period to ALL affected functions at once:
+let core = Core::builder()
+    .unstable_period(FuncUnstId::FuncUnstAll, 30)
+    .build();
+
+let n = core.get_unstable_period(FuncUnstId::Ema);   // read it back
+```
+
+Ids are spelled `FuncUnstId::<CamelCase>`, so `TA_FUNC_UNST_HT_DCPERIOD` is
+`FuncUnstId::HtDcPeriod`.
+
+There is no global to guard here: the period is fixed when the [`Core`](/api/rust/)
+is built and cannot change afterwards, which is what makes a `Core` `Send + Sync`.
+To use a different period, build another `Core` (or derive one with `to_builder()`).
+
+:::
 
 ## Functions with an unstable period
 
-Pass one of these `TA_FuncUnstId` values (or `TA_FUNC_UNST_ALL` for all of them):
+These are the functions with an unstable period. Every binding covers the same set;
+only the spelling of the id differs (see the tabs above). Each language also has a
+wildcard that targets all of them at once.
 
 <!-- ta_codegen:begin unstable-func-list -->
-`TA_FUNC_UNST_ADX`, `TA_FUNC_UNST_ATR`, `TA_FUNC_UNST_CMO`, `TA_FUNC_UNST_DX`, `TA_FUNC_UNST_EMA`, `TA_FUNC_UNST_HT_DCPERIOD`, `TA_FUNC_UNST_HT_DCPHASE`, `TA_FUNC_UNST_HT_PHASOR`, `TA_FUNC_UNST_HT_SINE`, `TA_FUNC_UNST_HT_TRENDLINE`, `TA_FUNC_UNST_HT_TRENDMODE`, `TA_FUNC_UNST_KAMA`, `TA_FUNC_UNST_MAMA`, `TA_FUNC_UNST_MINUS_DI`, `TA_FUNC_UNST_MINUS_DM`, `TA_FUNC_UNST_NATR`, `TA_FUNC_UNST_PLUS_DI`, `TA_FUNC_UNST_PLUS_DM`, `TA_FUNC_UNST_RSI`, `TA_FUNC_UNST_T3`.
+`ADX`, `ATR`, `CMO`, `DX`, `EMA`, `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE`, `HT_TRENDLINE`, `HT_TRENDMODE`, `KAMA`, `MAMA`, `MINUS_DI`, `MINUS_DM`, `NATR`, `PLUS_DI`, `PLUS_DM`, `RSI`, `T3`.
 <!-- ta_codegen:end unstable-func-list -->
 
-The full enumeration is in [ta_defs.h](https://github.com/TA-Lib/ta-lib/blob/main/include/ta_defs.h).
+The C enumeration is in [ta_defs.h](https://github.com/TA-Lib/ta-lib/blob/main/include/ta_defs.h).
 
 ## See also
 
-- [Initialize and Shutdown](/api/#init)
+- [C/C++ Core API](/api/) / [Rust Core API](/api/rust/)
 - [Candlestick Settings](/api/candle-settings/)

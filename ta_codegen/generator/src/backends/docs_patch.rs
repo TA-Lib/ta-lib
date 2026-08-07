@@ -109,16 +109,20 @@ fn unstable_func_list(enums: &HashMap<String, EnumDef>) -> (usize, String) {
         .get("FuncUnstId")
         .expect("FuncUnstId enum missing from enums.yaml");
 
+    // Emitted as the bare function name (`ADX`), not the C identifier
+    // (`TA_FUNC_UNST_ADX`): the page is language-neutral and spells the per-language
+    // spelling out in its own tab -- C `TA_FUNC_UNST_ADX`, Rust `FuncUnstId::Adx`.
+    // Which functions have an unstable period is a property of the algorithm, and the
+    // same in every binding; only the identifier differs.
     let names: Vec<String> = fu
         .variants
         .iter()
-        .filter(|v| {
+        .filter_map(|v| {
             let short = v.c_name.strip_prefix("TA_FUNC_UNST_").unwrap_or_else(|| {
                 panic!("FuncUnstId variant `{}` lacks the TA_FUNC_UNST_ prefix", v.c_name)
             });
-            !short.starts_with("UNUSED_")
+            (!short.starts_with("UNUSED_")).then(|| format!("`{short}`"))
         })
-        .map(|v| format!("`{}`", v.c_name))
         .collect();
 
     (names.len(), format!("{}.", names.join(", ")))

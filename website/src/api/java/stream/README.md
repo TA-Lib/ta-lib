@@ -4,8 +4,6 @@ description: "Java streaming API for live feeds: a stream handle carries indicat
 toc: false
 ---
 
-# Java Streaming API
-
 ::: warning Not yet released
 The Java API is not yet released. Estimated release: **Q1 2027**.
 :::

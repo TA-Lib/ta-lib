@@ -3,8 +3,6 @@ title: FAQ
 description: "Whether TA-Lib is still maintained (yes, actively again since 2025) and where to get support: Discord, GitHub issues and the wrapper communities."
 ---
 
-# FAQ
-
 **Is TA-Lib maintained?**
 
 Yes — and more actively than it has been in years!

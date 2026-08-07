@@ -4,8 +4,6 @@ description: "Install TA-Lib: a dozen languages, natively or through a wrapper. 
 toc: false
 ---
 
-# Install
-
 TA-Lib reaches a dozen languages: natively, or through a wrapper.
 
 ## Native

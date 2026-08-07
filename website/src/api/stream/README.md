@@ -4,8 +4,6 @@ description: "The TA-Lib C/C++ streaming API for live feeds: open a stream once,
 toc: false
 ---
 
-# C/C++ Streaming API
-
 ::: warning Not yet released
 This feature is planned for v0.8.x.
 :::
