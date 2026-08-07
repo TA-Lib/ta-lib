@@ -704,7 +704,6 @@ endif()
 # --- Convenience test targets (run the C ta_regtest binary) ---
 # make test           - C reference tests only
 # make regtest        - cross-language codegen verification (C, Java, C#, Rust)
-# make regtest-only   - codegen verification only (skip C reference tests)
 #
 # These run the already-built C ta_regtest binary; building ta_codegen and the
 # language servers is the developer build script's job (scripts/build.py — run
@@ -728,14 +727,6 @@ if(_TA_BUILD_TOOLS)
 			./ta_regtest --codegen --language=c,java,csharp,rust
 		DEPENDS ensure_ta_regtest_in_bin
 		COMMENT "Running cross-language regression tests (C, Java, C#, Rust)"
-	)
-
-	# Codegen-only: skip C reference tests
-	add_custom_target(regtest-only
-		COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_CURRENT_SOURCE_DIR}/bin"
-			./ta_regtest --codegen-only --language=c,java,csharp,rust
-		DEPENDS ensure_ta_regtest_in_bin
-		COMMENT "Running codegen-only regression tests (skip C reference)"
 	)
 endif()
 

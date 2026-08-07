@@ -15,7 +15,6 @@
 #   scripts/build.py servers        Generate + compile JSON-RPC language servers (cargo)
 #   scripts/build.py test           C reference regression tests
 #   scripts/build.py regtest        Full cross-language regression tests
-#   scripts/build.py regtest-only   Codegen verification only (skip C tests)
 #   scripts/build.py clean          Remove build directory
 #   scripts/build.py help           Show all targets
 
@@ -114,7 +113,6 @@ def show_help():
     check-source-lists  Verify the CMake and autotools ta_regtest source
                         lists agree (no build; pure text check)
     regtest             Full pipeline: servers (cargo) + C tests + codegen verification
-    regtest-only        Codegen verification only (skip C tests)
     fuzz-064            Bit-exact differential fuzz of the current library vs the
                         frozen released v0.6.4 (opt-in; builds ta_064_serve then
                         runs ta_regtest --fuzz-064). C-only; needs the v0.6.4 tag.
@@ -134,7 +132,7 @@ def show_help():
     --build-type=Debug  Set cmake build type (default: Release)
     --jobs=8            Parallel jobs (default: number of CPUs)
     --cmake-args="..."  Extra arguments passed to cmake configure
-    --language=c,rust   For servers/regtest/regtest-only/xlang-hash: build only
+    --language=c,rust   For servers/regtest/xlang-hash: build only
                         these backends, and require only their toolchains. A
                         machine with no JDK or .NET SDK can still run
                         `servers --language=c,rust`. Omit it and every backend
@@ -324,12 +322,11 @@ SIMPLE_TARGETS = {
     'ta_regtest':  'ensure_ta_regtest_in_bin',
     'test':        'test',
     'regtest':     'regtest',
-    'regtest-only':'regtest-only',
 }
 
 # Targets that build language servers and therefore honour --language, both for
 # which backends get built and for which toolchains must be present.
-LANG_FILTERED_TARGETS = ('servers', 'regtest', 'regtest-only', 'xlang-hash')
+LANG_FILTERED_TARGETS = ('servers', 'regtest', 'xlang-hash')
 
 # Map each target to the prerequisite set it requires. These are the
 # no---language defaults; see LANG_FILTERED_TARGETS above for the narrowed path.
@@ -344,7 +341,6 @@ TARGET_PREREQS = {
     'servers':      PREREQS_BUILD_SERVERS,
     'test':         PREREQS_BUILD_BASIC,
     'regtest':      PREREQS_BUILD_SERVERS,
-    'regtest-only': PREREQS_BUILD_SERVERS,
     'fuzz-064':     [PREREQS_CMAKE, PREREQS_GCC],
     # build_xlanghash builds --backend=rust,java,csharp, so the .NET SDK is as
     # required here as the JDK. Without it the C# server silently never builds.
@@ -457,7 +453,7 @@ def main():
     # The cross-language tests run the C ta_regtest binary against the language
     # servers, so build the servers (cargo) first — the CMake regtest target no
     # longer does it.
-    if args.target in ('regtest', 'regtest-only'):
+    if args.target == 'regtest':
         build_servers(root_dir, args.language)
 
     if args.target == 'all':

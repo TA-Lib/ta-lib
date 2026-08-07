@@ -6,7 +6,7 @@ of the library. `scripts/synth_gate.py` copies every `synth<n>/` into
 `ta_codegen/input/` inside a **throwaway git worktree**, regenerates all backends
 there, and runs the usual cross-language gates on the result:
 
-- `ta_regtest --codegen-only --function=SYNTH` — structural sweep + the
+- `ta_regtest --codegen --function=SYNTH` — structural sweep + the
   batch-vs-stream `stream_verify` / OpenAndFill bitwise gates, all four servers.
 - `ta_regtest --xlang-hash --function=SYNTH` — batch output parity, Rust/Java/C#
   against the in-process C golden, bitwise (fuzz shapes x seeds x sizes x params).

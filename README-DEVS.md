@@ -22,7 +22,7 @@ Repeat whenever you need to refresh the makefiles.
 
 Prerequisites: CMake 3.18+, a C compiler (clang or gcc), and the Rust toolchain (`rustup`).
 
-For cross-language server testing (`servers`, `regtest`, `regtest-only` targets), also: JDK (`javac` + `java`) and .NET SDK (`dotnet`).
+For cross-language server testing (`servers`, `regtest` targets), also: JDK (`javac` + `java`) and .NET SDK (`dotnet`).
 
 ```
 scripts/build.py                # Build the C library + all C tools (CMake)
@@ -40,14 +40,12 @@ To run tests:
 ```
 scripts/build.py test           # C reference tests only (quick)
 scripts/build.py regtest        # Full pipeline: servers + C tests + cross-language verification
-scripts/build.py regtest-only   # Codegen verification only (skip C reference tests)
 ```
 
 For more control, run `ta_regtest` directly from `bin/`:
 ```
 ./ta_regtest                                               # C reference tests only
 ./ta_regtest --codegen                                     # C tests + all-language codegen
-./ta_regtest --codegen-only                                # Codegen only (all languages)
 ./ta_regtest --codegen --language=c,rust                   # Filter to specific languages
 ./ta_regtest --codegen --function=RSI,SMA                  # Filter to specific functions
 ```

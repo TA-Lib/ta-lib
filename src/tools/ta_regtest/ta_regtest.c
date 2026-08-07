@@ -89,7 +89,6 @@ int doExtensiveProfiling;
 /* CSV list of function names to test (NULL = test all) */
 static const char *functionFilter = NULL;
 static int doCodegenTest = 0;
-static int codegenOnly = 0;
 static int doFuzz064 = 0;
 static int doXlangHash = 0;
 static const char *codegenLanguageFilter = NULL;
@@ -166,11 +165,6 @@ int main( int argc, char **argv )
          {
             doCodegenTest = 1;
             codegenLanguageFilter = argv[i] + 10;
-         }
-         else if( strcmp(argv[i], "--codegen-only") == 0 )
-         {
-            doCodegenTest = 1;
-            codegenOnly = 1;
          }
          else if( strncmp(argv[i], "--language=", 11) == 0 )
          {
@@ -325,7 +319,7 @@ int main( int argc, char **argv )
     *      abstract_get_lookback / TA_FunctionDescriptionXML), comparing output
     *      VALUES (not just metadata) for every function.
     * NOTE: the autotools dist nightly runs ta_regtest with no args, so this block
-    * only runs under --codegen/--codegen-only (build.py regtest / regtest.py),
+    * only runs under --codegen (build.py regtest / regtest.py),
     * not the dist verification path. */
    if( retValue == TA_TEST_PASS && doCodegenTest &&
        ( codegenLanguageFilter == NULL || strstr(codegenLanguageFilter, "rust") != NULL ) )
@@ -448,7 +442,6 @@ int main( int argc, char **argv )
    /* Perform all regresstions tests (except when ta_regtest is executed for profiling only). */
    if( !doExtensiveProfiling )
    {
-      if( !codegenOnly )
       {
          /* When codegen mode is active, also verify hand-written tests
           * against every available language server (C, Rust, Java, C#),
@@ -748,13 +741,8 @@ static void printUsage(void)
       printf( "       Languages: rust, c, java, csharp (default: all)\n" );
       printf( "       Example: --codegen=rust,java\n" );
       printf( "\n" );
-      printf( "    --codegen-only\n" );
-      printf( "       Run ONLY codegen verification; skip the normal C test suite.\n" );
-      printf( "       Combine with --language and --function to narrow the run.\n" );
-      printf( "       Example: --codegen-only --language=rust --function=SMA\n" );
-      printf( "\n" );
       printf( "    --language=LANG[,LANG,...]\n" );
-      printf( "       Filter which language servers to test with --codegen / --codegen-only.\n" );
+      printf( "       Filter which language servers to test with --codegen.\n" );
       printf( "       Valid values: rust, c, java, csharp (default: all)\n" );
       printf( "       Example: --language=c,rust\n" );
       printf( "\n" );

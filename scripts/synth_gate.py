@@ -7,7 +7,7 @@ that are NEVER shipped) into ta_codegen/input/ inside a throwaway git
 worktree, regenerates all backends there, and runs the usual gates scoped to
 the SYNTH family:
 
-  1. scripts/regtest.py --codegen-only --function=SYNTH
+  1. scripts/regtest.py --codegen --function=SYNTH
        builds the C library + ta_regtest + all four language servers +
        ta_ref_serve in the worktree, then runs the codegen sweep. SYNTH
        functions are absent from the frozen oracle (subset gate), but the
@@ -133,10 +133,10 @@ def main():
             sys.exit(f"synth_gate: FAIL — post-generate C rebuild exited {rc}")
 
         # Leg 1: codegen sweep + stream_verify/OpenAndFill, scoped to SYNTH.
-        rc, out1 = run(["./ta_regtest", "--codegen-only", "--function=SYNTH"],
+        rc, out1 = run(["./ta_regtest", "--codegen", "--function=SYNTH"],
                        cwd=os.path.join(wt, "bin"), capture=True)
         if rc != 0:
-            sys.exit(f"synth_gate: FAIL — --codegen-only exited {rc}")
+            sys.exit(f"synth_gate: FAIL — --codegen exited {rc}")
 
         # Leg 2: batch bitwise parity vs the in-process C golden.
         rc, out2 = run(["./ta_regtest", "--xlang-hash", "--function=SYNTH"],

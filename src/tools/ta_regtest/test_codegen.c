@@ -4672,6 +4672,12 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
  * src/tools/ta_regtest/CLAUDE.md.
  * ======================================================================== */
 
+/* The non-zero unstable period this gate sweeps (#116). Small on purpose: the
+ * value only has to move the lookback for the leg to bite, and every extra bar
+ * of unstable period is a bar of output the comparison no longer covers. The
+ * ref differential sweep it replaces used 3 as well. */
+#define XLANG_UNST_PERIOD 3
+
 typedef struct {
     const char        *name;      /* "rust", "java", "csharp" — --language= tokens */
     const char        *display;   /* "Rust", "Java", "C#"                     */
@@ -4769,6 +4775,11 @@ typedef struct {
     long long    sentNotDefault;     /* sentinel vectors where the in-process C
                                       * library did NOT reproduce the explicit
                                       * default's result. Fails the run.           */
+    long long    unstCases;          /* per-server comparisons run at a NON-ZERO
+                                      * unstable period (#116). Zero here means
+                                      * the axis is not being exercised at all —
+                                      * printed so it cannot go quiet unnoticed  */
+    long long    unstFuncs;          /* functions that carried an unstable leg     */
     long long    lbCases;            /* per-server lookback-tier comparisons       */
     long long    lbOorCases;         /* ... of which on an out-of-range vector     */
     long long    lbSentCases;        /* ... of which on a default-sentinel vector  */
@@ -5063,7 +5074,7 @@ static int xlang_illcond(const char *name, int shape)
 static void xlang_build_hex_request(char *buf, const TA_FuncInfo *fi,
                                     const TA_History *hist, int nbBars,
                                     int s, int e, const double *optVals,
-                                    int wantHash)
+                                    int unstPeriod, int wantHash)
 {
     int pos = codegen_appendf(buf, JSON_BUF_SIZE, 0,
         "{\"method\":\"TA_%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d",
@@ -5124,7 +5135,7 @@ static void xlang_build_hex_request(char *buf, const TA_FuncInfo *fi,
     }
 
     if( fi->flags & TA_FUNC_FLG_UNST_PER )
-        pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"unstablePeriod\":0");
+        pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"unstablePeriod\":%d", unstPeriod);
     if( wantHash )
         pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"want_hash\":1");
     codegen_appendf(buf, JSON_BUF_SIZE, pos, "}}");
@@ -5327,12 +5338,18 @@ static void xlang_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
 static int xlang_hash_call(XlangCtx *ctx, XlangServer *sv, const TA_FuncInfo *fi,
                            const TA_History *hist, int n, int s, int e,
                            int shape, int seed, const double *optVals,
-                           XHashParsed *out)
+                           int unstPeriod, XHashParsed *out)
 {
-    if( sv->usesSeed )
+    /* A non-zero unstable period cannot ride the seed transport: abstract_call
+     * carries no FuncUnstId, and no driver has ever sent one, so the Rust
+     * handler ignores the field outright and the C one would apply it to id 0
+     * (TA_FUNC_UNST_ADX) whatever function was called. The per-function method
+     * hardcodes the right id in its generated handler, so the unstable legs
+     * take the hex transport on every server. */
+    if( sv->usesSeed && unstPeriod == 0 )
         fuzz_build_request(ctx->reqBuf, fi, s, e, shape, seed, n, optVals, 0);
     else
-        xlang_build_hex_request(ctx->reqBuf, fi, hist, n, s, e, optVals, 1);
+        xlang_build_hex_request(ctx->reqBuf, fi, hist, n, s, e, optVals, unstPeriod, 1);
 
     if( !xlang_call(sv, ctx->reqBuf, ctx->respBuf) )
     {
@@ -5410,6 +5427,48 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         return;
     }
 
+    /* ---- Unstable-period axis (#116) ----
+     * The parameter sweep above holds the unstable period at 0, so until now
+     * nothing in this gate exercised a non-zero one: that axis was covered only
+     * by the ref differential sweep, i.e. only by the frozen ta_ref_serve, and
+     * would have been lost with it. XLANG_UNST_PERIOD runs FIRST and 0 LAST so
+     * every function leaves the servers at the value the next one expects. */
+    int unstVals[2] = { 0, 0 };
+    int nUnst = 1;
+    TA_FuncUnstId unstId = get_unst_id(funcInfo->name);
+    if( (funcInfo->flags & TA_FUNC_FLG_UNST_PER) && unstId != TA_TEST_UNST_NONE )
+    {
+        /* Non-vacuity: the leg only asserts something if the unstable period
+         * actually reaches this function. Lookback is the cheap observable —
+         * it is what the period feeds, and a flat lookback means the flag is
+         * lying, so fail loudly rather than bank a leg that compares nothing. */
+        TA_Integer lbZero = -1, lbUnst = -1;
+        xlang_set_opt_params(paramHolder, funcInfo, vec[0]);
+        TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+        if( TA_GetLookback(paramHolder, &lbZero) != TA_SUCCESS ) lbZero = -1;
+        TA_SetUnstablePeriod(unstId, (unsigned int)XLANG_UNST_PERIOD);
+        if( TA_GetLookback(paramHolder, &lbUnst) != TA_SUCCESS ) lbUnst = -1;
+        TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+
+        if( lbZero < 0 || lbUnst <= lbZero )
+        {
+            printf("  XLANG UNSTABLE PROBE VACUOUS [TA_%s]: lookback %d at unstable 0 vs "
+                   "%d at %d — TA_FUNC_FLG_UNST_PER says the period reaches this function "
+                   "and it does not, so its unstable leg would assert nothing\n",
+                   funcInfo->name, (int)lbZero, (int)lbUnst, XLANG_UNST_PERIOD);
+            for( int s = 0; s < ctx->nsv; s++ ) ctx->sv[s].mism++;
+            ctx->funcsWithFailures++;
+            ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
+            free_outputs(&p);
+            TA_ParamHolderFree(paramHolder);
+            return;
+        }
+        unstVals[0] = XLANG_UNST_PERIOD;
+        unstVals[1] = 0;
+        nUnst = 2;
+        ctx->unstFuncs++;
+    }
+
     static const int sizes[] = {40, 120, 240};
     static const int seeds[] = {1, 2, 3};
     ctx->reportedThisFunc = 0;
@@ -5420,10 +5479,12 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     xlang_lookback_leg(funcInfo, ctx, paramHolder, (const double (*)[FUZZ_MAX_OPT])vec,
                        kind, nvec);
 
+    for( int ui = 0; ui < nUnst; ui++ )
     for( int shape = 0; shape < FUZZ_NSHAPES; shape++ )
     for( int si = 0; si < (int)(sizeof(seeds)/sizeof(seeds[0])); si++ )
     for( int zi = 0; zi < (int)(sizeof(sizes)/sizeof(sizes[0])); zi++ )
     {
+        const int curUnst = unstVals[ui];
         int n = sizes[zi]; if( n > FUZZ_MAXN ) n = FUZZ_MAXN;
         fuzz_gen(shape, seeds[si], n,
                  g_fzBuf[0], g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4], g_fzBuf[5]);
@@ -5437,6 +5498,10 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
              * NOT pruned: its assertion compares outputs, which only diverge on
              * data where the wrong substituted value changes them. */
             if( kind[k] == FUZZ_VEC_REJECT && (shape || si || zi) ) continue;
+            /* Same argument for the unstable axis: both contract classes assert
+             * parameter VALIDATION, which runs before any unstable-period logic,
+             * so repeating them at a non-zero period adds no discrimination. */
+            if( kind[k] != FUZZ_VEC_NORMAL && curUnst != 0 ) continue;
 
             xlang_set_opt_params(paramHolder, funcInfo, vec[k]);
 
@@ -5462,6 +5527,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                  * the contract is subrange-independent too. */
                 if( kind[k] != FUZZ_VEC_NORMAL && ri != 0 ) continue;
                 TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+                if( curUnst ) TA_SetUnstablePeriod(unstId, (unsigned int)curUnst);
 
                 TA_Integer curBeg = 0, curNb = 0;
                 for( unsigned int o = 0; o < funcInfo->nbOutput; o++ )
@@ -5565,9 +5631,9 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                             continue;
                         }
                         int okS = xlang_hash_call(ctx, sv, funcInfo, &hist, n, s, e,
-                                                  shape, seeds[si], vec[k], &sent);
+                                                  shape, seeds[si], vec[k], curUnst, &sent);
                         int okD = okS && xlang_hash_call(ctx, sv, funcInfo, &hist, n, s, e,
-                                                         shape, seeds[si], vec[0], &dflt);
+                                                         shape, seeds[si], vec[0], curUnst, &dflt);
                         if( !okS || !okD )
                         {
                             sv->mism++;
@@ -5607,7 +5673,10 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                      * call to the element compare — C# stays bitwise on all of
                      * them. */
                     int tolPath = 0;
-                    if( sv->usesSeed )
+                    /* curUnst != 0 forces the hex transport even for a seed
+                     * server — see xlang_hash_call for why abstract_call cannot
+                     * carry an unstable period. */
+                    if( sv->usesSeed && curUnst == 0 )
                         fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0);
                     else
                     {
@@ -5627,7 +5696,8 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                          * golden stay bitwise there. */
                         if( tolPath && xlang_illcond(funcInfo->name, shape) )
                         { ctx->illcondSkipped++; continue; }
-                        xlang_build_hex_request(ctx->reqBuf, funcInfo, &hist, n, s, e, vec[k], !tolPath);
+                        xlang_build_hex_request(ctx->reqBuf, funcInfo, &hist, n, s, e, vec[k],
+                                                curUnst, !tolPath);
                     }
 
                     if( !xlang_call(sv, ctx->reqBuf, ctx->respBuf) )
@@ -5638,6 +5708,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     }
                     sv->cases++;
                     if( tolPath ) ctx->tolCases++;
+                    if( curUnst )  ctx->unstCases++;
                     if( kind[k] == FUZZ_VEC_REJECT ) ctx->oorCases++;
 
                     if( tolPath )
@@ -5831,6 +5902,8 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                "across the tolerance-lane servers: atan2 phase of a null signal, "
                "ill-conditioned across libms — C and Rust bitwise there)\n",
                ctx.illcondSkipped);
+    printf("unstable period (#116): %lld case(s) at unstable %d across %lld function(s)\n",
+           ctx.unstCases, XLANG_UNST_PERIOD, ctx.unstFuncs);
     printf("param contract (#148): reject %lld batch + %lld lookback, sentinel %lld batch "
            "+ %lld lookback; %lld lookback case(s) total\n",
            ctx.oorCases, ctx.lbOorCases, ctx.sentCases, ctx.lbSentCases, ctx.lbCases);
@@ -5894,6 +5967,18 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                "%lld batch / %lld lookback — no vector any language had to reject or "
                "resolve, so the parameter contract is not gated at all.\n",
                ctx.oorCases, ctx.lbOorCases, ctx.sentCases, ctx.lbSentCases);
+        return TA_CODEGEN_OUTPUT_MISMATCH;
+    }
+    /* The unstable-period axis needs a floor of its own for the same reason: it
+     * is a strict subset of the case total, which the 148 other functions keep
+     * large whether this leg runs or not. Unfiltered runs only — --function=
+     * can legitimately select nothing that carries TA_FUNC_FLG_UNST_PER. */
+    if( !functionFilter && ctx.comparisons > 0 && ctx.unstCases == 0 )
+    {
+        printf("FAIL — VACUOUS UNSTABLE LEG: not one case ran at a non-zero unstable "
+               "period, so nothing here gates it. %lld function(s) carry "
+               "TA_FUNC_FLG_UNST_PER; if that is now zero the flag or the sweep "
+               "stopped enumerating them (#116).\n", ctx.unstFuncs);
         return TA_CODEGEN_OUTPUT_MISMATCH;
     }
     /* The choice-list sentinel needs a floor of its OWN. It is a strict subset of
