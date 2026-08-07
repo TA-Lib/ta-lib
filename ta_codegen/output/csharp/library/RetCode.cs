@@ -49,7 +49,8 @@ public enum RetCode
     /// <summary>A parameter is out of its documented range, or two output
     /// arrays alias each other (<c>TA_BAD_PARAM</c> = 2).</summary>
     BadParam = 2,
-    /// <summary>An internal allocation failed (<c>TA_ALLOC_ERR</c> = 3).</summary>
+    /// <summary>An internal allocation failed (<c>TA_ALLOC_ERR</c> = 3). C parity only, never
+    /// returned here: an allocation failure terminates the process (#178).</summary>
     AllocErr = 3,
     /// <summary>A <see cref="TALib.Metadata.FunctionCall"/> was invoked with an
     /// input left unbound (<c>TA_INPUT_NOT_ALL_INITIALIZE</c> = 10). Reachable only

@@ -239,7 +239,7 @@ public partial class Core
           * slot with the current one, advance.
           */
          ringSize = sqrtPeriod - 1;
-         if( ringSize < 1 ) return RetCode.AllocErr;
+         if( ringSize < 1 ) return RetCode.InternalError;
          dRing = new double[ringSize];
          maxIdx_dRing = (ringSize)-1;
          dRing_Idx = 0;
@@ -412,7 +412,7 @@ public partial class Core
          }
          trailingHalf = 0.0;
          ringSize = sqrtPeriod - 1;
-         if( ringSize < 1 ) return RetCode.AllocErr;
+         if( ringSize < 1 ) return RetCode.InternalError;
          dRing = new double[ringSize];
          maxIdx_dRing = (ringSize)-1;
          dRing_Idx = 0;

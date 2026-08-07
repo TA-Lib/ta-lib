@@ -9,7 +9,7 @@ pub enum RetCode {
     OutOfRangeStartIndex,
     /// The end index is out of range or less than start index.
     OutOfRangeEndIndex,
-    /// Memory allocation failed.
+    /// C parity only, never returned here: an allocation failure terminates the process (#178).
     AllocErr,
     /// Internal error occurred.
     InternalError,

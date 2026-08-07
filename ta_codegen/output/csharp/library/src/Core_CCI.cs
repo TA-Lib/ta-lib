@@ -143,7 +143,7 @@ public partial class Core
       /* Allocate a circular buffer equal to the requested
        * period.
        */
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       circBuffer = new double[optInTimePeriod];
       maxIdx_circBuffer = (optInTimePeriod)-1;
       circBuffer_Idx = 0;
@@ -242,7 +242,7 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       circBuffer = new double[optInTimePeriod];
       maxIdx_circBuffer = (optInTimePeriod)-1;
       circBuffer_Idx = 0;

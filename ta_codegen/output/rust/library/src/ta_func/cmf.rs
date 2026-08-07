@@ -261,7 +261,7 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
-        if optInTimePeriod < 1 { return RetCode::AllocErr; }
+        if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 50usize {
             mfv_flow = &mut local_mfv_flow;
             mfv_volume = &mut local_mfv_volume;
@@ -468,7 +468,7 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::BadParam);
         }
-        if optInTimePeriod < 1 { return Err(RetCode::AllocErr); }
+        if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         mfv_flow = vec![0.0_f64; (optInTimePeriod) as usize];
         mfv_volume = vec![0.0_f64; (optInTimePeriod) as usize];
         maxIdx_mfv = ((optInTimePeriod) as usize) - 1;
@@ -652,7 +652,7 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::BadParam);
         }
-        if optInTimePeriod < 1 { return Err(RetCode::AllocErr); }
+        if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         mfv_flow = vec![0.0_f64; (optInTimePeriod) as usize];
         mfv_volume = vec![0.0_f64; (optInTimePeriod) as usize];
         maxIdx_mfv = ((optInTimePeriod) as usize) - 1;

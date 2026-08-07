@@ -1253,8 +1253,9 @@ impl StatementEmitter for JavaStmt<'_> {
             CircBuf::Init { id, layout, size } => {
                 let sz = render_expr(size, self.ctx, self.registry, self.helpers);
                 let mut s = String::new();
-                // Parity with the pre-cutover reference's CIRCBUF_INIT _JAVA guard.
-                s.push_str(&format!("{pad}if( {sz} < 1 ) return RetCode.AllocErr;\n"));
+                // The size is derived, so < 1 is a logic defect rather than an allocation
+                // failure: same code as C's TA_INTERNAL_ERROR(137) (#178).
+                s.push_str(&format!("{pad}if( {sz} < 1 ) return RetCode.InternalError;\n"));
                 for (arr, t) in circbuf_arrays(id, layout) {
                     s.push_str(&format!(
                         "{pad}{arr} = new {}[{sz}];\n",

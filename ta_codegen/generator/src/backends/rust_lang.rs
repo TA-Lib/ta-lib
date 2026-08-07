@@ -2307,15 +2307,16 @@ impl StatementEmitter for RustStmt<'_, '_> {
                     self.helpers,
                 );
                 let mut s = String::new();
-                // Parity with the pre-cutover reference's CIRCBUF_INIT _RUST guard;
-                // also prevents the `(sz as usize) - 1` underflow.
-                let alloc_fail = if self.ctx.result_error_returns {
-                    "return Err(RetCode::AllocErr);"
+                // The size is derived, so < 1 is a logic defect rather than an
+                // allocation failure: same code as C's TA_INTERNAL_ERROR(137)
+                // (#178). Also prevents the `(sz as usize) - 1` underflow.
+                let size_defect = if self.ctx.result_error_returns {
+                    "return Err(RetCode::InternalError);"
                 } else {
-                    "return RetCode::AllocErr;"
+                    "return RetCode::InternalError;"
                 };
                 s.push_str(&format!(
-                    "{pad}if {sz} < 1 {{ {alloc_fail} }}\n"
+                    "{pad}if {sz} < 1 {{ {size_defect} }}\n"
                 ));
                 if let Some(static_size) = self.ctx.circbuf_hybrid_static.get(id) {
                     s.push_str(&format!(

@@ -161,7 +161,7 @@
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod3 < 1 ) return RetCode.InternalError;
       term_closeMinusTrueLow = new double[optInTimePeriod3];
       term_trueRange = new double[optInTimePeriod3];
       maxIdx_term = (optInTimePeriod3)-1;
@@ -387,7 +387,7 @@
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod3 < 1 ) return RetCode.InternalError;
       term_closeMinusTrueLow = new double[optInTimePeriod3];
       term_trueRange = new double[optInTimePeriod3];
       maxIdx_term = (optInTimePeriod3)-1;
@@ -913,7 +913,7 @@
       if( startIdx > endIdx ) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod3 < 1 ) return RetCode.InternalError;
       term_closeMinusTrueLow = new double[optInTimePeriod3];
       term_trueRange = new double[optInTimePeriod3];
       maxIdx_term = (optInTimePeriod3)-1;
@@ -1169,7 +1169,7 @@
       if( startIdx > endIdx ) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod3 < 1 ) return RetCode.InternalError;
       term_closeMinusTrueLow = new double[optInTimePeriod3];
       term_trueRange = new double[optInTimePeriod3];
       maxIdx_term = (optInTimePeriod3)-1;

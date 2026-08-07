@@ -224,7 +224,7 @@ impl Core {
         }
         // Allocate a circular buffer equal to the requested
         // period.
-        if optInTimePeriod < 1 { return RetCode::AllocErr; }
+        if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
             circBuffer = &mut local_circBuffer;
         } else {
@@ -412,7 +412,7 @@ impl Core {
         }
         // Allocate a circular buffer equal to the requested
         // period.
-        if optInTimePeriod < 1 { return Err(RetCode::AllocErr); }
+        if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         circBuffer = vec![0.0_f64; (optInTimePeriod) as usize];
         maxIdx_circBuffer = ((optInTimePeriod) as usize) - 1;
         circBuffer_Idx = 0;
@@ -569,7 +569,7 @@ impl Core {
         }
         // Allocate a circular buffer equal to the requested
         // period.
-        if optInTimePeriod < 1 { return Err(RetCode::AllocErr); }
+        if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         circBuffer = vec![0.0_f64; (optInTimePeriod) as usize];
         maxIdx_circBuffer = ((optInTimePeriod) as usize) - 1;
         circBuffer_Idx = 0;

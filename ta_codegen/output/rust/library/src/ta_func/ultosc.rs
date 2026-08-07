@@ -302,7 +302,7 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
-        if optInTimePeriod3 < 1 { return RetCode::AllocErr; }
+        if optInTimePeriod3 < 1 { return RetCode::InternalError; }
         if (optInTimePeriod3) as usize <= 32usize {
             term_closeMinusTrueLow = &mut local_term_closeMinusTrueLow;
             term_trueRange = &mut local_term_trueRange;
@@ -664,7 +664,7 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::BadParam);
         }
-        if optInTimePeriod3 < 1 { return Err(RetCode::AllocErr); }
+        if optInTimePeriod3 < 1 { return Err(RetCode::InternalError); }
         term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
         term_trueRange = vec![0.0_f64; (optInTimePeriod3) as usize];
         maxIdx_term = ((optInTimePeriod3) as usize) - 1;
@@ -959,7 +959,7 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::BadParam);
         }
-        if optInTimePeriod3 < 1 { return Err(RetCode::AllocErr); }
+        if optInTimePeriod3 < 1 { return Err(RetCode::InternalError); }
         term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
         term_trueRange = vec![0.0_f64; (optInTimePeriod3) as usize];
         maxIdx_term = ((optInTimePeriod3) as usize) - 1;

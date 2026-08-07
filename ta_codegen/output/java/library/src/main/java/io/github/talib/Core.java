@@ -13097,7 +13097,7 @@ public class Core {
       /* Allocate a circular buffer equal to the requested
        * period.
        */
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       circBuffer = new double[optInTimePeriod];
       maxIdx_circBuffer = (optInTimePeriod)-1;
       circBuffer_Idx = 0;
@@ -13194,7 +13194,7 @@ public class Core {
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       circBuffer = new double[optInTimePeriod];
       maxIdx_circBuffer = (optInTimePeriod)-1;
       circBuffer_Idx = 0;
@@ -13519,7 +13519,7 @@ public class Core {
       /* Allocate a circular buffer equal to the requested
        * period.
        */
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       circBuffer = new double[optInTimePeriod];
       maxIdx_circBuffer = (optInTimePeriod)-1;
       circBuffer_Idx = 0;
@@ -13639,7 +13639,7 @@ public class Core {
       /* Allocate a circular buffer equal to the requested
        * period.
        */
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       circBuffer = new double[optInTimePeriod];
       maxIdx_circBuffer = (optInTimePeriod)-1;
       circBuffer_Idx = 0;
@@ -68836,7 +68836,7 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mfv_flow = new double[optInTimePeriod];
       mfv_volume = new double[optInTimePeriod];
       maxIdx_mfv = (optInTimePeriod)-1;
@@ -68956,7 +68956,7 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mfv_flow = new double[optInTimePeriod];
       mfv_volume = new double[optInTimePeriod];
       maxIdx_mfv = (optInTimePeriod)-1;
@@ -69358,7 +69358,7 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mfv_flow = new double[optInTimePeriod];
       mfv_volume = new double[optInTimePeriod];
       maxIdx_mfv = (optInTimePeriod)-1;
@@ -69504,7 +69504,7 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mfv_flow = new double[optInTimePeriod];
       mfv_volume = new double[optInTimePeriod];
       maxIdx_mfv = (optInTimePeriod)-1;
@@ -77127,7 +77127,7 @@ public class Core {
           * slot with the current one, advance.
           */
          ringSize = sqrtPeriod - 1;
-         if( ringSize < 1 ) return RetCode.AllocErr;
+         if( ringSize < 1 ) return RetCode.InternalError;
          dRing = new double[ringSize];
          maxIdx_dRing = (ringSize)-1;
          dRing_Idx = 0;
@@ -77298,7 +77298,7 @@ public class Core {
          }
          trailingHalf = 0.0;
          ringSize = sqrtPeriod - 1;
-         if( ringSize < 1 ) return RetCode.AllocErr;
+         if( ringSize < 1 ) return RetCode.InternalError;
          dRing = new double[ringSize];
          maxIdx_dRing = (ringSize)-1;
          dRing_Idx = 0;
@@ -77965,7 +77965,7 @@ public class Core {
           * slot with the current one, advance.
           */
          ringSize = sqrtPeriod - 1;
-         if( ringSize < 1 ) return RetCode.AllocErr;
+         if( ringSize < 1 ) return RetCode.InternalError;
          dRing = new double[ringSize];
          maxIdx_dRing = (ringSize)-1;
          dRing_Idx = 0;
@@ -78359,7 +78359,7 @@ public class Core {
           * slot with the current one, advance.
           */
          ringSize = sqrtPeriod - 1;
-         if( ringSize < 1 ) return RetCode.AllocErr;
+         if( ringSize < 1 ) return RetCode.InternalError;
          dRing = new double[ringSize];
          maxIdx_dRing = (ringSize)-1;
          dRing_Idx = 0;
@@ -106165,7 +106165,7 @@ public class Core {
          return RetCode.BadParam;
       }
       /* Id, Type, Static Size */
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mflow_positive = new double[optInTimePeriod];
       mflow_negative = new double[optInTimePeriod];
       maxIdx_mflow = (optInTimePeriod)-1;
@@ -106302,7 +106302,7 @@ public class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mflow_positive = new double[optInTimePeriod];
       mflow_negative = new double[optInTimePeriod];
       maxIdx_mflow = (optInTimePeriod)-1;
@@ -106663,7 +106663,7 @@ public class Core {
          return RetCode.BadParam;
       }
       /* Id, Type, Static Size */
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mflow_positive = new double[optInTimePeriod];
       mflow_negative = new double[optInTimePeriod];
       maxIdx_mflow = (optInTimePeriod)-1;
@@ -106813,7 +106813,7 @@ public class Core {
          return RetCode.BadParam;
       }
       /* Id, Type, Static Size */
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mflow_positive = new double[optInTimePeriod];
       mflow_negative = new double[optInTimePeriod];
       maxIdx_mflow = (optInTimePeriod)-1;
@@ -142878,7 +142878,7 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod3 < 1 ) return RetCode.InternalError;
       term_closeMinusTrueLow = new double[optInTimePeriod3];
       term_trueRange = new double[optInTimePeriod3];
       maxIdx_term = (optInTimePeriod3)-1;
@@ -143104,7 +143104,7 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod3 < 1 ) return RetCode.InternalError;
       term_closeMinusTrueLow = new double[optInTimePeriod3];
       term_trueRange = new double[optInTimePeriod3];
       maxIdx_term = (optInTimePeriod3)-1;
@@ -143630,7 +143630,7 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod3 < 1 ) return RetCode.InternalError;
       term_closeMinusTrueLow = new double[optInTimePeriod3];
       term_trueRange = new double[optInTimePeriod3];
       maxIdx_term = (optInTimePeriod3)-1;
@@ -143886,7 +143886,7 @@ public class Core {
       if( startIdx > endIdx ) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInTimePeriod3 < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod3 < 1 ) return RetCode.InternalError;
       term_closeMinusTrueLow = new double[optInTimePeriod3];
       term_trueRange = new double[optInTimePeriod3];
       maxIdx_term = (optInTimePeriod3)-1;

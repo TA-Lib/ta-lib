@@ -92,7 +92,7 @@
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mfv_flow = new double[optInTimePeriod];
       mfv_volume = new double[optInTimePeriod];
       maxIdx_mfv = (optInTimePeriod)-1;
@@ -212,7 +212,7 @@
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mfv_flow = new double[optInTimePeriod];
       mfv_volume = new double[optInTimePeriod];
       maxIdx_mfv = (optInTimePeriod)-1;
@@ -614,7 +614,7 @@
       if( startIdx > endIdx ) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mfv_flow = new double[optInTimePeriod];
       mfv_volume = new double[optInTimePeriod];
       maxIdx_mfv = (optInTimePeriod)-1;
@@ -760,7 +760,7 @@
       if( startIdx > endIdx ) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mfv_flow = new double[optInTimePeriod];
       mfv_volume = new double[optInTimePeriod];
       maxIdx_mfv = (optInTimePeriod)-1;

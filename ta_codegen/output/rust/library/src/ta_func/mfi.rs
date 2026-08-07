@@ -223,7 +223,7 @@ impl Core {
         let mut mflow_Idx: usize = 0;
         let mut maxIdx_mflow: usize = 49;
         // Id, Type, Static Size
-        if optInTimePeriod < 1 { return RetCode::AllocErr; }
+        if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 50usize {
             mflow_positive = &mut local_mflow_positive;
             mflow_negative = &mut local_mflow_negative;
@@ -441,7 +441,7 @@ impl Core {
         let mut mflow_Idx: usize = 0;
         let mut maxIdx_mflow: usize = 49;
         // Id, Type, Static Size
-        if optInTimePeriod < 1 { return Err(RetCode::AllocErr); }
+        if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
         mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
         maxIdx_mflow = ((optInTimePeriod) as usize) - 1;
@@ -629,7 +629,7 @@ impl Core {
         let mut mflow_Idx: usize = 0;
         let mut maxIdx_mflow: usize = 49;
         // Id, Type, Static Size
-        if optInTimePeriod < 1 { return Err(RetCode::AllocErr); }
+        if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
         mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
         mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
         maxIdx_mflow = ((optInTimePeriod) as usize) - 1;

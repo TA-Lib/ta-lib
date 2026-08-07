@@ -128,7 +128,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       /* Id, Type, Static Size */
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mflow_positive = new double[optInTimePeriod];
       mflow_negative = new double[optInTimePeriod];
       maxIdx_mflow = (optInTimePeriod)-1;
@@ -267,7 +267,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInTimePeriod < 1 ) return RetCode.AllocErr;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mflow_positive = new double[optInTimePeriod];
       mflow_negative = new double[optInTimePeriod];
       maxIdx_mflow = (optInTimePeriod)-1;

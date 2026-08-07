@@ -328,7 +328,7 @@ impl Core {
             // sqrtPeriod-1 slots is enough: read the expiring value, overwrite the
             // slot with the current one, advance.
             ringSize = sqrtPeriod - 1;
-            if ringSize < 1 { return RetCode::AllocErr; }
+            if ringSize < 1 { return RetCode::InternalError; }
             if (ringSize) as usize <= 50usize {
                 dRing = &mut local_dRing;
             } else {
@@ -798,7 +798,7 @@ impl Core {
             // sqrtPeriod-1 slots is enough: read the expiring value, overwrite the
             // slot with the current one, advance.
             ringSize = sqrtPeriod - 1;
-            if ringSize < 1 { return Err(RetCode::AllocErr); }
+            if ringSize < 1 { return Err(RetCode::InternalError); }
             dRing = vec![0.0_f64; (ringSize) as usize];
             maxIdx_dRing = ((ringSize) as usize) - 1;
             dRing_Idx = 0;
@@ -1222,7 +1222,7 @@ impl Core {
             // sqrtPeriod-1 slots is enough: read the expiring value, overwrite the
             // slot with the current one, advance.
             ringSize = sqrtPeriod - 1;
-            if ringSize < 1 { return Err(RetCode::AllocErr); }
+            if ringSize < 1 { return Err(RetCode::InternalError); }
             dRing = vec![0.0_f64; (ringSize) as usize];
             maxIdx_dRing = ((ringSize) as usize) - 1;
             dRing_Idx = 0;

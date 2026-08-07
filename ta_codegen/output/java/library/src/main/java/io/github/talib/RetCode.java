@@ -52,6 +52,7 @@ enum RetCode
 	BadParam,
 	OutOfRangeStartIndex,
     OutOfRangeEndIndex,
+    /** C parity only, never returned here: an allocation failure terminates the process (#178). */
     AllocErr,
     InternalError
 };
