@@ -596,7 +596,7 @@ fn emit_sv_compare(
             ));
         } else {
             let _ = std::fmt::Write::write_fmt(s, format_args!(
-                "{pad}if( {pre} sv_bitne(v{i}, {b}[{idx}]) ) {{ ok = 0; badBar = {bar}; badOut = {i}; bv = {b}[{idx}]; sv = v{i}; }}\n"
+                "{pad}if( {pre} sv_xtier_ne(v{i}, {b}[{idx}], &svZsign) ) {{ ok = 0; badBar = {bar}; badOut = {i}; bv = {b}[{idx}]; sv = v{i}; }}\n"
             ));
         }
     }
@@ -656,7 +656,9 @@ fn emit_sv_batch_fail_tail(s: &mut String, candle: bool) {
         s.push_str("            if( rd + 1 < rounds ) continue;\n");
         s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
         s.push_str("            TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );\n");
-        s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll);\n");
+        // Reachable after earlier candle rounds already compared, so the benign
+        // count travels with it — otherwise those cases vanish from the summary.
+        s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll, svZsign);\n");
     } else {
         s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
         s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"legs\\\":0,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":1}\", (int)rc, svNb, openRejects, openRejects);\n");
@@ -1021,6 +1023,16 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("static double sv_f0[SV_MAXN], sv_f1[SV_MAXN], sv_f2[SV_MAXN];\n");
     s.push_str("static int sv_if0[SV_MAXN], sv_if1[SV_MAXN];\n");
     s.push_str("static int sv_bitne(double a, double b) { return memcmp(&a, &b, sizeof(double)) != 0; }\n");
+    // Cross-tier compare (stream vs batch, and OpenAndFill's array vs batch).
+    // Differing bits that are numerically equal can only be +0.0 vs -0.0, which
+    // max/min leave unspecified: counted, never a mismatch — the same benign
+    // class --fuzz-064 carries (issue #147). Same-tier compares (peek vs
+    // update) keep sv_bitne: one code path has no licence to differ at all.
+    s.push_str("static int sv_xtier_ne(double a, double b, int *zsign) {\n");
+    s.push_str("    if( !sv_bitne(a, b) ) return 0;\n");
+    s.push_str("    if( a == b ) { (*zsign)++; return 0; }\n");
+    s.push_str("    return 1;\n");
+    s.push_str("}\n");
     // Candle-settings variation for CDL streams: rounds 1/2 re-run the
     // batch-vs-stream comparison with every setting's avgPeriod bumped (+3)
     // or zeroed (the instant-candle degenerate, runtime trailing lag 0).
@@ -1109,6 +1121,8 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("        TA_RetCode rc;\n");
         s.push_str("        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;\n");
         s.push_str("        int fillOk = 1, fillChecked = 0;\n");
+        // Benign +/-0 cases across every cross-tier compare in this request.
+        s.push_str("        int svZsign = 0;\n");
         s.push_str("        int pref[4]; int pc[4];\n");
         if candle {
             // Candle functions honor "candleLegs": re-run the whole sweep
@@ -1250,7 +1264,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                     ));
                 } else {
                     s.push_str(&format!(
-                        "                if( sv_bitne({}[ft], {}[ft]) ) fillOk = 0;\n",
+                        "                if( sv_xtier_ne({}[ft], {}[ft], &svZsign) ) fillOk = 0;\n",
                         fbuf[i], bbuf[i]
                     ));
                 }
@@ -1448,9 +1462,9 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // even if the driver's fill check ever regresses.
         s.push_str("        if( fillChecked && !fillOk ) allOk = 0;\n");
         if candle {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);\n");
         } else {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d}\", fillChecked, fillOk, allOk, peekAll);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", fillChecked, fillOk, allOk, peekAll, svZsign);\n");
         }
         s.push_str("        return;\n");
         s.push_str("    }\n");
@@ -4255,7 +4269,7 @@ const RUST_ABSTRACT_DYNAMIC_HANDLERS: &str = r#"        "abstract_call" => {
 // in-process on identical seeded inputs, compare BITWISE per bar (to_bits),
 // spot-assert peek == update, verify the OpenAndFill fill against the batch
 // arrays, and answer the same flat JSON contract the ta_regtest driver reads
-// (ok / peek_ok / legs / fill_checked / fill_ok / unsupportedArm /
+// (ok / peek_ok / legs / fill_checked / fill_ok / benign / unsupportedArm /
 // "not_streamable"). Differences from the C gate, by design:
 // - No startIdx-anchored OpenInternal leg: `<f>_open_internal` is pub(crate)
 //   (the anchor seam is a bit-exactness footgun, not a public API); anchored
@@ -4417,6 +4431,13 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str(&bdecls);
 
     s.push_str("    let mut legs = 0i64;\n    let mut all_ok = true;\n    let mut peek_all = true;\n    let mut fill_checked = 0i32;\n    let mut fill_ok = true;\n    let mut beg = 0usize;\n    let mut nb = 0usize;\n    let mut diag = String::new();\n");
+    // Benign +/-0 cases across every cross-tier compare in this request. `mut`
+    // only when an output can reach sv_xtier_ne: an all-integer function (every
+    // CDL*, MIN/MAX/MINMAXINDEX, HT_TRENDMODE) compares with `!=` and only ever
+    // reads this, and rustc's unused_mut is not in the generated crate's allow
+    // list — same reason cb_mut below is conditional.
+    let z_mut = if out_is_int.iter().any(|b| !*b) { "mut " } else { "" };
+    let _ = writeln!(s, "    let {z_mut}zsign = 0i64;");
     let rounds = if candle {
         "    let rounds = if candleLegs != 0 { 4 } else { 1 };\n"
     } else {
@@ -4475,7 +4496,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     if candle {
         s.push_str("            if !open_rejects { all_ok = false; }\n");
         s.push_str("            if rd + 1 < rounds { continue; }\n");
-        s.push_str("            return format!(\"{{\\\"retCode\\\":{},\\\"legs\\\":{},\\\"nb\\\":{},\\\"openRejects\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{}}}\", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all));\n");
+        s.push_str("            return format!(\"{{\\\"retCode\\\":{},\\\"legs\\\":{},\\\"nb\\\":{},\\\"openRejects\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}}}\", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), zsign);\n");
     } else {
         s.push_str("            return format!(\"{{\\\"retCode\\\":{},\\\"legs\\\":0,\\\"nb\\\":{},\\\"openRejects\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":1}}\", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));\n");
     }
@@ -4495,7 +4516,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         if *is_int {
             let _ = writeln!(s, "                    for i in 0..nb {{ if f{i}[i] != b{i}[i] {{ fill_ok = false; }} }}");
         } else {
-            let _ = writeln!(s, "                    for i in 0..nb {{ if f{i}[i].to_bits() != b{i}[i].to_bits() {{ fill_ok = false; }} }}");
+            let _ = writeln!(s, "                    for i in 0..nb {{ if sv_xtier_ne(f{i}[i], b{i}[i], &mut zsign) {{ fill_ok = false; }} }}");
         }
     }
     s.push_str("                }\n            }\n        }\n        }\n");
@@ -4527,7 +4548,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         if out_is_int[i] {
             let _ = writeln!(s, "                    if {part} != b{i}[p - 1 - beg] {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"where\\\":\\\"open\\\"\", p - 1); }} }}");
         } else {
-            let _ = writeln!(s, "                    if {part}.to_bits() != b{i}[p - 1 - beg].to_bits() {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"where\\\":\\\"open\\\"\", p - 1); }} }}");
+            let _ = writeln!(s, "                    if sv_xtier_ne({part}, b{i}[p - 1 - beg], &mut zsign) {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"where\\\":\\\"open\\\"\", p - 1); }} }}");
         }
     }
     // update loop
@@ -4549,7 +4570,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         if out_is_int[i] {
             let _ = writeln!(s, "                            if {up} != b{i}[t - beg] {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"batchv\\\":\\\"{{}}\\\",\\\"streamv\\\":\\\"{{}}\\\"\", t, b{i}[t - beg], {up}); }} }}");
         } else {
-            let _ = writeln!(s, "                            if {up}.to_bits() != b{i}[t - beg].to_bits() {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"batchv\\\":\\\"{{:016x}}\\\",\\\"streamv\\\":\\\"{{:016x}}\\\"\", t, b{i}[t - beg].to_bits(), {up}.to_bits()); }} }}");
+            let _ = writeln!(s, "                            if sv_xtier_ne({up}, b{i}[t - beg], &mut zsign) {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"batchv\\\":\\\"{{:016x}}\\\",\\\"streamv\\\":\\\"{{:016x}}\\\"\", t, b{i}[t - beg].to_bits(), {up}.to_bits()); }} }}");
         }
     }
     s.push_str("                        } else {\n");
@@ -4558,7 +4579,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         if out_is_int[i] {
             let _ = writeln!(s, "                            if {up} != b{i}[t - beg] {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"batchv\\\":\\\"{{}}\\\",\\\"streamv\\\":\\\"{{}}\\\"\", t, b{i}[t - beg], {up}); }} }}");
         } else {
-            let _ = writeln!(s, "                            if {up}.to_bits() != b{i}[t - beg].to_bits() {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"batchv\\\":\\\"{{:016x}}\\\",\\\"streamv\\\":\\\"{{:016x}}\\\"\", t, b{i}[t - beg].to_bits(), {up}.to_bits()); }} }}");
+            let _ = writeln!(s, "                            if sv_xtier_ne({up}, b{i}[t - beg], &mut zsign) {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"batchv\\\":\\\"{{:016x}}\\\",\\\"streamv\\\":\\\"{{:016x}}\\\"\", t, b{i}[t - beg].to_bits(), {up}.to_bits()); }} }}");
         }
     }
     s.push_str("                        }\n");
@@ -4584,7 +4605,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("    }\n");
     // fill_ok folds into ok as a safety net (mirrors the C gate), so a driver
     // reading only `ok` — e.g. the debug sweep — still fails on a fill regression.
-    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), diag)\n");
+    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)\n");
     s.push_str("}\n\n");
     s
 }
@@ -4598,6 +4619,14 @@ pub(crate) fn generate_rust_stream_verify(
     use std::fmt::Write as _;
     let mut s = String::new();
     s.push_str("// ---- stream_verify: Rust stream vs Rust batch, bitwise ----\n\n");
+    // Cross-tier compare — see the C emitter for the rule. Differing bits that
+    // compare equal are +0.0 vs -0.0 (issue #147): counted, never a mismatch.
+    // The peek-vs-update spot-assert stays a strict `to_bits()` compare.
+    s.push_str("fn sv_xtier_ne(a: f64, b: f64, zsign: &mut i64) -> bool {\n");
+    s.push_str("    if a.to_bits() == b.to_bits() { return false; }\n");
+    s.push_str("    if a == b { *zsign += 1; return false; }\n");
+    s.push_str("    true\n");
+    s.push_str("}\n\n");
     // Candle-settings rounds (mirror the C sweep): defaults / avgPeriod+3 /
     // avgPeriod=0 (instant candle) / rangeType=Shadows.
     s.push_str("fn sv_candle_settings(rd: i32) -> CandleSettings {\n    let mut s = CandleSettings::default_settings();\n    let all = |s: &mut CandleSettings, f: &dyn Fn(&mut CandleSetting)| {\n        for cs in [&mut s.body_long, &mut s.body_very_long, &mut s.body_short, &mut s.body_doji,\n                   &mut s.shadow_long, &mut s.shadow_very_long, &mut s.shadow_short,\n                   &mut s.shadow_very_short, &mut s.near, &mut s.far, &mut s.equal] {\n            f(cs);\n        }\n    };\n    match rd {\n        1 => all(&mut s, &|c| c.avg_period += 3),\n        2 => all(&mut s, &|c| c.avg_period = 0),\n        3 => all(&mut s, &|c| c.range_type = 2),\n        _ => {}\n    }\n    s\n}\n\n");
@@ -4810,6 +4839,10 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str(&bdecls);
 
     s.push_str("        long legs = 0;\n        boolean allOk = true;\n        boolean peekAll = true;\n        int fillChecked = 0;\n        boolean fillOk = true;\n        MInteger beg = new MInteger();\n        MInteger nb = new MInteger();\n        String diag = \"\";\n");
+    // Benign +/-0 cases across every cross-tier compare in this request. A
+    // one-element array, not a static: the server answers many requests per
+    // process and a static would carry one function's count into the next.
+    s.push_str("        long[] zsign = { 0 };\n");
     if candle {
         s.push_str("        int rounds = (candleLegs != 0) ? 4 : 1;\n");
     } else {
@@ -4872,7 +4905,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     if candle {
         s.push_str("                if (!openRejects) allOk = false;\n");
         s.push_str("                if (rd + 1 < rounds) continue;\n");
-        s.push_str("                return \"{\\\"retCode\\\":\" + rc.toInt() + \",\\\"legs\\\":\" + legs + \",\\\"nb\\\":\" + nb.value + \",\\\"openRejects\\\":\" + (openRejects ? 1 : 0) + \",\\\"ok\\\":\" + (allOk ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \"}\";\n");
+        s.push_str("                return \"{\\\"retCode\\\":\" + rc.toInt() + \",\\\"legs\\\":\" + legs + \",\\\"nb\\\":\" + nb.value + \",\\\"openRejects\\\":\" + (openRejects ? 1 : 0) + \",\\\"ok\\\":\" + (allOk ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign[0] + \"}\";\n");
     } else {
         s.push_str("                return \"{\\\"retCode\\\":\" + rc.toInt() + \",\\\"legs\\\":0,\\\"nb\\\":\" + nb.value + \",\\\"openRejects\\\":\" + (openRejects ? 1 : 0) + \",\\\"ok\\\":\" + (openRejects ? 1 : 0) + \",\\\"peek_ok\\\":1}\";\n");
     }
@@ -4891,7 +4924,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         if *is_int {
             let _ = writeln!(s, "                    for (int i = 0; i < nb.value; i++) if (f{i}[i] != b{i}[i]) fillOk = false;");
         } else {
-            let _ = writeln!(s, "                    for (int i = 0; i < nb.value; i++) if (svBne(f{i}[i], b{i}[i])) fillOk = false;");
+            let _ = writeln!(s, "                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f{i}[i], b{i}[i], zsign)) fillOk = false;");
         }
     }
     s.push_str("                }\n");
@@ -4963,13 +4996,13 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
             if out_is_int[i] {
                 let _ = writeln!(s, "                if (v0.{f} != b{i}[p - 1 - beg.value]) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + (p - 1) + \",\\\"badOut\\\":{i},\\\"where\\\":\\\"open\\\"\"; }}");
             } else {
-                let _ = writeln!(s, "                if (svBne(v0.{f}, b{i}[p - 1 - beg.value])) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + (p - 1) + \",\\\"badOut\\\":{i},\\\"where\\\":\\\"open\\\"\"; }}");
+                let _ = writeln!(s, "                if (svXtierNe(v0.{f}, b{i}[p - 1 - beg.value], zsign)) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + (p - 1) + \",\\\"badOut\\\":{i},\\\"where\\\":\\\"open\\\"\"; }}");
             }
         }
     } else if out_is_int[0] {
         s.push_str("                if (st.value() != b0[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + (p - 1) + \",\\\"badOut\\\":0,\\\"where\\\":\\\"open\\\"\"; }\n");
     } else {
-        s.push_str("                if (svBne(st.value(), b0[p - 1 - beg.value])) { allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + (p - 1) + \",\\\"badOut\\\":0,\\\"where\\\":\\\"open\\\"\"; }\n");
+        s.push_str("                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + (p - 1) + \",\\\"badOut\\\":0,\\\"where\\\":\\\"open\\\"\"; }\n");
     }
     // Update loop with peek-every-7 + value()==update.
     s.push_str("                for (int t = p; t < svN; t++) {\n");
@@ -5005,13 +5038,13 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
                 if out_is_int[i] {
                     let _ = writeln!(s, "{pad}if (up.{f} != b{i}[t - beg.value]) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + t + \",\\\"badOut\\\":{i},\\\"batchv\\\":\\\"\" + b{i}[t - beg.value] + \"\\\",\\\"streamv\\\":\\\"\" + up.{f} + \"\\\"\"; }}");
                 } else {
-                    let _ = writeln!(s, "{pad}if (svBne(up.{f}, b{i}[t - beg.value])) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + t + \",\\\"badOut\\\":{i},\\\"batchv\\\":\\\"\" + String.format(\"%016x\", Double.doubleToRawLongBits(b{i}[t - beg.value])) + \"\\\",\\\"streamv\\\":\\\"\" + String.format(\"%016x\", Double.doubleToRawLongBits(up.{f})) + \"\\\"\"; }}");
+                    let _ = writeln!(s, "{pad}if (svXtierNe(up.{f}, b{i}[t - beg.value], zsign)) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + t + \",\\\"badOut\\\":{i},\\\"batchv\\\":\\\"\" + String.format(\"%016x\", Double.doubleToRawLongBits(b{i}[t - beg.value])) + \"\\\",\\\"streamv\\\":\\\"\" + String.format(\"%016x\", Double.doubleToRawLongBits(up.{f})) + \"\\\"\"; }}");
                 }
             }
         } else if out_is_int[0] {
             let _ = writeln!(s, "{pad}if (up != b0[t - beg.value]) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + t + \",\\\"badOut\\\":0,\\\"batchv\\\":\\\"\" + b0[t - beg.value] + \"\\\",\\\"streamv\\\":\\\"\" + up + \"\\\"\"; }}");
         } else {
-            let _ = writeln!(s, "{pad}if (svBne(up, b0[t - beg.value])) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + t + \",\\\"badOut\\\":0,\\\"batchv\\\":\\\"\" + String.format(\"%016x\", Double.doubleToRawLongBits(b0[t - beg.value])) + \"\\\",\\\"streamv\\\":\\\"\" + String.format(\"%016x\", Double.doubleToRawLongBits(up)) + \"\\\"\"; }}");
+            let _ = writeln!(s, "{pad}if (svXtierNe(up, b0[t - beg.value], zsign)) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + t + \",\\\"badOut\\\":0,\\\"batchv\\\":\\\"\" + String.format(\"%016x\", Double.doubleToRawLongBits(b0[t - beg.value])) + \"\\\",\\\"streamv\\\":\\\"\" + String.format(\"%016x\", Double.doubleToRawLongBits(up)) + \"\\\"\"; }}");
         }
     };
     emit_up_compares(&mut s, "                        ");
@@ -5045,13 +5078,13 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
             if out_is_int[i] {
                 let _ = writeln!(s, "                            if (uA.{f} != uB.{f} || uA.{f} != b{i}[t - beg.value]) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }}");
             } else {
-                let _ = writeln!(s, "                            if (svBne(uA.{f}, uB.{f}) || svBne(uA.{f}, b{i}[t - beg.value])) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }}");
+                let _ = writeln!(s, "                            if (svBne(uA.{f}, uB.{f}) || svXtierNe(uA.{f}, b{i}[t - beg.value], zsign)) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }}");
             }
         }
     } else if out_is_int[0] {
         s.push_str("                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }\n");
     } else {
-        s.push_str("                            if (svBne(uA, uB) || svBne(uA, b0[t - beg.value])) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }\n");
+        s.push_str("                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }\n");
     }
     s.push_str("                        }\n");
     s.push_str("                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyOpenReject\\\":1\"; }\n");
@@ -5118,7 +5151,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
 
     s.push_str("        }\n");
     // fill_ok folds into ok as a safety net (mirrors the C/Rust gates).
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + diag + \"}\";\n");
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign[0] + diag + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }
@@ -5135,6 +5168,14 @@ pub(crate) fn generate_java_stream_verify(
     let mut s = String::new();
     s.push_str("    // ---- stream_verify: Java stream vs Java batch, bitwise ----\n\n");
     s.push_str("    static boolean svBne(double a, double b) {\n        return Double.doubleToRawLongBits(a) != Double.doubleToRawLongBits(b);\n    }\n\n");
+    // Cross-tier compare — see the C emitter for the rule. Differing bits that
+    // compare equal are +0.0 vs -0.0 (issue #147): counted, never a mismatch.
+    // peek/value()/copy-vs-copy stay on svBne — one code path, no licence to differ.
+    s.push_str("    static boolean svXtierNe(double a, double b, long[] zsign) {\n");
+    s.push_str("        if (!svBne(a, b)) return false;\n");
+    s.push_str("        if (a == b) { zsign[0]++; return false; }\n");
+    s.push_str("        return true;\n");
+    s.push_str("    }\n\n");
     // Candle-settings rounds (mirror the C/Rust sweep): defaults / avgPeriod+3
     // / avgPeriod=0 (instant candle) / rangeType=Shadows.
     s.push_str("    static void svApplyCandleRound(Core c, int rd) {\n");

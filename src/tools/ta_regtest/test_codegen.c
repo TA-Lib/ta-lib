@@ -1333,6 +1333,7 @@ typedef struct {
     int               streamSkipped;
     int               streamRejectArms;
     int               streamFillFunctions; /* funcs whose OpenAndFill == batch(0,n-1) bitwise */
+    long long         streamBenign;        /* cross-tier +0.0/-0.0 pairs (#147) — never a failure */
 } ForEachFuncContext;
 
 static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
@@ -2671,6 +2672,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int vecIsMin[STREAM_MAX_VEC];
     int nvec, v, variant, legs = 0, rejArms = 0, vecOverflow = 0;
     int fillChecked = 0;   /* set once any leg reports OpenAndFill was verified */
+    long long benign = 0;  /* signed-zero cases this function's legs reported */
     int isUnstable;
 
     if( ctx->error != TA_TEST_PASS ) return;
@@ -2816,6 +2818,14 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 if( l > 0 ) legs += l;
                 if( stream_flag(ctx->responseBuf, "\"unsupportedArm\":") == 1 )
                     rejArms++;
+                /* Cross-tier +0.0/-0.0 pairs the server chose not to fail on
+                 * (issue #147). Reported, never a failure — the same benign
+                 * class --fuzz-064 carries. `-1` is a server that predates the
+                 * field, which stream_flag reports as absent, not as a count. */
+                {
+                    int z = stream_flag(ctx->responseBuf, "\"benign\":");
+                    if( z > 0 ) benign += z;
+                }
             }
         }
     }
@@ -2835,7 +2845,13 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ctx->streamFunctions++;
     ctx->streamLegs += legs;
     ctx->streamRejectArms += rejArms;
+    ctx->streamBenign += benign;
     if( fillChecked ) ctx->streamFillFunctions++;
+    /* Named per function, like --fuzz-064's BENIGN line: a summary total that
+     * starts moving says only that something did, not what. */
+    if( benign > 0 )
+        printf("  BENIGN TA_%s: %lld cross-tier signed-zero case(s) "
+               "(numerically equal, +0.0 vs -0.0)\n", funcInfo->name, benign);
 }
 
 /* ---- Test orchestration (Task 9) ---- */
@@ -3259,12 +3275,18 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamSkipped       = 0;
             ctx.streamRejectArms    = 0;
             ctx.streamFillFunctions = 0;
+            ctx.streamBenign        = 0;
             TA_ForEachFunc(stream_one_function, &ctx);
+            /* The benign total is printed unconditionally, zero included: the
+             * whole point of counting the +/-0 class rather than ignoring it is
+             * that a change which starts flipping zeros shows up as a number
+             * moving off 0, in a line that is always there to compare against. */
             printf("  Stream verify: %d functions, %d legs bit-exact vs batch, "
-                   "%d expected-reject probes, %d without a stream\n"
+                   "%d expected-reject probes, %d without a stream, "
+                   "%lld benign signed-zero\n"
                    "  OpenAndFill verify: %d functions, filled array == batch(0,n-1) bitwise\n",
                    ctx.streamFunctions, ctx.streamLegs, ctx.streamRejectArms,
-                   ctx.streamSkipped, ctx.streamFillFunctions);
+                   ctx.streamSkipped, ctx.streamBenign, ctx.streamFillFunctions);
             /* Coverage ratchet: every function with a server stream must ALSO
              * verify OpenAndFill (the emit side and this verify side both gate on
              * the same has_open_and_fill, so they cannot desync silently — but if

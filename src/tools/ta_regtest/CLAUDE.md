@@ -369,6 +369,42 @@ cd ../bin && ./ta_regtest
 ./ta_regtest --codegen --language=c,rust --function=SMA,RSI
 ```
 
+## Signed zero: a value contract, not a bit contract (issue #147)
+
+`max(+0.0, -0.0)` has no defined answer, and the MIN/MAX family answers it
+**path-dependently**: the rescan keeps the oldest bar (strict `>`), the
+incremental step keeps the newest (`>=`), so which zero survives depends on the
+history that produced the window, not on its contents. No memoryless
+implementation of that family can match it everywhere. Bit identity is therefore
+*stronger* than what these algorithms define, and every gate here compares bits.
+
+So **cross-tier** comparisons — stream vs batch, and OpenAndFill's array vs batch
+— count "different bits, numerically equal" as **benign** instead of failing:
+`stream_verify` returns it per request as `benign`, the driver sums it into the
+`Stream verify:` line (printed even at 0, so a change that starts flipping zeros
+shows as a number moving) and names each function on a `BENIGN TA_x` line. Same
+class `--fuzz-064` already carries — `a == b` with differing bits can only be
+±0 — where dev lands 28 `TA_MIDPOINT` cases against v0.6.4.
+
+**Same-tier** comparisons stay strictly bitwise: peek vs update, `value()` vs
+update, copy-A vs copy-B, the `Integer.MIN_VALUE` sentinel pair. One code path
+run twice has no licence to differ at all. Integer outputs never reach this path.
+
+This landed before anything needed it, on purpose. `FUZZ_WITH_ZEROS` sprinkles
+literal `0.0`/`-0.0` and *does* reach a ±0 tie at the window extremum (its
+stream_verify cell — seed 1240, n=240, period 14 — has 10 such windows on
+`close`), so the first algorithm that gives batch and stream different tie
+behaviour would fail the gate on a difference already ruled benign. Sabotage-
+proven in all three servers: flipping the sign of every zero the batch emits
+keeps the run green while counting it (C 564,415 / Rust 420,421 / Java 480,590
+cases), and perturbing those same values to `1e-300` instead fails loudly with
+`STREAM FILL MISMATCH` and `"benign":0` — so the widened comparator still sees
+every difference that is not a zero's sign.
+
+Deliberately **not** surfaced in the user-facing docs. The published "bit-identical"
+wording stays as written: the sign of a zero is below the level a caller reasons
+about, and qualifying it there would cost more clarity than it buys.
+
 ## `--fuzz-064` — bit-exact differential fuzz vs released v0.6.4
 
 An opt-in mode (`ta_regtest --fuzz-064`, never part of default/nightly `--codegen`
