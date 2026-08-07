@@ -149,6 +149,11 @@ def build(root, bin_dir, lib_a):
     #    emit exact hex-float (%a) for the full_output debug arrays.
     with open(serve_src) as f:
         src = f.read()
+    # VALUES only. ta_func/ and ta_common/ come from the frozen lib_a, but
+    # ta_abstract_all.c / ta_func_api.c are NOT stripped (and ta_abstract_serve.c
+    # below comes from the current templates/), so this serve's metadata answers
+    # are the generator compared against itself. Never build a metadata gate on
+    # it, nor on a ta_XXX_serve generalized from it (#161, #116).
     src = re.sub(r'#include "ta_func/[^"]*\.c"\n', '', src)
     src = re.sub(r'#include "ta_common/[^"]*\.c"\n', '', src)
     src = src.replace('#include <stdio.h>',

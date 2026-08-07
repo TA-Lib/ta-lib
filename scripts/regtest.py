@@ -127,6 +127,10 @@ def _compile_ta_ref_serve(serve_src, lib_a, include_dirs, bin_dir, post_funcs=()
     import re
     with open(serve_src) as f:
         src_text = f.read()
+    # VALUES only. ta_func/ and ta_common/ come from the frozen lib_a, but
+    # ta_abstract_all.c / ta_func_api.c are NOT stripped and resolve against the
+    # CURRENT src/ta_abstract via -I, so this serve's metadata answers are the
+    # generator compared against itself. Never build a metadata gate on it (#161).
     src_text = re.sub(r'#include "ta_func/[^"]*\.c"\n', '', src_text)
     src_text = re.sub(r'#include "ta_common/[^"]*\.c"\n', '', src_text)
     src_text = src_text.replace(
