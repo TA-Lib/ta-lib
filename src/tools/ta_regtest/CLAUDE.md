@@ -503,10 +503,31 @@ Architecture (see `fuzz_data.h`, the Rust port in
   its own in-process generation, so a `fuzz_gen`-port bug surfaces as an INPUT
   mismatch, not a fake indicator-output bug. Hex servers (Java) send the driver's
   exact arrays, so they have no port to self-check and are skipped here.
+- **Unstable-period axis (#116).** The 20 functions carrying
+  `TA_FUNC_FLG_UNST_PER` run the whole sweep a second time at unstable period
+  `XLANG_UNST_PERIOD` (3), with the in-process golden set through
+  `TA_SetUnstablePeriod` and the servers through the per-call field. 0 runs last,
+  so each function leaves the servers where the next one expects them. Only
+  `FUZZ_VEC_NORMAL` vectors repeat: the reject/sentinel classes assert parameter
+  *validation*, which runs before any unstable-period logic. Before this the gate
+  pinned `unstablePeriod: 0` everywhere and the axis was covered **only** by the
+  ref differential sweep, i.e. only by the frozen `ta_ref_serve` — the last thing
+  blocking its retirement.
+  - **A non-zero period cannot ride the seed transport.** `abstract_call` carries
+    a `funcUnstId` that no driver has ever sent, so it reads 0
+    (`TA_FUNC_UNST_ADX`): the C handler would apply the period to ADX whatever
+    function was called, and the Rust handler ignores the field outright. The
+    per-function `TA_<name>` handler hardcodes the right id, so the unstable legs
+    force the hex transport on every server, Rust included.
+  - Non-vacuity is checked per function *before* the leg runs: the lookback must
+    move between unstable 0 and 3. A flat lookback means the flag is lying and
+    fails the run rather than banking a leg that compares nothing. A `unstCases`
+    floor catches the axis going quiet wholesale.
 - **Coverage:** every function × 9 shapes × 3 seeds × 3 sizes × parameter
-  vectors × 3 subranges ≈ 182k comparisons **per server**, ~94% with non-empty
-  output (a non-vacuity guard fails the run if nothing produced output — an empty
-  output hashes the same on both sides).
+  vectors × 3 subranges ≈ 237k comparisons **per server** (of which ~76k at a
+  non-zero unstable period), ~94% with non-empty output (a non-vacuity guard
+  fails the run if nothing produced output — an empty output hashes the same on
+  both sides).
 
 Scope rules (deliberate):
 - **No 0.6.4, no waivers; one tolerance and two skips.** This is
