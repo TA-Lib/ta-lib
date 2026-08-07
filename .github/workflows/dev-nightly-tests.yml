@@ -79,9 +79,14 @@ jobs:
         if: runner.os == 'Linux'
         uses: ./.github/actions/apt-install
         with:
-          packages: >-
-            automake libtool autogen openjdk-21-jdk
-            gcc-multilib gcc-i686-linux-gnu gcc-aarch64-linux-gnu
+          # One install per line, matching the grouping this job has always
+          # used; merging them breaks gcc-13-*-linux-gnu resolution.
+          packages: |
+            automake libtool autogen
+            openjdk-21-jdk
+            gcc-multilib
+            gcc-i686-linux-gnu
+            gcc-aarch64-linux-gnu
 
       - name: Build dist assets (Linux)
         if: runner.os == 'Linux'

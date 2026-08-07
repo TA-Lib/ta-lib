@@ -6,7 +6,14 @@ description: >-
 
 inputs:
   packages:
-    description: Space-separated package list (one apt-get call installs them all).
+    description: >-
+      Packages to install, ONE apt-get install PER LINE (whitespace-separated
+      within a line). The split is deliberate, not cosmetic: resolving several
+      toolchain metapackages in a single call asks apt for one consistent set
+      across all of them, which fails where sequential calls succeed --
+      installing gcc-multilib, gcc-i686-linux-gnu and gcc-aarch64-linux-gnu
+      together reports gcc-13-*-linux-gnu as "not installable". Keep a caller's
+      grouping unless you have re-tested it.
     required: true
 
 runs:
@@ -37,6 +44,13 @@ runs:
         APT_OPTS=(-o Acquire::Retries=3 -o DPkg::Lock::Timeout=600)
 
         sudo apt-get update "${APT_OPTS[@]}"
-        # Unquoted on purpose: PACKAGES is a space-separated list to be split.
-        # shellcheck disable=SC2086
-        sudo apt-get install -y --no-install-recommends "${APT_OPTS[@]}" $PACKAGES
+
+        # One call per line -- see the `packages` input docs for why these are
+        # not merged. No --no-install-recommends either: the toolchain
+        # metapackages here were only ever tested with recommends on.
+        while IFS= read -r group; do
+          [ -n "${group//[[:space:]]/}" ] || continue
+          # Unquoted on purpose: a line is a list of packages to word-split.
+          # shellcheck disable=SC2086
+          sudo apt-get install -y "${APT_OPTS[@]}" $group
+        done <<< "$PACKAGES"
