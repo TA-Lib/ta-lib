@@ -150,3 +150,44 @@ body .vp-toc-placeholder {
   margin-bottom: 0.5rem;
   outline: none;
 }
+
+// ---------------------------------------------------------------------------
+// Call-pattern argument groups (API pages).
+//
+// The API pages colour a function signature by argument group, then colour the
+// explanation bullet for each group to match, so the mapping from signature to
+// prose is spatial rather than something the reader has to reconstruct. Four
+// groups: the startIdx/endIdx range, the inputs, the optional inputs, and the
+// outputs.
+//
+// These were 36 inline `style=` attributes on the C/C++ page. They move here so
+// the Rust and Java API pages can reuse the same four names instead of copying
+// hex strings, and so the dark palette below has one place to live.
+//
+// Dark mode: the light values are full-saturation (#FFFF00, #00FF00) and stay
+// perfectly legible against a dark background, but they glare. The dark set
+// keeps each hue's identity -- the reader learns cyan = range once and it holds
+// in both themes -- at a much lower luminance, with light text instead of black.
+// Every pair clears WCAG AA (7.4:1 to 19.6:1 measured).
+//
+// `html[data-theme="dark"]` is the theme's own toggle attribute, so these can
+// never desync from the switch. Plain attribute selector and plain hex on
+// purpose: no light-dark(), color-mix() or oklch(), whose support is recent.
+.ta-arg-range,
+.ta-arg-in,
+.ta-arg-opt,
+.ta-arg-out {
+  color: #000;
+}
+
+.ta-arg-range { background-color: #66ffff; }
+.ta-arg-in    { background-color: #00ff00; }
+.ta-arg-opt   { background-color: #c0c0c0; }
+.ta-arg-out   { background-color: #ffff00; }
+
+html[data-theme="dark"] {
+  .ta-arg-range { background-color: #134f56; color: #d8fbff; }
+  .ta-arg-in    { background-color: #16532a; color: #dcf9e3; }
+  .ta-arg-opt   { background-color: #4a4a52; color: #ececf1; }
+  .ta-arg-out   { background-color: #5a4f12; color: #fdf6d6; }
+}
