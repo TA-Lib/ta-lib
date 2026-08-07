@@ -17,7 +17,6 @@ Test control:
 Filters (applied to generate AND test):
   --language=c,rust          Filter languages
   --function=SMA,RSI         Filter indicators
-  --codegen-only             Regtest: skip C reference tests
 
 Perftest options:
   --points=5000              Data points (default 5000)
@@ -282,11 +281,15 @@ def main():
     KNOWN_PASSTHROUGH = (
         "--function=", "--language=", "--points=", "--iters=", "--period=",
         "--shape=", "--seed=", "--regime-period=", "--trend-strength=",
-        "--codegen", "--codegen=", "--codegen-only",
+        "--codegen=",
         "--fuzz-064", "--xlang-hash", "--no-guarded",
     )
+    # --codegen is EXACT, not a prefix: a bare `startswith("--codegen")` accepts
+    # any `--codegen<anything>` and forwards the typo to ta_regtest, which is a
+    # louder failure than it needs to be and a quieter one than it looks.
+    EXACT_PASSTHROUGH = ("-p", "--codegen")
     unknown = [a for a in passthrough
-               if a != "-p" and not a.startswith(KNOWN_PASSTHROUGH)]
+               if a not in EXACT_PASSTHROUGH and not a.startswith(KNOWN_PASSTHROUGH)]
     if unknown:
         print("regtest.py: unknown option(s): " + " ".join(unknown))
         print(__doc__)
@@ -396,49 +399,32 @@ def main():
                 os.path.join(bin_dir, "ta_codegen_serve_rust"),
             )
 
-    # 5. regtest
+    # 5. regtest — ONE invocation. --codegen runs the C reference tests and the
+    #    cross-language verification in the same process, which is what lets
+    #    server_verify ride the hand-written tests (it is gated on them running).
     rc = 0
-    codegen_only = "--codegen-only" in passthrough
     if not no_regtest:
-        # 5a. C reference tests (skip if --codegen-only)
-        if not codegen_only:
-            print("\n" + "=" * 60)
-            print("REGTEST — C reference tests (252 points, all ranges)")
-            print("=" * 60)
-            # Only pass --function filter, not --language or --codegen flags
-            direct_args = [a for a in passthrough
-                           if a.startswith("--function=")]
-            rc = subprocess.run(
-                [os.path.join(bin_dir, "ta_regtest")] + direct_args,
-                cwd=bin_dir,
-            ).returncode
-            if rc != 0:
-                print(f"\nC reference regtest FAILED (exit {rc})")
-                sys.exit(rc)
-
-        # 5b. Cross-language codegen tests
         print("\n" + "=" * 60)
-        print("REGTEST — cross-language codegen verification")
+        print("REGTEST — C reference tests + cross-language codegen verification")
         print("=" * 60)
         # Allowlist, not passthrough: ta_regtest exits with BAD_USER_PARAM on any
         # argv it does not know (ta_regtest.c, the trailing else of the option
         # chain). Forwarding the perftest/bench-only flags — --points=, --iters=
-        # and the corpus selectors — aborted step 5b before the bench in step 6/7
-        # ever ran. An allowlist keeps a future bench flag from breaking it again.
+        # and the corpus selectors — aborted this step before the bench in step
+        # 6/7 ever ran. An allowlist keeps a future bench flag from breaking it.
         REGTEST_FLAGS = ("--function=", "--language=", "--codegen", "--codegen=",
-                         "--codegen-only", "--fuzz-064", "--xlang-hash",
-                         "--no-guarded", "-p")
+                         "--fuzz-064", "--xlang-hash", "--no-guarded", "-p")
         codegen_args = [a for a in passthrough
                         if a == "-p" or a.startswith(tuple(
                             f for f in REGTEST_FLAGS if f != "-p"))]
         if not any(a.startswith("--codegen") for a in codegen_args):
-            codegen_args = ["--codegen-only"] + codegen_args
+            codegen_args = ["--codegen"] + codegen_args
         rc = subprocess.run(
             [os.path.join(bin_dir, "ta_regtest")] + codegen_args,
             cwd=bin_dir,
         ).returncode
         if rc != 0:
-            print(f"\nCodegen regtest FAILED (exit {rc})")
+            print(f"\nRegtest FAILED (exit {rc})")
             sys.exit(rc)
 
     # 6. perftest
@@ -447,7 +433,7 @@ def main():
         print("PERFTEST — performance (large dataset, averaged)")
         print("=" * 60, flush=True)
         # Allowlist for the same reason as step 5b: ta_bench now rejects unknown
-        # argv instead of ignoring it, so regtest-only flags (--codegen-only,
+        # argv instead of ignoring it, so flags only ta_regtest knows (--codegen,
         # --xlang-hash, ...) must not reach it.
         BENCH_FLAGS = ("--points=", "--iters=", "--language=", "--function=",
                        "--period=", "--shape=", "--seed=", "--regime-period=",

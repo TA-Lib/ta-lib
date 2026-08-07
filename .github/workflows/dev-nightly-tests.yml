@@ -251,10 +251,16 @@ jobs:
   # toolchain (CMake/autotools never invoke cargo, so ta_regtest needs no Rust
   # toolchain). Only this job adds the Rust/Java/.NET toolchains, builds the
   # JSON-RPC language servers plus the frozen reference server (ta_ref_serve,
-  # from the pinned reference tag), and runs ta_regtest --codegen-only:
+  # from the pinned reference tag), and runs ta_regtest --codegen:
   # 161 functions x 4 languages diffed against the reference, including the
   # non-default-parameter ref differential sweep. POSIX-only (the server
   # harness uses fork/exec), hence no Windows leg.
+  #
+  # --codegen runs the C reference tests in the same process as the codegen
+  # sweep, which is what lets server_verify verify the HAND-WRITTEN tests
+  # against all four servers bitwise (it rides them). Re-running the suite the
+  # hero 'test' job already ran costs ~6s; that is what buys the hand-written
+  # tier a cross-language check.
   cross-language:
     name: "xlang: all langs vs pre-cutover C"
     needs: test
@@ -287,10 +293,8 @@ jobs:
         shell: bash
         run: |
           # Rust toolchain and cmake are preinstalled on ubuntu-latest.
-          # C reference tests already ran in the 'test' job (the hero);
-          # --codegen-only runs just the cross-language verification.
           # Benchmarks are skipped: CI timing is noise.
-          python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen-only
+          python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen
 
   # Synthetic-function gate. The cross-language job above verifies the SHIPPED
   # functions; this one verifies generator surface no shipped function uses
@@ -298,7 +302,7 @@ jobs:
   # scripts/synth_gate.py copies the committed template functions from
   # ta_codegen/generator/input_synth/ into ta_codegen/input/ inside a throwaway git
   # worktree, regenerates ALL backends there, and runs the usual gates scoped
-  # to the SYNTH family: --codegen-only (stream_verify / OpenAndFill,
+  # to the SYNTH family: --codegen (stream_verify / OpenAndFill,
   # batch-vs-stream bitwise in all four servers) and --xlang-hash (batch
   # parity, Rust/Java/C# vs the in-process C golden, bitwise). The script
   # asserts the SYNTH functions were actually swept in every leg, so a
@@ -377,7 +381,7 @@ jobs:
           # Rust toolchain and cmake are preinstalled on ubuntu-latest; no JDK/.NET
           # (Rust-only). --rust-debug builds the server with overflow checks on so the
           # edge-range sweep traps arithmetic overflow instead of wrapping it away.
-          python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen-only --language=rust --rust-debug
+          python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen --language=rust --rust-debug
 
       - name: Drive the streaming API against the same debug server
         shell: bash
@@ -554,7 +558,7 @@ jobs:
       # is its live regression test on a runner with no JDK and no .NET.
       - name: Ref differential sweep (C + Rust)
         shell: bash
-        run: python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen-only --language=c,rust
+        run: python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen --language=c,rust
 
   # C# on arm64 — the one place the managed FMA contract can diverge and nothing
   # would notice. Math.FusedMultiplyAdd is a JIT intrinsic: on x86-64 it becomes

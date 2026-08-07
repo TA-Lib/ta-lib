@@ -14,7 +14,6 @@ ta_regtest validates TA-Lib indicator implementations. It has two modes:
 |------|-------------|
 | `--function=CSV` | Substring filter — matched against the **group tag** in `DO_TEST`, not the function name. A function absent from its group's tag is unreachable by this filter (that is why the composite group is tagged `PVO,VWMA,COMPOSITE`). |
 | `--codegen` | Run codegen verification after C reference tests |
-| `--codegen-only` | Run only codegen verification, skip C reference tests |
 | `--language=CSV` | Filter languages for codegen verification (e.g., `c,rust,java`) |
 | `-p` | Profile mode |
 
@@ -22,7 +21,6 @@ Examples:
 ```bash
 ./ta_regtest                                           # C reference tests only
 ./ta_regtest --codegen                                 # C tests + all-language codegen
-./ta_regtest --codegen-only                            # Codegen only (all languages)
 ./ta_regtest --codegen --language=c,rust               # Codegen for C and Rust only
 ./ta_regtest --codegen --function=RSI,SMA              # Filter to specific functions
 ```
@@ -31,7 +29,7 @@ Examples:
 
 | File | Purpose |
 |------|---------|
-| `ta_regtest.c` | Main entry point. CLI flags: `--function=CSV`, `--codegen`, `--codegen-only`, `--language=CSV`, `-p` |
+| `ta_regtest.c` | Main entry point. CLI flags: `--function=CSV`, `--codegen`, `--language=CSV`, `-p` |
 | `test_codegen.c` | Codegen verification: spawns servers, sends JSON-RPC, compares results |
 | `test_codegen.h` | API: `test_codegen(history, languageFilter, functionFilter)` |
 | `codegen_pipe.c/h` | Subprocess pipe abstraction for JSON-RPC over stdin/stdout |
@@ -244,7 +242,7 @@ YAML-derived value, so this is one of the few metadata checks that is not a
 generator comparing against itself.
 
 Where this runs: **one** nightly job — dev-nightly's `xlang` step, which is the
-only one invoking `regtest.py --codegen-only` unfiltered. The other `--codegen`
+only one invoking `regtest.py --codegen` unfiltered. The other `--codegen`
 jobs narrow to `rust` or `c,rust`, and `main-nightly` runs `--xlang-hash`, which
 reaches `abstract_get_lookback` and no other abstract RPC. So every gate in this
 section has a single point of failure in CI. That is deliberate rather than

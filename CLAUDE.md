@@ -78,7 +78,6 @@ scripts/build.py servers        # Generate + compile JSON-RPC language servers (
 # Test
 scripts/build.py test           # C reference tests only (quick)
 scripts/build.py regtest        # Full pipeline: servers (cargo) + C tests + cross-language verification
-scripts/build.py regtest-only   # Codegen verification only (skip C reference tests)
 
 # ta_codegen (run from ta_codegen/generator/)
 cargo run -- generate                            # Generate indicator code for all backends
@@ -91,7 +90,6 @@ cargo test                                       # ta_codegen's own test suite
 # ta_regtest directly (from bin/)
 ./ta_regtest                                     # C reference tests only
 ./ta_regtest --codegen                           # C tests + all-language codegen verification
-./ta_regtest --codegen-only                      # Codegen verification only
 ./ta_regtest --codegen --language=c,rust --function=RSI,SMA
 ```
 

@@ -159,7 +159,7 @@ def prereqs_for_languages(lang_filter):
 
     Without --language every backend is generated and built, so the full set
     applies. With one, only that backend's toolchain is required — a JDK/.NET-less
-    machine could not reach `--codegen-only --language=c,rust` at all before.
+    machine could not reach `--codegen --language=c,rust` at all before.
     cmake and cargo stay unconditional: the generator itself is the Rust binary
     driving generate/generate-servers/build, so even --language=c runs cargo."""
     if not lang_filter:
