@@ -226,7 +226,9 @@ impl Core {
         let mut fullOut: f64 = 0.0_f64;
         let mut halfOut: f64 = 0.0_f64;
         let mut diffReal: f64 = 0.0_f64;
-        let mut dRing: Vec<f64> = Vec::new();
+        let mut local_dRing: [f64; 50] = [0.0_f64; 50];
+        let mut heap_dRing: Vec<f64> = Vec::new();
+        let mut dRing: &mut [f64] = &mut [];
         let mut dRing_Idx: usize = 0;
         let mut maxIdx_dRing: usize = 49;
         // The de-lagged series needs only its last sqrt(n) values, so the whole
@@ -327,7 +329,12 @@ impl Core {
             // slot with the current one, advance.
             ringSize = sqrtPeriod - 1;
             if ringSize < 1 { return RetCode::AllocErr; }
-            dRing = vec![0.0_f64; (ringSize) as usize];
+            if (ringSize) as usize <= 50usize {
+                dRing = &mut local_dRing;
+            } else {
+                heap_dRing = vec![0.0_f64; (ringSize) as usize];
+                dRing = &mut heap_dRing;
+            }
             maxIdx_dRing = ((ringSize) as usize) - 1;
             dRing_Idx = 0;
             // Warm-up: the sqrtPeriod-1 de-lagged values before the first output

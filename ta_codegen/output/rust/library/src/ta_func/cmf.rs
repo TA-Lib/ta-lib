@@ -234,8 +234,12 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
-        let mut mfv_flow: Vec<f64> = Vec::new();
-        let mut mfv_volume: Vec<f64> = Vec::new();
+        let mut local_mfv_flow: [f64; 50] = [0.0_f64; 50];
+        let mut heap_mfv_flow: Vec<f64> = Vec::new();
+        let mut mfv_flow: &mut [f64] = &mut [];
+        let mut local_mfv_volume: [f64; 50] = [0.0_f64; 50];
+        let mut heap_mfv_volume: Vec<f64> = Vec::new();
+        let mut mfv_volume: &mut [f64] = &mut [];
         let mut mfv_Idx: usize = 0;
         let mut maxIdx_mfv: usize = 49;
         // Both the per-bar money flow volume and the volume that produced it are
@@ -258,8 +262,15 @@ impl Core {
             return RetCode::Success;
         }
         if optInTimePeriod < 1 { return RetCode::AllocErr; }
-        mfv_flow = vec![0.0_f64; (optInTimePeriod) as usize];
-        mfv_volume = vec![0.0_f64; (optInTimePeriod) as usize];
+        if (optInTimePeriod) as usize <= 50usize {
+            mfv_flow = &mut local_mfv_flow;
+            mfv_volume = &mut local_mfv_volume;
+        } else {
+            heap_mfv_flow = vec![0.0_f64; (optInTimePeriod) as usize];
+            mfv_flow = &mut heap_mfv_flow;
+            heap_mfv_volume = vec![0.0_f64; (optInTimePeriod) as usize];
+            mfv_volume = &mut heap_mfv_volume;
+        }
         maxIdx_mfv = ((optInTimePeriod) as usize) - 1;
         mfv_Idx = 0;
         outIdx = 0;

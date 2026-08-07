@@ -248,8 +248,12 @@ impl Core {
         let mut usedFlag: [i32; 3 as usize] = [0i32; 3 as usize];
         let mut periods: [i32; 3 as usize] = [0i32; 3 as usize];
         let mut sortedPeriods: [i32; 3 as usize] = [0i32; 3 as usize];
-        let mut term_closeMinusTrueLow: Vec<f64> = Vec::new();
-        let mut term_trueRange: Vec<f64> = Vec::new();
+        let mut local_term_closeMinusTrueLow: [f64; 32] = [0.0_f64; 32];
+        let mut heap_term_closeMinusTrueLow: Vec<f64> = Vec::new();
+        let mut term_closeMinusTrueLow: &mut [f64] = &mut [];
+        let mut local_term_trueRange: [f64; 32] = [0.0_f64; 32];
+        let mut heap_term_trueRange: Vec<f64> = Vec::new();
+        let mut term_trueRange: &mut [f64] = &mut [];
         let mut term_Idx: usize = 0;
         let mut maxIdx_term: usize = 31;
         // The two per-bar terms the three moving sums are built from. Both are a
@@ -299,8 +303,15 @@ impl Core {
             return RetCode::Success;
         }
         if optInTimePeriod3 < 1 { return RetCode::AllocErr; }
-        term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
-        term_trueRange = vec![0.0_f64; (optInTimePeriod3) as usize];
+        if (optInTimePeriod3) as usize <= 32usize {
+            term_closeMinusTrueLow = &mut local_term_closeMinusTrueLow;
+            term_trueRange = &mut local_term_trueRange;
+        } else {
+            heap_term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
+            term_closeMinusTrueLow = &mut heap_term_closeMinusTrueLow;
+            heap_term_trueRange = vec![0.0_f64; (optInTimePeriod3) as usize];
+            term_trueRange = &mut heap_term_trueRange;
+        }
         maxIdx_term = ((optInTimePeriod3) as usize) - 1;
         term_Idx = 0;
         // Prime running totals used in moving averages.

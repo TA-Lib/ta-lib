@@ -214,14 +214,25 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
-        let mut mflow_positive: Vec<f64> = Vec::new();
-        let mut mflow_negative: Vec<f64> = Vec::new();
+        let mut local_mflow_positive: [f64; 50] = [0.0_f64; 50];
+        let mut heap_mflow_positive: Vec<f64> = Vec::new();
+        let mut mflow_positive: &mut [f64] = &mut [];
+        let mut local_mflow_negative: [f64; 50] = [0.0_f64; 50];
+        let mut heap_mflow_negative: Vec<f64> = Vec::new();
+        let mut mflow_negative: &mut [f64] = &mut [];
         let mut mflow_Idx: usize = 0;
         let mut maxIdx_mflow: usize = 49;
         // Id, Type, Static Size
         if optInTimePeriod < 1 { return RetCode::AllocErr; }
-        mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
-        mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
+        if (optInTimePeriod) as usize <= 50usize {
+            mflow_positive = &mut local_mflow_positive;
+            mflow_negative = &mut local_mflow_negative;
+        } else {
+            heap_mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
+            mflow_positive = &mut heap_mflow_positive;
+            heap_mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
+            mflow_negative = &mut heap_mflow_negative;
+        }
         maxIdx_mflow = ((optInTimePeriod) as usize) - 1;
         mflow_Idx = 0;
         (*outBegIdx) = 0;
