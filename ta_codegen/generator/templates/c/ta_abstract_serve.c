@@ -137,6 +137,21 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
    if( !abstract_parse_func_name(json, funcName, sizeof(funcName), &handle, resp, resp_size) )
       return;
 
+   /* This endpoint cannot express WHICH function's unstable period to set: the
+    * id would have to arrive in its own field, and an absent field parses as 0
+    * -- TA_FUNC_UNST_ADX -- so a non-zero period would land on ADX whatever
+    * function was called, and stay there (unlike the per-function handlers,
+    * nothing here restores it). Refuse rather than guess. The per-function
+    * TA_<name> method hardcodes the correct id and is where unstable-period
+    * work belongs. Checked before the ParamHolder is allocated so the early
+    * return has nothing to free. */
+   if( json_find_int(json, "unstablePeriod") != 0 ) {
+      snprintf(resp, resp_size,
+               "{\"error\":\"abstract_call cannot set an unstable period: this "
+               "endpoint carries no per-function id. Use the TA_<name> method.\"}");
+      return;
+   }
+
    TA_ParamHolder *params;
    if( TA_ParamHolderAlloc(handle, &params) != TA_SUCCESS ) {
       snprintf(resp, resp_size, "{\"error\":\"ParamHolderAlloc failed\"}");
@@ -148,13 +163,6 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
 
    int startIdx = json_find_int(json, "startIdx");
    int endIdx   = json_find_int(json, "endIdx");
-
-   /* Handle unstable period if provided */
-   int funcUnstId = json_find_int(json, "funcUnstId");
-   int unstPeriod = json_find_int(json, "unstablePeriod");
-   if( unstPeriod > 0 || funcUnstId > 0 ) {
-      TA_SetUnstablePeriod((TA_FuncUnstId)funcUnstId, (unsigned int)unstPeriod);
-   }
 
    /* Set inputs based on ta_abstract metadata */
    int totalRealInputs = 0;
