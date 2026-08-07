@@ -45,6 +45,7 @@ static char *win_strcasestr(const char *haystack, const char *needle)
 
 #include "ta_libc.h"
 #include "bench_corpus.h"
+#include "../ta_alloc_check.h"
 
 /* ---- Configuration ---- */
 
@@ -94,6 +95,8 @@ static void generate_price_data(int n, const BenchCorpusCfg *corpus) {
     g_volume = calloc(n, sizeof(TA_Real));
     g_oi     = calloc(n, sizeof(TA_Real));
     g_periods = calloc(n, sizeof(TA_Real));
+    if( !g_open || !g_high || !g_low || !g_close || !g_volume || !g_oi || !g_periods )
+        TA_TOOL_OOM("the price data arrays");
     bench_corpus_gen(corpus, n, g_open, g_high, g_low, g_close, g_volume, g_oi,
                      g_periods);
 }

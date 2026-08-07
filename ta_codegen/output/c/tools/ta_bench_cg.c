@@ -17,6 +17,8 @@
 
 #include "bench_corpus.h"
 
+#include "tools/ta_alloc_check.h"
+
 #include "ta_func/ta_func_stream_private.h"
 
 #include "ta_common/ta_global.c"
@@ -241,6 +243,8 @@ static void generate_price_data(int n) {
     g_volume = calloc(n, sizeof(double));
     g_oi     = calloc(n, sizeof(double));
     g_periods = calloc(n, sizeof(double));
+    if( !g_open || !g_high || !g_low || !g_close || !g_volume || !g_oi || !g_periods )
+        TA_TOOL_OOM("the price data arrays");
     bench_corpus_gen(&g_corpus, n,
                      g_open, g_high, g_low, g_close, g_volume, g_oi, g_periods);
 }

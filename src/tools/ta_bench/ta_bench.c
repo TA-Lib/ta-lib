@@ -45,6 +45,7 @@ static char *win_strcasestr(const char *haystack, const char *needle)
 #include "ta_libc.h"
 #include "codegen_pipe.h"
 #include "bench_corpus.h"
+#include "../ta_alloc_check.h"
 
 /* ---- Configuration ---- */
 
@@ -90,6 +91,8 @@ static void generate_price_data(int n, const BenchCorpusCfg *corpus) {
     g_close  = calloc(n, sizeof(TA_Real));
     g_volume = calloc(n, sizeof(TA_Real));
     g_oi     = calloc(n, sizeof(TA_Real));
+    if( !g_open || !g_high || !g_low || !g_close || !g_volume || !g_oi )
+        TA_TOOL_OOM("the price data arrays");
     bench_corpus_gen(corpus, n, g_open, g_high, g_low, g_close, g_volume, g_oi, NULL);
 }
 
@@ -427,6 +430,8 @@ int main(int argc, char *argv[]) {
     /* Start servers + load data */
     char *reqBuf  = malloc(JSON_BUF_SIZE);
     char *respBuf = malloc(JSON_BUF_SIZE);
+    TA_TOOL_CHECK_ALLOC(reqBuf);
+    TA_TOOL_CHECK_ALLOC(respBuf);
 
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( LANGUAGES[li].optional && !lang_filter ) continue;

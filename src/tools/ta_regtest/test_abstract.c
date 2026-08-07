@@ -81,6 +81,7 @@ extern int doExtensiveProfiling;
  * replicated via the server's abstract_call endpoint and compared. */
 #include "codegen_pipe.h"
 #include "ta_abstract.h"
+#include "../ta_alloc_check.h"
 static CodegenPipe *g_abstractPipe = NULL;
 /* Which language the attached server is ("c"/"rust"/"java"/"csharp"), so a
  * per-backend carve-out can name its backend instead of applying to all four. */
@@ -168,6 +169,8 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang)
       g_abstractPipe = cp;
       g_abstractReqBuf = malloc(ABSTRACT_JSON_BUF_SIZE);
       g_abstractRespBuf = malloc(ABSTRACT_JSON_BUF_SIZE);
+      TA_TOOL_CHECK_ALLOC(g_abstractReqBuf);
+      TA_TOOL_CHECK_ALLOC(g_abstractRespBuf);
    }
    else
    {

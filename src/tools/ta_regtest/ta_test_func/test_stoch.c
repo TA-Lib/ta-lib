@@ -60,6 +60,7 @@
 #include "ta_utility.h"
 #include "ta_memory.h"
 #include "server_verify.h"
+#include "../../ta_alloc_check.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -409,6 +410,7 @@ static TA_RetCode rangeTestFunction( TA_Integer   startIdx,
 
 
   dummyOutput = TA_Malloc( (endIdx-startIdx+1) * sizeof(TA_Real) );
+  TA_TOOL_CHECK_ALLOC(dummyOutput);
 
   switch( testParam->test->testId )
   {
@@ -917,6 +919,7 @@ static TA_RetCode referenceStoch( TA_Integer    startIdx,
    {
       bufferIsAllocated = 1;
       tempBuffer = TA_Malloc( (endIdx-today+1)*sizeof(TA_Real) );
+      TA_TOOL_CHECK_ALLOC(tempBuffer);
    }
 
    /* Do the K calculation */

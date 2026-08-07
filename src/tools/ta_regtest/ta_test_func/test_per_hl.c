@@ -65,6 +65,7 @@
 #include "ta_utility.h"
 #include "ta_memory.h"
 #include "server_verify.h"
+#include "../../ta_alloc_check.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -304,6 +305,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
     * safe)
     */
    dummyBuffer = TA_Malloc( sizeof(double) * (endIdx-startIdx+100) );
+   TA_TOOL_CHECK_ALLOC(dummyBuffer);
    switch( testParam->test->theFunction )
    {
    case TA_AROON_UP_TEST:

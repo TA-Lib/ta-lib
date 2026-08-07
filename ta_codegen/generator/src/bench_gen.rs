@@ -27,6 +27,9 @@ pub fn generate_c_bench(funcs: &[FuncDef]) -> String {
     // The shared benchmark input corpus (src/tools/ta_bench is on the include
     // path — see the ta_bench_cg / ta_bench_stream gcc invocations in main.rs).
     s.push_str("#include \"bench_corpus.h\"\n\n");
+    // Fail-loud allocation checking (src/ is on the include path -- same
+    // gcc invocations).
+    s.push_str("#include \"tools/ta_alloc_check.h\"\n\n");
 
     // Internal stream declarations (TA_<N>_OpenInternal)
     s.push_str("#include \"ta_func/ta_func_stream_private.h\"\n\n");
@@ -561,6 +564,9 @@ pub fn generate_c_stream_bench(funcs: &[FuncDef]) -> String {
     // The shared benchmark input corpus (src/tools/ta_bench is on the include
     // path — see the ta_bench_cg / ta_bench_stream gcc invocations in main.rs).
     s.push_str("#include \"bench_corpus.h\"\n\n");
+    // Fail-loud allocation checking (src/ is on the include path -- same
+    // gcc invocations).
+    s.push_str("#include \"tools/ta_alloc_check.h\"\n\n");
 
     s.push_str("#include \"ta_func/ta_func_stream_private.h\"\n\n");
     s.push_str("#include \"ta_common/ta_global.c\"\n");
@@ -732,7 +738,7 @@ static long long get_nanotime(void) {
 
 ";
 
-const PRICE_DATA_GEN: &str = r"
+const PRICE_DATA_GEN: &str = r#"
 static double *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi, *g_periods;
 static int g_nPoints;
 
@@ -751,11 +757,13 @@ static void generate_price_data(int n) {
     g_volume = calloc(n, sizeof(double));
     g_oi     = calloc(n, sizeof(double));
     g_periods = calloc(n, sizeof(double));
+    if( !g_open || !g_high || !g_low || !g_close || !g_volume || !g_oi || !g_periods )
+        TA_TOOL_OOM("the price data arrays");
     bench_corpus_gen(&g_corpus, n,
                      g_open, g_high, g_low, g_close, g_volume, g_oi, g_periods);
 }
 
-";
+"#;
 
 /* Shared --shape / --seed / --regime-period / --list-shapes handling, spliced
  * into both generated mains. Unknown shape names fail loudly rather than

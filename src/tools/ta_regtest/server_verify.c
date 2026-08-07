@@ -24,6 +24,7 @@
 #include "server_verify.h"
 #include "test_codegen.h"   /* codegen_output_hash / codegen_hash_compare / XHash* */
 #include "ta_abstract.h"
+#include "../ta_alloc_check.h"
 
 /* ---- Configuration ---- */
 
@@ -136,6 +137,8 @@ void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes)
     {
         g_reqBuf  = malloc(SV_BUF_SIZE);
         g_respBuf = malloc(SV_BUF_SIZE);
+        TA_TOOL_CHECK_ALLOC(g_reqBuf);
+        TA_TOOL_CHECK_ALLOC(g_respBuf);
         for( int p = 0; p < SV_MAX_PIPES; p++ )
         {
             g_lastCompatibility[p] = -1;

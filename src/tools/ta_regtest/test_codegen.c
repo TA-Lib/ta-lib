@@ -47,6 +47,7 @@ static int  g_floatCapableLangTested = 0;
 #include "ta_abstract.h"
 #include "ta_utility.h"  /* TA_IS_ZERO / TA_IS_ZERO_SCALED / TA_IS_ZERO_OR_NEG (predicate parity truth) */
 #include "fuzz_data.h"   /* shared, byte-identical input generator + output hasher */
+#include "../ta_alloc_check.h"
 
 /* Timing now comes from each server's JSON-RPC timing_ns field (the reference
  * baseline is ta_ref_serve, task #7), so no in-process timer is needed here. */
@@ -1088,11 +1089,13 @@ static void setup_outputs(CodegenRangeTestParam *p)
         case TA_Output_Real:
             p->outputIsInteger[i] = 0;
             p->outRealBufs[i] = (TA_Real *)calloc(MAX_NB_TEST_ELEMENT, sizeof(TA_Real));
+            TA_TOOL_CHECK_ALLOC(p->outRealBufs[i]);
             TA_SetOutputParamRealPtr(p->paramHolder, i, p->outRealBufs[i]);
             break;
         case TA_Output_Integer:
             p->outputIsInteger[i] = 1;
             p->outIntBufs[i] = (TA_Integer *)calloc(MAX_NB_TEST_ELEMENT, sizeof(TA_Integer));
+            TA_TOOL_CHECK_ALLOC(p->outIntBufs[i]);
             TA_SetOutputParamIntegerPtr(p->paramHolder, i, p->outIntBufs[i]);
             break;
         }

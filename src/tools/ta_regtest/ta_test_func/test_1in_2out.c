@@ -63,6 +63,7 @@
 #include "ta_utility.h"
 #include "ta_memory.h"
 #include "server_verify.h"
+#include "../../ta_alloc_check.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -225,6 +226,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
    testParam = (TA_RangeTestParam *)opaqueData;
 
    dummyOutput = TA_Malloc( (endIdx-startIdx+1) * sizeof(TA_Real) );
+   TA_TOOL_CHECK_ALLOC(dummyOutput);
 
    if( outputNb == 0 )
    {

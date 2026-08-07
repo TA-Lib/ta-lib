@@ -63,6 +63,7 @@
 #include "ta_utility.h"
 #include "ta_memory.h"
 #include "server_verify.h"
+#include "../../ta_alloc_check.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -241,6 +242,7 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
       #define ALLOC_INT_BUFFER(varSize)  \
       { \
          intBuffer = TA_Malloc(sizeof(TA_Integer)*(varSize+2)); \
+         TA_TOOL_CHECK_ALLOC(intBuffer); \
          intBuffer[0]      = PRE_SENTINEL; \
          intBuffer[varSize+1] = POST_SENTINEL; \
       }
