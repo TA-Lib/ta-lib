@@ -285,6 +285,60 @@ silently doing nothing. The counter that matters is `nbOutputCmp`, incremented
 independently of them lets a deleted comparison leave the summary printing
 byte-identical numbers while the gate checks strictly less.
 
+## The float leg — the same contract, in Java and C# (issue #170)
+
+`test_variants.c` covers `TA_S_` == `TA_` in-process, which is C only. The
+**float leg** (`run_float_leg`, `test_codegen.c`) is the cross-language form: it
+sends one function twice to the *same* server — once normally, once with
+`"use_float":1` — on float-widened inputs, and requires the two to agree. That
+covers the other two float surfaces: Java's `float[]` Core overloads and C#'s,
+168 functions each. Rust has no single-precision surface and is the only
+exclusion. Each call must come back with `"used_float":1`; a server that ignored
+the flag would return its double result twice and pass while verifying nothing.
+
+The leg runs **two parameter vectors**. The resolved defaults, and — since #170
+— the **default sentinel** (`TA_INTEGER_DEFAULT` / `TA_REAL_DEFAULT` in every
+optional slot, sent to *both* halves, so the property is "each tier substitutes
+the same declared default" and needs no oracle). The sentinel vector is not a
+refinement: it is the one that exposed the `TA_S_EMA` k-factor defect fixed in
+`2e9767397`, where the float body derived `k` from the raw sentinel because its
+initialiser ran before the prologue substituted it. The same defect was live in
+Java's float `emaInternal` and C#'s float `Ema`, and reaching only resolved
+defaults, no gate could see it there. Sabotage-proven both ways: reintroducing
+it in the Java and C# float bodies fails the sentinel pass on both, and with the
+sentinel pass switched off the identical sabotage passes clean.
+
+Not asserted: `float(sentinel) == float(default)`. A body that mishandles the
+sentinel either diverges from its own double tier (the pair check) or is
+rejected outright (an error response where the resolved-default request
+succeeded is a hard failure, not a skip), and the double tier's own
+sentinel-selects-the-default contract belongs to `--xlang-hash` (#148).
+
+Two exclusions, both counted and printed:
+
+* **Choice-list slots on Java.** `Core` takes a real `MAType` enum, so
+  `Integer.MIN_VALUE` is unrepresentable and the generated Java server dies
+  constructing one (#162). That slot alone stays at its explicit default — the
+  function's other parameters still ride the sentinel, which beats skipping the
+  function. `codegen_lang_can_pass_enum_sentinel` is the single definition,
+  shared with `--xlang-hash`.
+* **Functions with no optional parameter**, where the pass would re-send the
+  request just made.
+
+The floor is **per language** and counts comparisons *that diffed output
+elements*: a total would stay green while one server answered every sentinel
+request with an error, and one server silently opting out is the exact shape of
+the hole this closes. `eligible` (functions that reached the pass with a
+sentinel-able parameter) is what the floor tests against, so a `--function=`
+filter naming only parameterless functions is a legitimate zero.
+
+`run_float_leg` snapshots and restores everything it touches in
+`CodegenRangeTestParam` — the `parse_ref_baseline` fields, `optOverride[]`, the
+request-shaping flags, the timing accumulators. Before #170 it was safe only
+because it happened to be the last statement of `sweep_run_variant`, and the
+first attempt at a second pass produced `SWEEP GUARDED MISMATCH [TA_ACCBANDS]`
+(the guarded call at the swept period against a baseline left at the default).
+
 ## Transport
 
 `codegen_pipe_call` reads responses in 256KB chunks into a per-pipe buffer that
