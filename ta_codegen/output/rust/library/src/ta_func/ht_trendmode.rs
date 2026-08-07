@@ -247,7 +247,8 @@ impl Core {
         let mut constDeg2RadBy360: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         let mut smoothPeriod: f64 = 0.0_f64;
-        let mut smoothPrice: Vec<f64> = Vec::new();
+        let mut local_smoothPrice: [f64; 50] = [0.0_f64; 50];
+        let mut smoothPrice: &mut [f64] = &mut [];
         let mut smoothPrice_Idx: usize = 0;
         let mut maxIdx_smoothPrice: usize = 49;
         let mut idx: usize = 0_usize;
@@ -272,7 +273,7 @@ impl Core {
         // Variable used to keep track of the previous
         // smooth price. In the case of this algorithm,
         // we will never need more than 50 values.
-        smoothPrice = vec![0.0_f64; maxIdx_smoothPrice + 1];
+        smoothPrice = &mut local_smoothPrice;
         smoothPrice_Idx = 0;
         // Variable used to calculate the dominant cycle phase
         // Variable used to calculate the trend mode
