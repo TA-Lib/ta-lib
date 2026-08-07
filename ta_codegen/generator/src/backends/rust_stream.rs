@@ -35,7 +35,7 @@ use crate::streaming::{self, StreamModel, StreamPlan};
 use super::rust_doc::{series_def, unit_domain, CLOSE_SERIES, UNIT_SERIES, VOLUME_SERIES};
 use super::rust_lang::{
     build_matype_map, collect_for_loop_vars, collect_sentinel_vars, collect_signed_int_vars,
-    collect_var_types, emit_circbuf_prolog_rust, expr_is_untyped_integer,
+    collect_var_types, emit_circbuf_prolog_rust, expr_is_untyped_integer, CircBufTier,
     gen_opt_param_validation_with, render_expr, render_hoisted_blocks, render_statement,
     to_pascal_case, RustRenderCtx,
 };
@@ -1142,7 +1142,7 @@ fn emit_open_region(
     // Declarations (hoisted; always `mut` — the crate allows unused_mut).
     for stmt in body {
         if let Statement::CircBuf(CircBuf::Prolog { id, layout, static_size }) = stmt {
-            o.push_str(&emit_circbuf_prolog_rust(id, layout, *static_size, None));
+            o.push_str(&emit_circbuf_prolog_rust(id, layout, *static_size, CircBufTier::StreamVec));
             continue;
         }
         if let Statement::VarDecl { var_type, name, .. } = stmt {
@@ -3172,7 +3172,7 @@ fn emit_composed_region(
 
     for stmt in body {
         if let Statement::CircBuf(CircBuf::Prolog { id, layout, static_size }) = stmt {
-            o.push_str(&emit_circbuf_prolog_rust(id, layout, *static_size, None));
+            o.push_str(&emit_circbuf_prolog_rust(id, layout, *static_size, CircBufTier::StreamVec));
             continue;
         }
         if let Statement::VarDecl { var_type, name, .. } = stmt {

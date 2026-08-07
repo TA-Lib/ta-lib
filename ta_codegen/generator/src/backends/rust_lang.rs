@@ -684,7 +684,7 @@ fn gen_guarded_func(
                 static_size,
             }) = stmt
             {
-                out.push_str(&emit_circbuf_prolog_rust(id, layout, *static_size, Some(circbuf_has_runtime_init(&func.body, id))));
+                out.push_str(&emit_circbuf_prolog_rust(id, layout, *static_size, batch_circbuf_tier(&func.body, id)));
                 continue;
             }
             if let Statement::VarDecl { var_type, name, init } = stmt {
@@ -783,7 +783,7 @@ fn gen_guarded_func(
                 static_size,
             }) = stmt
             {
-                out.push_str(&emit_circbuf_prolog_rust(id, layout, *static_size, Some(circbuf_has_runtime_init(&func.body, id))));
+                out.push_str(&emit_circbuf_prolog_rust(id, layout, *static_size, batch_circbuf_tier(&func.body, id)));
                 continue;
             }
             if let Statement::VarDecl { var_type, name, .. } = stmt {
@@ -1039,7 +1039,7 @@ fn gen_private_func_inner(
             static_size,
         }) = stmt
         {
-            out.push_str(&emit_circbuf_prolog_rust(id, layout, *static_size, Some(circbuf_has_runtime_init(&func.body, id))));
+            out.push_str(&emit_circbuf_prolog_rust(id, layout, *static_size, batch_circbuf_tier(&func.body, id)));
             continue;
         }
         if let Statement::VarDecl { var_type, name, .. } = stmt {
@@ -1315,22 +1315,31 @@ fn circbuf_storage(id: &str, layout: &CircBufLayout) -> Vec<(String, VarType)> {
     }
 }
 
+/// Which tier a CIRCBUF prolog is being emitted for, and so which storage shape
+/// it gets. The two are not interchangeable: [`Self::StreamVec`] is forced by
+/// ownership, not chosen — the open path moves the storage into the stream state
+/// struct, which outlives the frame, so a `&mut` slice into a stack array would
+/// dangle. Only the batch tier can take the hybrid, and only it needs to.
+#[derive(Clone, Copy)]
+pub(crate) enum CircBufTier {
+    /// Stream: an owning `Vec` per field-split storage.
+    StreamVec,
+    /// Batch: C's hybrid — a zeroed stack array at the static size, a heap `Vec`
+    /// behind it, and a `&mut` slice the body indexes through. The heap `Vec` is
+    /// declared only when a runtime `CIRCBUF_INIT` exists to reach it
+    /// (`INIT_LOCAL_ONLY` never leaves the stack array).
+    BatchHybrid { has_runtime_init: bool },
+}
+
 /// Emit the function-top declarations for a CIRCBUF prolog, plus the `usize`
 /// rotation index and bound. The bound is seeded to `static_size - 1` (NOT 0)
 /// so the `INIT_LOCAL_ONLY` path (HT functions) sizes its buffer correctly
 /// before any `INIT` runs. Indent is the 8-space body level.
-///
-/// `hybrid_runtime_init` selects the storage shape:
-/// - `None` (stream tier): an empty `Vec` per field-split storage — the open
-///   path moves these into the stream state struct, so they must own heap.
-/// - `Some(has_init)` (batch tier): the C-style hybrid — a zeroed stack array
-///   of the static size, a deferred heap `Vec` (only when a runtime `INIT`
-///   exists to reach it), and a `&mut` slice the body indexes through.
 pub(crate) fn emit_circbuf_prolog_rust(
     id: &str,
     layout: &CircBufLayout,
     static_size: i64,
-    hybrid_runtime_init: Option<bool>,
+    tier: CircBufTier,
 ) -> String {
     let mut s = String::new();
     for (storage, t) in circbuf_storage(id, layout) {
@@ -1339,13 +1348,13 @@ pub(crate) fn emit_circbuf_prolog_rust(
         } else {
             ("f64", "0.0_f64")
         };
-        match hybrid_runtime_init {
-            None => {
+        match tier {
+            CircBufTier::StreamVec => {
                 s.push_str(&format!(
                     "        let mut {storage}: Vec<{vt}> = Vec::new();\n"
                 ));
             }
-            Some(has_runtime_init) => {
+            CircBufTier::BatchHybrid { has_runtime_init } => {
                 s.push_str(&format!(
                     "        let mut local_{storage}: [{vt}; {static_size}] = [{zero}; {static_size}];\n"
                 ));
@@ -1382,6 +1391,12 @@ pub(crate) fn collect_circbuf_static(body: &[Statement]) -> std::collections::Ha
         .collect()
 }
 
+/// The batch tier's storage shape for `id` in `body`. The heap `Vec` is declared
+/// only when a runtime `CIRCBUF_INIT` can reach it.
+pub(crate) fn batch_circbuf_tier(body: &[Statement], id: &str) -> CircBufTier {
+    CircBufTier::BatchHybrid { has_runtime_init: circbuf_has_runtime_init(body, id) }
+}
+
 /// Whether a runtime-sized `CIRCBUF_INIT` for `id` appears anywhere in `body`
 /// (as opposed to `INIT_LOCAL_ONLY`, which never needs the heap fallback).
 pub(crate) fn circbuf_has_runtime_init(body: &[Statement], id: &str) -> bool {
@@ -1390,13 +1405,11 @@ pub(crate) fn circbuf_has_runtime_init(body: &[Statement], id: &str) -> bool {
         Statement::If { then_body, else_body, .. } => {
             circbuf_has_runtime_init(then_body, id) || circbuf_has_runtime_init(else_body, id)
         }
-        Statement::While { body: b, .. } | Statement::DoWhile { body: b, .. } => {
-            circbuf_has_runtime_init(b, id)
-        }
-        Statement::For { body: b, .. } | Statement::ForC { body: b, .. } => {
-            circbuf_has_runtime_init(b, id)
-        }
-        Statement::Block { body: b } => circbuf_has_runtime_init(b, id),
+        Statement::While { body: b, .. }
+        | Statement::DoWhile { body: b, .. }
+        | Statement::For { body: b, .. }
+        | Statement::ForC { body: b, .. }
+        | Statement::Block { body: b } => circbuf_has_runtime_init(b, id),
         Statement::Switch { cases, default, .. } => {
             cases.iter().any(|(_, cb)| circbuf_has_runtime_init(cb, id))
                 || circbuf_has_runtime_init(default, id)
