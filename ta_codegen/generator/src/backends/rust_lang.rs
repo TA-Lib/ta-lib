@@ -10,6 +10,71 @@ use crate::ir::{
 use crate::parser::enums::lookup_variant;
 use crate::registry::Registry;
 use super::common::{contains_alloc_err_return, expr_directly_contains_candle_call, find_sizeof_type};
+
+/// Words this backend cannot render as an identifier (see [`crate::naming`]):
+/// the strict keywords of every edition through 2024, plus the set reserved for
+/// future use. Raw identifiers (`r#loop`) would sidestep most of these, but the
+/// generator never emits one — a name that needs escaping to compile is a name
+/// the input should not have used.
+///
+/// The weak keywords (`union`, `macro_rules`, `'static`, `dyn` pre-2018, and the
+/// 2024 `safe`) are deliberately absent: they are legal identifiers.
+pub(crate) const RESERVED_WORDS: &[&str] = &[
+    // --- strict keywords ---
+    "as",
+    "async",
+    "await",
+    "break",
+    "const",
+    "continue",
+    "crate",
+    "dyn",
+    "else",
+    "enum",
+    "extern",
+    "false",
+    "fn",
+    "for",
+    "if",
+    "impl",
+    "in",
+    "let",
+    "loop",
+    "match",
+    "mod",
+    "move",
+    "mut",
+    "pub",
+    "ref",
+    "return",
+    "self",
+    "static",
+    "struct",
+    "super",
+    "trait",
+    "true",
+    "type",
+    "unsafe",
+    "use",
+    "where",
+    "while",
+    "Self",
+    // --- reserved for future use ---
+    "abstract",
+    "become",
+    "box",
+    "do",
+    "final",
+    "gen",
+    "macro",
+    "override",
+    "priv",
+    "try",
+    "typeof",
+    "unsized",
+    "virtual",
+    "yield",
+];
 use super::builtins::{MathFn, SpecialBuiltin, StdlibFn};
 use super::expr_walk::{is_int_bitwise, ExprEmitter};
 use super::fma::{self, is_i32_opt_in_param, is_integer_returning_helper, FmaCtx};
