@@ -37,6 +37,7 @@ pub mod variant_frame;
 
 use crate::helper_registry::HelperRegistry;
 use crate::ir::{EnumDef, FuncDef};
+use crate::naming::NameKind;
 use crate::registry::Registry;
 use crate::server_gen;
 use std::collections::HashMap;
@@ -96,6 +97,42 @@ pub trait LanguageBackend {
         out_base.join(self.out_subdir())
     }
 
+    /// Words this backend cannot render as an identifier — its language's
+    /// reserved keywords. Consulted by the default [`check_name`](Self::check_name).
+    ///
+    /// The lists live in each backend's own module (`c::RESERVED_WORDS`, ...) so
+    /// adding a language adds its keywords in exactly one place, next to the
+    /// renderer that would have to escape them.
+    fn reserved_words(&self) -> &'static [&'static str] {
+        &[]
+    }
+
+    /// How this backend spells an input-tree `name` of `kind` in its output.
+    ///
+    /// The default is verbatim, which is right for everything but a function
+    /// name: locals and signature arguments pass straight through in all four
+    /// backends. Function names are mangled per language, and the mangling is
+    /// what decides the answer — `LOOP` is a fine C function (`TA_LOOP`) and an
+    /// impossible Rust one (`loop`).
+    fn rendered_name(&self, name: &str, kind: NameKind<'_>) -> String {
+        let _ = kind;
+        name.to_string()
+    }
+
+    /// Reject `name` if this backend cannot render it as an identifier.
+    ///
+    /// The shared rule is "[`rendered_name`](Self::rendered_name) must not be a
+    /// [`reserved_words`](Self::reserved_words) entry". A backend with a rule
+    /// that a word list cannot express overrides this wholesale; the returned
+    /// string is the reason, phrased to be readable after `name`.
+    fn check_name(&self, name: &str, kind: NameKind<'_>) -> Result<(), String> {
+        let rendered = self.rendered_name(name, kind);
+        if self.reserved_words().contains(&rendered.as_str()) {
+            return Err(reserved_word_reason(self.name(), name, &rendered));
+        }
+        Ok(())
+    }
+
     /// Generate and write this backend's JSON-RPC test server source under
     /// `out_base` (`ta_codegen/output/`). `enums` is passed so the server's
     /// `FuncUnstId` enum / id map can be emitted from enums.yaml (the source of
@@ -136,6 +173,17 @@ impl LanguageBackend for CBackend {
     /// alongside the generated indicators — never delete it during cleanup.
     fn clean_keep(&self) -> &'static [&'static str] {
         &["ta_utility.c"]
+    }
+    fn reserved_words(&self) -> &'static [&'static str] {
+        c::RESERVED_WORDS
+    }
+    /// `TA_SMA`, `TA_MOVING_AVERAGE` — the `TA_` prefix puts every function name
+    /// out of the keywords' reach; everything else is verbatim.
+    fn rendered_name(&self, name: &str, kind: NameKind<'_>) -> String {
+        match kind {
+            NameKind::Function { .. } => format!("TA_{}", name.to_uppercase()),
+            _ => name.to_string(),
+        }
     }
     /// Shipped C library is generated in place under `src/ta_func` (option B):
     /// `out_base` is `<root>/ta_codegen/output`, so `../../src/ta_func` = `<root>/src/ta_func`.
@@ -192,6 +240,17 @@ impl LanguageBackend for RustBackend {
         // `RUST_TEMPLATE_MODULES`) plus the generated `mod.rs`.
         &["types.rs", "scratch_election.rs", "mod.rs"]
     }
+    fn reserved_words(&self) -> &'static [&'static str] {
+        rust_lang::RESERVED_WORDS
+    }
+    /// A `Core` method is the lower-cased function name (`SMA` -> `sma`), which
+    /// is the one mangling in this tree that can *create* a keyword collision.
+    fn rendered_name(&self, name: &str, kind: NameKind<'_>) -> String {
+        match kind {
+            NameKind::Function { .. } => name.to_lowercase(),
+            _ => name.to_string(),
+        }
+    }
     fn generate_server(
         &self,
         funcs: &[FuncDef],
@@ -235,6 +294,16 @@ impl LanguageBackend for JavaBackend {
     }
     fn clean_glob(&self) -> (&'static str, &'static str) {
         ("Core_", ".java")
+    }
+    fn reserved_words(&self) -> &'static [&'static str] {
+        java::RESERVED_WORDS
+    }
+    /// camelCase, from the YAML `camel_case` when the function carries one.
+    fn rendered_name(&self, name: &str, kind: NameKind<'_>) -> String {
+        match kind {
+            NameKind::Function { camel_case } => java::to_java_method_name(name, camel_case),
+            _ => name.to_string(),
+        }
     }
     fn generate_server(
         &self,
@@ -285,6 +354,16 @@ impl LanguageBackend for CSharpBackend {
     fn clean_glob(&self) -> (&'static str, &'static str) {
         ("Core_", ".cs")
     }
+    fn reserved_words(&self) -> &'static [&'static str] {
+        csharp::RESERVED_WORDS
+    }
+    /// `PascalCase`, from the same YAML `camel_case` Java derives from.
+    fn rendered_name(&self, name: &str, kind: NameKind<'_>) -> String {
+        match kind {
+            NameKind::Function { camel_case } => csharp::to_csharp_method_name(name, camel_case),
+            _ => name.to_string(),
+        }
+    }
     fn generate_server(
         &self,
         funcs: &[FuncDef],
@@ -301,6 +380,19 @@ impl LanguageBackend for CSharpBackend {
         let csproj = dir.join("TaCodegenServe.csproj");
         std::fs::write(&csproj, server_gen::csharp_server_csproj()).unwrap();
         println!("  C# server -> {}", path.display());
+    }
+}
+
+/// The reason string a backend's default [`LanguageBackend::check_name`]
+/// returns, spelling out the mangling when the rendered form differs from the
+/// authored one (`LOOP` is not itself a keyword; `loop` is).
+pub(crate) fn reserved_word_reason(backend: &str, name: &str, rendered: &str) -> String {
+    if rendered == name {
+        format!("`{name}` is a reserved word in the {backend} backend")
+    } else {
+        format!(
+            "it renders as `{rendered}` in the {backend} backend, which is a reserved word there"
+        )
     }
 }
 

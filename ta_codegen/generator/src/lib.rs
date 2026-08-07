@@ -22,6 +22,7 @@ pub mod flag_sync;
 pub mod formatter;
 pub mod helper_registry;
 pub mod ir;
+pub mod naming;
 pub mod parser;
 pub mod registry;
 pub mod server_gen;

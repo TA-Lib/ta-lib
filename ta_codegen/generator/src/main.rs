@@ -5,6 +5,7 @@ use ta_codegen_lib::extractor::TableFuncDef;
 use ta_codegen_lib::formatter;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::ir;
+use ta_codegen_lib::naming;
 use ta_codegen_lib::parser;
 use ta_codegen_lib::registry::Registry;
 use ta_codegen_lib::server_gen;
@@ -482,14 +483,31 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         None => backends::all_names(),
     };
 
-    // Documentation gate — the first thing that runs, before the stale-file clean and
-    // before any backend writes. The website renders every function's `## Parameters`
-    // from its .md joined to the YAML, so a section that disagrees with the YAML is
-    // caught while the tree is still untouched; failing later would abort with
+    // Everything both up-front gates need, and the same list `all_funcs` uses on
+    // the `--func` path below: every definition, fully wired from its .c.
+    let all_defs = load_all_yaml_defs(&base);
+
+    // Naming gate — before anything else, because a name no backend can render
+    // is a defect in the source of truth rather than in any one output. Checked
+    // against every backend at once, so a C-only build cannot pass a name that
+    // Rust, Java or C# would choke on (`base` is a C# keyword and nothing
+    // else's). See `naming.rs`.
+    if let Err(errors) = naming::validate_all(&all_defs, &helper_registry) {
+        for e in &errors {
+            eprintln!("error: {e}");
+        }
+        eprintln!("       (a name must be a legal identifier in every backend: see ta_codegen/generator/src/naming.rs)");
+        std::process::exit(1);
+    }
+
+    // Documentation gate — before the stale-file clean and before any backend
+    // writes. The website renders every function's `## Parameters` from its .md
+    // joined to the YAML, so a section that disagrees with the YAML is caught
+    // while the tree is still untouched; failing later would abort with
     // `src/ta_func/*.c` already deleted by the clean below. Validates every function
     // regardless of `--func`, because the website is regenerated in full either way.
     // Same fail-fast shape as the streaming gate in Phase 1.
-    if let Err(errors) = backends::docs_site::validate_docs(&load_all_yaml_defs(&base), &root) {
+    if let Err(errors) = backends::docs_site::validate_docs(&all_defs, &root) {
         for e in &errors {
             eprintln!("error: {e}");
         }
@@ -568,10 +586,8 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
 
     // For cross-function outputs (func_list, Makefile.am), use all definitions
     // regardless of --func filter. Reuse already-parsed data when unfiltered.
-    let all_yaml_defs;
     let all_funcs: &[ir::FuncDef] = if func_filter.is_some() {
-        all_yaml_defs = load_all_yaml_defs(&base);
-        &all_yaml_defs
+        &all_defs
     } else {
         &generated_funcs
     };

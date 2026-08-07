@@ -10,6 +10,73 @@ use crate::ir::{
 };
 use crate::parser::enums::lookup_variant;
 use crate::registry::{Lang, Registry};
+
+/// Words this backend cannot render as an identifier (see [`crate::naming`]):
+/// the Java keywords (JLS 3.9), the three literals, `_` (a keyword since Java 9),
+/// and `yield` — a restricted identifier that a `switch` body cannot open a
+/// statement with, and this backend emits `switch`.
+///
+/// The other restricted identifiers (`var`, `record`, `sealed`, `permits`, and
+/// the module-declaration words) are deliberately absent: they are legal
+/// variable names everywhere this backend puts one.
+pub(crate) const RESERVED_WORDS: &[&str] = &[
+    "abstract",
+    "assert",
+    "boolean",
+    "break",
+    "byte",
+    "case",
+    "catch",
+    "char",
+    "class",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extends",
+    "final",
+    "finally",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "implements",
+    "import",
+    "instanceof",
+    "int",
+    "interface",
+    "long",
+    "native",
+    "new",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "return",
+    "short",
+    "static",
+    "strictfp",
+    "super",
+    "switch",
+    "synchronized",
+    "this",
+    "throw",
+    "throws",
+    "transient",
+    "try",
+    "void",
+    "volatile",
+    "while",
+    // literals + the lone underscore + the one hazardous restricted identifier
+    "false",
+    "null",
+    "true",
+    "yield",
+    "_",
+];
 use super::common::{contains_alloc_err_return, expr_directly_contains_candle_call, find_sizeof_type};
 use super::builtins::{MathFn, SpecialBuiltin, StdlibFn};
 use super::expr_walk::{binop_prec, expr_prec, is_int_bitwise, wrap_child, wrap_inlined, ExprEmitter};
