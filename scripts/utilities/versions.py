@@ -573,7 +573,7 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
         set_version_string_conanfile(root_dir, highest_version)
         is_updated = True
 
-    # NOTE: website/src/install/README.md (the website install page) is
+    # NOTE: website/src/install/c/README.md (the website install page) is
     # intentionally NOT synced here. It must advertise the latest *published*
     # release, not this in-development VERSION, so rewriting it from
     # `highest_version` would leak a not-yet-released version onto the live website

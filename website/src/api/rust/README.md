@@ -1,6 +1,6 @@
 ---
 title: Rust Core API
-description: "The ta-lib Rust crate: a native port with no C bindings, indicators as methods on Core over f64 slices, bit-identical to the C library."
+description: "The ta-lib Rust crate: a native port with no C bindings, indicators as methods on Core over f64 slices, bit-identical to the reference C library."
 toc: false
 ---
 
@@ -10,7 +10,7 @@ toc: false
 The Rust API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The `ta-lib` crate is a native Rust port of TA-Lib — no C bindings, no `unsafe` at the call site. Every indicator is a method on a `Core` value, operates on `f64` slices, and is **bit-identical** to the C library over the same inputs.
+The `ta-lib` crate is a native Rust port of TA-Lib — no C bindings, no `unsafe` at the call site. Every indicator is a method on a `Core` value, operates on `f64` slices, and is **bit-identical** to the reference C library over the same inputs.
 
 To process a live feed one bar at a time instead of a whole array, see the companion [Rust Streaming API](/api/rust/stream/).
 

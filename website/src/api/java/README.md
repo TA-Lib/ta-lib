@@ -1,6 +1,6 @@
 ---
 title: Java Core API
-description: "The io.github.talib Java library: a native port with no JNI, indicators as methods on a Core instance over double arrays, bit-identical to the C library."
+description: "io.github.talib: a native Java port with no JNI, indicators as methods on a Core instance over double arrays, bit-identical to the reference C library."
 toc: false
 ---
 
@@ -10,7 +10,7 @@ toc: false
 The Java API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The Java library is a native port of TA-Lib in the `io.github.talib` package — no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays, and is **bit-identical** to the C library over the same inputs.
+The Java library is a native port of TA-Lib in the `io.github.talib` package — no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays, and is **bit-identical** to the reference C library over the same inputs.
 
 To process a live feed one bar at a time instead of a whole array, see the companion [Java Streaming API](/api/java/stream/).
 

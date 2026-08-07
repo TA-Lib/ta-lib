@@ -25,7 +25,13 @@ export default hopeTheme({
   markdown: {
     align: true,
     attrs: true,
-    gfm: true,
+    // OFF deliberately: `gfm: true` turns every single newline into a <br>, which
+    // is right for a GitHub README and wrong for a docs site -- it put 74 hard
+    // breaks mid-sentence across 27 pages, 61 of them on generated function pages
+    // whose prose is hard-wrapped in ta_codegen/input/<name>/<name>.md. Nothing
+    // here relies on the other GFM behaviours (tables come from markdown-it, and
+    // the only bare URL on the site is inside a code block, so linkify is moot).
+    gfm: false,
     include: true,
     mark: true,
     mermaid: false,

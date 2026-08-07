@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Synchronize the website install page (website/src/install/README.md) so it
+# Synchronize the website install page (website/src/install/c/README.md) so it
 # advertises the latest *published* GitHub release.
 #
 # The source of truth is the GitHub "latest release" API, so the website can
@@ -12,14 +12,14 @@
 # Idempotent and safe to call from various points:
 #
 #   scripts/sync-website.py
-#       Rewrite website/src/install/README.md to match the latest release. No-op
+#       Rewrite website/src/install/c/README.md to match the latest release. No-op
 #       if already in sync (or if the release cannot be determined). Intended to
 #       run where CI already commits back to the repo (see dev-nightly-tests.yml)
 #       so the committed files and the deployed website always match -- we never
 #       rewrite at deploy time.
 #
 #   scripts/sync-website.py --check
-#       Do not modify anything. Exit non-zero if website/src/install/README.md
+#       Do not modify anything. Exit non-zero if website/src/install/c/README.md
 #       does not match the latest release. Intended for a manual, post-release-bump
 #       verification.
 #
@@ -103,7 +103,7 @@ def main() -> int:
 
     # Exits 0 (with a message) when run from a fork -> inherently a no-op there.
     root_dir = verify_git_repo_original()
-    install_md = path_join(root_dir, 'website', 'src', 'install', 'README.md')
+    install_md = path_join(root_dir, 'website', 'src', 'install', 'c', 'README.md')
 
     latest = get_latest_release_version(token)
     if latest is None:
@@ -115,7 +115,7 @@ def main() -> int:
         if not stale:
             print(f"Website is in sync with the latest release ({latest}).")
             return 0
-        message = (f"website/src/install/README.md still advertises {stale} but the "
+        message = (f"website/src/install/c/README.md still advertises {stale} but the "
                    f"latest release is {latest}; it will sync on the next dev-nightly "
                    f"+ dev->main merge.")
         if args.warn_only:
@@ -125,9 +125,9 @@ def main() -> int:
         return 1
 
     if replace_version(install_md, latest):
-        print(f"Updated website/src/install/README.md to {latest}.")
+        print(f"Updated website/src/install/c/README.md to {latest}.")
     else:
-        print(f"website/src/install/README.md already at {latest} (no change).")
+        print(f"website/src/install/c/README.md already at {latest} (no change).")
     return 0
 
 

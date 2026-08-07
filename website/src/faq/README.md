@@ -1,6 +1,6 @@
 ---
 title: FAQ
-description: "Answers about TA-Lib: whether it is still maintained, licensing, supported platforms, and how it compares to other technical analysis libraries."
+description: "Whether TA-Lib is still maintained (yes, actively again since 2025) and where to get support: Discord, GitHub issues and the wrapper communities."
 ---
 
 # FAQ

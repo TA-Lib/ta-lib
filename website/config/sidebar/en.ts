@@ -3,11 +3,9 @@ import { sidebar } from "vuepress-theme-hope";
 export const enSidebar = sidebar({
   "/": [
     { text: "Home", link: "" },
-    {
-      text: "Install",
-      link: "install/",
-      children: [{ text: "C/C++", link: "install/" }, "wrappers/"],
-    },
+    // Deliberately childless: /install/ is a router page listing every native
+    // and every wrapper, so the sub-pages it links to would only duplicate it.
+    { text: "Install", link: "install/" },
     {
       text: "Docs",
       link: "functions/",
@@ -16,7 +14,10 @@ export const enSidebar = sidebar({
         {
           text: "C/C++ API",
           collapsible: true,
-          children: ["api/", "api/stream/"],
+          // The install page lives at /install/c/ (reached from the /install/
+          // router too); it is listed here because that is where a reader
+          // already in the C docs looks for it.
+          children: ["install/c/", "api/", "api/stream/"],
         },
         {
           text: "Rust API",

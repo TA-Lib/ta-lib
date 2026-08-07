@@ -956,7 +956,7 @@ fn build_index(funcs: &[&FuncDef]) -> String {
     // the bare "Functions": the theme already appends "| TA-Lib.org" to the `<title>`, and
     // "TA-Lib Functions | TA-Lib.org" would say the brand twice.
     let mut s = String::from(
-        "---\ntitle: Functions\ndescription: \"Every TA-Lib technical analysis function, grouped by category — formula, inputs, outputs and source for each.\"\n---\n\n",
+        "---\ntitle: Functions\ndescription: \"Every TA-Lib technical analysis function, grouped by category, with the formula, inputs, outputs and source for each.\"\n---\n\n",
     );
     s.push_str(
         "All technical-analysis functions, grouped by category. Each page documents the \

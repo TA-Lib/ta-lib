@@ -1,6 +1,6 @@
 ---
 title: Functions
-description: "Every TA-Lib technical analysis function, grouped by category — formula, inputs, outputs and source for each."
+description: "Every TA-Lib technical analysis function, grouped by category, with the formula, inputs, outputs and source for each."
 ---
 
 All technical-analysis functions, grouped by category. Each page documents the formula, inputs, outputs, and links to the C / Rust / Java source.
