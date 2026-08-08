@@ -2365,6 +2365,204 @@ static void testOutputAlias( const TA_FuncInfo *funcInfo, void *opaqueData )
       *errorNumber = err;
 }
 
+/* TA_MAX_INDEX bounds the API domain: an index above it is rejected rather than
+ * computed, identically in all four backends. The guard is generated into every
+ * function's prologue, so this drives it over every function ta_abstract
+ * reports. (Issue #180.)
+ *
+ * Every case here returns from the prologue BEFORE any input is dereferenced,
+ * and that constraint is what shapes the boundary rows. An index near
+ * TA_MAX_INDEX with buffers to match would be 800 MB per array, so a *successful*
+ * call at the boundary is not affordable in this suite and the accepting side
+ * has to be observed some other way:
+ *
+ *  - startIdx == TA_MAX_INDEX accepted: pair it with a smaller endIdx. Answering
+ *    _END_INDEX proves the start check let it through; a `>=` off-by-one would
+ *    answer _START_INDEX instead.
+ *  - endIdx == TA_MAX_INDEX accepted: reach the NEXT check in the prologue.
+ *    An out-of-range optional parameter answers TA_BAD_PARAM, which is only
+ *    reachable once both range checks have passed.
+ *
+ * So an off-by-one fails in either direction: too strict shows up on the two
+ * boundary-accept rows, too lax on the MAX+1 rows. */
+
+typedef struct
+{
+   int          startIdx;
+   int          endIdx;
+   int          badParam;   /* 1 = also pass an out-of-range optional parameter */
+   TA_RetCode   expected;
+   const char  *what;
+} TA_IndexRangeCase;
+
+static const TA_IndexRangeCase TA_INDEX_RANGE_CASES[] =
+{
+   { -1,               10,                 0, TA_OUT_OF_RANGE_START_INDEX, "startIdx < 0" },
+   { TA_MAX_INDEX+1,   TA_MAX_INDEX+1,     0, TA_OUT_OF_RANGE_START_INDEX, "startIdx > TA_MAX_INDEX" },
+   { 0,                -1,                 0, TA_OUT_OF_RANGE_END_INDEX,   "endIdx < 0" },
+   { 0,                TA_MAX_INDEX+1,     0, TA_OUT_OF_RANGE_END_INDEX,   "endIdx > TA_MAX_INDEX" },
+   { 10,               9,                  0, TA_OUT_OF_RANGE_END_INDEX,   "endIdx < startIdx" },
+   { TA_MAX_INDEX,     TA_MAX_INDEX-1,     0, TA_OUT_OF_RANGE_END_INDEX,   "startIdx == TA_MAX_INDEX accepted" },
+   { TA_MAX_INDEX,     TA_MAX_INDEX,       1, TA_BAD_PARAM,                "endIdx == TA_MAX_INDEX accepted" }
+};
+
+static int indexRangeNbFuncs;        /* functions enumerated                 */
+static int indexRangeNbChecked;      /* rows actually run                    */
+static int indexRangeNbAccept;       /* boundary-accept rows actually run    */
+static int indexRangeNbNoProbe;      /* functions with no usable probe       */
+
+/* The boundary-accept row needs an optional-parameter value the prologue is
+ * CERTAIN to reject, because the row's safety depends on it: the call is made
+ * at startIdx == endIdx == TA_MAX_INDEX, so if validation let the value
+ * through, the body would run and read ~1e8 elements past a 2000-element array.
+ * "Certain" therefore means the range the generated prologue enforces is the
+ * same range ta_abstract advertises -- true for IntegerRange and RealRange,
+ * which the prologue emits as a literal `< min || > max` from the same YAML.
+ *
+ * Enum ("integer list") parameters are deliberately NOT used. Generated
+ * prologues emit no range check for them -- TA_MA only remaps the default
+ * sentinel and defers to a switch far below the index checks -- so an unlisted
+ * value would not be rejected there, and the row would turn into an
+ * out-of-bounds read. A function with only enum optional parameters skips this
+ * row and is counted as skipped instead.
+ *
+ * Returns 1 and fills *whichParam / *intValue / *realValue / *isReal, or 0 when
+ * the function has no usable probe. */
+static int indexRangeBadOptValue( const TA_FuncInfo *funcInfo,
+                                  unsigned int *whichParam,
+                                  int *intValue, double *realValue, int *isReal )
+{
+   const TA_OptInputParameterInfo *optInfo;
+   unsigned int i;
+
+   for( i = 0; i < funcInfo->nbOptInput; i++ )
+   {
+      TA_GetOptInputParameterInfo( funcInfo->handle, i, &optInfo );
+      if( optInfo->type == TA_OptInput_IntegerRange )
+      {
+         const TA_IntegerRange *r = (const TA_IntegerRange *)optInfo->dataSet;
+         /* A parameter whose max is already TA_INTEGER_MAX has no value above
+          * it to pass, so it cannot serve as the probe. */
+         if( r && r->max < TA_INTEGER_MAX )
+         {
+            *whichParam = i; *isReal = 0; *intValue = r->max + 1;
+            return 1;
+         }
+      }
+      else if( optInfo->type == TA_OptInput_RealRange )
+      {
+         const TA_RealRange *r = (const TA_RealRange *)optInfo->dataSet;
+         if( r && r->max < TA_REAL_MAX )
+         {
+            *whichParam = i; *isReal = 1; *realValue = r->max * 2.0 + 1.0;
+            return 1;
+         }
+      }
+   }
+   return 0;
+}
+
+static ErrorNumber checkIndexRangeRejected( const TA_FuncInfo *funcInfo )
+{
+   TA_ParamHolder *paramHolder;
+   const TA_FuncHandle *handle = funcInfo->handle;
+   const TA_InputParameterInfo *inputInfo;
+   const TA_OutputParameterInfo *outInfo;
+   TA_RetCode retCode;
+   unsigned int i, c, badParamIdx = 0;
+   int outBegIdx, outNbElement;
+   int badInt = 0, badIsReal = 0;
+   double badReal = 0.0;
+   int haveProbe = indexRangeBadOptValue( funcInfo, &badParamIdx,
+                                          &badInt, &badReal, &badIsReal );
+
+   indexRangeNbFuncs++;
+   if( !haveProbe )
+      indexRangeNbNoProbe++;
+
+   for( c = 0; c < sizeof(TA_INDEX_RANGE_CASES)/sizeof(TA_INDEX_RANGE_CASES[0]); c++ )
+   {
+      const TA_IndexRangeCase *tc = &TA_INDEX_RANGE_CASES[c];
+
+      /* Not applicable: no optional parameter this function is certain to
+       * reject, so the row cannot be made safe. Counted above, and reported in
+       * the coverage line, rather than dropped silently. */
+      if( tc->badParam && !haveProbe )
+         continue;
+
+      retCode = TA_ParamHolderAlloc( handle, &paramHolder );
+      if( retCode != TA_SUCCESS )
+         return TA_ABS_TST_FAIL_PARAMHOLDERALLOC;
+
+      for( i = 0; i < funcInfo->nbInput; i++ )
+      {
+         TA_GetInputParameterInfo( handle, i, &inputInfo );
+         switch( inputInfo->type )
+         {
+         case TA_Input_Price:
+            TA_SetInputParamPricePtr( paramHolder, i,
+               inputInfo->flags&TA_IN_PRICE_OPEN?inputRandomData:NULL,
+               inputInfo->flags&TA_IN_PRICE_HIGH?inputRandomData:NULL,
+               inputInfo->flags&TA_IN_PRICE_LOW?inputRandomData:NULL,
+               inputInfo->flags&TA_IN_PRICE_CLOSE?inputRandomData:NULL,
+               inputInfo->flags&TA_IN_PRICE_VOLUME?inputRandomData:NULL, NULL );
+            break;
+         case TA_Input_Real:
+            TA_SetInputParamRealPtr( paramHolder, i, inputRandomData );
+            break;
+         case TA_Input_Integer:
+            TA_SetInputParamIntegerPtr( paramHolder, i, inputRandomData_int );
+            break;
+         }
+      }
+
+      for( i = 0; i < funcInfo->nbOutput; i++ )
+      {
+         TA_GetOutputParameterInfo( handle, i, &outInfo );
+         if( outInfo->type == TA_Output_Integer )
+            TA_SetOutputParamIntegerPtr( paramHolder, i, &output_int[i][0] );
+         else
+            TA_SetOutputParamRealPtr( paramHolder, i, &output[i][0] );
+      }
+
+      if( tc->badParam )
+      {
+         if( badIsReal )
+            TA_SetOptInputParamReal( paramHolder, badParamIdx, badReal );
+         else
+            TA_SetOptInputParamInteger( paramHolder, badParamIdx, badInt );
+      }
+
+      retCode = TA_CallFunc( paramHolder, tc->startIdx, tc->endIdx,
+                             &outBegIdx, &outNbElement );
+      TA_ParamHolderFree( paramHolder );
+
+      if( retCode != tc->expected )
+      {
+         printf( "  INDEX RANGE [%s]: %s (startIdx=%d endIdx=%d) returned %d, "
+                 "expected %d\n",
+                 funcInfo->name, tc->what, tc->startIdx, tc->endIdx,
+                 retCode, tc->expected );
+         return TA_ABS_TST_FAIL_INDEX_RANGE;
+      }
+      indexRangeNbChecked++;
+      if( tc->badParam )
+         indexRangeNbAccept++;
+   }
+   return TA_TEST_PASS;
+}
+
+static void testIndexRange( const TA_FuncInfo *funcInfo, void *opaqueData )
+{
+   ErrorNumber *errorNumber = (ErrorNumber *)opaqueData;
+   ErrorNumber err;
+   if( *errorNumber != TA_TEST_PASS )
+      return;
+   err = checkIndexRangeRejected( funcInfo );
+   if( err != TA_TEST_PASS )
+      *errorNumber = err;
+}
+
 /* Reusing an input buffer as one of the outputs (in-place transform) is a
  * documented guarantee: "the caller can reuse the input buffer to store one
  * of the outputs ... All TA functions support this" (website/src/api,
@@ -2945,6 +3143,43 @@ static ErrorNumber test_default_calls(void)
    /* Every multi-output function must reject output-buffer aliasing (issue #108). */
    if( errNumber == TA_TEST_PASS )
       TA_ForEachFunc( testOutputAlias, &errNumber );
+
+   /* Every function must bound startIdx/endIdx by TA_MAX_INDEX (issue #180). */
+   if( errNumber == TA_TEST_PASS )
+   {
+      indexRangeNbFuncs = indexRangeNbChecked = 0;
+      indexRangeNbAccept = indexRangeNbNoProbe = 0;
+      TA_ForEachFunc( testIndexRange, &errNumber );
+      if( errNumber == TA_TEST_PASS )
+         printf( "  Index range (#180): %d case(s) over %d function(s); the "
+                 "startIdx boundary is checked for all, the endIdx boundary for "
+                 "%d (the other %d expose no optional parameter the prologue is "
+                 "certain to reject)\n",
+                 indexRangeNbChecked, indexRangeNbFuncs, indexRangeNbAccept,
+                 indexRangeNbNoProbe );
+
+      /* Exact accounting rather than a round floor. Every function runs the six
+       * always-applicable rows, and the boundary-accept row either ran or was
+       * counted as unprobeable — so these two identities pin the whole table.
+       * A single "at least N cases" floor would not: the six rejection rows
+       * alone satisfy it, and the boundary-accept half could vanish unnoticed.
+       * That half is precisely what catches a `>=` off-by-one. */
+      if( errNumber == TA_TEST_PASS && indexRangeNbFuncs < 150 )
+      {
+         printf( "Failed: index-range gate saw only %d function(s)\n",
+                 indexRangeNbFuncs );
+         errNumber = TA_ABS_TST_FAIL_INDEX_RANGE;
+      }
+      if( errNumber == TA_TEST_PASS &&
+          ( indexRangeNbChecked != 6 * indexRangeNbFuncs + indexRangeNbAccept ||
+            indexRangeNbAccept  != indexRangeNbFuncs - indexRangeNbNoProbe ) )
+      {
+         printf( "Failed: index-range accounting (%d cases, %d funcs, %d accept, "
+                 "%d unprobeable)\n", indexRangeNbChecked, indexRangeNbFuncs,
+                 indexRangeNbAccept, indexRangeNbNoProbe );
+         errNumber = TA_ABS_TST_FAIL_INDEX_RANGE;
+      }
+   }
 
    /* In-place (input==output) aliasing must be bitwise-correct (issue #130). */
    if( errNumber == TA_TEST_PASS )

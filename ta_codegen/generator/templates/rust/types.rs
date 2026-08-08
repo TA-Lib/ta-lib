@@ -108,6 +108,17 @@ pub const INTEGER_MIN: i32 = i32::MIN + 1;
 /// Highest value an `i32` optional parameter may take (C's `TA_INTEGER_MAX`).
 pub const INTEGER_MAX: i32 = i32::MAX;
 
+/// Largest value `startIdx` or `endIdx` may take (C's `TA_MAX_INDEX`). Above it,
+/// a call returns [`RetCode::OutOfRangeStartIndex`] or
+/// [`RetCode::OutOfRangeEndIndex`] rather than computing.
+///
+/// This bounds the **API domain** and nothing else. In particular it is not an
+/// accuracy guarantee: a handful of functions accumulate rounding error that
+/// grows with the series length and are already imprecise well below this cap.
+/// It is a `usize` here and an `int` in C, Java and C#, so the same call is
+/// accepted or rejected identically in all four.
+pub const MAX_INDEX: usize = 100_000_000;
+
 /// A single candlestick setting entry.
 #[derive(Debug, Clone, Copy)]
 pub struct CandleSetting {

@@ -86,7 +86,8 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `endIdx < startIdx`.
+    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`], and
+    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`.
     ///
     /// # Panics
     ///
@@ -128,8 +129,11 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        if endIdx < startIdx {
+        if startIdx > MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
+        }
+        if endIdx > MAX_INDEX || endIdx < startIdx {
+            return RetCode::OutOfRangeEndIndex;
         }
         let _assertLb = self.ceil_lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -187,8 +191,8 @@ impl Core {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
-        if inReal.len() > i32::MAX as usize {
-            return Err(RetCode::BadParam);
+        if inReal.len() > MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
@@ -248,8 +252,8 @@ impl Core {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
-        if inReal.len() > i32::MAX as usize {
-            return Err(RetCode::BadParam);
+        if inReal.len() > MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;

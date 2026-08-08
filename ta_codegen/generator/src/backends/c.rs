@@ -661,9 +661,9 @@ fn gen_func_inner(
     // Validation prologue. Omitted for the `_Private` variant, whose callers are
     // the guarded bodies that have already validated.
     if name_override.is_none() {
-        out.push_str("   if( startIdx < 0 )\n");
+        out.push_str("   if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )\n");
         out.push_str("      return TA_OUT_OF_RANGE_START_INDEX;\n");
-        out.push_str("   if( (endIdx < 0) || (endIdx < startIdx) )\n");
+        out.push_str("   if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )\n");
         out.push_str("      return TA_OUT_OF_RANGE_END_INDEX;\n");
         out.push('\n');
 

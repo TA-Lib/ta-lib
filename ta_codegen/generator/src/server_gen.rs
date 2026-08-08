@@ -2047,6 +2047,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    static final int INTEGER_DEFAULT = Integer.MIN_VALUE;\n");
     s.push_str("    static final int INTEGER_MIN = Integer.MIN_VALUE + 1;\n");
     s.push_str("    static final int INTEGER_MAX = Integer.MAX_VALUE;\n");
+    s.push_str("    static final int MAX_INDEX = 100000000;\n");
     // Sized by the id count, so the wildcard gets no slot -- matching the
     // shipped CoreBuilder (#144).
     s.push_str("    int[] unstablePeriod = new int[FuncUnstId.COUNT];\n");
@@ -3310,7 +3311,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("use serde_json::{self, Value};\n");
     s.push_str("use std::io::{self, BufRead, Write};\n");
     s.push_str("use std::time::Instant;\n");
-    s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId};\n");
+    s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, MAX_INDEX};\n");
     s.push_str("use ta_lib::{CandleSetting, CandleSettings, CandleSettingType};\n");
     s.push_str("use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};\n\n");
 
@@ -4063,11 +4064,11 @@ fn abs_call(core: &Core, params: &Value) -> String {
     // clamping, and the driver compares retCodes.
     let raw_start = params["startIdx"].as_i64().unwrap_or(0);
     let raw_end = params["endIdx"].as_i64().unwrap_or(0);
-    if raw_start < 0 {
+    if raw_start < 0 || raw_start > MAX_INDEX as i64 {
         return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
                        retcode_to_int(RetCode::OutOfRangeStartIndex));
     }
-    if raw_end < 0 || raw_end < raw_start {
+    if raw_end < 0 || raw_end > MAX_INDEX as i64 || raw_end < raw_start {
         return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
                        retcode_to_int(RetCode::OutOfRangeEndIndex));
     }
@@ -5423,6 +5424,14 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         if (f is null) return "{\"error\":\"Unknown function\"}";
         int startIdx = GetInt(p, "startIdx", 0);
         int endIdx = GetInt(p, "endIdx", 0);
+        // Answer the range codes BEFORE sizing anything by the range (#180).
+        // `n` below drives every output allocation, so validating after it
+        // would turn an out-of-range request into an 800MB-per-output
+        // allocation and take the server down instead of returning a code.
+        if (startIdx < 0 || startIdx > Core.TA_MAX_INDEX)
+            return "{\"binder\":1,\"lookback\":-1,\"retCode\":12,\"outBegIdx\":0,\"outNBElement\":0}";
+        if (endIdx < 0 || endIdx > Core.TA_MAX_INDEX || endIdx < startIdx)
+            return "{\"binder\":1,\"lookback\":-1,\"retCode\":13,\"outBegIdx\":0,\"outNBElement\":0}";
         int n = endIdx - startIdx + 1;
         if (n < 1) n = 1;
 

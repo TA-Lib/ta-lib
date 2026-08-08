@@ -381,14 +381,14 @@ fn gen_imports() -> String {
 /// `ta_lib_dispatch::dispatch_fma!` (one cached CPU check per call; both
 /// paths are correctly rounded, so which clone runs never changes bits).
 /// Lookback and the stream tier stay undispatched, mirroring the C decision.
-fn fma_dispatch_wrap(text: String, fn_name: &str) -> String {
+fn fma_dispatch_wrap(text: String, fn_name: &str, vis: &str) -> String {
     if !fma::EMIT_FMA || !text.contains(".mul_add(") {
         return text;
     }
     // From here the variant fuses, so a signature-pattern mismatch must fail
     // LOUD: a silent passthrough would ship the exact #156 regression while
     // every value gate stays green (both paths are bit-identical).
-    let sig_open = format!("    pub fn {fn_name}(\n");
+    let sig_open = format!("    {vis}fn {fn_name}(\n");
     let sig_close = "    ) -> RetCode {\n";
     let Some(sig_pos) = text.find(&sig_open) else {
         panic!("{fn_name}: fused body but the signature no longer matches `{sig_open:?}` — FMA dispatch would silently vanish");
@@ -490,6 +490,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     out.push_str(&fma_dispatch_wrap(
         gen_guarded_func(func, &snake, enums, registry, helpers),
         &snake,
+        "pub ",
     ));
 
     // Build a temporary FuncDef with private_body for the `_private` variant
@@ -554,6 +555,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         out.push_str(&fma_dispatch_wrap(
             gen_private_func(&body_func, &snake, &ctx, enums, registry, helpers),
             &format!("{snake}_private"),
+            "pub(crate) ",
         ));
     }
 
@@ -651,9 +653,18 @@ fn gen_guarded_func(
     out.push_str(&gen_generic_output_params(func));
     out.push_str("    ) -> RetCode {\n");
 
-    // Range check
-    out.push_str("        if endIdx < startIdx {\n");
+    // Range check. `usize` makes C's two negative-index conditions
+    // unrepresentable, so MAX_INDEX is what gives OutOfRangeStartIndex a
+    // producer here at all. The end-index arm answers OutOfRangeEndIndex to
+    // match C and the crate's own abstract tier (#180; C6 of #179 -- every
+    // batch entry point used to answer OutOfRangeStartIndex for endIdx <
+    // startIdx, which no gate could see: the JSON-RPC server re-implements
+    // C's guard, so the crate's answer never reached the driver).
+    out.push_str("        if startIdx > MAX_INDEX {\n");
     out.push_str("            return RetCode::OutOfRangeStartIndex;\n");
+    out.push_str("        }\n");
+    out.push_str("        if endIdx > MAX_INDEX || endIdx < startIdx {\n");
+    out.push_str("            return RetCode::OutOfRangeEndIndex;\n");
     out.push_str("        }\n");
 
     // Param validation
@@ -1048,10 +1059,14 @@ fn gen_private_func_inner(
 
     out.push_str(&super::rust_doc::private_docs(func, snake));
 
-    // Function signature — always pub fn (unsafe is contained internally)
+    // `pub(crate)`, not `pub`: C makes `TA_XXX_Private` file-`static` and Java/C#
+    // make theirs package-private/internal, so a `pub` here was the one backend
+    // where a caller could reach an entry point with no validation prologue --
+    // and therefore no TA_MAX_INDEX bound (#180). Cross-indicator calls are all
+    // in-crate, so nothing legitimate loses access.
     // #[inline] enables cross-module inlining for cross-indicator calls
     out.push_str("    #[inline]\n");
-    out.push_str(&format!("    pub fn {func_name}(\n"));
+    out.push_str(&format!("    pub(crate) fn {func_name}(\n"));
     out.push_str("        &self,\n");
     out.push_str("        mut startIdx: usize,\n");
     out.push_str("        endIdx: usize,\n");

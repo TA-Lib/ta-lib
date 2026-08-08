@@ -2944,6 +2944,114 @@ static ErrorNumber test_predicate_parity(CodegenPipe *cp, const CodegenLanguage 
     return TA_TEST_PASS;
 }
 
+/* TA_MAX_INDEX must bound startIdx/endIdx in EVERY backend, not just C
+ * (issue #180). Without this, deleting the cap from java.rs, csharp.rs or
+ * rust_lang.rs leaves every gate green: test_abstract.c's index-range gate
+ * drives the in-process C library only, and no other driver sends an index
+ * anywhere near the cap.
+ *
+ * SPANS ARE DELIBERATELY TINY. The servers size their output buffers
+ * `endIdx - startIdx + 1` BEFORE dispatching, so the obvious probe
+ * (startIdx=0, endIdx=TA_MAX_INDEX+1) would allocate 800MB per output on each
+ * server and test the allocator rather than the guard. Every pair below spans
+ * at most two elements while still being out of range.
+ *
+ * Two cases C covers that this cannot, by construction:
+ *  - negative indices: JSON numbers reach the servers through unsigned parses,
+ *    so a negative startIdx is not expressible over the wire.
+ *  - endIdx == TA_MAX_INDEX accepted: proving it needs a call that gets PAST
+ *    the range check, i.e. a real 800MB-per-array call. test_abstract.c reaches
+ *    it in-process instead, via an out-of-range optional parameter.
+ * What is left is exactly the part that can diverge silently: the two
+ * rejections and the startIdx boundary.
+ *
+ * A backend missing the guard does not merely answer the wrong code — it
+ * indexes an array of a few elements at ~1e8 and takes the server down. Both
+ * outcomes fail here; only the diagnostic differs. */
+typedef struct
+{
+    int         startIdx;
+    int         endIdx;
+    TA_RetCode  expected;
+    const char *what;
+} XlangIndexRangeCase;
+
+static ErrorNumber test_index_range_xlang(CodegenPipe *cp, const CodegenLanguage *lang,
+                                          char *reqBuf, char *respBuf)
+{
+    static const XlangIndexRangeCase CASES[] = {
+        { TA_MAX_INDEX+1, TA_MAX_INDEX+1, TA_OUT_OF_RANGE_START_INDEX,
+          "startIdx > TA_MAX_INDEX" },
+        { TA_MAX_INDEX,   TA_MAX_INDEX+1, TA_OUT_OF_RANGE_END_INDEX,
+          "endIdx > TA_MAX_INDEX" },
+        { 10,             9,              TA_OUT_OF_RANGE_END_INDEX,
+          "endIdx < startIdx" },
+        { TA_MAX_INDEX,   TA_MAX_INDEX-1, TA_OUT_OF_RANGE_END_INDEX,
+          "startIdx == TA_MAX_INDEX accepted" }
+    };
+    /* One per input shape: a single real array, a real array with several
+     * outputs, and a full price bundle. The prologue is emitted from one
+     * template, so this is about shapes, not about coverage of all 168. */
+    static const char *const FUNCS[] = { "TA_SMA", "TA_BBANDS", "TA_AD" };
+    static const int NB = 8;
+    double data[8] = { 10.0, 11.0, 12.0, 11.5, 13.0, 12.5, 14.0, 13.5 };
+    unsigned int f, c;
+    int nbChecked = 0;
+
+    for( f = 0; f < sizeof(FUNCS)/sizeof(FUNCS[0]); f++ )
+    {
+        for( c = 0; c < sizeof(CASES)/sizeof(CASES[0]); c++ )
+        {
+            const XlangIndexRangeCase *tc = &CASES[c];
+            int rc, pos;
+
+            pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
+                    "{\"method\":\"%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d",
+                    FUNCS[f], tc->startIdx, tc->endIdx);
+            if( strcmp(FUNCS[f], "TA_AD") == 0 )
+            {
+                pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, ",\"inHigh\":");
+                pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, data, NB, 0);
+                pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, ",\"inLow\":");
+                pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, data, NB, 0);
+                pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, ",\"inClose\":");
+                pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, data, NB, 0);
+                pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, ",\"inVolume\":");
+                pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, data, NB, 0);
+            }
+            else
+            {
+                pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, ",\"inReal\":");
+                pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, data, NB, 0);
+            }
+            codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, "}}");
+
+            if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS
+                || json_is_error(respBuf) )
+            {
+                printf("  INDEX RANGE XLANG [%s]: %s %s (startIdx=%d endIdx=%d) "
+                       "call failed: %s\n",
+                       lang->display, FUNCS[f], tc->what, tc->startIdx, tc->endIdx,
+                       respBuf);
+                return TA_INDEX_RANGE_XLANG_CALL_FAILED;
+            }
+            rc = json_get_int(respBuf, "retCode");
+            if( rc != (int)tc->expected )
+            {
+                printf("  INDEX RANGE XLANG [%s]: %s %s (startIdx=%d endIdx=%d) "
+                       "returned %d, C returns %d\n",
+                       lang->display, FUNCS[f], tc->what, tc->startIdx, tc->endIdx,
+                       rc, (int)tc->expected);
+                return TA_INDEX_RANGE_XLANG_MISMATCH;
+            }
+            nbChecked++;
+        }
+    }
+    printf("  Index range (#180): %d case(s) match C's TA_MAX_INDEX contract\n",
+           nbChecked);
+    return TA_TEST_PASS;
+}
+
 /* set_unstable_period's set-all wildcard (id == TA_FUNC_UNST_ALL) must really
  * reach every function on every server (issue #144).
  *
@@ -3187,6 +3295,19 @@ static ErrorNumber test_codegen_for_language(
         if( predErr != TA_TEST_PASS )
         {
             ctx.error = predErr;
+            ctx.failed++;
+        }
+    }
+
+    /* TA_MAX_INDEX bounds startIdx/endIdx in this backend too (#180). Not
+     * frozen-reference-dependent: ta_ref_serve predates the cap, so the
+     * expectation comes from the in-process C contract. */
+    if( ctx.error == TA_TEST_PASS )
+    {
+        ErrorNumber idxErr = test_index_range_xlang(&cp, lang, requestBuf, responseBuf);
+        if( idxErr != TA_TEST_PASS )
+        {
+            ctx.error = idxErr;
             ctx.failed++;
         }
     }

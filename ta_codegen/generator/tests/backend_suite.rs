@@ -591,10 +591,17 @@ fn test_rust_ema_private_omits_validation() {
     let (func, enums) = load_indicator("ema");
     let out = generate_all(&func, &enums);
 
-    let private = extract_section(&out.rust, "pub fn ema_private(", "\n}\n");
+    // `pub(crate)`, matching C's file-`static` TA_EMA_Private (#180): skipping
+    // validation is only sound while the callers are the guarded bodies.
+    let private = extract_section(&out.rust, "pub(crate) fn ema_private(", "\n}\n");
     assert!(
         !private.contains("OutOfRangeStartIndex"),
         "Rust ema_private should NOT have range validation"
+    );
+    assert!(
+        !out.rust.contains("pub fn ema_private("),
+        "Rust ema_private must not be crate-public: it is the one entry point with no \
+         validation prologue, so a `pub` here bypasses the TA_MAX_INDEX bound (#180)"
     );
 }
 
@@ -9026,4 +9033,58 @@ fn rust_circbuf_class_layout_shares_one_crossover_guard() {
             && guard.contains("heap_term_trueRange = vec!["),
         "ULTOSC: both fields allocate in the exceeds arm"
     );
+}
+
+/// `TA_MAX_INDEX` is stated as a literal in five hand-written places across four
+/// languages plus the Java test server's embedded `Core` (#180). Nothing in the
+/// build makes them agree — the generated prologues reference the *symbol*, so a
+/// raised cap in `ta_defs.h` alone would leave C accepting calls the other three
+/// reject, which is the one divergence the constant exists to prevent.
+///
+/// This is the parity check. It reads the value out of each surface and requires
+/// one distinct value. Adding a fifth binding means adding it here.
+#[test]
+fn ta_max_index_agrees_across_every_surface() {
+    use std::path::Path;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+
+    // (file, the text immediately preceding the literal)
+    let surfaces: &[(&str, &str)] = &[
+        ("include/ta_defs.h", "#define TA_MAX_INDEX "),
+        ("ta_codegen/generator/templates/rust/types.rs", "pub const MAX_INDEX: usize = "),
+        ("ta_codegen/output/java/library/src/main/java/io/github/talib/Core.java",
+         "public static final int MAX_INDEX = "),
+        ("ta_codegen/output/csharp/library/Core.cs", "public const int TA_MAX_INDEX = "),
+        ("ta_codegen/generator/src/server_gen.rs", "static final int MAX_INDEX = "),
+    ];
+
+    let mut seen: Vec<(String, u64)> = Vec::new();
+    for (rel, prefix) in surfaces {
+        let text = std::fs::read_to_string(root.join(rel))
+            .unwrap_or_else(|e| panic!("{rel}: {e}"));
+        let at = text
+            .find(prefix)
+            .unwrap_or_else(|| panic!("{rel}: no `{prefix}` — did the declaration move?"));
+        let digits: String = text[at + prefix.len()..]
+            .chars()
+            .take_while(|c| c.is_ascii_digit() || *c == '_')
+            .filter(|c| *c != '_')
+            .collect();
+        let value: u64 = digits
+            .parse()
+            .unwrap_or_else(|_| panic!("{rel}: `{prefix}` is not followed by a literal"));
+        seen.push(((*rel).to_string(), value));
+    }
+
+    let first = seen[0].1;
+    for (rel, value) in &seen {
+        assert_eq!(
+            *value, first,
+            "TA_MAX_INDEX disagrees: {rel} says {value}, {} says {first}",
+            seen[0].0
+        );
+    }
+    // Pin the shipped value too, so raising the cap is a deliberate edit here
+    // and not something a backend picks up silently.
+    assert_eq!(first, 100_000_000, "TA_MAX_INDEX changed; update the docs and CHANGELOG with it");
 }

@@ -91,9 +91,9 @@ TA_LIB_API TA_RetCode TA_PVO( int    startIdx,
    int offset;
    int i;
 
-   if( startIdx < 0 )
+   if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx < startIdx) )
+   if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
       return TA_OUT_OF_RANGE_END_INDEX;
 
    if( !inVolume )
@@ -181,9 +181,9 @@ TA_RetCode TA_S_PVO( int    startIdx,
    int offset;
    int i;
 
-   if( startIdx < 0 )
+   if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx < startIdx) )
+   if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
       return TA_OUT_OF_RANGE_END_INDEX;
 
    if( !inVolume )
@@ -300,6 +300,7 @@ TA_RetCode TA_PVO_OpenInternal( struct TA_PVO_Stream **stream, const double inVo
    *stream = NULL;
    if( !inVolume || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (int)optInFastPeriod == (int)0x80000000 )
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
@@ -444,6 +445,7 @@ TA_LIB_API TA_RetCode TA_PVO_OpenAndFill( TA_PVO_Stream **stream, const double i
    *stream = NULL;
    if( !inVolume || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
    if( (int)optInFastPeriod == (int)0x80000000 )
       optInFastPeriod = 12;

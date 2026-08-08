@@ -1540,6 +1540,14 @@ fn emit_dispatch_open_and_fill(
     null_checks.push("!outNBElement".into());
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
     let _ = writeln!(o, "   if( historyLen < 1 ) return TA_BAD_PARAM;");
+    // The fill covers bars 0..historyLen-1, so its last bar is an index like any
+    // other and TA_MAX_INDEX bounds it too (#180). Without this the streaming
+    // entry points would compute over exactly the ranges the batch call refuses,
+    // and the two are required to agree bit for bit.
+    let _ = writeln!(
+        o,
+        "   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;"
+    );
     // Aliasing: fill writes the caller's arrays, so they must be distinct from
     // every input and from each other (the callee OpenAndFill also guards, but
     // the identity path below fills directly).
@@ -1674,6 +1682,14 @@ fn emit_dispatch(
         .collect();
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
     let _ = writeln!(o, "   if( historyLen < 1 ) return TA_BAD_PARAM;");
+    // The fill covers bars 0..historyLen-1, so its last bar is an index like any
+    // other and TA_MAX_INDEX bounds it too (#180). Without this the streaming
+    // entry points would compute over exactly the ranges the batch call refuses,
+    // and the two are required to agree bit for bit.
+    let _ = writeln!(
+        o,
+        "   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;"
+    );
     let _ = writeln!(o, "   (void)startIdx;");
     o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM"));
     let _ = writeln!(
@@ -2594,6 +2610,14 @@ fn emit_period_bank(
         .collect();
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
     let _ = writeln!(o, "   if( historyLen < 1 ) return TA_BAD_PARAM;");
+    // The fill covers bars 0..historyLen-1, so its last bar is an index like any
+    // other and TA_MAX_INDEX bounds it too (#180). Without this the streaming
+    // entry points would compute over exactly the ranges the batch call refuses,
+    // and the two are required to agree bit for bit.
+    let _ = writeln!(
+        o,
+        "   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;"
+    );
     o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM"));
     // MAVP's own guard: an inverted [min,max] window is invalid (batch rejects).
     let _ = writeln!(o, "   if( {min} > {max} ) return TA_BAD_PARAM;");
@@ -2690,6 +2714,14 @@ fn emit_period_bank(
     fill_nulls.push("!outNBElement".into());
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", fill_nulls.join(" || "));
     let _ = writeln!(o, "   if( historyLen < 1 ) return TA_BAD_PARAM;");
+    // The fill covers bars 0..historyLen-1, so its last bar is an index like any
+    // other and TA_MAX_INDEX bounds it too (#180). Without this the streaming
+    // entry points would compute over exactly the ranges the batch call refuses,
+    // and the two are required to agree bit for bit.
+    let _ = writeln!(
+        o,
+        "   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;"
+    );
     let mut alias: Vec<String> = Vec::new();
     for inp in &inputs {
         alias.push(format!("(const void *){out} == (const void *){inp}"));
@@ -3268,6 +3300,14 @@ fn emit_open_validation(
     }
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
     let _ = writeln!(o, "   if( historyLen < 1 ) return TA_BAD_PARAM;");
+    // The fill covers bars 0..historyLen-1, so its last bar is an index like any
+    // other and TA_MAX_INDEX bounds it too (#180). Without this the streaming
+    // entry points would compute over exactly the ranges the batch call refuses,
+    // and the two are required to agree bit for bit.
+    let _ = writeln!(
+        o,
+        "   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;"
+    );
     if mode == OutMode::Fill {
         // Cast to `const void *` so the pointer comparison is well-typed for any
         // output/input element types (integer outputs vs double inputs would

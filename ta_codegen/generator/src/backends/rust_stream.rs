@@ -970,14 +970,18 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode) {
         empties.push(format!("{extra}.len() != {first}.len()"));
     }
     let _ = writeln!(o, "        if {} {{\n            return Err(RetCode::BadParam);\n        }}", empties.join(" || "));
-    // C-parity input-size ceiling: the C API's `historyLen` is an `int`, so a
-    // history beyond i32::MAX bars is unrepresentable there — and the AIA tier
+    // Input-size ceiling. The fill covers bars 0..historyLen-1, so its last bar
+    // is an index like any other and TA_MAX_INDEX bounds it too (#180) —
+    // otherwise the streaming entry points would compute over exactly the
+    // ranges the batch call refuses, and the two are required to agree bit for
+    // bit. MAX_INDEX + 1 is below i32::MAX, so this subsumes the C-parity
+    // ceiling it replaces: C's `historyLen` is an `int`, and the AIA tier
     // carries batch-absolute i32 cursors that a longer warm-up would wrap at
-    // the capture cast (review finding: update() would panic where batch
-    // succeeds). Rejecting up front keeps "no panics post-open" true.
+    // the capture cast (update() would panic where batch succeeds). Rejecting
+    // up front keeps "no panics post-open" true.
     let _ = writeln!(
         o,
-        "        if {first}.len() > i32::MAX as usize {{\n            return Err(RetCode::BadParam);\n        }}"
+        "        if {first}.len() > MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
     );
     if mode == OutMode::Fill {
         // Output mutual-distinctness (#108) — same guard the batch emits.

@@ -247,7 +247,7 @@ fn emit_api(o: &mut String, sorted: &[FuncRow]) {
 /// The hand-written half of the binder: the holder, its setters and the sealed
 /// `OptValue` trait. The two dispatch matches are generated after it.
 const BINDER_SCAFFOLDING: &str = r#"
-use crate::{Core, RetCode};
+use crate::{Core, RetCode, MAX_INDEX};
 
 /// Where a call's output starts and how much of it there is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -697,11 +697,16 @@ fn emit_binder(o: &mut String, sorted: &[FuncRow]) {
          \x20   /// are the same call (issue #162).\n\
          \x20   ///\n\
          \x20   /// # Errors\n\
-         \x20   /// [`RetCode::BadParam`] if a required input or output was never bound,\n\
-         \x20   /// if an output is too short for the range, or if the function rejects\n\
-         \x20   /// its parameters.\n\
+         \x20   /// [`RetCode::OutOfRangeStartIndex`] if `start_idx` exceeds\n\
+         \x20   /// [`MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] if `end_idx` exceeds\n\
+         \x20   /// it or is below `start_idx`, and [`RetCode::BadParam`] if a required\n\
+         \x20   /// input or output was never bound, if an output is too short for the\n\
+         \x20   /// range, or if the function rejects its parameters.\n\
          \x20   pub fn call(&mut self, start_idx: usize, end_idx: usize) -> Result<OutRange, RetCode> {\n\
-         \x20       if end_idx < start_idx { return Err(RetCode::OutOfRangeEndIndex); }\n\
+         \x20       if start_idx > MAX_INDEX { return Err(RetCode::OutOfRangeStartIndex); }\n\
+         \x20       if end_idx > MAX_INDEX || end_idx < start_idx {\n\
+         \x20           return Err(RetCode::OutOfRangeEndIndex);\n\
+         \x20       }\n\
          \x20       // C cannot do this: TA_SetOutputParamRealPtr takes a bare pointer, so\n\
          \x20       // no backend checks capacity and an undersized buffer is an\n\
          \x20       // out-of-bounds write. A slice carries its length.\n\

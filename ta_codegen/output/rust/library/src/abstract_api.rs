@@ -2614,7 +2614,7 @@ pub const MAX_OPT_INPUTS: usize = 8;
 pub const MAX_OUTPUTS: usize = 3;
 
 
-use crate::{Core, RetCode};
+use crate::{Core, RetCode, MAX_INDEX};
 
 /// Where a call's output starts and how much of it there is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -3003,11 +3003,16 @@ impl<'a> ParamHolder<'a> {
     /// are the same call (issue #162).
     ///
     /// # Errors
-    /// [`RetCode::BadParam`] if a required input or output was never bound,
-    /// if an output is too short for the range, or if the function rejects
-    /// its parameters.
+    /// [`RetCode::OutOfRangeStartIndex`] if `start_idx` exceeds
+    /// [`MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] if `end_idx` exceeds
+    /// it or is below `start_idx`, and [`RetCode::BadParam`] if a required
+    /// input or output was never bound, if an output is too short for the
+    /// range, or if the function rejects its parameters.
     pub fn call(&mut self, start_idx: usize, end_idx: usize) -> Result<OutRange, RetCode> {
-        if end_idx < start_idx { return Err(RetCode::OutOfRangeEndIndex); }
+        if start_idx > MAX_INDEX { return Err(RetCode::OutOfRangeStartIndex); }
+        if end_idx > MAX_INDEX || end_idx < start_idx {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
         // C cannot do this: TA_SetOutputParamRealPtr takes a bare pointer, so
         // no backend checks capacity and an undersized buffer is an
         // out-of-bounds write. A slice carries its length.

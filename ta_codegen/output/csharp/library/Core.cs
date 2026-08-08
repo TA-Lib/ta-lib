@@ -73,6 +73,17 @@ public partial class Core
     internal const int TA_INTEGER_MIN = int.MinValue + 1;
     internal const int TA_INTEGER_MAX = int.MaxValue;
 
+    /// <summary>Largest value <c>startIdx</c> or <c>endIdx</c> may take. Above
+    /// it a call returns <see cref="RetCode.OutOfRangeStartIndex"/> or
+    /// <see cref="RetCode.OutOfRangeEndIndex"/> rather than computing.</summary>
+    /// <remarks><para>This bounds the <i>API domain</i> and nothing else — in
+    /// particular it is not an accuracy guarantee. A handful of functions
+    /// accumulate rounding error that grows with the series length and are
+    /// already imprecise well below this cap.</para>
+    /// <para>Identical in C, Rust and Java, so the same call is accepted or
+    /// rejected the same way in all four.</para></remarks>
+    public const int TA_MAX_INDEX = 100000000;
+
     /* Sized by the id count, so the All wildcard gets no slot (#144). */
     internal readonly int[] unstablePeriod = new int[FuncUnstIds.Count];
 

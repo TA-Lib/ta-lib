@@ -4,7 +4,7 @@
 use serde_json::{self, Value};
 use std::io::{self, BufRead, Write};
 use std::time::Instant;
-use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId};
+use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, MAX_INDEX};
 use ta_lib::{CandleSetting, CandleSettings, CandleSettingType};
 use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};
 
@@ -13412,11 +13412,11 @@ fn abs_call(core: &Core, params: &Value) -> String {
     // clamping, and the driver compares retCodes.
     let raw_start = params["startIdx"].as_i64().unwrap_or(0);
     let raw_end = params["endIdx"].as_i64().unwrap_or(0);
-    if raw_start < 0 {
+    if raw_start < 0 || raw_start > MAX_INDEX as i64 {
         return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
                        retcode_to_int(RetCode::OutOfRangeStartIndex));
     }
-    if raw_end < 0 || raw_end < raw_start {
+    if raw_end < 0 || raw_end > MAX_INDEX as i64 || raw_end < raw_start {
         return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
                        retcode_to_int(RetCode::OutOfRangeEndIndex));
     }

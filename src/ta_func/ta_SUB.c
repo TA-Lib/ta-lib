@@ -71,9 +71,9 @@ TA_LIB_API TA_RetCode TA_SUB( int    startIdx,
    int outIdx;
    int i;
 
-   if( startIdx < 0 )
+   if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx < startIdx) )
+   if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
       return TA_OUT_OF_RANGE_END_INDEX;
 
    if( !inReal0 )
@@ -104,9 +104,9 @@ TA_RetCode TA_S_SUB( int    startIdx,
    int outIdx;
    int i;
 
-   if( startIdx < 0 )
+   if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx < startIdx) )
+   if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
       return TA_OUT_OF_RANGE_END_INDEX;
 
    if( !inReal0 )
@@ -151,6 +151,7 @@ TA_RetCode TA_SUB_OpenInternal( struct TA_SUB_Stream **stream, const double inRe
    *stream = NULL;
    if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -196,6 +197,7 @@ TA_LIB_API TA_RetCode TA_SUB_OpenAndFill( TA_SUB_Stream **stream, const double i
    *stream = NULL;
    if( !inReal0 || !inReal1 || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal0 || (const void *)outReal == (const void *)inReal1 ) return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;

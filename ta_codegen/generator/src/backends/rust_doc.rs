@@ -87,11 +87,17 @@ pub fn guarded_docs(
     d.paragraph("# Errors");
     d.blank();
     if func.optional_inputs.is_empty() {
-        d.paragraph("Returns [`RetCode::OutOfRangeStartIndex`] when `endIdx < startIdx`.");
+        d.paragraph(
+            "Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds \
+             [`MAX_INDEX`], and [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds \
+             it or is below `startIdx`.",
+        );
     } else {
         d.paragraph(
-            "Returns [`RetCode::OutOfRangeStartIndex`] when `endIdx < startIdx`, and \
-             [`RetCode::BadParam`] when an optional parameter is outside its documented range.",
+            "Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds \
+             [`MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or \
+             is below `startIdx`, and [`RetCode::BadParam`] when an optional parameter \
+             is outside its documented range.",
         );
     }
 

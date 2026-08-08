@@ -178,6 +178,8 @@ it is TA_SMA_Lookback.</p>
 | `TA_LIB_NOT_INITIALIZE` | [TA_Initialize](#init) was not called, or did not succeed. |
 | `TA_BAD_PARAM` | A parameter is out of range, or a required pointer is NULL. |
 | `TA_ALLOC_ERR` | Allocation failed, most likely out of memory. |
+| `TA_OUT_OF_RANGE_START_INDEX` | startIdx is negative or above [TA_MAX_INDEX](#index_range). |
+| `TA_OUT_OF_RANGE_END_INDEX` | endIdx is negative, above [TA_MAX_INDEX](#index_range), or below startIdx. |
 
 <p>The full list is the TA_RetCode enumeration in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_defs.h">ta_defs.h</a>. Rather than mapping the codes yourself, <b>TA_SetRetCodeInfo</b> turns any of them - including one this version of the library does not know - into a printable name and description:</p>
 
@@ -199,6 +201,23 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 
 <p>The <a href="#output_size">TA_XXXX_Lookback</a> functions are the exception to the pattern: they return an int rather than a TA_RetCode, and answer <b>-1</b> when a parameter is out of range. Check for that before using the value as an allocation size.</p>
 
+### 3.5 Index Range {#index_range}
+
+<p><b>TA_MAX_INDEX</b> is the largest value startIdx or endIdx may take: <b>100,000,000</b>. A call outside the range is rejected rather than computed:</p>
+
+| Condition | Return code |
+|-----------|-------------|
+| `startIdx < 0` or `startIdx > TA_MAX_INDEX` | `TA_OUT_OF_RANGE_START_INDEX` |
+| `endIdx < 0`, `endIdx > TA_MAX_INDEX`, or `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` |
+
+<p>The limit is the same number in every language binding — <code>TA_MAX_INDEX</code> in C, Java and C#, <code>ta_lib::MAX_INDEX</code> in Rust — so a call is accepted or rejected identically whichever you use. It is a constant rather than a buffer length, so the check costs two comparisons and is done before anything is read.</p>
+
+<p>For context on the size: 100 million one-minute bars is about 190 years of 24/7 data, or a century of a regular equity session. Series that long are usually tick data, where the <a href="/api/stream/">streaming API</a> is the better tool anyway.</p>
+
+<p><b>This bounds the API domain and nothing else.</b> In particular it is not a promise about accuracy. A handful of functions accumulate rounding error as the series grows, and the worst of them have lost several digits well before this limit — WMA, HMA, CORREL and the LINEARREG family are the ones to know about. No single index cap can express that, because the error depends on the data and on the period, not on the index alone. It is also unrelated to the <a href="#numerical_stability">numerical-stability categories</a>, which answer a different question: whether a value converges as history grows, not how rounding accumulates within it.</p>
+
+<p>Raising this limit later would only admit calls that are rejected today, so it is safe to treat 100,000,000 as a floor rather than a fixed contract.</p>
+
 ## 4.0 Advanced Features {#advanced}
 
 ### 4.1 Abstraction Layer {#abstract}
@@ -218,6 +237,7 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 <a id="unstable_period"></a>
 <p>Take one bar and compute an indicator for it twice: once with a year of history before it, once with a decade. Do you get the same value? For many functions, always — they read a fixed number of bars and ignore everything older. Others are recursive, so their earliest values depend on how much history precedes them, converging as more bars are supplied — the Exponential Moving Average is the classic example. A few accumulate from the very first bar and never converge at all.</p>
 <p>Each function's documentation specifies which of the four <a href="/functions/stability.html">numerical-stability categories</a> applies to it.</p>
+<p>This is about convergence, not rounding. A function can be perfectly convergent and still accumulate floating-point error over a very long series — a separate axis, noted under <a href="#index_range">Index Range</a>.</p>
 <p>See the <a href="/api/unstable-period/">Unstable Period</a> page for how to configure this.</p>
 
 ### 4.3 Candlestick Settings {#candle_settings}

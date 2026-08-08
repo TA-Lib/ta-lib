@@ -1141,6 +1141,13 @@ fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode) {
     let _ = writeln!(o, "      if( {} ) {{", checks.join(" || "));
     let _ = writeln!(o, "         return RetCode.BadParam;");
     let _ = writeln!(o, "      }}");
+    // The fill covers bars 0..historyLen-1, so its last bar is an index like any
+    // other and MAX_INDEX bounds it too (#180). Without this the streaming
+    // entry points would compute over exactly the ranges the batch call refuses,
+    // and the two are required to agree bit for bit.
+    let _ = writeln!(o, "      if( historyLen > MAX_INDEX + 1 ) {{");
+    let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+    let _ = writeln!(o, "      }}");
     o.push_str(&emit_opt_param_validation(func, "RetCode.BadParam"));
     if mode == OutMode::Fill {
         // Output aliasing guards: OpenAndFill writes outputs then reads the
