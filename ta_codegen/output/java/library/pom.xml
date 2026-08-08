@@ -31,7 +31,9 @@
   <packaging>jar</packaging>
 
   <name>TA-Lib</name>
-  <description>Technical analysis library: 161 indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns) - the official Java port of TA-Lib, verified against the C reference.</description>
+  <!-- The count is published to Central and is immutable per version: keep it in
+       step with `ls ta_codegen/input/*/` minus helpers/ and types/. -->
+  <description>Technical analysis library: 168 indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns) - the official Java port of TA-Lib, verified against the C reference.</description>
   <url>https://ta-lib.org</url>
   <inceptionYear>1999</inceptionYear>
 
@@ -79,6 +81,33 @@
   </properties>
 
   <build>
+    <!-- BSD-3-Clause clause 2 requires a binary redistribution to reproduce the
+         copyright notice, the conditions and the disclaimer "in the
+         documentation and/or other materials provided with the distribution",
+         and a Central release is immutable — a jar published without it stays
+         non-compliant forever. The repo-root LICENSE is read in place rather
+         than copied into src/main/resources: a second copy has nothing keeping
+         it in step with the first. Four levels up is ta_codegen/output/java/
+         library -> the repo root, so this module only builds inside the repo,
+         which is the only place it is ever built.
+
+         This replaces the default src/main/resources; there is none.
+
+         Coverage: META-INF/LICENSE in the main jar, and maven-source-plugin
+         picks the same resource up for the sources jar. The javadoc jar is
+         covered by <bottom> below instead — the javadoc plugin consumes no
+         resources, and its rendered pages are the "documentation" the clause
+         names. -->
+    <resources>
+      <resource>
+        <directory>${project.basedir}/../../../..</directory>
+        <targetPath>META-INF</targetPath>
+        <includes>
+          <include>LICENSE</include>
+        </includes>
+      </resource>
+    </resources>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -127,6 +156,13 @@
                here rather than shipping. -->
           <doclint>all,-missing</doclint>
           <quiet>true</quiet>
+          <!-- The javadoc jar's share of BSD-3-Clause clause 2. The plugin
+               consumes no <resources>, so the notice has to be rendered into
+               the pages themselves; this replaces the default footer, which
+               reproduces the copyright line and nothing else. -->
+          <!-- One line on purpose: Maven collapses the indentation of a wrapped
+               value away entirely, welding "reserved." onto "Distributed". -->
+          <bottom><![CDATA[Copyright &copy; 1999-2026, Mario Fortier. All rights reserved. Distributed under the <a href="https://github.com/TA-Lib/ta-lib/blob/main/LICENSE">BSD 3-Clause License</a>: redistributions must retain the copyright notice, this list of conditions and the following disclaimer. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED.]]></bottom>
         </configuration>
         <executions>
           <execution>
