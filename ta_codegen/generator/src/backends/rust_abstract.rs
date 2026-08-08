@@ -5,7 +5,7 @@
 //! (linear strcmp name scan, opaque `void* dataSet`, heap-allocated string tables,
 //! fn-pointer callbacks), it emits a **zero-cost, link-time-const registry**:
 //! everything lives in `&'static`/`const` tables, the opaque dataSet becomes a
-//! type-safe `OptDomain` enum, `FuncId` is a fieldless enum that doubles as the
+//! type-safe `OptInputType` enum, `FuncId` is a fieldless enum that doubles as the
 //! dense index, enumeration is an iterator, and name lookup is a generated `match`.
 //!
 //! Renders [`abstract_rows`](super::abstract_rows) — the backend-neutral row model
@@ -146,7 +146,7 @@ fn emit_output(o: &mut String, out: &OutputRow) {
 
 fn emit_opt(o: &mut String, opt: &OptRow) {
     // The row carries `precision` as `i32` (C's `TA_RealRange.precision` is an
-    // int); the generated `OptDomain::RealRange` narrows it to `u8`. Nothing in
+    // int); the generated `OptInputType::RealRange` narrows it to `u8`. Nothing in
     // the shipped input comes close, but an out-of-range YAML value would emit a
     // crate that does not compile — fail here instead, naming the parameter.
     if let OptDomain::RealRange { precision, .. } = &opt.domain {
@@ -158,7 +158,7 @@ fn emit_opt(o: &mut String, opt: &OptRow) {
     }
     let _ = write!(
         o,
-        "OptInputInfo {{ param_name: {:?}, display_name: {:?}, hint: {:?}, flags: OptInputFlags({:#010x}), domain: ",
+        "OptInputInfo {{ param_name: {:?}, display_name: {:?}, hint: {:?}, flags: OptInputFlags({:#010x}), kind: ",
         opt.param_name, opt.display_name, opt.hint, opt.flags
     );
     emit_domain(o, &opt.domain);
@@ -171,7 +171,7 @@ fn emit_domain(o: &mut String, domain: &OptDomain) {
             let (s, e, i) = *suggested;
             let _ = write!(
                 o,
-                "OptDomain::RealRange {{ min: {}, max: {}, precision: {}, default: {}, suggested: ({}, {}, {}) }}",
+                "OptInputType::RealRange {{ min: {}, max: {}, precision: {}, default: {}, suggested: ({}, {}, {}) }}",
                 fl(*min),
                 fl(*max),
                 precision,
@@ -185,18 +185,18 @@ fn emit_domain(o: &mut String, domain: &OptDomain) {
             let (s, e, i) = *suggested;
             let _ = write!(
                 o,
-                "OptDomain::IntegerRange {{ min: {min}, max: {max}, default: {default}, suggested: ({s}, {e}, {i}) }}"
+                "OptInputType::IntegerRange {{ min: {min}, max: {max}, default: {default}, suggested: ({s}, {e}, {i}) }}"
             );
         }
         OptDomain::IntegerList { values, default } => {
-            o.push_str("OptDomain::IntegerList { values: &[");
+            o.push_str("OptInputType::IntegerList { values: &[");
             for (v, name) in values {
                 let _ = write!(o, "({v}, {name:?}), ");
             }
             let _ = write!(o, "], default: {default} }}");
         }
         OptDomain::RealList { values, default } => {
-            o.push_str("OptDomain::RealList { values: &[");
+            o.push_str("OptInputType::RealList { values: &[");
             for (v, name) in values {
                 let _ = write!(o, "({}, {name:?}), ", fl(*v));
             }
@@ -281,8 +281,8 @@ pub trait OptValue: sealed::Sealed {
 impl OptValue for i32 {
     fn bind(self, holder: &mut ParamHolder<'_>, index: usize) -> Result<(), RetCode> {
         let info = holder.func.info().opt_inputs.get(index).ok_or(RetCode::BadParam)?;
-        match info.domain {
-            OptDomain::IntegerRange { .. } | OptDomain::IntegerList { .. } => {
+        match info.kind {
+            OptInputType::IntegerRange { .. } | OptInputType::IntegerList { .. } => {
                 holder.int_opt[index] = self;
                 Ok(())
             }
@@ -294,8 +294,8 @@ impl OptValue for i32 {
 impl OptValue for f64 {
     fn bind(self, holder: &mut ParamHolder<'_>, index: usize) -> Result<(), RetCode> {
         let info = holder.func.info().opt_inputs.get(index).ok_or(RetCode::BadParam)?;
-        match info.domain {
-            OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+        match info.kind {
+            OptInputType::RealRange { .. } | OptInputType::RealList { .. } => {
                 holder.real_opt[index] = self;
                 Ok(())
             }
@@ -521,7 +521,7 @@ mod binder_tests {
             // number a transposition is undetectable.
             let set = |h: &mut ParamHolder<'_>| {
                 for (k, o) in f.opt_inputs.iter().enumerate() {
-                    if let OptDomain::IntegerRange { min, max, .. } = o.domain {
+                    if let OptInputType::IntegerRange { min, max, .. } = o.kind {
                         let v = (min + 2 + k as i32).min(max);
                         h.set_opt(k, v).unwrap();
                     }
@@ -559,13 +559,13 @@ mod binder_tests {
             let unset = |_: &mut ParamHolder<'_>| {};
             let explicit = |h: &mut ParamHolder<'_>| {
                 for (k, o) in f.opt_inputs.iter().enumerate() {
-                    match o.domain {
-                        OptDomain::IntegerRange { default, .. } => { h.set_opt(k, default).unwrap(); }
-                        OptDomain::IntegerList { default, .. } => {
+                    match o.kind {
+                        OptInputType::IntegerRange { default, .. } => { h.set_opt(k, default).unwrap(); }
+                        OptInputType::IntegerList { default, .. } => {
                             h.set_opt(k, i32::try_from(default).unwrap()).unwrap();
                         }
-                        OptDomain::RealRange { default, .. }
-                        | OptDomain::RealList { default, .. } => { h.set_opt(k, default).unwrap(); }
+                        OptInputType::RealRange { default, .. }
+                        | OptInputType::RealList { default, .. } => { h.set_opt(k, default).unwrap(); }
                     }
                 }
             };
@@ -930,7 +930,7 @@ const HEADER: &str = r"//! TA-Lib function metadata registry — the Rust abstra
 //! Rust analog of C's `ta_abstract` (`TA_GetFuncInfo`, `TA_Get*ParameterInfo`,
 //! `TA_ForEachFunc`), implemented as a **zero-cost, link-time-const registry**:
 //!   * all metadata is `&'static`/`const` in `.rodata` — zero heap, zero runtime init;
-//!   * the opaque C `void* dataSet` + type tag becomes a type-safe [`OptDomain`] enum
+//!   * the opaque C `void* dataSet` + type tag becomes a type-safe [`OptInputType`] enum
 //!     (illegal states unrepresentable, no unchecked cast);
 //!   * [`FuncId`] is a fieldless enum that doubles as the dense index into [`FUNCS`]
 //!     (no opaque handle, no magic-number validity check);
@@ -1082,9 +1082,14 @@ pub struct OutputInfo {
     pub flags: OutputFlags,
 }
 
-/// The domain of an optional input — type-safe replacement for C's `void* dataSet` + type tag.
+/// What an optional input may be: the tag *and* its domain.
+///
+/// C keeps these apart — `TA_OptInputParameterType` names the shape and
+/// `const void *dataSet` carries the values, cast by hand. Here they are fused, so the
+/// pairing is checked by the compiler. Named for the C tag it replaces, matching Java's
+/// `OptInputType`; C# ships this same fused shape under `OptInputDomain`.
 #[derive(Debug, Clone, Copy)]
-pub enum OptDomain {
+pub enum OptInputType {
     RealRange { min: f64, max: f64, precision: u8, default: f64, suggested: (f64, f64, f64) },
     IntegerRange { min: i32, max: i32, default: i32, suggested: (i32, i32, i32) },
     RealList { values: &'static [(f64, &'static str)], default: f64 },
@@ -1098,7 +1103,7 @@ pub struct OptInputInfo {
     pub display_name: &'static str,
     pub hint: &'static str,
     pub flags: OptInputFlags,
-    pub domain: OptDomain,
+    pub kind: OptInputType,
 }
 
 /// Metadata for one TA-Lib function (C: `TA_FuncInfo` + its parameter tables).

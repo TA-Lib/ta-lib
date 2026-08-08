@@ -3312,7 +3312,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("use std::time::Instant;\n");
     s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId};\n");
     s.push_str("use ta_lib::{CandleSetting, CandleSettings, CandleSettingType};\n");
-    s.push_str("use ta_lib::abstract_api::{self, InputType, OutputType, OptDomain};\n\n");
+    s.push_str("use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};\n\n");
 
     // Seed-based fuzz input generator + FNV output hasher — a bit-exact port of
     // src/tools/ta_regtest/fuzz_data.h. Powers the cross-language bitwise-parity
@@ -3959,11 +3959,11 @@ const RUST_ABSTRACT_METADATA_HANDLERS: &str = r#"        "TA_GetFuncInfo" => {
             match abstract_api::get_func_handle(name)
                 .and_then(|id| abstract_api::get_opt_input_parameter_info(id, idx)) {
                 Some(oi) => {
-                    let (ty, default): (i32, f64) = match oi.domain {
-                        OptDomain::RealRange { default, .. } => (0, default),
-                        OptDomain::RealList { default, .. } => (1, default),
-                        OptDomain::IntegerRange { default, .. } => (2, default as f64),
-                        OptDomain::IntegerList { default, .. } => (3, default as f64),
+                    let (ty, default): (i32, f64) = match oi.kind {
+                        OptInputType::RealRange { default, .. } => (0, default),
+                        OptInputType::RealList { default, .. } => (1, default),
+                        OptInputType::IntegerRange { default, .. } => (2, default as f64),
+                        OptInputType::IntegerList { default, .. } => (3, default as f64),
                     };
                     let mut resp = serde_json::json!({
                         "type": ty,
@@ -3973,8 +3973,8 @@ const RUST_ABSTRACT_METADATA_HANDLERS: &str = r#"        "TA_GetFuncInfo" => {
                         "hint": oi.hint,
                         "defaultValue": default,
                     });
-                    match oi.domain {
-                        OptDomain::RealRange { min, max, precision, suggested, .. } => {
+                    match oi.kind {
+                        OptInputType::RealRange { min, max, precision, suggested, .. } => {
                             resp["min"] = serde_json::json!(min);
                             resp["max"] = serde_json::json!(max);
                             resp["precision"] = serde_json::json!(precision);
@@ -3982,14 +3982,14 @@ const RUST_ABSTRACT_METADATA_HANDLERS: &str = r#"        "TA_GetFuncInfo" => {
                             resp["suggestedEnd"] = serde_json::json!(suggested.1);
                             resp["suggestedIncrement"] = serde_json::json!(suggested.2);
                         }
-                        OptDomain::IntegerRange { min, max, suggested, .. } => {
+                        OptInputType::IntegerRange { min, max, suggested, .. } => {
                             resp["min"] = serde_json::json!(min);
                             resp["max"] = serde_json::json!(max);
                             resp["suggestedStart"] = serde_json::json!(suggested.0);
                             resp["suggestedEnd"] = serde_json::json!(suggested.1);
                             resp["suggestedIncrement"] = serde_json::json!(suggested.2);
                         }
-                        OptDomain::IntegerList { values, .. } => {
+                        OptInputType::IntegerList { values, .. } => {
                             let mut vl = String::new();
                             for (i, (v, label)) in values.iter().enumerate() {
                                 if i > 0 { vl.push(';'); }
@@ -3997,7 +3997,7 @@ const RUST_ABSTRACT_METADATA_HANDLERS: &str = r#"        "TA_GetFuncInfo" => {
                             }
                             resp["valueList"] = serde_json::json!(vl);
                         }
-                        OptDomain::RealList { .. } => {}
+                        OptInputType::RealList { .. } => {}
                     }
                     resp.to_string()
                 }
@@ -4118,8 +4118,8 @@ fn abs_call(core: &Core, params: &Value) -> String {
             }
         }
         for (k, opt) in info.opt_inputs.iter().enumerate() {
-            match opt.domain {
-                OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+            match opt.kind {
+                OptInputType::RealRange { .. } | OptInputType::RealList { .. } => {
                     if let Some(v) = params[opt.param_name].as_f64() { note(h.set_opt(k, v)); }
                 }
                 _ => {
@@ -4190,8 +4190,8 @@ fn abs_lookback(core: &Core, params: &Value) -> Option<i64> {
     let id = abstract_api::get_func_handle(fname)?;
     let mut h = id.new_call(core);
     for (k, opt) in id.info().opt_inputs.iter().enumerate() {
-        match opt.domain {
-            OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
+        match opt.kind {
+            OptInputType::RealRange { .. } | OptInputType::RealList { .. } => {
                 if let Some(v) = params[opt.param_name].as_f64() { let _ = h.set_opt(k, v); }
             }
             _ => {

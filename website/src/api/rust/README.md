@@ -152,13 +152,13 @@ info.name;        // "SMA"
 info.group;       // Group::OverlapStudies
 info.hint;        // one-line description
 info.inputs;      // &[InputInfo]     -- param_name, kind, flags
-info.opt_inputs;  // &[OptInputInfo]  -- display_name, hint, domain
+info.opt_inputs;  // &[OptInputInfo]  -- display_name, hint, kind
 info.outputs;     // &[OutputInfo]    -- param_name, kind, flags
 
 for_each_func(|f| println!("{} ({:?})", f.name, f.group));
 ```
 
-Each optional parameter carries a typed `OptDomain` — `RealRange`, `IntegerRange`, `RealList` or `IntegerList` — with its bounds, default and suggested values, so a UI can build the right control without a lookup table of its own. It replaces C's `void* dataSet` plus type tag.
+Each optional parameter carries a typed `OptInputType` — `RealRange`, `IntegerRange`, `RealList` or `IntegerList` — with its bounds, default and suggested values, so a UI can build the right control without a lookup table of its own. It replaces C's type tag plus `void* dataSet` — two separate fields there, with the cast done by hand.
 
 Binding arguments at run time goes through a `ParamHolder`:
 
