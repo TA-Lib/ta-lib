@@ -278,8 +278,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -290,13 +289,16 @@
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
       double cur_outReal;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       RocStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#rocOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#rocOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -563,12 +565,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_ROC open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("ROC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_ROC open: internal error");
+         throw new IllegalStateException("ROC open: internal error");
       }
-      throw new IllegalArgumentException("TA_ROC open: " + retCode);
+      throw new IllegalArgumentException("ROC open: " + retCode);
    }
    /**
     * Open a live ROC stream over the warm-up history; the handle's
@@ -604,10 +606,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_ROC openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("ROC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_ROC openAndFill: internal error");
+         throw new IllegalStateException("ROC openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_ROC openAndFill: " + retCode);
+      throw new IllegalArgumentException("ROC openAndFill: " + retCode);
    }

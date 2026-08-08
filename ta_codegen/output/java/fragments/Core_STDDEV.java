@@ -35,9 +35,9 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
          return -1;
       }
       /* Lookback is driven by the variance. */
@@ -67,9 +67,9 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
          return RetCode.BadParam;
       }
       /* Calculate the variance. */
@@ -126,9 +126,9 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
          return RetCode.BadParam;
       }
       retCode = varianceInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
@@ -277,8 +277,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -288,13 +287,16 @@
       double optInNbDev;
       double cur_outReal;
       VarianceStream sub0;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       StdDevStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#stdDevOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#stdDevOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -387,10 +389,13 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
          return RetCode.BadParam;
+      }
+      if( historyLen < stdDevLookback(optInTimePeriod, optInNbDev) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
       }
       double[] sc_outReal = new double[historyLen];
       /* Calculate the variance. */
@@ -451,13 +456,16 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
          return RetCode.BadParam;
       }
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
+      }
+      if( historyLen < stdDevLookback(optInTimePeriod, optInNbDev) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
       }
       double[] sc_outReal = new double[historyLen];
       /* Calculate the variance. */
@@ -512,12 +520,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_STDDEV open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("STDDEV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_STDDEV open: internal error");
+         throw new IllegalStateException("STDDEV open: internal error");
       }
-      throw new IllegalArgumentException("TA_STDDEV open: " + retCode);
+      throw new IllegalArgumentException("STDDEV open: " + retCode);
    }
    /**
     * Open a live STDDEV stream over the warm-up history; the handle's
@@ -553,10 +561,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_STDDEV openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("STDDEV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_STDDEV openAndFill: internal error");
+         throw new IllegalStateException("STDDEV openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_STDDEV openAndFill: " + retCode);
+      throw new IllegalArgumentException("STDDEV openAndFill: " + retCode);
    }

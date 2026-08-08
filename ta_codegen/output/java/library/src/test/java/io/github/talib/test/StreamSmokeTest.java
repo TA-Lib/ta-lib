@@ -67,6 +67,87 @@ public class StreamSmokeTest {
         }
     }
 
+    /**
+     * Every stream opener, given one bar of history, must report ITSELF using the
+     * spelling the metadata registry publishes — {@code "<name> open: ..."}.
+     *
+     * <p>Swept over all 168 rather than sampled: the three spellings of a function
+     * differ (the Java method {@code htTrendline}, the registry name {@code
+     * HT_TRENDLINE}, C's {@code TA_HT_TRENDLINE}), so a hardcoded prefix would pin
+     * whichever happened to be current, and two hand-picked functions cannot see a
+     * composed opener naming its sub-stage. The expectation is read from the
+     * registry so the message and the registry move together.
+     *
+     * <p>Zero-lookback functions (ACOS, AD, OBV, …) succeed on one bar and are
+     * counted, not asserted.
+     */
+    private static void openMessagesNameTheirOwnFunction(Core core) {
+        int own = 0, noThrow = 0;
+        java.util.List<String> substage = new java.util.ArrayList<String>();
+        java.util.List<String> unexpected = new java.util.ArrayList<String>();
+
+        for (io.github.talib.metadata.FunctionInfo f : io.github.talib.metadata.Functions.all()) {
+            java.lang.reflect.Method open = null;
+            for (java.lang.reflect.Method m : Core.class.getMethods()) {
+                if (m.getName().equals(f.javaMethodName() + "Open")) {
+                    open = m;
+                    break;
+                }
+            }
+            if (open == null) {
+                unexpected.add(f.name() + ": no " + f.javaMethodName() + "Open");
+                continue;
+            }
+            Class<?>[] pt = open.getParameterTypes();
+            Object[] args = new Object[pt.length];
+            for (int i = 0; i < pt.length; i++) {
+                if (pt[i] == double[].class) {
+                    args[i] = new double[1];           // one bar: shorter than any lookback
+                } else if (pt[i] == int.class) {
+                    args[i] = Integer.MIN_VALUE;       // documented default
+                } else if (pt[i] == double.class) {
+                    args[i] = Core.REAL_DEFAULT;
+                } else if (pt[i] == MAType.class) {
+                    args[i] = MAType.Sma;
+                } else {
+                    unexpected.add(f.name() + ": unhandled parameter " + pt[i].getName());
+                }
+            }
+            try {
+                open.invoke(core, args);
+                noThrow++;                             // zero-lookback function
+            } catch (java.lang.reflect.InvocationTargetException e) {
+                Throwable t = e.getCause();
+                String msg = String.valueOf(t.getMessage());
+                if (!(t instanceof InsufficientHistoryException)) {
+                    unexpected.add(f.name() + " -> " + t.getClass().getSimpleName() + ": " + msg);
+                } else if (msg.startsWith(f.name() + " open:")) {
+                    own++;
+                } else {
+                    substage.add(f.name() + " -> \"" + msg + "\"");
+                }
+            } catch (IllegalAccessException e) {
+                unexpected.add(f.name() + ": " + e);
+            }
+        }
+
+        for (String u : unexpected) {
+            System.out.println("  (unclassified: " + u + ")");
+        }
+        for (String s : substage) {
+            System.out.println("  (reports a sub-stage's name: " + s + ")");
+        }
+        check(unexpected.isEmpty(), "every opener is reachable and rejects as documented");
+        check(own + noThrow + substage.size() == 168,
+              "the sweep covered all 168 functions (saw " + (own + noThrow + substage.size()) + ")");
+        check(noThrow == 28, "28 zero-lookback openers accept one bar (saw " + noThrow + ")");
+        /* No allowlist. Until the composed shape got its own-lookback precheck,
+         * APO/BBANDS/PPO/PVO reported "MA open:" and STDDEV "VAR open:" — the
+         * sub-stream they delegate to. All 140 now name themselves. */
+        check(substage.isEmpty(), "no opener reports a sub-stage's name (saw " + substage.size() + ")");
+        check(own == 140, "all 140 throwing openers name themselves (saw " + own + ")");
+    }
+
     private static boolean bitEq(double a, double b) {
         return Double.doubleToRawLongBits(a) == Double.doubleToRawLongBits(b);
     }
@@ -112,6 +193,19 @@ public class StreamSmokeTest {
         b.update(111.0);
         check(bitEq(a.value(), b.value()), "copy is equivalent (same input, same bits)");
 
+        /* fillRange() is never null: a plain open leaves it empty, and a
+         * successful openAndFill always writes at least one value (a history
+         * shorter than lookback + 1 throws instead), so isEmpty() separates the
+         * two without a null check. */
+        check(s.fillRange() != null && s.fillRange().isEmpty(),
+              "plain open leaves fillRange empty, never null");
+        double[] warm = new double[batchRange.count()];
+        Core.SmaStream f = core.smaOpenAndFill(close, 14, warm);
+        check(f.fillRange().equals(batchRange), "openAndFill fillRange == the batch range");
+        check(bitEq(warm[batchRange.count() - 1], f.value()),
+              "last filled value == the handle's value");
+        check(f.copy().fillRange().equals(batchRange), "copy carries the fill range");
+
         /* Exceptions: typed insufficient history; plain IAE for bad params;
          * aliasing rejection on openAndFill; update/peek never throw. */
         try {
@@ -119,8 +213,8 @@ public class StreamSmokeTest {
             check(false, "short history must throw");
         } catch (InsufficientHistoryException e) {
             check(e instanceof IllegalArgumentException, "IHE extends IAE");
-            check(e.getMessage().startsWith("TA_SMA open:"), "stable message prefix");
         }
+        openMessagesNameTheirOwnFunction(core);
         try {
             core.smaOpen(close, -3);
             check(false, "bad param must throw");
@@ -141,7 +235,7 @@ public class StreamSmokeTest {
                     core.smaOpen(close, 30).value()),
               "MIN_VALUE selects the default");
 
-        /* Multi-output Value: named final fields, equals/hashCode/toString. */
+        /* Multi-output Value: named components, equals/hashCode/toString. */
         Core.MacdStream m = core.macdOpen(close, 12, 26, 9);
         Core.MacdStream.Value v1 = m.update(close[n - 1]);
         check(m.value() == v1, "multi-output value() returns the cached instance");
@@ -151,6 +245,50 @@ public class StreamSmokeTest {
         java.util.HashSet<Core.MacdStream.Value> set = new java.util.HashSet<Core.MacdStream.Value>();
         set.add(v1);
         check(set.contains(m.value()), "Value hashCode/equals contract");
+
+        /* Components are readable by name, in batch output order, and carry the
+         * same bits the batch call produces. Nothing else pins the component
+         * NAMES from a test: they are otherwise only checked by javac on the
+         * generated sub-stream consumers.
+         *
+         * Compared at the OPEN value, not at v1: opening over the whole series
+         * already positions the handle at the last bar, so the update above
+         * advances it past the end of what any batch call computes. */
+        double[] bM = new double[n], bS = new double[n], bH = new double[n];
+        OutRange mr = core.macd(0, n - 1, close, 12, 26, 9, bM, bS, bH);
+        Core.MacdStream.Value vOpen = core.macdOpen(close, 12, 26, 9).value();
+        int lastM = mr.count() - 1;
+        check(bitEq(vOpen.macd(),       bM[lastM]), "Value.macd() == batch outMACD");
+        check(bitEq(vOpen.macdSignal(), bS[lastM]), "Value.macdSignal() == batch outMACDSignal");
+        check(bitEq(vOpen.macdHist(),   bH[lastM]), "Value.macdHist() == batch outMACDHist");
+        /* Value is a record, so a consumer on JDK 21+ can destructure it in a
+         * record pattern. Asserted by reflection rather than by the pattern
+         * itself: this suite compiles at --release 17, where the syntax does not
+         * exist. */
+        check(Core.MacdStream.Value.class.isRecord(), "Value is a record");
+        check(Core.MacdStream.Value.class.getRecordComponents().length == 3,
+              "Value has one component per batch output");
+
+        /* ...and EVERY multi-output handle, not just MACD: one class checked by
+         * name would let the other thirteen regress to a hand-rolled class. The
+         * count is asserted exactly, so a Value that stopped being generated is
+         * a failure rather than a smaller sweep. */
+        int valueTypes = 0, records = 0;
+        for (Class<?> nested : Core.class.getDeclaredClasses()) {
+            for (Class<?> inner : nested.getDeclaredClasses()) {
+                if (!inner.getSimpleName().equals("Value")) {
+                    continue;
+                }
+                valueTypes++;
+                if (inner.isRecord()) {
+                    records++;
+                } else {
+                    System.out.println("  (not a record: " + nested.getSimpleName() + ".Value)");
+                }
+            }
+        }
+        check(valueTypes == 14, "14 multi-output handles carry a Value (found " + valueTypes + ")");
+        check(records == valueTypes, "every Value is a record");
 
         /* Dispatch DX: every MAType opens through the same entry point. */
         for (MAType ty : MAType.values()) {

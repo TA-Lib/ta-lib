@@ -194,7 +194,9 @@ fn input_desc(name: &str, doc: &DocDef) -> String {
     .to_string()
 }
 
-fn output_desc(output: &Output, doc: &DocDef) -> String {
+/// Also the record-component doc on the streaming `Value` (`java_stream`), so
+/// one output is described the same way in the batch and streaming tiers.
+pub(super) fn output_desc(output: &Output, doc: &DocDef) -> String {
     doc.outputs
         .iter()
         .find(|(n, _)| n == &output.name)

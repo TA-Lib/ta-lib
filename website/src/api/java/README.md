@@ -86,4 +86,4 @@ Core core = Core.builder()
     .build();
 ```
 
-There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.getUnstablePeriod(FuncUnstId.Ema)`.
+There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.Ema)` — the same name the builder writes it under, since a `Core` is immutable and has no writer to distinguish it from.

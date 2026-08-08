@@ -384,8 +384,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -400,13 +399,16 @@
       Value cachedValue;
       RsiStream sub0;
       StochFStream sub1;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       StochRsiStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#stochRsiOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#stochRsiOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -424,29 +426,18 @@
          this.fillRange = other.fillRange;
       }
 
-      /** One output set, in batch output order. Immutable. */
-      public static final class Value {
-         public final double fastK;
-         public final double fastD;
-         Value( double fastK, double fastD ) {
-            this.fastK = fastK;
-            this.fastD = fastD;
-         }
-         @Override public String toString() {
-            return "Value[" + "fastK=" + fastK + ", " + "fastD=" + fastD + "]";
-         }
-         @Override public boolean equals( Object o ) {
-            if( !(o instanceof Value) ) return false;
-            Value v = (Value) o;
-            return Double.doubleToLongBits(this.fastK) == Double.doubleToLongBits(v.fastK) && Double.doubleToLongBits(this.fastD) == Double.doubleToLongBits(v.fastD);
-         }
-         @Override public int hashCode() {
-            int h = 17;
-            h = 31 * h + Double.hashCode(fastK);
-            h = 31 * h + Double.hashCode(fastD);
-            return h;
-         }
-      }
+      /**
+       * One output set, in batch output order. Immutable.
+       *
+       * <p>{@code equals} compares every component bitwise, so {@code NaN}
+       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+       * {@code hashCode} is consistent with it but its exact value is
+       * unspecified — do not persist it or compare it across JVM versions.
+       *
+       * @param fastK Unsmoothed stochastic of the RSI (raw %K)
+       * @param fastD %K smoothed over FastD_Period (signal line)
+       */
+      public record Value(double fastK, double fastD) { }
 
       /**
        * Commit one closed bar; always produces the new current value.
@@ -497,8 +488,8 @@
       cur_tempRSIBuffer = sp.sub0.update(inReal);
       {
          StochFStream.Value subOut1 = sp.sub1.update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
-         cur_outFastK = subOut1.fastK;
-         cur_outFastD = subOut1.fastD;
+         cur_outFastK = subOut1.fastK();
+         cur_outFastD = subOut1.fastD();
       }
       sp.cur_outFastK = cur_outFastK;
       sp.cur_outFastD = cur_outFastD;
@@ -534,6 +525,9 @@
          optInFastD_Period = 3;
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( historyLen < stochRsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
       }
       double[] sc_outFastK = new double[historyLen];
       double[] sc_outFastD = new double[historyLen];
@@ -645,6 +639,9 @@
       if( (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD ) {
          return RetCode.BadParam;
       }
+      if( historyLen < stochRsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
       double[] sc_outFastK = new double[historyLen];
       double[] sc_outFastD = new double[historyLen];
       /* Stochastic RSI
@@ -732,12 +729,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_STOCHRSI open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("STOCHRSI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_STOCHRSI open: internal error");
+         throw new IllegalStateException("STOCHRSI open: internal error");
       }
-      throw new IllegalArgumentException("TA_STOCHRSI open: " + retCode);
+      throw new IllegalArgumentException("STOCHRSI open: " + retCode);
    }
    /**
     * Open a live STOCHRSI stream over the warm-up history; the handle's
@@ -773,10 +770,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_STOCHRSI openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("STOCHRSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_STOCHRSI openAndFill: internal error");
+         throw new IllegalStateException("STOCHRSI openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_STOCHRSI openAndFill: " + retCode);
+      throw new IllegalArgumentException("STOCHRSI openAndFill: " + retCode);
    }

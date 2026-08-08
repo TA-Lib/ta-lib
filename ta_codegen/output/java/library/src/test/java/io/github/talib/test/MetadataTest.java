@@ -509,7 +509,7 @@ public class MetadataTest {
                 ParamHolder unset = bind(f, oU, iU);
                 ParamHolder sent  = bind(f, oS, iS);
                 ParamHolder expl  = bind(f, oE, iE);
-                sent.setOptInput(p, Core.TA_INTEGER_DEFAULT);
+                sent.setOptInput(p, Core.INTEGER_DEFAULT);
                 expl.setOptInput(p, declared);
 
                 OutRange rU = unset.call(0, N - 1);
@@ -640,6 +640,33 @@ public class MetadataTest {
         return a;
     }
 
+    /**
+     * {@code FunctionInfo.newCall(Core)} must route through the {@code Core} it
+     * was handed, not {@link Core#DEFAULT}.
+     *
+     * <p>It is public API with zero callers anywhere — every other metadata test
+     * uses the no-arg {@code newCall()}, which hardcodes {@code Core.DEFAULT} —
+     * so a binder that dropped the argument on the floor would look perfectly
+     * healthy. The oracle is the unstable period, because it is the one setting
+     * that visibly moves a lookback: {@code CoreApiTest} already pins
+     * {@code plain.rsiLookback(14) + 9 == tuned.rsiLookback(14)} for the typed
+     * API, and this asserts the metadata path reaches the same place.
+     */
+    static void newCallCarriesTheGivenCore() {
+        Core tuned = Core.builder().unstablePeriod(io.github.talib.FuncUnstId.Rsi, 9).build();
+        FunctionInfo rsi = Functions.byName("RSI");
+
+        int viaDefault = rsi.newCall().setOptInput(0, 14).lookback();
+        int viaTuned = rsi.newCall(tuned).setOptInput(0, 14).lookback();
+
+        check(viaDefault == Core.DEFAULT.rsiLookback(14),
+              "newCall() uses Core.DEFAULT (" + viaDefault + ")");
+        check(viaTuned == tuned.rsiLookback(14),
+              "newCall(core) uses the given Core (" + viaTuned + " vs " + tuned.rsiLookback(14) + ")");
+        check(viaTuned == viaDefault + 9,
+              "the unstable period reaches the binder: " + viaDefault + " + 9 == " + viaTuned);
+    }
+
     public static void main(String[] args) throws Exception {
         registryIsComplete();
         hintsArePopulated();
@@ -649,6 +676,7 @@ public class MetadataTest {
         explicitParametersReachTheFunction();
         choiceListSentinelMatchesTheDefault();
         holderLookbackMatchesTheTypedApi();
+        newCallCarriesTheGivenCore();
         functionDescriptionXmlDescribesEveryFunction();
         registryIsImmutable();
 

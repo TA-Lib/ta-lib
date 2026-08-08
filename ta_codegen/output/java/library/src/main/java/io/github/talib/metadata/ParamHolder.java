@@ -188,7 +188,7 @@ public final class ParamHolder {
             real MAType -- so it resolves at this boundary, which is exactly where
             an UNSET choice list already resolves (see the constructor). Leaving
             the two to disagree was issue #164's first finding. */
-         if (value == Core.TA_INTEGER_DEFAULT) {
+         if (value == Core.INTEGER_DEFAULT) {
             int declared = (int) info.optInputs().get(idx).defaultValue();
             maTypeOpts[idx] = all[declared];
             intOpts[idx] = declared;

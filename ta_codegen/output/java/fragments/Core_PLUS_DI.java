@@ -706,8 +706,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -723,13 +722,16 @@
       double prevPlusDM;
       double prevTR;
       double cur_outReal;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       PlusDIStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#plusDIOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#plusDIOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -1805,12 +1807,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_PLUS_DI open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("PLUS_DI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_PLUS_DI open: internal error");
+         throw new IllegalStateException("PLUS_DI open: internal error");
       }
-      throw new IllegalArgumentException("TA_PLUS_DI open: " + retCode);
+      throw new IllegalArgumentException("PLUS_DI open: " + retCode);
    }
    /**
     * Open a live PLUS_DI stream over the warm-up history; the handle's
@@ -1846,10 +1848,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_PLUS_DI openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("PLUS_DI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_PLUS_DI openAndFill: internal error");
+         throw new IllegalStateException("PLUS_DI openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_PLUS_DI openAndFill: " + retCode);
+      throw new IllegalArgumentException("PLUS_DI openAndFill: " + retCode);
    }

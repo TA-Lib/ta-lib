@@ -300,8 +300,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -313,13 +312,16 @@
       double cur_outReal;
       MovingAverageStream sub0;
       MovingAverageStream sub1;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       ApoStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#apoOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#apoOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -410,6 +412,9 @@
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( historyLen < apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
       double[] sc_outReal = new double[historyLen];
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -487,6 +492,9 @@
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
+      if( historyLen < apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
       double[] sc_outReal = new double[historyLen];
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -546,12 +554,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_APO open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("APO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_APO open: internal error");
+         throw new IllegalStateException("APO open: internal error");
       }
-      throw new IllegalArgumentException("TA_APO open: " + retCode);
+      throw new IllegalArgumentException("APO open: " + retCode);
    }
    /**
     * Open a live APO stream over the warm-up history; the handle's
@@ -587,10 +595,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_APO openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("APO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_APO openAndFill: internal error");
+         throw new IllegalStateException("APO openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_APO openAndFill: " + retCode);
+      throw new IllegalArgumentException("APO openAndFill: " + retCode);
    }

@@ -122,7 +122,7 @@ public class CoreApiTest {
                 if (id == FuncUnstId.All) {
                     continue;   // All / None are sentinels, not functions
                 }
-                if (core.getUnstablePeriod(id) != 0) {
+                if (core.unstablePeriod(id) != 0) {
                     allZero = false;
                 }
             }
@@ -132,9 +132,9 @@ public class CoreApiTest {
 
     static void builderSetsOnePeriod() {
         Core core = Core.builder().unstablePeriod(FuncUnstId.Rsi, 10).build();
-        check(core.getUnstablePeriod(FuncUnstId.Rsi) == 10, "builder sets the named period");
-        check(core.getUnstablePeriod(FuncUnstId.Ema) == 0, "builder leaves other periods alone");
-        check(Core.DEFAULT.getUnstablePeriod(FuncUnstId.Rsi) == 0,
+        check(core.unstablePeriod(FuncUnstId.Rsi) == 10, "builder sets the named period");
+        check(core.unstablePeriod(FuncUnstId.Ema) == 0, "builder leaves other periods alone");
+        check(Core.DEFAULT.unstablePeriod(FuncUnstId.Rsi) == 0,
               "building does not disturb Core.DEFAULT");
     }
 
@@ -142,7 +142,7 @@ public class CoreApiTest {
         Core core = Core.builder().unstablePeriod(FuncUnstId.All, 7).build();
         boolean everySlot = true;
         for (FuncUnstId id : FuncUnstId.values()) {
-            if (id != FuncUnstId.All && core.getUnstablePeriod(id) != 7) {
+            if (id != FuncUnstId.All && core.unstablePeriod(id) != 7) {
                 everySlot = false;
             }
         }
@@ -220,9 +220,9 @@ public class CoreApiTest {
         Core first = b.build();
         b.unstablePeriod(FuncUnstId.Rsi, 99);
         Core second = b.build();
-        check(first.getUnstablePeriod(FuncUnstId.Rsi) == 3,
+        check(first.unstablePeriod(FuncUnstId.Rsi) == 3,
               "reusing the builder does not mutate an already-built Core");
-        check(second.getUnstablePeriod(FuncUnstId.Rsi) == 99, "the second build sees the new value");
+        check(second.unstablePeriod(FuncUnstId.Rsi) == 99, "the second build sees the new value");
     }
 
     static void toBuilderRoundTripsAndDoesNotAlias() {
@@ -232,9 +232,9 @@ public class CoreApiTest {
             .build();
         Core derived = original.toBuilder().unstablePeriod(FuncUnstId.Ema, 8).build();
 
-        check(derived.getUnstablePeriod(FuncUnstId.Rsi) == 5, "toBuilder carries settings over");
-        check(derived.getUnstablePeriod(FuncUnstId.Ema) == 8, "the derived Core has the new setting");
-        check(original.getUnstablePeriod(FuncUnstId.Ema) == 0,
+        check(derived.unstablePeriod(FuncUnstId.Rsi) == 5, "toBuilder carries settings over");
+        check(derived.unstablePeriod(FuncUnstId.Ema) == 8, "the derived Core has the new setting");
+        check(original.unstablePeriod(FuncUnstId.Ema) == 0,
               "deriving does not mutate the original Core");
     }
 
@@ -268,6 +268,18 @@ public class CoreApiTest {
             }
         }
         check(allFinal, "every Core instance field is final (JLS 17.5 safe publication)");
+    }
+
+    /**
+     * The other half of the safe-publication promise: final fields guarantee
+     * nothing if a subclass can add a non-final one. {@code coreFieldsAreFinal}
+     * reflects over fields only, so this is the class-level check it is not.
+     */
+    static void configClassesAreFinal() {
+        check(java.lang.reflect.Modifier.isFinal(Core.class.getModifiers()),
+              "Core is final (a subclass could void JLS 17.5 safe publication)");
+        check(java.lang.reflect.Modifier.isFinal(CoreBuilder.class.getModifiers()),
+              "CoreBuilder is final");
     }
 
     /** No compatibility knob survives on the Java surface. */
@@ -304,13 +316,16 @@ public class CoreApiTest {
         checkThrows(IllegalArgumentException.class,
             () -> Core.builder().candleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, -1, 1.0),
             "negative avgPeriod -> IAE");
+        // Core.unstablePeriod(id) reads; CoreBuilder.unstablePeriod(id, period)
+        // writes. Same name, different class and arity — the immutable Core has
+        // no writer for a `get` prefix to disambiguate against.
         checkThrows(NullPointerException.class,
-            () -> Core.DEFAULT.getUnstablePeriod(null), "null id on the getter -> NPE");
+            () -> Core.DEFAULT.unstablePeriod(null), "null id on the reader -> NPE");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.getUnstablePeriod(FuncUnstId.All),
+            () -> Core.DEFAULT.unstablePeriod(FuncUnstId.All),
             "FuncUnstId.All has no single value to read -> IAE");
-        // The setter accepts All (set-all wildcard) but must reject None the same
-        // way the getter does, rather than indexing off the end of the array.
+        // The writer accepts All (set-all wildcard) but must reject None the same
+        // way the reader does, rather than indexing off the end of the array.
         check(FuncUnstId.All.value() == 65535 && FuncUnstId.COUNT == FuncUnstId.values().length - 1,
             "FuncUnstId.All is pinned at 65535 and COUNT covers every function id");
     }
@@ -375,6 +390,7 @@ public class CoreApiTest {
         toBuilderRoundTripsAndDoesNotAlias();
         candleSettingIsImmutable();
         coreFieldsAreFinal();
+        configClassesAreFinal();
         compatibilityIsGone();
         misuseThrows();
         sharedAcrossThreads();

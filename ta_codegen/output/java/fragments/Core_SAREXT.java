@@ -45,44 +45,44 @@
     */
    public int sarExtLookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
-      if( optInStartValue == TA_REAL_DEFAULT ) {
+      if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+      } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
          return -1;
       }
-      if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
          return -1;
       }
-      if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
          return -1;
       }
-      if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
          return -1;
       }
-      if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
          return -1;
       }
-      if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
          return -1;
       }
-      if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
          return -1;
       }
-      if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
          return -1;
       }
       /* SAR always sacrifices one price bar to establish the
@@ -127,44 +127,44 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInStartValue == TA_REAL_DEFAULT ) {
+      if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+      } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
          return RetCode.BadParam;
       }
       /* > 0 indicates long. == 0 indicates short */
@@ -476,44 +476,44 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInStartValue == TA_REAL_DEFAULT ) {
+      if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+      } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
          return RetCode.BadParam;
       }
       if( startIdx < 1 ) {
@@ -827,8 +827,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -850,13 +849,16 @@
       double ep;
       double sar;
       double cur_outReal;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       SarExtStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#sarExtOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#sarExtOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -1068,44 +1070,44 @@
       if( historyLen < 1 || inLow.length != inHigh.length ) {
          return RetCode.BadParam;
       }
-      if( optInStartValue == TA_REAL_DEFAULT ) {
+      if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+      } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
          return RetCode.BadParam;
       }
       /* > 0 indicates long. == 0 indicates short */
@@ -1420,44 +1422,44 @@
       if( historyLen < 1 || inLow.length != inHigh.length ) {
          return RetCode.BadParam;
       }
-      if( optInStartValue == TA_REAL_DEFAULT ) {
+      if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+      } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
          return RetCode.BadParam;
       }
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
@@ -1762,12 +1764,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_SAREXT open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("SAREXT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_SAREXT open: internal error");
+         throw new IllegalStateException("SAREXT open: internal error");
       }
-      throw new IllegalArgumentException("TA_SAREXT open: " + retCode);
+      throw new IllegalArgumentException("SAREXT open: " + retCode);
    }
    /**
     * Open a live SAREXT stream over the warm-up history; the handle's
@@ -1803,10 +1805,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_SAREXT openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("SAREXT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_SAREXT openAndFill: internal error");
+         throw new IllegalStateException("SAREXT openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_SAREXT openAndFill: " + retCode);
+      throw new IllegalArgumentException("SAREXT openAndFill: " + retCode);
    }

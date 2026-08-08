@@ -32,12 +32,12 @@
     */
    public int mamaLookback( double optInFastLimit, double optInSlowLimit )
    {
-      if( optInFastLimit == TA_REAL_DEFAULT ) {
+      if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
          return -1;
       }
-      if( optInSlowLimit == TA_REAL_DEFAULT ) {
+      if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
          return -1;
@@ -141,12 +141,12 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInFastLimit == TA_REAL_DEFAULT ) {
+      if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
          return RetCode.BadParam;
       }
-      if( optInSlowLimit == TA_REAL_DEFAULT ) {
+      if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
          return RetCode.BadParam;
@@ -536,12 +536,12 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInFastLimit == TA_REAL_DEFAULT ) {
+      if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
          return RetCode.BadParam;
       }
-      if( optInSlowLimit == TA_REAL_DEFAULT ) {
+      if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
          return RetCode.BadParam;
@@ -923,8 +923,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -992,13 +991,16 @@
       double cur_outMAMA;
       double cur_outFAMA;
       Value cachedValue;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       MamaStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#mamaOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#mamaOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -1069,29 +1071,18 @@
          this.fillRange = other.fillRange;
       }
 
-      /** One output set, in batch output order. Immutable. */
-      public static final class Value {
-         public final double mama;
-         public final double fama;
-         Value( double mama, double fama ) {
-            this.mama = mama;
-            this.fama = fama;
-         }
-         @Override public String toString() {
-            return "Value[" + "mama=" + mama + ", " + "fama=" + fama + "]";
-         }
-         @Override public boolean equals( Object o ) {
-            if( !(o instanceof Value) ) return false;
-            Value v = (Value) o;
-            return Double.doubleToLongBits(this.mama) == Double.doubleToLongBits(v.mama) && Double.doubleToLongBits(this.fama) == Double.doubleToLongBits(v.fama);
-         }
-         @Override public int hashCode() {
-            int h = 17;
-            h = 31 * h + Double.hashCode(mama);
-            h = 31 * h + Double.hashCode(fama);
-            return h;
-         }
-      }
+      /**
+       * One output set, in batch output order. Immutable.
+       *
+       * <p>{@code equals} compares every component bitwise, so {@code NaN}
+       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+       * {@code hashCode} is consistent with it but its exact value is
+       * unspecified — do not persist it or compare it across JVM versions.
+       *
+       * @param mama Adaptive moving average (fast line)
+       * @param fama Following adaptive moving average, using half the alpha (slow line)
+       */
+      public record Value(double mama, double fama) { }
 
       /**
        * Commit one closed bar; always produces the new current value.
@@ -1386,12 +1377,12 @@
       if( historyLen < 1 ) {
          return RetCode.BadParam;
       }
-      if( optInFastLimit == TA_REAL_DEFAULT ) {
+      if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
          return RetCode.BadParam;
       }
-      if( optInSlowLimit == TA_REAL_DEFAULT ) {
+      if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
          return RetCode.BadParam;
@@ -1840,12 +1831,12 @@
       if( historyLen < 1 ) {
          return RetCode.BadParam;
       }
-      if( optInFastLimit == TA_REAL_DEFAULT ) {
+      if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
          return RetCode.BadParam;
       }
-      if( optInSlowLimit == TA_REAL_DEFAULT ) {
+      if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
          return RetCode.BadParam;
@@ -2238,12 +2229,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_MAMA open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("MAMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_MAMA open: internal error");
+         throw new IllegalStateException("MAMA open: internal error");
       }
-      throw new IllegalArgumentException("TA_MAMA open: " + retCode);
+      throw new IllegalArgumentException("MAMA open: " + retCode);
    }
    /**
     * Open a live MAMA stream over the warm-up history; the handle's
@@ -2279,10 +2270,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_MAMA openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("MAMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_MAMA openAndFill: internal error");
+         throw new IllegalStateException("MAMA openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_MAMA openAndFill: " + retCode);
+      throw new IllegalArgumentException("MAMA openAndFill: " + retCode);
    }

@@ -2041,12 +2041,12 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // The parameter sentinels the generated validation names. This server is a
     // standalone compilation unit, so it carries its own copy of what the shipped
     // io.github.talib.Core declares.
-    s.push_str("    static final double TA_REAL_DEFAULT = -4e37;\n");
-    s.push_str("    static final double TA_REAL_MIN = -3e37;\n");
-    s.push_str("    static final double TA_REAL_MAX = 3e37;\n");
-    s.push_str("    static final int TA_INTEGER_DEFAULT = Integer.MIN_VALUE;\n");
-    s.push_str("    static final int TA_INTEGER_MIN = Integer.MIN_VALUE + 1;\n");
-    s.push_str("    static final int TA_INTEGER_MAX = Integer.MAX_VALUE;\n");
+    s.push_str("    static final double REAL_DEFAULT = -4e37;\n");
+    s.push_str("    static final double REAL_MIN = -3e37;\n");
+    s.push_str("    static final double REAL_MAX = 3e37;\n");
+    s.push_str("    static final int INTEGER_DEFAULT = Integer.MIN_VALUE;\n");
+    s.push_str("    static final int INTEGER_MIN = Integer.MIN_VALUE + 1;\n");
+    s.push_str("    static final int INTEGER_MAX = Integer.MAX_VALUE;\n");
     // Sized by the id count, so the wildcard gets no slot -- matching the
     // shipped CoreBuilder (#144).
     s.push_str("    int[] unstablePeriod = new int[FuncUnstId.COUNT];\n");
@@ -2067,7 +2067,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    };\n\n");
     // Mirrors the shipped Core's mapper — the spliced public wrappers call it.
     s.push_str("    static RuntimeException failure(String funcName, RetCode retCode) {\n");
-    s.push_str("        String where = \"TA_\" + funcName + \": \";\n");
+    s.push_str("        String where = funcName + \": \";\n");
     s.push_str("        switch (retCode) {\n");
     s.push_str("            case OutOfRangeStartIndex: return new IndexOutOfBoundsException(where + \"startIdx out of range\");\n");
     s.push_str("            case OutOfRangeEndIndex: return new IndexOutOfBoundsException(where + \"endIdx out of range\");\n");
@@ -4713,10 +4713,13 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         .iter()
         .map(|o| o.param_type == crate::ir::ParamType::Integer)
         .collect();
+    // The accessor CALL, not the name: `Value` is a record, so every read below
+    // is `up.macd()`. Rendered once here because all ten read sites interpolate
+    // this same list.
     let vfield: Vec<String> = func
         .outputs
         .iter()
-        .map(|o| crate::backends::java_stream::value_field_name(&o.name))
+        .map(|o| format!("{}()", crate::backends::java_stream::value_field_name(&o.name)))
         .collect();
 
     let mut s = String::new();

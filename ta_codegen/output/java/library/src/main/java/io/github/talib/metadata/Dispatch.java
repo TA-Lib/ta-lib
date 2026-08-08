@@ -39,23 +39,23 @@
 package io.github.talib.metadata;
 
 import io.github.talib.Core;
-         import io.github.talib.OutRange;
+import io.github.talib.OutRange;
 
-         /**
-          * Routes a {@link ParamHolder} onto the typed method it names.
-          *
-          * <p>A generated {@code switch}, not reflection: the argument lists below are
-          * emitted from the same definitions as the methods they call, so a signature
-          * change breaks this file at compile time instead of at run time. It also
-          * leaves the library AOT- and jlink-friendly.
-          */
-         final class Dispatch {
+/**
+ * Routes a {@link ParamHolder} onto the typed method it names.
+ *
+ * <p>A generated {@code switch}, not reflection: the argument lists below are
+ * emitted from the same definitions as the methods they call, so a signature
+ * change breaks this file at compile time instead of at run time. It also
+ * leaves the library AOT- and jlink-friendly.
+ */
+final class Dispatch {
 
-            private Dispatch() { }
+   private Dispatch() { }
 
-            static OutRange call(ParamHolder h, int startIdx, int endIdx) {
-               Core core = h.core();
-               switch (h.info().name()) {
+   static OutRange call(ParamHolder h, int startIdx, int endIdx) {
+      Core core = h.core();
+      switch (h.info().name()) {
          case "ACCBANDS":
             return core.accbands(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0), h.realOutput(1), h.realOutput(2));

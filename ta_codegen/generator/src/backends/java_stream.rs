@@ -31,7 +31,9 @@
 //!   (an `IllegalArgumentException` subclass). `InternalError` (capture
 //!   invariant) becomes `IllegalStateException`; every other reject a plain
 //!   `IllegalArgumentException`. Messages carry the stable prefix
-//!   `"TA_<NAME> open:"`. `update`/`peek` never throw after a successful open.
+//!   `"<NAME> open:"`, where `<NAME>` is the function as the metadata registry
+//!   spells it (`SMA`, `HT_TRENDLINE`) — not C's `TA_`-prefixed symbol and not
+//!   the Java method name. `update`/`peek` never throw after a successful open.
 //! - There is no `close`: a handle is ordinary heap state — GC suffices (no
 //!   AutoCloseable, no finalizer). Handles are deliberately NOT serializable;
 //!   the sanctioned checkpoint story is re-opening from retained history.
@@ -581,8 +583,7 @@ fn emit_handle_class_with_members(
          \x20   * the same handle. With no concurrent {{@code update}}, {{@code peek}}/\n\
          \x20   * {{@code value}}/{{@code copy}} never write the handle and may be called\n\
          \x20   * concurrently after safe publication. Independent handles (including\n\
-         \x20   * {{@code copy()}} results) are fully independent. Do not mutate the owning\n\
-         \x20   * {{@link Core}}'s settings while streams opened from it are live.\n\
+         \x20   * {{@code copy()}} results) are fully independent.\n\
          \x20   * <p>Not serializable by design: to checkpoint, retain the history and\n\
          \x20   * re-open — the result is bit-identical by contract.\n\
          \x20   */"
@@ -593,15 +594,21 @@ fn emit_handle_class_with_members(
         let _ = writeln!(o, "      {jty} {name};");
     }
     o.push_str(extra_members);
-    // Set once, by openAndFill only (null for a plain open) — the range of the
-    // warm-up values that call wrote into the caller's output arrays.
-    let _ = writeln!(o, "      OutRange fillRange;");
+    // Set once, by openAndFill only — the range of the warm-up values that call
+    // wrote into the caller's output arrays. A plain open fills nothing and so
+    // keeps `EMPTY`, which cannot collide with a real fill: openAndFill returns
+    // OutOfRangeEndIndex (→ InsufficientHistoryException) when the history is
+    // shorter than lookback + 1, so a successful one always writes ≥ 1 value.
+    let _ = writeln!(o, "      OutRange fillRange = OutRange.EMPTY;");
     let _ = writeln!(o, "\n      {class}( Core core ) {{ this.core = core; }}");
     let _ = writeln!(
         o,
         "\n      /**\n\
-         \x20      * The range filled by {{@link Core#{base}OpenAndFill}}, or {{@code null}}\n\
-         \x20      * when this handle came from a plain {{@code open}} (which fills nothing).\n\
+         \x20      * The range filled by {{@link Core#{base}OpenAndFill}}, or\n\
+         \x20      * {{@link OutRange#EMPTY}} when this handle came from a plain\n\
+         \x20      * {{@code open}} (which fills nothing). Never {{@code null}}; a\n\
+         \x20      * successful {{@code openAndFill}} always writes at least one value,\n\
+         \x20      * so {{@link OutRange#isEmpty()}} tells the two apart.\n\
          \x20      */\n\
          \x20     public OutRange fillRange() {{ return fillRange; }}",
         base = java_base(func)
@@ -631,80 +638,52 @@ fn emit_handle_class_with_members(
     let _ = writeln!(o, "   }}");
 }
 
-/// The immutable multi-output value class (batch output order, public final
-/// fields named after the outputs: `outSlowK` → `slowK`).
+/// The immutable multi-output value record (batch output order, components
+/// named after the outputs: `outSlowK` → `slowK`).
+///
+/// A record, not a hand-rolled class: `equals`/`hashCode`/`toString` become
+/// spec-guaranteed rather than 20 generated lines each that have to be argued
+/// correct. The semantics are identical — a record compares `double` components
+/// with `Double.compare`, which agrees with the `doubleToLongBits` comparison
+/// this replaces on every input, `±0.0` and every NaN bit pattern included —
+/// and the rendered `toString` is byte-for-byte the same `Value[slowK=…, …]`.
+///
+/// The one thing it costs is the canonical constructor: a public record cannot
+/// hide one, so users can fabricate a `Value`. It carries no invariant to
+/// protect (any tuple of outputs is a legitimate reading), and in exchange the
+/// type destructures in record patterns and binds in JSON mappers with no
+/// configuration.
 fn emit_value_class(o: &mut String, func: &FuncDef) {
     if !has_value_class(func) {
         return;
     }
-    let _ = writeln!(
-        o,
-        "\n      /** One output set, in batch output order. Immutable. */"
-    );
-    let _ = writeln!(o, "      public static final class Value {{");
-    for out in &func.outputs {
-        let t = out_java_type(func, &out.name);
-        let _ = writeln!(o, "         public final {t} {};", value_field_name(&out.name));
-    }
-    let params: Vec<String> = func
+    let components: Vec<String> = func
         .outputs
         .iter()
         .map(|out| format!("{} {}", out_java_type(func, &out.name), value_field_name(&out.name)))
         .collect();
-    let _ = writeln!(o, "         Value( {} ) {{", params.join(", "));
-    for out in &func.outputs {
-        let f = value_field_name(&out.name);
-        let _ = writeln!(o, "            this.{f} = {f};");
-    }
-    let _ = writeln!(o, "         }}");
-    // toString: "Value[slowK=…, slowD=…]".
-    let fmt: Vec<String> = func
-        .outputs
-        .iter()
-        .map(|out| {
-            let f = value_field_name(&out.name);
-            format!("\"{f}=\" + {f}")
-        })
-        .collect();
-    let _ = writeln!(o, "         @Override public String toString() {{");
+    let _ = writeln!(o, "\n      /**");
+    let _ = writeln!(o, "       * One output set, in batch output order. Immutable.");
+    let _ = writeln!(o, "       *");
     let _ = writeln!(
         o,
-        "            return \"Value[\" + {} + \"]\";",
-        fmt.join(" + \", \" + ")
+        "       * <p>{{@code equals}} compares every component bitwise, so {{@code NaN}}\n\
+         \x20      * equals {{@code NaN}} and {{@code 0.0}} does not equal {{@code -0.0}}.\n\
+         \x20      * {{@code hashCode}} is consistent with it but its exact value is\n\
+         \x20      * unspecified — do not persist it or compare it across JVM versions.\n\
+         \x20      *"
     );
-    let _ = writeln!(o, "         }}");
-    // equals/hashCode: bit-based double semantics (NaN/-0.0-safe, what a
-    // record would generate).
-    let eqs: Vec<String> = func
-        .outputs
-        .iter()
-        .map(|out| {
-            let f = value_field_name(&out.name);
-            if out_is_int(func, &out.name) {
-                format!("this.{f} == v.{f}")
-            } else {
-                format!("Double.doubleToLongBits(this.{f}) == Double.doubleToLongBits(v.{f})")
-            }
-        })
-        .collect();
-    let _ = writeln!(o, "         @Override public boolean equals( Object o ) {{");
-    let _ = writeln!(o, "            if( !(o instanceof Value) ) return false;");
-    let _ = writeln!(o, "            Value v = (Value) o;");
-    let _ = writeln!(o, "            return {};", eqs.join(" && "));
-    let _ = writeln!(o, "         }}");
-    let _ = writeln!(o, "         @Override public int hashCode() {{");
-    let _ = writeln!(o, "            int h = 17;");
     for out in &func.outputs {
-        let f = value_field_name(&out.name);
-        if out_is_int(func, &out.name) {
-            let _ = writeln!(o, "            h = 31 * h + {f};");
-        } else {
-            let _ = writeln!(o, "            h = 31 * h + Double.hashCode({f});");
-        }
+        // Same prose the batch method's `@param out…` carries, so an output
+        // reads identically in both tiers.
+        let desc = func
+            .doc
+            .as_ref()
+            .map_or_else(|| "Output values.".to_string(), |d| super::java_doc::output_desc(out, d));
+        let _ = writeln!(o, "       * @param {} {desc}", value_field_name(&out.name));
     }
-    let _ = writeln!(o, "            return h;");
-    let _ = writeln!(o, "         }}");
-    let _ = writeln!(o, "      }}");
+    let _ = writeln!(o, "       */");
+    let _ = writeln!(o, "      public record Value({}) {{ }}", components.join(", "));
 }
 
 /// The value expression reading the current outputs off a handle variable.
@@ -1598,13 +1577,13 @@ fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str) {
     let _ = writeln!(o, "      if( retCode == RetCode.OutOfRangeEndIndex ) {{");
     let _ = writeln!(
         o,
-        "         throw new InsufficientHistoryException(\"TA_{n} {what}: history shorter than lookback + 1\");"
+        "         throw new InsufficientHistoryException(\"{n} {what}: history shorter than lookback + 1\");"
     );
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      if( retCode == RetCode.InternalError ) {{");
-    let _ = writeln!(o, "         throw new IllegalStateException(\"TA_{n} {what}: internal error\");");
+    let _ = writeln!(o, "         throw new IllegalStateException(\"{n} {what}: internal error\");");
     let _ = writeln!(o, "      }}");
-    let _ = writeln!(o, "      throw new IllegalArgumentException(\"TA_{n} {what}: \" + retCode);");
+    let _ = writeln!(o, "      throw new IllegalArgumentException(\"{n} {what}: \" + retCode);");
 }
 
 /// `openInternal` (composition seam), the public `<base>Open`, and the public
@@ -2038,7 +2017,7 @@ fn emit_dispatch(
                 if let streaming::OutSlot::Forward(k) = slot {
                     let _ = writeln!(
                         o,
-                        "         sp.cur_{} = subValue.{};",
+                        "         sp.cur_{} = subValue.{}();",
                         outputs[*k],
                         callee_value_field(registry, &arm.callee, i)
                     );
@@ -2060,9 +2039,9 @@ fn emit_dispatch(
         let _ = writeln!(o, "      int historyLen = {first}.length;");
         emit_open_validation(o, func, mode);
         // Own-lookback precheck BEFORE delegating: the callee's open would
-        // reject too, but with ITS message prefix ("TA_SMA open:" for a TA_MA
-        // call) — the documented stable "TA_<NAME> open:" contract requires
-        // the reject to carry this function's name.
+        // reject too, but with ITS message prefix ("SMA open:" for a MA call)
+        // — the documented stable "<NAME> open:" contract requires the reject
+        // to carry this function's name.
         let _ = writeln!(o, "      if( historyLen < {lb_call} + 1 ) {{");
         let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
         let _ = writeln!(o, "      }}");
@@ -2628,7 +2607,7 @@ fn emit_composed_step(
                     for (k, d) in sub.dsts.iter().enumerate() {
                         let _ = writeln!(
                             o,
-                            "         cur_{d} = subOut{sub_idx}.{};",
+                            "         cur_{d} = subOut{sub_idx}.{}();",
                             callee_value_field(registry, &callee_key, k)
                         );
                     }
@@ -2746,6 +2725,29 @@ fn emit_composed_open(
     emit_body_decls(o, func, &combined);
     emit_open_head(o, func, &[], mode);
     emit_open_validation(o, func, mode);
+    // Own-lookback precheck BEFORE opening any sub: a sub's reject would carry
+    // the CALLEE's message prefix ("MA open:" for a BBANDS call), breaking the
+    // stable "<NAME> open:" contract. Same check the dispatch and period-bank
+    // shapes already emit, for the same reason.
+    //
+    // It also makes the contract testable in the other direction: past this
+    // point a sub rejecting is a bug in THIS function's lookback, not a caller
+    // error, so it surfaces as the IllegalStateException the reject-conversion
+    // tail already maps InternalError to rather than being silently reported as
+    // the sub's insufficient history.
+    //
+    // Cost: one lookback call per OPEN, on a path that already allocates
+    // `historyLen` doubles per output; `update` is untouched. On the rejecting
+    // path it is now cheaper, because the scratch allocations below no longer
+    // happen before the reject.
+    {
+        let lb_args: Vec<String> =
+            func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+        let lb_call = format!("{}Lookback({})", java_base(func), lb_args.join(", "));
+        let _ = writeln!(o, "      if( historyLen < {lb_call} + 1 ) {{");
+        let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+        let _ = writeln!(o, "      }}");
+    }
     emit_extras_and_candle(o, func, &combined, registry, helpers, counter, stream_fma);
     for out in outputs {
         let _ = writeln!(o, "      double[] sc_{out} = new double[historyLen];");

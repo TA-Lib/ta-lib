@@ -296,8 +296,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -309,13 +308,16 @@
       int lagRingCap_adx;
       double[] lagRing_adx;
       AdxStream sub0;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       AdxrStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#adxrOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#adxrOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -399,6 +401,9 @@
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( historyLen < adxrLookback(optInTimePeriod) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
       }
       double[] sc_outReal = new double[historyLen];
       /* Original implementation from Wilder's book was doing some integer
@@ -486,6 +491,9 @@
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          return RetCode.BadParam;
       }
+      if( historyLen < adxrLookback(optInTimePeriod) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
       double[] sc_outReal = new double[historyLen];
       /* Original implementation from Wilder's book was doing some integer
        * rounding in its calculations.
@@ -561,12 +569,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_ADXR open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("ADXR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_ADXR open: internal error");
+         throw new IllegalStateException("ADXR open: internal error");
       }
-      throw new IllegalArgumentException("TA_ADXR open: " + retCode);
+      throw new IllegalArgumentException("ADXR open: " + retCode);
    }
    /**
     * Open a live ADXR stream over the warm-up history; the handle's
@@ -602,10 +610,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_ADXR openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("ADXR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_ADXR openAndFill: internal error");
+         throw new IllegalStateException("ADXR openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_ADXR openAndFill: " + retCode);
+      throw new IllegalArgumentException("ADXR openAndFill: " + retCode);
    }

@@ -63,7 +63,7 @@ package io.github.talib;
  * it to one thread); the {@code Core} it produces is. Builder allocation is a
  * cold path and irrelevant to indicator throughput.
  */
-public class CoreBuilder {
+public final class CoreBuilder {
 
    private final int[] unstablePeriod;
 
@@ -73,7 +73,7 @@ public class CoreBuilder {
    public CoreBuilder() {
       this.unstablePeriod = new int[FuncUnstId.COUNT];
       // CandleSetting is immutable, so the default instances are shared, not copied.
-      this.candleSettings = Core.TA_CandleDefaultSettings.clone();
+      this.candleSettings = Core.DEFAULT_CANDLE_SETTINGS.clone();
    }
 
    /** A builder seeded from an existing {@code Core}'s settings (see {@link Core#toBuilder()}). */
@@ -146,11 +146,11 @@ public class CoreBuilder {
          throw new NullPointerException("settingType");
       }
       if (settingType == CandleSettingType.AllCandleSettings) {
-         System.arraycopy(Core.TA_CandleDefaultSettings, 0, candleSettings, 0,
+         System.arraycopy(Core.DEFAULT_CANDLE_SETTINGS, 0, candleSettings, 0,
             candleSettings.length);
       } else {
          candleSettings[settingType.ordinal()] =
-            Core.TA_CandleDefaultSettings[settingType.ordinal()];
+            Core.DEFAULT_CANDLE_SETTINGS[settingType.ordinal()];
       }
       return this;
    }

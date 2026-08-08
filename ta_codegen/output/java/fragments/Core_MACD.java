@@ -542,8 +542,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -562,13 +561,16 @@
       double cur_outMACDSignal;
       double cur_outMACDHist;
       Value cachedValue;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       MacdStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#macdOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#macdOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -590,32 +592,19 @@
          this.fillRange = other.fillRange;
       }
 
-      /** One output set, in batch output order. Immutable. */
-      public static final class Value {
-         public final double macd;
-         public final double macdSignal;
-         public final double macdHist;
-         Value( double macd, double macdSignal, double macdHist ) {
-            this.macd = macd;
-            this.macdSignal = macdSignal;
-            this.macdHist = macdHist;
-         }
-         @Override public String toString() {
-            return "Value[" + "macd=" + macd + ", " + "macdSignal=" + macdSignal + ", " + "macdHist=" + macdHist + "]";
-         }
-         @Override public boolean equals( Object o ) {
-            if( !(o instanceof Value) ) return false;
-            Value v = (Value) o;
-            return Double.doubleToLongBits(this.macd) == Double.doubleToLongBits(v.macd) && Double.doubleToLongBits(this.macdSignal) == Double.doubleToLongBits(v.macdSignal) && Double.doubleToLongBits(this.macdHist) == Double.doubleToLongBits(v.macdHist);
-         }
-         @Override public int hashCode() {
-            int h = 17;
-            h = 31 * h + Double.hashCode(macd);
-            h = 31 * h + Double.hashCode(macdSignal);
-            h = 31 * h + Double.hashCode(macdHist);
-            return h;
-         }
-      }
+      /**
+       * One output set, in batch output order. Immutable.
+       *
+       * <p>{@code equals} compares every component bitwise, so {@code NaN}
+       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+       * {@code hashCode} is consistent with it but its exact value is
+       * unspecified — do not persist it or compare it across JVM versions.
+       *
+       * @param macd Fast EMA minus slow EMA.
+       * @param macdSignal EMA of the MACD line.
+       * @param macdHist MACD minus signal line.
+       */
+      public record Value(double macd, double macdSignal, double macdHist) { }
 
       /**
        * Commit one closed bar; always produces the new current value.
@@ -1070,12 +1059,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_MACD open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("MACD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_MACD open: internal error");
+         throw new IllegalStateException("MACD open: internal error");
       }
-      throw new IllegalArgumentException("TA_MACD open: " + retCode);
+      throw new IllegalArgumentException("MACD open: " + retCode);
    }
    /**
     * Open a live MACD stream over the warm-up history; the handle's
@@ -1111,10 +1100,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_MACD openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("MACD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_MACD openAndFill: internal error");
+         throw new IllegalStateException("MACD openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_MACD openAndFill: " + retCode);
+      throw new IllegalArgumentException("MACD openAndFill: " + retCode);
    }

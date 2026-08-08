@@ -515,8 +515,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -535,13 +534,16 @@
       MovingAverageStream sub0;
       MovingAverageStream sub1;
       MovingAverageStream sub2;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       MacdExtStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#macdExtOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#macdExtOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -563,32 +565,19 @@
          this.fillRange = other.fillRange;
       }
 
-      /** One output set, in batch output order. Immutable. */
-      public static final class Value {
-         public final double macd;
-         public final double macdSignal;
-         public final double macdHist;
-         Value( double macd, double macdSignal, double macdHist ) {
-            this.macd = macd;
-            this.macdSignal = macdSignal;
-            this.macdHist = macdHist;
-         }
-         @Override public String toString() {
-            return "Value[" + "macd=" + macd + ", " + "macdSignal=" + macdSignal + ", " + "macdHist=" + macdHist + "]";
-         }
-         @Override public boolean equals( Object o ) {
-            if( !(o instanceof Value) ) return false;
-            Value v = (Value) o;
-            return Double.doubleToLongBits(this.macd) == Double.doubleToLongBits(v.macd) && Double.doubleToLongBits(this.macdSignal) == Double.doubleToLongBits(v.macdSignal) && Double.doubleToLongBits(this.macdHist) == Double.doubleToLongBits(v.macdHist);
-         }
-         @Override public int hashCode() {
-            int h = 17;
-            h = 31 * h + Double.hashCode(macd);
-            h = 31 * h + Double.hashCode(macdSignal);
-            h = 31 * h + Double.hashCode(macdHist);
-            return h;
-         }
-      }
+      /**
+       * One output set, in batch output order. Immutable.
+       *
+       * <p>{@code equals} compares every component bitwise, so {@code NaN}
+       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+       * {@code hashCode} is consistent with it but its exact value is
+       * unspecified — do not persist it or compare it across JVM versions.
+       *
+       * @param macd MACD line: fast MA minus slow MA.
+       * @param macdSignal Signal line: MA of the MACD line.
+       * @param macdHist Histogram: MACD minus signal.
+       */
+      public record Value(double macd, double macdSignal, double macdHist) { }
 
       /**
        * Commit one closed bar; always produces the new current value.
@@ -684,6 +673,9 @@
          optInSignalPeriod = 9;
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( historyLen < macdExtLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
       }
       double[] sc_outMACD = new double[historyLen];
       double[] sc_outMACDSignal = new double[historyLen];
@@ -848,6 +840,9 @@
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
          return RetCode.BadParam;
       }
+      if( historyLen < macdExtLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
       double[] sc_outMACD = new double[historyLen];
       double[] sc_outMACDSignal = new double[historyLen];
       double[] sc_outMACDHist = new double[historyLen];
@@ -984,12 +979,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_MACDEXT open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("MACDEXT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_MACDEXT open: internal error");
+         throw new IllegalStateException("MACDEXT open: internal error");
       }
-      throw new IllegalArgumentException("TA_MACDEXT open: " + retCode);
+      throw new IllegalArgumentException("MACDEXT open: " + retCode);
    }
    /**
     * Open a live MACDEXT stream over the warm-up history; the handle's
@@ -1025,10 +1020,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_MACDEXT openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("MACDEXT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_MACDEXT openAndFill: internal error");
+         throw new IllegalStateException("MACDEXT openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_MACDEXT openAndFill: " + retCode);
+      throw new IllegalArgumentException("MACDEXT openAndFill: " + retCode);
    }

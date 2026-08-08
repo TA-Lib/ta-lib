@@ -402,8 +402,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -425,13 +424,16 @@
       double cur_outRealMiddleBand;
       double cur_outRealLowerBand;
       Value cachedValue;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       AccbandsStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#accbandsOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#accbandsOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -456,32 +458,19 @@
          this.fillRange = other.fillRange;
       }
 
-      /** One output set, in batch output order. Immutable. */
-      public static final class Value {
-         public final double realUpperBand;
-         public final double realMiddleBand;
-         public final double realLowerBand;
-         Value( double realUpperBand, double realMiddleBand, double realLowerBand ) {
-            this.realUpperBand = realUpperBand;
-            this.realMiddleBand = realMiddleBand;
-            this.realLowerBand = realLowerBand;
-         }
-         @Override public String toString() {
-            return "Value[" + "realUpperBand=" + realUpperBand + ", " + "realMiddleBand=" + realMiddleBand + ", " + "realLowerBand=" + realLowerBand + "]";
-         }
-         @Override public boolean equals( Object o ) {
-            if( !(o instanceof Value) ) return false;
-            Value v = (Value) o;
-            return Double.doubleToLongBits(this.realUpperBand) == Double.doubleToLongBits(v.realUpperBand) && Double.doubleToLongBits(this.realMiddleBand) == Double.doubleToLongBits(v.realMiddleBand) && Double.doubleToLongBits(this.realLowerBand) == Double.doubleToLongBits(v.realLowerBand);
-         }
-         @Override public int hashCode() {
-            int h = 17;
-            h = 31 * h + Double.hashCode(realUpperBand);
-            h = 31 * h + Double.hashCode(realMiddleBand);
-            h = 31 * h + Double.hashCode(realLowerBand);
-            return h;
-         }
-      }
+      /**
+       * One output set, in batch output order. Immutable.
+       *
+       * <p>{@code equals} compares every component bitwise, so {@code NaN}
+       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+       * {@code hashCode} is consistent with it but its exact value is
+       * unspecified — do not persist it or compare it across JVM versions.
+       *
+       * @param realUpperBand SMA of the range-scaled high band.
+       * @param realMiddleBand SMA of the close.
+       * @param realLowerBand SMA of the range-scaled low band.
+       */
+      public record Value(double realUpperBand, double realMiddleBand, double realLowerBand) { }
 
       /**
        * Commit one closed bar; always produces the new current value.
@@ -875,12 +864,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_ACCBANDS open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("ACCBANDS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_ACCBANDS open: internal error");
+         throw new IllegalStateException("ACCBANDS open: internal error");
       }
-      throw new IllegalArgumentException("TA_ACCBANDS open: " + retCode);
+      throw new IllegalArgumentException("ACCBANDS open: " + retCode);
    }
    /**
     * Open a live ACCBANDS stream over the warm-up history; the handle's
@@ -916,10 +905,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_ACCBANDS openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("ACCBANDS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_ACCBANDS openAndFill: internal error");
+         throw new IllegalStateException("ACCBANDS openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_ACCBANDS openAndFill: " + retCode);
+      throw new IllegalArgumentException("ACCBANDS openAndFill: " + retCode);
    }

@@ -98,14 +98,14 @@ pub const REAL_DEFAULT: f64 = -4e37;
 /// C's `TA_INTEGER_DEFAULT`. One below [`INTEGER_MIN`], for the same reason.
 pub const INTEGER_DEFAULT: i32 = i32::MIN;
 
-/// Widest value a `f64` optional parameter may take (C's `TA_REAL_MIN`). A
+/// Lowest value a `f64` optional parameter may take (C's `TA_REAL_MIN`). A
 /// parameter outside its documented range returns [`RetCode::BadParam`].
 pub const REAL_MIN: f64 = -3e37;
-/// Widest value a `f64` optional parameter may take (C's `TA_REAL_MAX`).
+/// Highest value a `f64` optional parameter may take (C's `TA_REAL_MAX`).
 pub const REAL_MAX: f64 = 3e37;
-/// Widest value an `i32` optional parameter may take (C's `TA_INTEGER_MIN`).
+/// Lowest value an `i32` optional parameter may take (C's `TA_INTEGER_MIN`).
 pub const INTEGER_MIN: i32 = i32::MIN + 1;
-/// Widest value an `i32` optional parameter may take (C's `TA_INTEGER_MAX`).
+/// Highest value an `i32` optional parameter may take (C's `TA_INTEGER_MAX`).
 pub const INTEGER_MAX: i32 = i32::MAX;
 
 /// A single candlestick setting entry.

@@ -71,8 +71,11 @@ fn test_java_sma_ring_stream_section() {
     // Open body: early-success no-data guard maps to the in-band
     // insufficient-history signal; the wrapper types it.
     assert!(s.contains("return RetCode.OutOfRangeEndIndex ;"));
-    assert!(s.contains("throw new InsufficientHistoryException(\"TA_SMA open:"));
-    assert!(s.contains("throw new IllegalStateException(\"TA_SMA open: internal error\");"));
+    // The message names the function as the metadata registry spells it, with
+    // no C `TA_` prefix (that is C's namespacing, meaningless on a classpath).
+    assert!(s.contains("throw new InsufficientHistoryException(\"SMA open:"));
+    assert!(s.contains("throw new IllegalStateException(\"SMA open: internal error\");"));
+    assert!(!s.contains("\"TA_SMA open:"), "no C-namespaced prefix survives");
     // OpenAndFill: aliasing guard (Java is the one managed backend where
     // out == in compiles) and the batch output tail.
     assert!(s.contains("(Object)outReal == (Object)inReal"));
@@ -101,15 +104,19 @@ fn test_java_ema_private_extra_param_and_compat() {
 #[test]
 fn test_java_mama_value_class_protocol() {
     let s = java_stream_section("mama");
-    // Multi-output => nested immutable Value with named final fields.
-    assert!(s.contains("public static final class Value {"));
-    assert!(s.contains("public final double mama;"));
-    assert!(s.contains("public final double fama;"));
-    // Generated object protocol (design-review FLAW fix): toString + bit-based
-    // equals/hashCode.
-    assert!(s.contains("@Override public String toString() {"));
-    assert!(s.contains("Double.doubleToLongBits(this.mama) == Double.doubleToLongBits(v.mama)"));
-    assert!(s.contains("@Override public int hashCode() {"));
+    // Multi-output => nested immutable Value record, components named after the
+    // outputs and in batch output order.
+    assert!(s.contains("public record Value(double mama, double fama) { }"));
+    // The object protocol is the record's, so what used to be three generated
+    // methods is now the absence of them — assert they are gone rather than
+    // leaving the check vacuous.
+    assert!(!s.contains("@Override public String toString() {"));
+    assert!(!s.contains("Double.doubleToLongBits(this.mama)"));
+    assert!(!s.contains("@Override public int hashCode() {"));
+    // Components carry the batch method's own prose (java_doc::output_desc), so
+    // one output reads the same in both tiers.
+    assert!(s.contains("@param mama "));
+    assert!(s.contains("@param fama "));
     // update caches the instance so value() is a pure field read.
     assert!(s.contains("this.cachedValue ="));
     assert!(s.contains("return this.cachedValue;"));
@@ -174,7 +181,7 @@ fn test_java_ma_dispatch() {
     // MAMA arm routes OutSlot Forward(0) through the Value field and discards
     // FAMA; the fill tail materializes a throwaway buffer for the Discard.
     assert!(s.contains("MamaStream.Value subValue = ((MamaStream) sp.sub).update(inReal);"));
-    assert!(s.contains("sp.cur_outReal = subValue.mama;"));
+    assert!(s.contains("sp.cur_outReal = subValue.mama();"));
     assert!(s.contains("new double[historyLen]"));
     // Identity path re-derived from the stored param on every step; the guard
     // also covers the period-independent TA_MAType_DISABLED identity (issue #93).
@@ -217,8 +224,8 @@ fn test_java_stoch_composed() {
     assert!(s.contains("double[] sc_outSlowK = new double[historyLen];"));
     assert!(s.contains("OpenInternal(java.util.Arrays.copyOfRange("));
     assert!(s.contains("System.arraycopy(sc_outSlowK, 0, outSlowK, 0, outNBElement.value);"));
-    // Multi-output Value with the stripped field names.
-    assert!(s.contains("public final double slowK;"));
+    // Multi-output Value with the stripped component names.
+    assert!(s.contains("public record Value(double slowK, double slowD) { }"));
 }
 
 #[test]

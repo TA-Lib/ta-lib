@@ -491,7 +491,7 @@ pub(crate) fn java_type_str(var_type: &VarType) -> &'static str {
 }
 
 /// Optional-parameter validation prologue (Java): map the Integer.MIN_VALUE /
-/// TA_REAL_DEFAULT sentinels to the documented default value, then reject
+/// `Core.REAL_DEFAULT` sentinels to the documented default value, then reject
 /// out-of-range values. One source of truth for both variants: guarded
 /// functions fail with `RetCode.BadParam`, lookback functions fail with `-1`
 /// (the classic lookback bad-param contract).
@@ -499,7 +499,7 @@ pub(crate) fn java_type_str(var_type: &VarType) -> &'static str {
 /// Enum params (e.g. MAType) are the one place Java needs neither half of this
 /// prologue, and the type system genuinely is the reason: a Java enum reference
 /// cannot hold an arbitrary int, so there is no out-of-range value to reject and
-/// no `TA_INTEGER_DEFAULT` to substitute. `Integer.MIN_VALUE` is not a `MAType`
+/// no `INTEGER_DEFAULT` to substitute. `Integer.MIN_VALUE` is not a `MAType`
 /// and cannot be made into one, so "use the documented default" is discharged by
 /// the signature rather than by a check. C, Rust and C# all surface that
 /// parameter as an integer instead, so all three must substitute — see
@@ -532,7 +532,7 @@ pub(crate) fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
             ParamType::Real => {
                 if let Some(default_val) = opt.default {
                     out.push_str(&format!(
-                        "      if( {name} == TA_REAL_DEFAULT ) {{\n         {name} = {val:e};\n      }}",
+                        "      if( {name} == REAL_DEFAULT ) {{\n         {name} = {val:e};\n      }}",
                         name = opt.name,
                         val = default_val
                     ));
@@ -541,8 +541,8 @@ pub(crate) fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
                         out.push_str(&format!(
                             " else if( {name} < {lo} || {name} > {hi} ) {{\n         return {fail};\n      }}",
                             name = opt.name,
-                            lo = super::common::real_bound_literal(min, "TA_"),
-                            hi = super::common::real_bound_literal(max, "TA_")
+                            lo = super::common::real_bound_literal(min, ""),
+                            hi = super::common::real_bound_literal(max, "")
                         ));
                     }
                     out.push('\n');

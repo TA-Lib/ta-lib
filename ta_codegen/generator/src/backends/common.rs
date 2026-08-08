@@ -20,9 +20,9 @@ pub const TA_INTEGER_MAX: i32 = i32::MAX;
 pub const TA_INTEGER_DEFAULT: i32 = i32::MIN;
 
 /// Render a real range bound: the `REAL_MIN`/`REAL_MAX` sentinels by name, anything
-/// else as a literal. `prefix` is the backend's namespace (`"TA_"` for C and Java,
-/// empty for Rust, whose crate already namespaces them) — so the generated sources
-/// name the constant instead of repeating ±3e37.
+/// else as a literal. `prefix` is the backend's namespace (`"TA_"` for C, empty for
+/// Rust and Java, whose crate and package already namespace them) — so the generated
+/// sources name the constant instead of repeating ±3e37.
 #[must_use]
 #[allow(clippy::float_cmp)] // these are exact sentinel values, not measurements
 pub fn real_bound_literal(v: f64, prefix: &str) -> String {

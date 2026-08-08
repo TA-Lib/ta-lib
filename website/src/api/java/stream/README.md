@@ -67,17 +67,19 @@ OutRange r = s.fillRange();                     // what was written, on the hand
 double v = s.update(newClose);
 ```
 
-The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The filled range is reported on the returned handle as `fillRange()` (`null` after a plain `Open`, which fills nothing) rather than through out-parameters. The output arrays must not alias the input or each other.
+The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The filled range is reported on the returned handle as `fillRange()` rather than through out-parameters — never `null`, and `OutRange.EMPTY` after a plain `Open`, which fills nothing. A successful `OpenAndFill` always writes at least one value, so `fillRange().isEmpty()` tells the two apart. The output arrays must not alias the input or each other.
 
 ## Multi-input / multi-output
 
-Inputs and outputs mirror the batch method. Multi-output functions return a small immutable `Value` class with one final field per output, in batch output order; candlestick patterns return `int`:
+Inputs and outputs mirror the batch method. Multi-output functions return a small immutable `Value` record with one component per output, in batch output order; candlestick patterns return `int`:
 
 ```java
 // MACD: one input, three outputs
 Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
 Core.MacdStream.Value out = m.update(newClose);
-// out.macd, out.macdSignal, out.macdHist
+// out.macd(), out.macdSignal(), out.macdHist()
+// On JDK 21+ it also destructures:
+//   if (v instanceof Core.MacdStream.Value(double macd, double signal, double hist)) { ... }
 
 // A candlestick pattern returns int
 Core.CdlDojiStream c = core.cdlDojiOpen(open, high, low, close);

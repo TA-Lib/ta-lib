@@ -355,8 +355,8 @@ enforcing it its own way:
   publication (a stronger guarantee than C documents for `const` peek). No
   synchronization in the generated code; safe publication when handing a
   handle between threads is the caller's usual memory-model responsibility.
-  A returned multi-output `Value` is immutable with final fields — safely
-  publishable even through a data race (JLS 17.5).
+  A returned multi-output `Value` is a record, so its components are final —
+  safely publishable even through a data race (JLS 17.5).
 
 ### Python (future consumer — exploration, not in scope)
 

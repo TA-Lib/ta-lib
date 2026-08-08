@@ -358,8 +358,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -380,13 +379,16 @@
       int cur_outMinIdx;
       int cur_outMaxIdx;
       Value cachedValue;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       MinMaxIndexStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#minMaxIndexOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#minMaxIndexOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -410,29 +412,18 @@
          this.fillRange = other.fillRange;
       }
 
-      /** One output set, in batch output order. Immutable. */
-      public static final class Value {
-         public final int minIdx;
-         public final int maxIdx;
-         Value( int minIdx, int maxIdx ) {
-            this.minIdx = minIdx;
-            this.maxIdx = maxIdx;
-         }
-         @Override public String toString() {
-            return "Value[" + "minIdx=" + minIdx + ", " + "maxIdx=" + maxIdx + "]";
-         }
-         @Override public boolean equals( Object o ) {
-            if( !(o instanceof Value) ) return false;
-            Value v = (Value) o;
-            return this.minIdx == v.minIdx && this.maxIdx == v.maxIdx;
-         }
-         @Override public int hashCode() {
-            int h = 17;
-            h = 31 * h + minIdx;
-            h = 31 * h + maxIdx;
-            return h;
-         }
-      }
+      /**
+       * One output set, in batch output order. Immutable.
+       *
+       * <p>{@code equals} compares every component bitwise, so {@code NaN}
+       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+       * {@code hashCode} is consistent with it but its exact value is
+       * unspecified — do not persist it or compare it across JVM versions.
+       *
+       * @param minIdx Absolute index (into inReal) of the window minimum.
+       * @param maxIdx Absolute index (into inReal) of the window maximum.
+       */
+      public record Value(int minIdx, int maxIdx) { }
 
       /**
        * Commit one closed bar; always produces the new current value.
@@ -781,12 +772,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_MINMAXINDEX open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("MINMAXINDEX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_MINMAXINDEX open: internal error");
+         throw new IllegalStateException("MINMAXINDEX open: internal error");
       }
-      throw new IllegalArgumentException("TA_MINMAXINDEX open: " + retCode);
+      throw new IllegalArgumentException("MINMAXINDEX open: " + retCode);
    }
    /**
     * Open a live MINMAXINDEX stream over the warm-up history; the handle's
@@ -822,10 +813,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_MINMAXINDEX openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("MINMAXINDEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_MINMAXINDEX openAndFill: internal error");
+         throw new IllegalStateException("MINMAXINDEX openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_MINMAXINDEX openAndFill: " + retCode);
+      throw new IllegalArgumentException("MINMAXINDEX openAndFill: " + retCode);
    }

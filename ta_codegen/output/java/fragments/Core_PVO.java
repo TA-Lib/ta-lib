@@ -307,8 +307,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -320,13 +319,16 @@
       double cur_outReal;
       MovingAverageStream sub0;
       MovingAverageStream sub1;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       PvoStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#pvoOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#pvoOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -424,6 +426,9 @@
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( historyLen < pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
       double[] sc_outReal = new double[historyLen];
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -507,6 +512,9 @@
       if( (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
+      if( historyLen < pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
       double[] sc_outReal = new double[historyLen];
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -571,12 +579,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_PVO open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("PVO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_PVO open: internal error");
+         throw new IllegalStateException("PVO open: internal error");
       }
-      throw new IllegalArgumentException("TA_PVO open: " + retCode);
+      throw new IllegalArgumentException("PVO open: " + retCode);
    }
    /**
     * Open a live PVO stream over the warm-up history; the handle's
@@ -612,10 +620,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_PVO openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("PVO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_PVO openAndFill: internal error");
+         throw new IllegalStateException("PVO openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_PVO openAndFill: " + retCode);
+      throw new IllegalArgumentException("PVO openAndFill: " + retCode);
    }

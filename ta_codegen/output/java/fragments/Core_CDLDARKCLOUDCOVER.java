@@ -26,9 +26,9 @@
     */
    public int cdlDarkCloudCoverLookback( double optInPenetration )
    {
-      if( optInPenetration == TA_REAL_DEFAULT ) {
+      if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
          return -1;
       }
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -62,9 +62,9 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInPenetration == TA_REAL_DEFAULT ) {
+      if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -154,9 +154,9 @@
       if( (endIdx < 0) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInPenetration == TA_REAL_DEFAULT ) {
+      if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
          return RetCode.BadParam;
       }
       lookbackTotal = cdlDarkCloudCoverLookback(optInPenetration);
@@ -318,8 +318,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -342,13 +341,16 @@
       int cs_BodyLong_avgPeriod;
       double cs_BodyLong_factor;
       int cur_outInteger;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       CdlDarkCloudCoverStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlDarkCloudCoverOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#cdlDarkCloudCoverOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -465,9 +467,9 @@
       if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
          return RetCode.BadParam;
       }
-      if( optInPenetration == TA_REAL_DEFAULT ) {
+      if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
          return RetCode.BadParam;
       }
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -588,9 +590,9 @@
       if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
          return RetCode.BadParam;
       }
-      if( optInPenetration == TA_REAL_DEFAULT ) {
+      if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
          return RetCode.BadParam;
       }
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
@@ -710,12 +712,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_CDLDARKCLOUDCOVER open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("CDLDARKCLOUDCOVER open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_CDLDARKCLOUDCOVER open: internal error");
+         throw new IllegalStateException("CDLDARKCLOUDCOVER open: internal error");
       }
-      throw new IllegalArgumentException("TA_CDLDARKCLOUDCOVER open: " + retCode);
+      throw new IllegalArgumentException("CDLDARKCLOUDCOVER open: " + retCode);
    }
    /**
     * Open a live CDLDARKCLOUDCOVER stream over the warm-up history; the handle's
@@ -751,10 +753,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_CDLDARKCLOUDCOVER openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("CDLDARKCLOUDCOVER openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_CDLDARKCLOUDCOVER openAndFill: internal error");
+         throw new IllegalStateException("CDLDARKCLOUDCOVER openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_CDLDARKCLOUDCOVER openAndFill: " + retCode);
+      throw new IllegalArgumentException("CDLDARKCLOUDCOVER openAndFill: " + retCode);
    }

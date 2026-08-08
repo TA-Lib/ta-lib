@@ -58,12 +58,12 @@ enum CandleSettingType {
 }
 
 class Core {
-    static final double TA_REAL_DEFAULT = -4e37;
-    static final double TA_REAL_MIN = -3e37;
-    static final double TA_REAL_MAX = 3e37;
-    static final int TA_INTEGER_DEFAULT = Integer.MIN_VALUE;
-    static final int TA_INTEGER_MIN = Integer.MIN_VALUE + 1;
-    static final int TA_INTEGER_MAX = Integer.MAX_VALUE;
+    static final double REAL_DEFAULT = -4e37;
+    static final double REAL_MIN = -3e37;
+    static final double REAL_MAX = 3e37;
+    static final int INTEGER_DEFAULT = Integer.MIN_VALUE;
+    static final int INTEGER_MIN = Integer.MIN_VALUE + 1;
+    static final int INTEGER_MAX = Integer.MAX_VALUE;
     int[] unstablePeriod = new int[FuncUnstId.COUNT];
     CandleSetting[] candleSettings = {
         new CandleSetting(RangeType.RealBody, 10, 1.0),   // BodyLong
@@ -80,7 +80,7 @@ class Core {
     };
 
     static RuntimeException failure(String funcName, RetCode retCode) {
-        String where = "TA_" + funcName + ": ";
+        String where = funcName + ": ";
         switch (retCode) {
             case OutOfRangeStartIndex: return new IndexOutOfBoundsException(where + "startIdx out of range");
             case OutOfRangeEndIndex: return new IndexOutOfBoundsException(where + "endIdx out of range");
@@ -495,8 +495,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -518,13 +517,16 @@ class Core {
           double cur_outRealMiddleBand;
           double cur_outRealLowerBand;
           Value cachedValue;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AccbandsStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#accbandsOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#accbandsOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -549,32 +551,19 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double realUpperBand;
-             public final double realMiddleBand;
-             public final double realLowerBand;
-             Value( double realUpperBand, double realMiddleBand, double realLowerBand ) {
-                this.realUpperBand = realUpperBand;
-                this.realMiddleBand = realMiddleBand;
-                this.realLowerBand = realLowerBand;
-             }
-             @Override public String toString() {
-                return "Value[" + "realUpperBand=" + realUpperBand + ", " + "realMiddleBand=" + realMiddleBand + ", " + "realLowerBand=" + realLowerBand + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.realUpperBand) == Double.doubleToLongBits(v.realUpperBand) && Double.doubleToLongBits(this.realMiddleBand) == Double.doubleToLongBits(v.realMiddleBand) && Double.doubleToLongBits(this.realLowerBand) == Double.doubleToLongBits(v.realLowerBand);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(realUpperBand);
-                h = 31 * h + Double.hashCode(realMiddleBand);
-                h = 31 * h + Double.hashCode(realLowerBand);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param realUpperBand SMA of the range-scaled high band.
+           * @param realMiddleBand SMA of the close.
+           * @param realLowerBand SMA of the range-scaled low band.
+           */
+          public record Value(double realUpperBand, double realMiddleBand, double realLowerBand) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -968,12 +957,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ACCBANDS open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ACCBANDS open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ACCBANDS open: internal error");
+             throw new IllegalStateException("ACCBANDS open: internal error");
           }
-          throw new IllegalArgumentException("TA_ACCBANDS open: " + retCode);
+          throw new IllegalArgumentException("ACCBANDS open: " + retCode);
        }
        /**
         * Open a live ACCBANDS stream over the warm-up history; the handle's
@@ -1009,12 +998,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ACCBANDS openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ACCBANDS openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ACCBANDS openAndFill: internal error");
+             throw new IllegalStateException("ACCBANDS openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ACCBANDS openAndFill: " + retCode);
+          throw new IllegalArgumentException("ACCBANDS openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -1188,21 +1177,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class AcosStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AcosStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#acosOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#acosOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -1307,12 +1298,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ACOS open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ACOS open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ACOS open: internal error");
+             throw new IllegalStateException("ACOS open: internal error");
           }
-          throw new IllegalArgumentException("TA_ACOS open: " + retCode);
+          throw new IllegalArgumentException("ACOS open: " + retCode);
        }
        /**
         * Open a live ACOS stream over the warm-up history; the handle's
@@ -1348,12 +1339,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ACOS openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ACOS openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ACOS openAndFill: internal error");
+             throw new IllegalStateException("ACOS openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ACOS openAndFill: " + retCode);
+          throw new IllegalArgumentException("ACOS openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -1604,8 +1595,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -1613,13 +1603,16 @@ class Core {
           final Core core;
           double ad;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AdStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#adOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#adOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -1806,12 +1799,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_AD open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("AD open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_AD open: internal error");
+             throw new IllegalStateException("AD open: internal error");
           }
-          throw new IllegalArgumentException("TA_AD open: " + retCode);
+          throw new IllegalArgumentException("AD open: " + retCode);
        }
        /**
         * Open a live AD stream over the warm-up history; the handle's
@@ -1847,12 +1840,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_AD openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("AD openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_AD openAndFill: internal error");
+             throw new IllegalStateException("AD openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_AD openAndFill: " + retCode);
+          throw new IllegalArgumentException("AD openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -2032,21 +2025,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class AddStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AddStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#addOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#addOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -2151,12 +2146,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ADD open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ADD open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ADD open: internal error");
+             throw new IllegalStateException("ADD open: internal error");
           }
-          throw new IllegalArgumentException("TA_ADD open: " + retCode);
+          throw new IllegalArgumentException("ADD open: " + retCode);
        }
        /**
         * Open a live ADD stream over the warm-up history; the handle's
@@ -2192,12 +2187,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ADD openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ADD openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ADD openAndFill: internal error");
+             throw new IllegalStateException("ADD openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ADD openAndFill: " + retCode);
+          throw new IllegalArgumentException("ADD openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -2630,8 +2625,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -2647,13 +2641,16 @@ class Core {
           double one_minus_fastk;
           double ad;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AdOscStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#adOscOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#adOscOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -3032,12 +3029,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ADOSC open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ADOSC open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ADOSC open: internal error");
+             throw new IllegalStateException("ADOSC open: internal error");
           }
-          throw new IllegalArgumentException("TA_ADOSC open: " + retCode);
+          throw new IllegalArgumentException("ADOSC open: " + retCode);
        }
        /**
         * Open a live ADOSC stream over the warm-up history; the handle's
@@ -3073,12 +3070,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ADOSC openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ADOSC openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ADOSC openAndFill: internal error");
+             throw new IllegalStateException("ADOSC openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ADOSC openAndFill: " + retCode);
+          throw new IllegalArgumentException("ADOSC openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -3844,8 +3841,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -3865,13 +3861,16 @@ class Core {
           double plusDI;
           double prevADX;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AdxStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#adxOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#adxOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -4744,12 +4743,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ADX open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ADX open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ADX open: internal error");
+             throw new IllegalStateException("ADX open: internal error");
           }
-          throw new IllegalArgumentException("TA_ADX open: " + retCode);
+          throw new IllegalArgumentException("ADX open: " + retCode);
        }
        /**
         * Open a live ADX stream over the warm-up history; the handle's
@@ -4785,12 +4784,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ADX openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ADX openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ADX openAndFill: internal error");
+             throw new IllegalStateException("ADX openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ADX openAndFill: " + retCode);
+          throw new IllegalArgumentException("ADX openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -5090,8 +5089,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -5103,13 +5101,16 @@ class Core {
           int lagRingCap_adx;
           double[] lagRing_adx;
           AdxStream sub0;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AdxrStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#adxrOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#adxrOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -5193,6 +5194,9 @@ class Core {
              optInTimePeriod = 14;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( historyLen < adxrLookback(optInTimePeriod) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
           }
           double[] sc_outReal = new double[historyLen];
           /* Original implementation from Wilder's book was doing some integer
@@ -5280,6 +5284,9 @@ class Core {
           if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
              return RetCode.BadParam;
           }
+          if( historyLen < adxrLookback(optInTimePeriod) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
           double[] sc_outReal = new double[historyLen];
           /* Original implementation from Wilder's book was doing some integer
            * rounding in its calculations.
@@ -5355,12 +5362,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ADXR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ADXR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ADXR open: internal error");
+             throw new IllegalStateException("ADXR open: internal error");
           }
-          throw new IllegalArgumentException("TA_ADXR open: " + retCode);
+          throw new IllegalArgumentException("ADXR open: " + retCode);
        }
        /**
         * Open a live ADXR stream over the warm-up history; the handle's
@@ -5396,12 +5403,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ADXR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ADXR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ADXR openAndFill: internal error");
+             throw new IllegalStateException("ADXR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ADXR openAndFill: " + retCode);
+          throw new IllegalArgumentException("ADXR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -5705,8 +5712,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -5718,13 +5724,16 @@ class Core {
           double cur_outReal;
           MovingAverageStream sub0;
           MovingAverageStream sub1;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           ApoStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#apoOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#apoOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -5815,6 +5824,9 @@ class Core {
           } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( historyLen < apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
           double[] sc_outReal = new double[historyLen];
           /* Allocate an intermediate buffer. */
           tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -5892,6 +5904,9 @@ class Core {
           if( (Object)outReal == (Object)inReal ) {
              return RetCode.BadParam;
           }
+          if( historyLen < apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
           double[] sc_outReal = new double[historyLen];
           /* Allocate an intermediate buffer. */
           tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -5951,12 +5966,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_APO open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("APO open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_APO open: internal error");
+             throw new IllegalStateException("APO open: internal error");
           }
-          throw new IllegalArgumentException("TA_APO open: " + retCode);
+          throw new IllegalArgumentException("APO open: " + retCode);
        }
        /**
         * Open a live APO stream over the warm-up history; the handle's
@@ -5992,12 +6007,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_APO openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("APO openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_APO openAndFill: internal error");
+             throw new IllegalStateException("APO openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_APO openAndFill: " + retCode);
+          throw new IllegalArgumentException("APO openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -6373,8 +6388,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -6395,13 +6409,16 @@ class Core {
           double cur_outAroonDown;
           double cur_outAroonUp;
           Value cachedValue;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AroonStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#aroonOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#aroonOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -6425,29 +6442,18 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double aroonDown;
-             public final double aroonUp;
-             Value( double aroonDown, double aroonUp ) {
-                this.aroonDown = aroonDown;
-                this.aroonUp = aroonUp;
-             }
-             @Override public String toString() {
-                return "Value[" + "aroonDown=" + aroonDown + ", " + "aroonUp=" + aroonUp + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.aroonDown) == Double.doubleToLongBits(v.aroonDown) && Double.doubleToLongBits(this.aroonUp) == Double.doubleToLongBits(v.aroonUp);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(aroonDown);
-                h = 31 * h + Double.hashCode(aroonUp);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param aroonDown Recency of the lowest low (100 = it is the current bar, decaying as it ages)
+           * @param aroonUp Recency of the highest high (100 = it is the current bar, decaying as it ages)
+           */
+          public record Value(double aroonDown, double aroonUp) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -6819,12 +6825,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_AROON open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("AROON open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_AROON open: internal error");
+             throw new IllegalStateException("AROON open: internal error");
           }
-          throw new IllegalArgumentException("TA_AROON open: " + retCode);
+          throw new IllegalArgumentException("AROON open: " + retCode);
        }
        /**
         * Open a live AROON stream over the warm-up history; the handle's
@@ -6860,12 +6866,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_AROON openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("AROON openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_AROON openAndFill: internal error");
+             throw new IllegalStateException("AROON openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_AROON openAndFill: " + retCode);
+          throw new IllegalArgumentException("AROON openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -7245,8 +7251,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -7266,13 +7271,16 @@ class Core {
           double[] x_inHigh;
           double[] x_inLow;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AroonOscStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#aroonOscOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#aroonOscOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -7699,12 +7707,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_AROONOSC open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("AROONOSC open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_AROONOSC open: internal error");
+             throw new IllegalStateException("AROONOSC open: internal error");
           }
-          throw new IllegalArgumentException("TA_AROONOSC open: " + retCode);
+          throw new IllegalArgumentException("AROONOSC open: " + retCode);
        }
        /**
         * Open a live AROONOSC stream over the warm-up history; the handle's
@@ -7740,12 +7748,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_AROONOSC openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("AROONOSC openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_AROONOSC openAndFill: internal error");
+             throw new IllegalStateException("AROONOSC openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_AROONOSC openAndFill: " + retCode);
+          throw new IllegalArgumentException("AROONOSC openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -7921,21 +7929,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class AsinStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AsinStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#asinOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#asinOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -8040,12 +8050,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ASIN open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ASIN open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ASIN open: internal error");
+             throw new IllegalStateException("ASIN open: internal error");
           }
-          throw new IllegalArgumentException("TA_ASIN open: " + retCode);
+          throw new IllegalArgumentException("ASIN open: " + retCode);
        }
        /**
         * Open a live ASIN stream over the warm-up history; the handle's
@@ -8081,12 +8091,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ASIN openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ASIN openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ASIN openAndFill: internal error");
+             throw new IllegalStateException("ASIN openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ASIN openAndFill: " + retCode);
+          throw new IllegalArgumentException("ASIN openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -8261,21 +8271,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class AtanStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AtanStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#atanOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#atanOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -8382,12 +8394,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ATAN open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ATAN open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ATAN open: internal error");
+             throw new IllegalStateException("ATAN open: internal error");
           }
-          throw new IllegalArgumentException("TA_ATAN open: " + retCode);
+          throw new IllegalArgumentException("ATAN open: " + retCode);
        }
        /**
         * Open a live ATAN stream over the warm-up history; the handle's
@@ -8423,12 +8435,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ATAN openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ATAN openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ATAN openAndFill: internal error");
+             throw new IllegalStateException("ATAN openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ATAN openAndFill: " + retCode);
+          throw new IllegalArgumentException("ATAN openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -8876,8 +8888,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -8888,13 +8899,16 @@ class Core {
           double val3;
           double lag1_inClose;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AtrStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#atrOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#atrOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -9316,12 +9330,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ATR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ATR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ATR open: internal error");
+             throw new IllegalStateException("ATR open: internal error");
           }
-          throw new IllegalArgumentException("TA_ATR open: " + retCode);
+          throw new IllegalArgumentException("ATR open: " + retCode);
        }
        /**
         * Open a live ATR stream over the warm-up history; the handle's
@@ -9357,12 +9371,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ATR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ATR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ATR openAndFill: internal error");
+             throw new IllegalStateException("ATR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ATR openAndFill: " + retCode);
+          throw new IllegalArgumentException("ATR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -9617,8 +9631,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -9629,13 +9642,16 @@ class Core {
           int winCap_i;
           double[] win_i_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AvgDevStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#avgDevOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#avgDevOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -9844,12 +9860,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_AVGDEV open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("AVGDEV open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_AVGDEV open: internal error");
+             throw new IllegalStateException("AVGDEV open: internal error");
           }
-          throw new IllegalArgumentException("TA_AVGDEV open: " + retCode);
+          throw new IllegalArgumentException("AVGDEV open: " + retCode);
        }
        /**
         * Open a live AVGDEV stream over the warm-up history; the handle's
@@ -9885,12 +9901,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_AVGDEV openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("AVGDEV openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_AVGDEV openAndFill: internal error");
+             throw new IllegalStateException("AVGDEV openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_AVGDEV openAndFill: " + retCode);
+          throw new IllegalArgumentException("AVGDEV openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -10091,21 +10107,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class AvgPriceStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           AvgPriceStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#avgPriceOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#avgPriceOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -10214,12 +10232,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_AVGPRICE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("AVGPRICE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_AVGPRICE open: internal error");
+             throw new IllegalStateException("AVGPRICE open: internal error");
           }
-          throw new IllegalArgumentException("TA_AVGPRICE open: " + retCode);
+          throw new IllegalArgumentException("AVGPRICE open: " + retCode);
        }
        /**
         * Open a live AVGPRICE stream over the warm-up history; the handle's
@@ -10255,12 +10273,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_AVGPRICE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("AVGPRICE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_AVGPRICE openAndFill: internal error");
+             throw new IllegalStateException("AVGPRICE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_AVGPRICE openAndFill: " + retCode);
+          throw new IllegalArgumentException("AVGPRICE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -10319,14 +10337,14 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return -1;
           }
-          if( optInNbDevUp == TA_REAL_DEFAULT ) {
+          if( optInNbDevUp == REAL_DEFAULT ) {
              optInNbDevUp = 2e0;
-          } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
+          } else if( optInNbDevUp < REAL_MIN || optInNbDevUp > REAL_MAX ) {
              return -1;
           }
-          if( optInNbDevDn == TA_REAL_DEFAULT ) {
+          if( optInNbDevDn == REAL_DEFAULT ) {
              optInNbDevDn = 2e0;
-          } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
+          } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
              return -1;
           }
           int maLookback;
@@ -10380,14 +10398,14 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInNbDevUp == TA_REAL_DEFAULT ) {
+          if( optInNbDevUp == REAL_DEFAULT ) {
              optInNbDevUp = 2e0;
-          } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
+          } else if( optInNbDevUp < REAL_MIN || optInNbDevUp > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInNbDevDn == TA_REAL_DEFAULT ) {
+          if( optInNbDevDn == REAL_DEFAULT ) {
              optInNbDevDn = 2e0;
-          } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
+          } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
@@ -10625,14 +10643,14 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInNbDevUp == TA_REAL_DEFAULT ) {
+          if( optInNbDevUp == REAL_DEFAULT ) {
              optInNbDevUp = 2e0;
-          } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
+          } else if( optInNbDevUp < REAL_MIN || optInNbDevUp > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInNbDevDn == TA_REAL_DEFAULT ) {
+          if( optInNbDevDn == REAL_DEFAULT ) {
              optInNbDevDn = 2e0;
-          } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
+          } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
@@ -10968,8 +10986,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -10985,13 +11002,16 @@ class Core {
           Value cachedValue;
           MovingAverageStream sub0;
           StdDevStream sub1;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           BbandsStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#bbandsOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#bbandsOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -11010,32 +11030,19 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double realUpperBand;
-             public final double realMiddleBand;
-             public final double realLowerBand;
-             Value( double realUpperBand, double realMiddleBand, double realLowerBand ) {
-                this.realUpperBand = realUpperBand;
-                this.realMiddleBand = realMiddleBand;
-                this.realLowerBand = realLowerBand;
-             }
-             @Override public String toString() {
-                return "Value[" + "realUpperBand=" + realUpperBand + ", " + "realMiddleBand=" + realMiddleBand + ", " + "realLowerBand=" + realLowerBand + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.realUpperBand) == Double.doubleToLongBits(v.realUpperBand) && Double.doubleToLongBits(this.realMiddleBand) == Double.doubleToLongBits(v.realMiddleBand) && Double.doubleToLongBits(this.realLowerBand) == Double.doubleToLongBits(v.realLowerBand);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(realUpperBand);
-                h = 31 * h + Double.hashCode(realMiddleBand);
-                h = 31 * h + Double.hashCode(realLowerBand);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param realUpperBand Middle band plus nbDevUp standard deviations.
+           * @param realMiddleBand The moving average.
+           * @param realLowerBand Middle band minus nbDevDn standard deviations.
+           */
+          public record Value(double realUpperBand, double realMiddleBand, double realLowerBand) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -11125,15 +11132,18 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInNbDevUp == TA_REAL_DEFAULT ) {
+          if( optInNbDevUp == REAL_DEFAULT ) {
              optInNbDevUp = 2e0;
-          } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
+          } else if( optInNbDevUp < REAL_MIN || optInNbDevUp > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInNbDevDn == TA_REAL_DEFAULT ) {
+          if( optInNbDevDn == REAL_DEFAULT ) {
              optInNbDevDn = 2e0;
-          } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
+          } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
              return RetCode.BadParam;
+          }
+          if( historyLen < bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
           }
           double[] sc_outRealUpperBand = new double[historyLen];
           double[] sc_outRealMiddleBand = new double[historyLen];
@@ -11232,18 +11242,21 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInNbDevUp == TA_REAL_DEFAULT ) {
+          if( optInNbDevUp == REAL_DEFAULT ) {
              optInNbDevUp = 2e0;
-          } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
+          } else if( optInNbDevUp < REAL_MIN || optInNbDevUp > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInNbDevDn == TA_REAL_DEFAULT ) {
+          if( optInNbDevDn == REAL_DEFAULT ) {
              optInNbDevDn = 2e0;
-          } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
+          } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
              return RetCode.BadParam;
+          }
+          if( historyLen < bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
           }
           double[] sc_outRealUpperBand = new double[historyLen];
           double[] sc_outRealMiddleBand = new double[historyLen];
@@ -11333,12 +11346,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_BBANDS open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("BBANDS open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_BBANDS open: internal error");
+             throw new IllegalStateException("BBANDS open: internal error");
           }
-          throw new IllegalArgumentException("TA_BBANDS open: " + retCode);
+          throw new IllegalArgumentException("BBANDS open: " + retCode);
        }
        /**
         * Open a live BBANDS stream over the warm-up history; the handle's
@@ -11374,12 +11387,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_BBANDS openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("BBANDS openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_BBANDS openAndFill: internal error");
+             throw new IllegalStateException("BBANDS openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_BBANDS openAndFill: " + retCode);
+          throw new IllegalArgumentException("BBANDS openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -11843,8 +11856,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -11867,13 +11879,16 @@ class Core {
           double[] ring_trailingIdx_inReal0;
           double[] ring_trailingIdx_inReal1;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           BetaStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#betaOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#betaOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -12393,12 +12408,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_BETA open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("BETA open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_BETA open: internal error");
+             throw new IllegalStateException("BETA open: internal error");
           }
-          throw new IllegalArgumentException("TA_BETA open: " + retCode);
+          throw new IllegalArgumentException("BETA open: " + retCode);
        }
        /**
         * Open a live BETA stream over the warm-up history; the handle's
@@ -12434,12 +12449,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_BETA openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("BETA openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_BETA openAndFill: internal error");
+             throw new IllegalStateException("BETA openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_BETA openAndFill: " + retCode);
+          throw new IllegalArgumentException("BETA openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -12643,21 +12658,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class BopStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           BopStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#bopOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#bopOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -12784,12 +12801,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_BOP open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("BOP open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_BOP open: internal error");
+             throw new IllegalStateException("BOP open: internal error");
           }
-          throw new IllegalArgumentException("TA_BOP open: " + retCode);
+          throw new IllegalArgumentException("BOP open: " + retCode);
        }
        /**
         * Open a live BOP stream over the warm-up history; the handle's
@@ -12825,12 +12842,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_BOP openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("BOP openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_BOP openAndFill: internal error");
+             throw new IllegalStateException("BOP openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_BOP openAndFill: " + retCode);
+          throw new IllegalArgumentException("BOP openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -13194,8 +13211,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -13211,13 +13227,16 @@ class Core {
           int cbSize_circBuffer;
           double[] cb_circBuffer;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CciStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cciOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cciOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -13554,12 +13573,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CCI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CCI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CCI open: internal error");
+             throw new IllegalStateException("CCI open: internal error");
           }
-          throw new IllegalArgumentException("TA_CCI open: " + retCode);
+          throw new IllegalArgumentException("CCI open: " + retCode);
        }
        /**
         * Open a live CCI stream over the warm-up history; the handle's
@@ -13595,12 +13614,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CCI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CCI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CCI openAndFill: internal error");
+             throw new IllegalStateException("CCI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CCI openAndFill: " + retCode);
+          throw new IllegalArgumentException("CCI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -13897,8 +13916,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -13923,13 +13941,16 @@ class Core {
           int cs_BodyLong_avgPeriod;
           double cs_BodyLong_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           Cdl2CrowsStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdl2CrowsOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdl2CrowsOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -14284,12 +14305,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL2CROWS open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL2CROWS open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL2CROWS open: internal error");
+             throw new IllegalStateException("CDL2CROWS open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL2CROWS open: " + retCode);
+          throw new IllegalArgumentException("CDL2CROWS open: " + retCode);
        }
        /**
         * Open a live CDL2CROWS stream over the warm-up history; the handle's
@@ -14325,12 +14346,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL2CROWS openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL2CROWS openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL2CROWS openAndFill: internal error");
+             throw new IllegalStateException("CDL2CROWS openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL2CROWS openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDL2CROWS openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -14644,8 +14665,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -14681,13 +14701,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           Cdl3BlackCrowsStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdl3BlackCrowsOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdl3BlackCrowsOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -15157,12 +15180,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL3BLACKCROWS open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL3BLACKCROWS open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL3BLACKCROWS open: internal error");
+             throw new IllegalStateException("CDL3BLACKCROWS open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL3BLACKCROWS open: " + retCode);
+          throw new IllegalArgumentException("CDL3BLACKCROWS open: " + retCode);
        }
        /**
         * Open a live CDL3BLACKCROWS stream over the warm-up history; the handle's
@@ -15198,12 +15221,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL3BLACKCROWS openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL3BLACKCROWS openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL3BLACKCROWS openAndFill: internal error");
+             throw new IllegalStateException("CDL3BLACKCROWS openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL3BLACKCROWS openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDL3BLACKCROWS openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -15532,8 +15555,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -15568,13 +15590,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           Cdl3InsideStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdl3InsideOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdl3InsideOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -16017,12 +16042,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL3INSIDE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL3INSIDE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL3INSIDE open: internal error");
+             throw new IllegalStateException("CDL3INSIDE open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL3INSIDE open: " + retCode);
+          throw new IllegalArgumentException("CDL3INSIDE open: " + retCode);
        }
        /**
         * Open a live CDL3INSIDE stream over the warm-up history; the handle's
@@ -16058,12 +16083,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL3INSIDE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL3INSIDE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL3INSIDE openAndFill: internal error");
+             throw new IllegalStateException("CDL3INSIDE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL3INSIDE openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDL3INSIDE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -16375,8 +16400,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -16413,13 +16437,16 @@ class Core {
           int cs_Near_avgPeriod;
           double cs_Near_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           Cdl3LineStrikeStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdl3LineStrikeOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdl3LineStrikeOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -16871,12 +16898,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL3LINESTRIKE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL3LINESTRIKE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL3LINESTRIKE open: internal error");
+             throw new IllegalStateException("CDL3LINESTRIKE open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL3LINESTRIKE open: " + retCode);
+          throw new IllegalArgumentException("CDL3LINESTRIKE open: " + retCode);
        }
        /**
         * Open a live CDL3LINESTRIKE stream over the warm-up history; the handle's
@@ -16912,12 +16939,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL3LINESTRIKE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL3LINESTRIKE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL3LINESTRIKE openAndFill: internal error");
+             throw new IllegalStateException("CDL3LINESTRIKE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL3LINESTRIKE openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDL3LINESTRIKE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -17177,8 +17204,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -17189,13 +17215,16 @@ class Core {
           double lag1_inClose;
           double lag2_inClose;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           Cdl3OutsideStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdl3OutsideOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdl3OutsideOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -17404,12 +17433,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL3OUTSIDE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL3OUTSIDE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL3OUTSIDE open: internal error");
+             throw new IllegalStateException("CDL3OUTSIDE open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL3OUTSIDE open: " + retCode);
+          throw new IllegalArgumentException("CDL3OUTSIDE open: " + retCode);
        }
        /**
         * Open a live CDL3OUTSIDE stream over the warm-up history; the handle's
@@ -17445,12 +17474,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL3OUTSIDE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL3OUTSIDE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL3OUTSIDE openAndFill: internal error");
+             throw new IllegalStateException("CDL3OUTSIDE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL3OUTSIDE openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDL3OUTSIDE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -17861,8 +17890,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -17927,13 +17955,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           Cdl3StarsInSouthStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdl3StarsInSouthOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdl3StarsInSouthOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -18737,12 +18768,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL3STARSINSOUTH open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL3STARSINSOUTH open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL3STARSINSOUTH open: internal error");
+             throw new IllegalStateException("CDL3STARSINSOUTH open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL3STARSINSOUTH open: " + retCode);
+          throw new IllegalArgumentException("CDL3STARSINSOUTH open: " + retCode);
        }
        /**
         * Open a live CDL3STARSINSOUTH stream over the warm-up history; the handle's
@@ -18778,12 +18809,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL3STARSINSOUTH openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL3STARSINSOUTH openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL3STARSINSOUTH openAndFill: internal error");
+             throw new IllegalStateException("CDL3STARSINSOUTH openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL3STARSINSOUTH openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDL3STARSINSOUTH openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -19213,8 +19244,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -19279,13 +19309,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           Cdl3WhiteSoldiersStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdl3WhiteSoldiersOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdl3WhiteSoldiersOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -20112,12 +20145,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL3WHITESOLDIERS open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL3WHITESOLDIERS open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL3WHITESOLDIERS open: internal error");
+             throw new IllegalStateException("CDL3WHITESOLDIERS open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL3WHITESOLDIERS open: " + retCode);
+          throw new IllegalArgumentException("CDL3WHITESOLDIERS open: " + retCode);
        }
        /**
         * Open a live CDL3WHITESOLDIERS stream over the warm-up history; the handle's
@@ -20153,12 +20186,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDL3WHITESOLDIERS openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDL3WHITESOLDIERS openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDL3WHITESOLDIERS openAndFill: internal error");
+             throw new IllegalStateException("CDL3WHITESOLDIERS openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDL3WHITESOLDIERS openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDL3WHITESOLDIERS openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -20188,9 +20221,9 @@ class Core {
         */
        public int cdlAbandonedBabyLookback( double optInPenetration )
        {
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return -1;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
@@ -20240,9 +20273,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* Identify the minimum number of price bar needed
@@ -20362,9 +20395,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           lookbackTotal = cdlAbandonedBabyLookback(optInPenetration);
@@ -20550,8 +20583,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -20597,13 +20629,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlAbandonedBabyStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlAbandonedBabyOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlAbandonedBabyOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -20787,9 +20822,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
@@ -20980,9 +21015,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
@@ -21168,12 +21203,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLABANDONEDBABY open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLABANDONEDBABY open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLABANDONEDBABY open: internal error");
+             throw new IllegalStateException("CDLABANDONEDBABY open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLABANDONEDBABY open: " + retCode);
+          throw new IllegalArgumentException("CDLABANDONEDBABY open: " + retCode);
        }
        /**
         * Open a live CDLABANDONEDBABY stream over the warm-up history; the handle's
@@ -21209,12 +21244,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLABANDONEDBABY openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLABANDONEDBABY openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLABANDONEDBABY openAndFill: internal error");
+             throw new IllegalStateException("CDLABANDONEDBABY openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLABANDONEDBABY openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLABANDONEDBABY openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -21677,8 +21712,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -21755,13 +21789,16 @@ class Core {
           int cs_ShadowShort_avgPeriod;
           double cs_ShadowShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlAdvanceBlockStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlAdvanceBlockOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlAdvanceBlockOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -22727,12 +22764,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLADVANCEBLOCK open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLADVANCEBLOCK open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLADVANCEBLOCK open: internal error");
+             throw new IllegalStateException("CDLADVANCEBLOCK open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLADVANCEBLOCK open: " + retCode);
+          throw new IllegalArgumentException("CDLADVANCEBLOCK open: " + retCode);
        }
        /**
         * Open a live CDLADVANCEBLOCK stream over the warm-up history; the handle's
@@ -22768,12 +22805,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLADVANCEBLOCK openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLADVANCEBLOCK openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLADVANCEBLOCK openAndFill: internal error");
+             throw new IllegalStateException("CDLADVANCEBLOCK openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLADVANCEBLOCK openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLADVANCEBLOCK openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -23098,8 +23135,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -23126,13 +23162,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlBeltHoldStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlBeltHoldOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlBeltHoldOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -23526,12 +23565,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLBELTHOLD open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLBELTHOLD open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLBELTHOLD open: internal error");
+             throw new IllegalStateException("CDLBELTHOLD open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLBELTHOLD open: " + retCode);
+          throw new IllegalArgumentException("CDLBELTHOLD open: " + retCode);
        }
        /**
         * Open a live CDLBELTHOLD stream over the warm-up history; the handle's
@@ -23567,12 +23606,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLBELTHOLD openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLBELTHOLD openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLBELTHOLD openAndFill: internal error");
+             throw new IllegalStateException("CDLBELTHOLD openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLBELTHOLD openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLBELTHOLD openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -23870,8 +23909,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -23905,13 +23943,16 @@ class Core {
           int cs_BodyLong_avgPeriod;
           double cs_BodyLong_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlBreakawayStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlBreakawayOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlBreakawayOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -24307,12 +24348,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLBREAKAWAY open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLBREAKAWAY open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLBREAKAWAY open: internal error");
+             throw new IllegalStateException("CDLBREAKAWAY open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLBREAKAWAY open: " + retCode);
+          throw new IllegalArgumentException("CDLBREAKAWAY open: " + retCode);
        }
        /**
         * Open a live CDLBREAKAWAY stream over the warm-up history; the handle's
@@ -24348,12 +24389,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLBREAKAWAY openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLBREAKAWAY openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLBREAKAWAY openAndFill: internal error");
+             throw new IllegalStateException("CDLBREAKAWAY openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLBREAKAWAY openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLBREAKAWAY openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -24670,8 +24711,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -24698,13 +24738,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlClosingMarubozuStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlClosingMarubozuOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlClosingMarubozuOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -25098,12 +25141,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLCLOSINGMARUBOZU open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLCLOSINGMARUBOZU open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLCLOSINGMARUBOZU open: internal error");
+             throw new IllegalStateException("CDLCLOSINGMARUBOZU open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLCLOSINGMARUBOZU open: " + retCode);
+          throw new IllegalArgumentException("CDLCLOSINGMARUBOZU open: " + retCode);
        }
        /**
         * Open a live CDLCLOSINGMARUBOZU stream over the warm-up history; the handle's
@@ -25139,12 +25182,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLCLOSINGMARUBOZU openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLCLOSINGMARUBOZU openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLCLOSINGMARUBOZU openAndFill: internal error");
+             throw new IllegalStateException("CDLCLOSINGMARUBOZU openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLCLOSINGMARUBOZU openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -25457,8 +25500,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -25495,13 +25537,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlConcealBabysWallStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlConcealBabysWallOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlConcealBabysWallOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -25972,12 +26017,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLCONCEALBABYSWALL open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLCONCEALBABYSWALL open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLCONCEALBABYSWALL open: internal error");
+             throw new IllegalStateException("CDLCONCEALBABYSWALL open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLCONCEALBABYSWALL open: " + retCode);
+          throw new IllegalArgumentException("CDLCONCEALBABYSWALL open: " + retCode);
        }
        /**
         * Open a live CDLCONCEALBABYSWALL stream over the warm-up history; the handle's
@@ -26013,12 +26058,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLCONCEALBABYSWALL openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLCONCEALBABYSWALL openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLCONCEALBABYSWALL openAndFill: internal error");
+             throw new IllegalStateException("CDLCONCEALBABYSWALL openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLCONCEALBABYSWALL openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLCONCEALBABYSWALL openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -26353,8 +26398,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -26394,13 +26438,16 @@ class Core {
           int cs_Equal_avgPeriod;
           double cs_Equal_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlCounterAttackStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlCounterAttackOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlCounterAttackOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -26926,12 +26973,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLCOUNTERATTACK open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLCOUNTERATTACK open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLCOUNTERATTACK open: internal error");
+             throw new IllegalStateException("CDLCOUNTERATTACK open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLCOUNTERATTACK open: " + retCode);
+          throw new IllegalArgumentException("CDLCOUNTERATTACK open: " + retCode);
        }
        /**
         * Open a live CDLCOUNTERATTACK stream over the warm-up history; the handle's
@@ -26967,12 +27014,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLCOUNTERATTACK openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLCOUNTERATTACK openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLCOUNTERATTACK openAndFill: internal error");
+             throw new IllegalStateException("CDLCOUNTERATTACK openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLCOUNTERATTACK openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLCOUNTERATTACK openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -27002,9 +27049,9 @@ class Core {
         */
        public int cdlDarkCloudCoverLookback( double optInPenetration )
        {
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 5e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return -1;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -27038,9 +27085,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 5e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* Identify the minimum number of price bar needed
@@ -27130,9 +27177,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 5e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           lookbackTotal = cdlDarkCloudCoverLookback(optInPenetration);
@@ -27294,8 +27341,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -27318,13 +27364,16 @@ class Core {
           int cs_BodyLong_avgPeriod;
           double cs_BodyLong_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlDarkCloudCoverStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlDarkCloudCoverOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlDarkCloudCoverOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -27441,9 +27490,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 5e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -27564,9 +27613,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 5e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
@@ -27686,12 +27735,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLDARKCLOUDCOVER open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLDARKCLOUDCOVER open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLDARKCLOUDCOVER open: internal error");
+             throw new IllegalStateException("CDLDARKCLOUDCOVER open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLDARKCLOUDCOVER open: " + retCode);
+          throw new IllegalArgumentException("CDLDARKCLOUDCOVER open: " + retCode);
        }
        /**
         * Open a live CDLDARKCLOUDCOVER stream over the warm-up history; the handle's
@@ -27727,12 +27776,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLDARKCLOUDCOVER openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLDARKCLOUDCOVER openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLDARKCLOUDCOVER openAndFill: internal error");
+             throw new IllegalStateException("CDLDARKCLOUDCOVER openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLDARKCLOUDCOVER openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLDARKCLOUDCOVER openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -28013,8 +28062,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -28031,13 +28079,16 @@ class Core {
           int cs_BodyDoji_avgPeriod;
           double cs_BodyDoji_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlDojiStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlDojiOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlDojiOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -28325,12 +28376,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLDOJI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLDOJI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLDOJI open: internal error");
+             throw new IllegalStateException("CDLDOJI open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLDOJI open: " + retCode);
+          throw new IllegalArgumentException("CDLDOJI open: " + retCode);
        }
        /**
         * Open a live CDLDOJI stream over the warm-up history; the handle's
@@ -28366,12 +28417,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLDOJI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLDOJI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLDOJI openAndFill: internal error");
+             throw new IllegalStateException("CDLDOJI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLDOJI openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLDOJI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -28709,8 +28760,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -28741,13 +28791,16 @@ class Core {
           int cs_BodyLong_avgPeriod;
           double cs_BodyLong_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlDojiStarStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlDojiStarOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlDojiStarOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -29168,12 +29221,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLDOJISTAR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLDOJISTAR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLDOJISTAR open: internal error");
+             throw new IllegalStateException("CDLDOJISTAR open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLDOJISTAR open: " + retCode);
+          throw new IllegalArgumentException("CDLDOJISTAR open: " + retCode);
        }
        /**
         * Open a live CDLDOJISTAR stream over the warm-up history; the handle's
@@ -29209,12 +29262,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLDOJISTAR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLDOJISTAR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLDOJISTAR openAndFill: internal error");
+             throw new IllegalStateException("CDLDOJISTAR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLDOJISTAR openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLDOJISTAR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -29544,8 +29597,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -29572,13 +29624,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlDragonflyDojiStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlDragonflyDojiOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlDragonflyDojiOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -29972,12 +30027,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLDRAGONFLYDOJI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLDRAGONFLYDOJI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLDRAGONFLYDOJI open: internal error");
+             throw new IllegalStateException("CDLDRAGONFLYDOJI open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLDRAGONFLYDOJI open: " + retCode);
+          throw new IllegalArgumentException("CDLDRAGONFLYDOJI open: " + retCode);
        }
        /**
         * Open a live CDLDRAGONFLYDOJI stream over the warm-up history; the handle's
@@ -30013,12 +30068,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLDRAGONFLYDOJI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLDRAGONFLYDOJI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLDRAGONFLYDOJI openAndFill: internal error");
+             throw new IllegalStateException("CDLDRAGONFLYDOJI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLDRAGONFLYDOJI openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLDRAGONFLYDOJI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -30290,8 +30345,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -30300,13 +30354,16 @@ class Core {
           double lag1_inOpen;
           double lag1_inClose;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlEngulfingStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlEngulfingOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlEngulfingOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -30517,12 +30574,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLENGULFING open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLENGULFING open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLENGULFING open: internal error");
+             throw new IllegalStateException("CDLENGULFING open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLENGULFING open: " + retCode);
+          throw new IllegalArgumentException("CDLENGULFING open: " + retCode);
        }
        /**
         * Open a live CDLENGULFING stream over the warm-up history; the handle's
@@ -30558,12 +30615,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLENGULFING openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLENGULFING openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLENGULFING openAndFill: internal error");
+             throw new IllegalStateException("CDLENGULFING openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLENGULFING openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLENGULFING openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -30593,9 +30650,9 @@ class Core {
         */
        public int cdlEveningDojiStarLookback( double optInPenetration )
        {
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return -1;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
@@ -30645,9 +30702,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* Identify the minimum number of price bar needed
@@ -30768,9 +30825,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           lookbackTotal = cdlEveningDojiStarLookback(optInPenetration);
@@ -30952,8 +31009,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -30999,13 +31055,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlEveningDojiStarStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlEveningDojiStarOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlEveningDojiStarOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -31192,9 +31251,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
@@ -31386,9 +31445,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
@@ -31575,12 +31634,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLEVENINGDOJISTAR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLEVENINGDOJISTAR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLEVENINGDOJISTAR open: internal error");
+             throw new IllegalStateException("CDLEVENINGDOJISTAR open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLEVENINGDOJISTAR open: " + retCode);
+          throw new IllegalArgumentException("CDLEVENINGDOJISTAR open: " + retCode);
        }
        /**
         * Open a live CDLEVENINGDOJISTAR stream over the warm-up history; the handle's
@@ -31616,12 +31675,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLEVENINGDOJISTAR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLEVENINGDOJISTAR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLEVENINGDOJISTAR openAndFill: internal error");
+             throw new IllegalStateException("CDLEVENINGDOJISTAR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLEVENINGDOJISTAR openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLEVENINGDOJISTAR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -31651,9 +31710,9 @@ class Core {
         */
        public int cdlEveningStarLookback( double optInPenetration )
        {
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return -1;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -31696,9 +31755,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* Identify the minimum number of price bar needed
@@ -31809,9 +31868,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           lookbackTotal = cdlEveningStarLookback(optInPenetration);
@@ -31985,8 +32044,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -32024,13 +32082,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlEveningStarStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlEveningStarOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlEveningStarOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -32189,9 +32250,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -32361,9 +32422,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
@@ -32529,12 +32590,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLEVENINGSTAR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLEVENINGSTAR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLEVENINGSTAR open: internal error");
+             throw new IllegalStateException("CDLEVENINGSTAR open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLEVENINGSTAR open: " + retCode);
+          throw new IllegalArgumentException("CDLEVENINGSTAR open: " + retCode);
        }
        /**
         * Open a live CDLEVENINGSTAR stream over the warm-up history; the handle's
@@ -32570,12 +32631,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLEVENINGSTAR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLEVENINGSTAR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLEVENINGSTAR openAndFill: internal error");
+             throw new IllegalStateException("CDLEVENINGSTAR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLEVENINGSTAR openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLEVENINGSTAR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -32908,8 +32969,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -32944,13 +33004,16 @@ class Core {
           int cs_Near_avgPeriod;
           double cs_Near_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlGapSideSideWhiteStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlGapSideSideWhiteOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlGapSideSideWhiteOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -33433,12 +33496,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLGAPSIDESIDEWHITE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLGAPSIDESIDEWHITE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLGAPSIDESIDEWHITE open: internal error");
+             throw new IllegalStateException("CDLGAPSIDESIDEWHITE open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLGAPSIDESIDEWHITE open: " + retCode);
+          throw new IllegalArgumentException("CDLGAPSIDESIDEWHITE open: " + retCode);
        }
        /**
         * Open a live CDLGAPSIDESIDEWHITE stream over the warm-up history; the handle's
@@ -33474,12 +33537,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLGAPSIDESIDEWHITE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLGAPSIDESIDEWHITE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLGAPSIDESIDEWHITE openAndFill: internal error");
+             throw new IllegalStateException("CDLGAPSIDESIDEWHITE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLGAPSIDESIDEWHITE openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -33809,8 +33872,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -33837,13 +33899,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlGravestoneDojiStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlGravestoneDojiOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlGravestoneDojiOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -34237,12 +34302,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLGRAVESTONEDOJI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLGRAVESTONEDOJI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLGRAVESTONEDOJI open: internal error");
+             throw new IllegalStateException("CDLGRAVESTONEDOJI open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLGRAVESTONEDOJI open: " + retCode);
+          throw new IllegalArgumentException("CDLGRAVESTONEDOJI open: " + retCode);
        }
        /**
         * Open a live CDLGRAVESTONEDOJI stream over the warm-up history; the handle's
@@ -34278,12 +34343,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLGRAVESTONEDOJI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLGRAVESTONEDOJI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLGRAVESTONEDOJI openAndFill: internal error");
+             throw new IllegalStateException("CDLGRAVESTONEDOJI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLGRAVESTONEDOJI openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLGRAVESTONEDOJI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -34667,8 +34732,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -34719,13 +34783,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlHammerStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlHammerOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlHammerOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -35353,12 +35420,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHAMMER open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHAMMER open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHAMMER open: internal error");
+             throw new IllegalStateException("CDLHAMMER open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHAMMER open: " + retCode);
+          throw new IllegalArgumentException("CDLHAMMER open: " + retCode);
        }
        /**
         * Open a live CDLHAMMER stream over the warm-up history; the handle's
@@ -35394,12 +35461,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHAMMER openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHAMMER openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHAMMER openAndFill: internal error");
+             throw new IllegalStateException("CDLHAMMER openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHAMMER openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLHAMMER openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -35783,8 +35850,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -35835,13 +35901,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlHangingManStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlHangingManOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlHangingManOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -36469,12 +36538,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHANGINGMAN open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHANGINGMAN open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHANGINGMAN open: internal error");
+             throw new IllegalStateException("CDLHANGINGMAN open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHANGINGMAN open: " + retCode);
+          throw new IllegalArgumentException("CDLHANGINGMAN open: " + retCode);
        }
        /**
         * Open a live CDLHANGINGMAN stream over the warm-up history; the handle's
@@ -36510,12 +36579,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHANGINGMAN openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHANGINGMAN openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHANGINGMAN openAndFill: internal error");
+             throw new IllegalStateException("CDLHANGINGMAN openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHANGINGMAN openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLHANGINGMAN openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -36866,8 +36935,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -36898,13 +36966,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlHaramiStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlHaramiOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlHaramiOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -37371,12 +37442,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHARAMI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHARAMI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHARAMI open: internal error");
+             throw new IllegalStateException("CDLHARAMI open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHARAMI open: " + retCode);
+          throw new IllegalArgumentException("CDLHARAMI open: " + retCode);
        }
        /**
         * Open a live CDLHARAMI stream over the warm-up history; the handle's
@@ -37412,12 +37483,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHARAMI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHARAMI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHARAMI openAndFill: internal error");
+             throw new IllegalStateException("CDLHARAMI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHARAMI openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLHARAMI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -37765,8 +37836,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -37797,13 +37867,16 @@ class Core {
           int cs_BodyLong_avgPeriod;
           double cs_BodyLong_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlHaramiCrossStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlHaramiCrossOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlHaramiCrossOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -38264,12 +38337,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHARAMICROSS open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHARAMICROSS open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHARAMICROSS open: internal error");
+             throw new IllegalStateException("CDLHARAMICROSS open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHARAMICROSS open: " + retCode);
+          throw new IllegalArgumentException("CDLHARAMICROSS open: " + retCode);
        }
        /**
         * Open a live CDLHARAMICROSS stream over the warm-up history; the handle's
@@ -38305,12 +38378,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHARAMICROSS openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHARAMICROSS openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHARAMICROSS openAndFill: internal error");
+             throw new IllegalStateException("CDLHARAMICROSS openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHARAMICROSS openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLHARAMICROSS openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -38630,8 +38703,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -38658,13 +38730,16 @@ class Core {
           int cs_ShadowVeryLong_avgPeriod;
           double cs_ShadowVeryLong_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlHignWaveStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlHignWaveOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlHignWaveOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -39054,12 +39129,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHIGHWAVE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHIGHWAVE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHIGHWAVE open: internal error");
+             throw new IllegalStateException("CDLHIGHWAVE open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHIGHWAVE open: " + retCode);
+          throw new IllegalArgumentException("CDLHIGHWAVE open: " + retCode);
        }
        /**
         * Open a live CDLHIGHWAVE stream over the warm-up history; the handle's
@@ -39095,12 +39170,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHIGHWAVE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHIGHWAVE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHIGHWAVE openAndFill: internal error");
+             throw new IllegalStateException("CDLHIGHWAVE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHIGHWAVE openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLHIGHWAVE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -39428,8 +39503,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -39444,13 +39518,16 @@ class Core {
           double lag1_inLow;
           double lag2_inLow;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlHikkakeStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlHikkakeOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlHikkakeOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -39768,12 +39845,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHIKKAKE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHIKKAKE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHIKKAKE open: internal error");
+             throw new IllegalStateException("CDLHIKKAKE open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHIKKAKE open: " + retCode);
+          throw new IllegalArgumentException("CDLHIKKAKE open: " + retCode);
        }
        /**
         * Open a live CDLHIKKAKE stream over the warm-up history; the handle's
@@ -39809,12 +39886,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHIKKAKE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHIKKAKE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHIKKAKE openAndFill: internal error");
+             throw new IllegalStateException("CDLHIKKAKE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHIKKAKE openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLHIKKAKE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -40197,8 +40274,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -40230,13 +40306,16 @@ class Core {
           int cs_Near_avgPeriod;
           double cs_Near_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlHikkakeModStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlHikkakeModOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlHikkakeModOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -40729,12 +40808,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHIKKAKEMOD open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHIKKAKEMOD open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHIKKAKEMOD open: internal error");
+             throw new IllegalStateException("CDLHIKKAKEMOD open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHIKKAKEMOD open: " + retCode);
+          throw new IllegalArgumentException("CDLHIKKAKEMOD open: " + retCode);
        }
        /**
         * Open a live CDLHIKKAKEMOD stream over the warm-up history; the handle's
@@ -40770,12 +40849,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHIKKAKEMOD openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHIKKAKEMOD openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHIKKAKEMOD openAndFill: internal error");
+             throw new IllegalStateException("CDLHIKKAKEMOD openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHIKKAKEMOD openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLHIKKAKEMOD openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -41104,8 +41183,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -41137,13 +41215,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlHomingPigeonStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlHomingPigeonOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlHomingPigeonOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -41590,12 +41671,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHOMINGPIGEON open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHOMINGPIGEON open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHOMINGPIGEON open: internal error");
+             throw new IllegalStateException("CDLHOMINGPIGEON open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHOMINGPIGEON open: " + retCode);
+          throw new IllegalArgumentException("CDLHOMINGPIGEON open: " + retCode);
        }
        /**
         * Open a live CDLHOMINGPIGEON stream over the warm-up history; the handle's
@@ -41631,12 +41712,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLHOMINGPIGEON openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLHOMINGPIGEON openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLHOMINGPIGEON openAndFill: internal error");
+             throw new IllegalStateException("CDLHOMINGPIGEON openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLHOMINGPIGEON openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLHOMINGPIGEON openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -41991,8 +42072,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -42036,13 +42116,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlIdentical3CrowsStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlIdentical3CrowsOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlIdentical3CrowsOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -42627,12 +42710,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLIDENTICAL3CROWS open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLIDENTICAL3CROWS open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLIDENTICAL3CROWS open: internal error");
+             throw new IllegalStateException("CDLIDENTICAL3CROWS open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLIDENTICAL3CROWS open: " + retCode);
+          throw new IllegalArgumentException("CDLIDENTICAL3CROWS open: " + retCode);
        }
        /**
         * Open a live CDLIDENTICAL3CROWS stream over the warm-up history; the handle's
@@ -42668,12 +42751,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLIDENTICAL3CROWS openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLIDENTICAL3CROWS openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLIDENTICAL3CROWS openAndFill: internal error");
+             throw new IllegalStateException("CDLIDENTICAL3CROWS openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLIDENTICAL3CROWS openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLIDENTICAL3CROWS openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -43004,8 +43087,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -43038,13 +43120,16 @@ class Core {
           int cs_Equal_avgPeriod;
           double cs_Equal_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlInNeckStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlInNeckOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlInNeckOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -43510,12 +43595,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLINNECK open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLINNECK open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLINNECK open: internal error");
+             throw new IllegalStateException("CDLINNECK open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLINNECK open: " + retCode);
+          throw new IllegalArgumentException("CDLINNECK open: " + retCode);
        }
        /**
         * Open a live CDLINNECK stream over the warm-up history; the handle's
@@ -43551,12 +43636,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLINNECK openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLINNECK openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLINNECK openAndFill: internal error");
+             throw new IllegalStateException("CDLINNECK openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLINNECK openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLINNECK openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -43906,8 +43991,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -43946,13 +44030,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlInvertedHammerStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlInvertedHammerOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlInvertedHammerOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -44471,12 +44558,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLINVERTEDHAMMER open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLINVERTEDHAMMER open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLINVERTEDHAMMER open: internal error");
+             throw new IllegalStateException("CDLINVERTEDHAMMER open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLINVERTEDHAMMER open: " + retCode);
+          throw new IllegalArgumentException("CDLINVERTEDHAMMER open: " + retCode);
        }
        /**
         * Open a live CDLINVERTEDHAMMER stream over the warm-up history; the handle's
@@ -44512,12 +44599,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLINVERTEDHAMMER openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLINVERTEDHAMMER openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLINVERTEDHAMMER openAndFill: internal error");
+             throw new IllegalStateException("CDLINVERTEDHAMMER openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLINVERTEDHAMMER openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLINVERTEDHAMMER openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -44847,8 +44934,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -44888,13 +44974,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlKickingStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlKickingOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlKickingOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -45433,12 +45522,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLKICKING open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLKICKING open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLKICKING open: internal error");
+             throw new IllegalStateException("CDLKICKING open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLKICKING open: " + retCode);
+          throw new IllegalArgumentException("CDLKICKING open: " + retCode);
        }
        /**
         * Open a live CDLKICKING stream over the warm-up history; the handle's
@@ -45474,12 +45563,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLKICKING openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLKICKING openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLKICKING openAndFill: internal error");
+             throw new IllegalStateException("CDLKICKING openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLKICKING openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLKICKING openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -45814,8 +45903,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -45855,13 +45943,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlKickingByLengthStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlKickingByLengthOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlKickingByLengthOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -46402,12 +46493,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLKICKINGBYLENGTH open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLKICKINGBYLENGTH open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLKICKINGBYLENGTH open: internal error");
+             throw new IllegalStateException("CDLKICKINGBYLENGTH open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLKICKINGBYLENGTH open: " + retCode);
+          throw new IllegalArgumentException("CDLKICKINGBYLENGTH open: " + retCode);
        }
        /**
         * Open a live CDLKICKINGBYLENGTH stream over the warm-up history; the handle's
@@ -46443,12 +46534,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLKICKINGBYLENGTH openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLKICKINGBYLENGTH openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLKICKINGBYLENGTH openAndFill: internal error");
+             throw new IllegalStateException("CDLKICKINGBYLENGTH openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLKICKINGBYLENGTH openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLKICKINGBYLENGTH openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -46750,8 +46841,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -46779,13 +46869,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlLadderBottomStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlLadderBottomOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlLadderBottomOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -47174,12 +47267,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLLADDERBOTTOM open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLLADDERBOTTOM open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLLADDERBOTTOM open: internal error");
+             throw new IllegalStateException("CDLLADDERBOTTOM open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLLADDERBOTTOM open: " + retCode);
+          throw new IllegalArgumentException("CDLLADDERBOTTOM open: " + retCode);
        }
        /**
         * Open a live CDLLADDERBOTTOM stream over the warm-up history; the handle's
@@ -47215,12 +47308,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLLADDERBOTTOM openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLLADDERBOTTOM openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLLADDERBOTTOM openAndFill: internal error");
+             throw new IllegalStateException("CDLLADDERBOTTOM openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLLADDERBOTTOM openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLLADDERBOTTOM openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -47542,8 +47635,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -47570,13 +47662,16 @@ class Core {
           int cs_ShadowLong_avgPeriod;
           double cs_ShadowLong_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlLongLeggedDojiStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlLongLeggedDojiOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlLongLeggedDojiOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -47966,12 +48061,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLLONGLEGGEDDOJI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLLONGLEGGEDDOJI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLLONGLEGGEDDOJI open: internal error");
+             throw new IllegalStateException("CDLLONGLEGGEDDOJI open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLLONGLEGGEDDOJI open: " + retCode);
+          throw new IllegalArgumentException("CDLLONGLEGGEDDOJI open: " + retCode);
        }
        /**
         * Open a live CDLLONGLEGGEDDOJI stream over the warm-up history; the handle's
@@ -48007,12 +48102,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLLONGLEGGEDDOJI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLLONGLEGGEDDOJI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLLONGLEGGEDDOJI openAndFill: internal error");
+             throw new IllegalStateException("CDLLONGLEGGEDDOJI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLLONGLEGGEDDOJI openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLLONGLEGGEDDOJI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -48321,8 +48416,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -48349,13 +48443,16 @@ class Core {
           int cs_ShadowShort_avgPeriod;
           double cs_ShadowShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlLongLineStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlLongLineOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlLongLineOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -48743,12 +48840,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLLONGLINE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLLONGLINE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLLONGLINE open: internal error");
+             throw new IllegalStateException("CDLLONGLINE open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLLONGLINE open: " + retCode);
+          throw new IllegalArgumentException("CDLLONGLINE open: " + retCode);
        }
        /**
         * Open a live CDLLONGLINE stream over the warm-up history; the handle's
@@ -48784,12 +48881,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLLONGLINE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLLONGLINE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLLONGLINE openAndFill: internal error");
+             throw new IllegalStateException("CDLLONGLINE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLLONGLINE openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLLONGLINE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -49104,8 +49201,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -49132,13 +49228,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlMarubozuStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlMarubozuOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlMarubozuOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -49526,12 +49625,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLMARUBOZU open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLMARUBOZU open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLMARUBOZU open: internal error");
+             throw new IllegalStateException("CDLMARUBOZU open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLMARUBOZU open: " + retCode);
+          throw new IllegalArgumentException("CDLMARUBOZU open: " + retCode);
        }
        /**
         * Open a live CDLMARUBOZU stream over the warm-up history; the handle's
@@ -49567,12 +49666,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLMARUBOZU openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLMARUBOZU openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLMARUBOZU openAndFill: internal error");
+             throw new IllegalStateException("CDLMARUBOZU openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLMARUBOZU openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLMARUBOZU openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -49864,8 +49963,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -49887,13 +49985,16 @@ class Core {
           int cs_Equal_avgPeriod;
           double cs_Equal_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlMatchingLowStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlMatchingLowOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlMatchingLowOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -50228,12 +50329,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLMATCHINGLOW open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLMATCHINGLOW open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLMATCHINGLOW open: internal error");
+             throw new IllegalStateException("CDLMATCHINGLOW open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLMATCHINGLOW open: " + retCode);
+          throw new IllegalArgumentException("CDLMATCHINGLOW open: " + retCode);
        }
        /**
         * Open a live CDLMATCHINGLOW stream over the warm-up history; the handle's
@@ -50269,12 +50370,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLMATCHINGLOW openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLMATCHINGLOW openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLMATCHINGLOW openAndFill: internal error");
+             throw new IllegalStateException("CDLMATCHINGLOW openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLMATCHINGLOW openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLMATCHINGLOW openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -50304,9 +50405,9 @@ class Core {
         */
        public int cdlMatHoldLookback( double optInPenetration )
        {
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 5e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return -1;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -50348,9 +50449,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 5e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* Identify the minimum number of price bar needed
@@ -50475,9 +50576,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 5e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           lookbackTotal = cdlMatHoldLookback(optInPenetration);
@@ -50655,8 +50756,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -50708,13 +50808,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlMatHoldStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlMatHoldOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlMatHoldOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -50910,9 +51013,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 5e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -51131,9 +51234,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 5e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
@@ -51349,12 +51452,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLMATHOLD open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLMATHOLD open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLMATHOLD open: internal error");
+             throw new IllegalStateException("CDLMATHOLD open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLMATHOLD open: " + retCode);
+          throw new IllegalArgumentException("CDLMATHOLD open: " + retCode);
        }
        /**
         * Open a live CDLMATHOLD stream over the warm-up history; the handle's
@@ -51390,12 +51493,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLMATHOLD openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLMATHOLD openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLMATHOLD openAndFill: internal error");
+             throw new IllegalStateException("CDLMATHOLD openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLMATHOLD openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLMATHOLD openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -51426,9 +51529,9 @@ class Core {
         */
        public int cdlMorningDojiStarLookback( double optInPenetration )
        {
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return -1;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
@@ -51478,9 +51581,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* Identify the minimum number of price bar needed
@@ -51601,9 +51704,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           lookbackTotal = cdlMorningDojiStarLookback(optInPenetration);
@@ -51791,8 +51894,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -51838,13 +51940,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlMorningDojiStarStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlMorningDojiStarOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlMorningDojiStarOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -52031,9 +52136,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
@@ -52225,9 +52330,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
@@ -52414,12 +52519,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLMORNINGDOJISTAR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLMORNINGDOJISTAR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLMORNINGDOJISTAR open: internal error");
+             throw new IllegalStateException("CDLMORNINGDOJISTAR open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLMORNINGDOJISTAR open: " + retCode);
+          throw new IllegalArgumentException("CDLMORNINGDOJISTAR open: " + retCode);
        }
        /**
         * Open a live CDLMORNINGDOJISTAR stream over the warm-up history; the handle's
@@ -52455,12 +52560,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLMORNINGDOJISTAR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLMORNINGDOJISTAR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLMORNINGDOJISTAR openAndFill: internal error");
+             throw new IllegalStateException("CDLMORNINGDOJISTAR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLMORNINGDOJISTAR openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLMORNINGDOJISTAR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -52490,9 +52595,9 @@ class Core {
         */
        public int cdlMorningStarLookback( double optInPenetration )
        {
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return -1;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -52535,9 +52640,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* Identify the minimum number of price bar needed
@@ -52648,9 +52753,9 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           lookbackTotal = cdlMorningStarLookback(optInPenetration);
@@ -52830,8 +52935,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -52869,13 +52973,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlMorningStarStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlMorningStarOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlMorningStarOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -53034,9 +53141,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -53206,9 +53313,9 @@ class Core {
           if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BadParam;
           }
-          if( optInPenetration == TA_REAL_DEFAULT ) {
+          if( optInPenetration == REAL_DEFAULT ) {
              optInPenetration = 3e-1;
-          } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+          } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
@@ -53374,12 +53481,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLMORNINGSTAR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLMORNINGSTAR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLMORNINGSTAR open: internal error");
+             throw new IllegalStateException("CDLMORNINGSTAR open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLMORNINGSTAR open: " + retCode);
+          throw new IllegalArgumentException("CDLMORNINGSTAR open: " + retCode);
        }
        /**
         * Open a live CDLMORNINGSTAR stream over the warm-up history; the handle's
@@ -53415,12 +53522,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLMORNINGSTAR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLMORNINGSTAR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLMORNINGSTAR openAndFill: internal error");
+             throw new IllegalStateException("CDLMORNINGSTAR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLMORNINGSTAR openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLMORNINGSTAR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -53749,8 +53856,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -53783,13 +53889,16 @@ class Core {
           int cs_Equal_avgPeriod;
           double cs_Equal_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlOnNeckStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlOnNeckOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlOnNeckOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -54255,12 +54364,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLONNECK open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLONNECK open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLONNECK open: internal error");
+             throw new IllegalStateException("CDLONNECK open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLONNECK open: " + retCode);
+          throw new IllegalArgumentException("CDLONNECK open: " + retCode);
        }
        /**
         * Open a live CDLONNECK stream over the warm-up history; the handle's
@@ -54296,12 +54405,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLONNECK openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLONNECK openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLONNECK openAndFill: internal error");
+             throw new IllegalStateException("CDLONNECK openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLONNECK openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLONNECK openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -54605,8 +54714,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -54635,13 +54743,16 @@ class Core {
           int cs_BodyLong_avgPeriod;
           double cs_BodyLong_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlPiercingStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlPiercingOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlPiercingOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -55056,12 +55167,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLPIERCING open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLPIERCING open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLPIERCING open: internal error");
+             throw new IllegalStateException("CDLPIERCING open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLPIERCING open: " + retCode);
+          throw new IllegalArgumentException("CDLPIERCING open: " + retCode);
        }
        /**
         * Open a live CDLPIERCING stream over the warm-up history; the handle's
@@ -55097,12 +55208,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLPIERCING openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLPIERCING openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLPIERCING openAndFill: internal error");
+             throw new IllegalStateException("CDLPIERCING openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLPIERCING openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLPIERCING openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -55444,8 +55555,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -55482,13 +55592,16 @@ class Core {
           int cs_ShadowLong_avgPeriod;
           double cs_ShadowLong_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlRickshawManStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlRickshawManOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlRickshawManOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -55994,12 +56107,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLRICKSHAWMAN open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLRICKSHAWMAN open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLRICKSHAWMAN open: internal error");
+             throw new IllegalStateException("CDLRICKSHAWMAN open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLRICKSHAWMAN open: " + retCode);
+          throw new IllegalArgumentException("CDLRICKSHAWMAN open: " + retCode);
        }
        /**
         * Open a live CDLRICKSHAWMAN stream over the warm-up history; the handle's
@@ -56035,12 +56148,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLRICKSHAWMAN openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLRICKSHAWMAN openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLRICKSHAWMAN openAndFill: internal error");
+             throw new IllegalStateException("CDLRICKSHAWMAN openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLRICKSHAWMAN openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLRICKSHAWMAN openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -56406,8 +56519,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -56458,13 +56570,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlRiseFall3MethodsStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlRiseFall3MethodsOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlRiseFall3MethodsOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -57092,12 +57207,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLRISEFALL3METHODS open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLRISEFALL3METHODS open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLRISEFALL3METHODS open: internal error");
+             throw new IllegalStateException("CDLRISEFALL3METHODS open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLRISEFALL3METHODS open: " + retCode);
+          throw new IllegalArgumentException("CDLRISEFALL3METHODS open: " + retCode);
        }
        /**
         * Open a live CDLRISEFALL3METHODS stream over the warm-up history; the handle's
@@ -57133,12 +57248,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLRISEFALL3METHODS openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLRISEFALL3METHODS openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLRISEFALL3METHODS openAndFill: internal error");
+             throw new IllegalStateException("CDLRISEFALL3METHODS openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLRISEFALL3METHODS openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLRISEFALL3METHODS openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -57497,8 +57612,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -57540,13 +57654,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlSeperatingLinesStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlSeperatingLinesOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlSeperatingLinesOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -58092,12 +58209,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLSEPARATINGLINES open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLSEPARATINGLINES open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLSEPARATINGLINES open: internal error");
+             throw new IllegalStateException("CDLSEPARATINGLINES open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLSEPARATINGLINES open: " + retCode);
+          throw new IllegalArgumentException("CDLSEPARATINGLINES open: " + retCode);
        }
        /**
         * Open a live CDLSEPARATINGLINES stream over the warm-up history; the handle's
@@ -58133,12 +58250,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLSEPARATINGLINES openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLSEPARATINGLINES openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLSEPARATINGLINES openAndFill: internal error");
+             throw new IllegalStateException("CDLSEPARATINGLINES openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLSEPARATINGLINES openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLSEPARATINGLINES openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -58492,8 +58609,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -58532,13 +58648,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlShootingStarStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlShootingStarOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlShootingStarOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -59057,12 +59176,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLSHOOTINGSTAR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLSHOOTINGSTAR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLSHOOTINGSTAR open: internal error");
+             throw new IllegalStateException("CDLSHOOTINGSTAR open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLSHOOTINGSTAR open: " + retCode);
+          throw new IllegalArgumentException("CDLSHOOTINGSTAR open: " + retCode);
        }
        /**
         * Open a live CDLSHOOTINGSTAR stream over the warm-up history; the handle's
@@ -59098,12 +59217,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLSHOOTINGSTAR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLSHOOTINGSTAR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLSHOOTINGSTAR openAndFill: internal error");
+             throw new IllegalStateException("CDLSHOOTINGSTAR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLSHOOTINGSTAR openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLSHOOTINGSTAR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -59429,8 +59548,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -59457,13 +59575,16 @@ class Core {
           int cs_ShadowShort_avgPeriod;
           double cs_ShadowShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlShortLineStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlShortLineOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlShortLineOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -59853,12 +59974,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLSHORTLINE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLSHORTLINE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLSHORTLINE open: internal error");
+             throw new IllegalStateException("CDLSHORTLINE open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLSHORTLINE open: " + retCode);
+          throw new IllegalArgumentException("CDLSHORTLINE open: " + retCode);
        }
        /**
         * Open a live CDLSHORTLINE stream over the warm-up history; the handle's
@@ -59894,12 +60015,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLSHORTLINE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLSHORTLINE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLSHORTLINE openAndFill: internal error");
+             throw new IllegalStateException("CDLSHORTLINE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLSHORTLINE openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLSHORTLINE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -60182,8 +60303,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -60200,13 +60320,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlSpinningTopStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlSpinningTopOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlSpinningTopOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -60494,12 +60617,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLSPINNINGTOP open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLSPINNINGTOP open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLSPINNINGTOP open: internal error");
+             throw new IllegalStateException("CDLSPINNINGTOP open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLSPINNINGTOP open: " + retCode);
+          throw new IllegalArgumentException("CDLSPINNINGTOP open: " + retCode);
        }
        /**
         * Open a live CDLSPINNINGTOP stream over the warm-up history; the handle's
@@ -60535,12 +60658,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLSPINNINGTOP openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLSPINNINGTOP openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLSPINNINGTOP openAndFill: internal error");
+             throw new IllegalStateException("CDLSPINNINGTOP openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLSPINNINGTOP openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLSPINNINGTOP openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -60953,8 +61076,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -61019,13 +61141,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlStalledPatternStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlStalledPatternOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlStalledPatternOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -61829,12 +61954,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLSTALLEDPATTERN open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLSTALLEDPATTERN open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLSTALLEDPATTERN open: internal error");
+             throw new IllegalStateException("CDLSTALLEDPATTERN open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLSTALLEDPATTERN open: " + retCode);
+          throw new IllegalArgumentException("CDLSTALLEDPATTERN open: " + retCode);
        }
        /**
         * Open a live CDLSTALLEDPATTERN stream over the warm-up history; the handle's
@@ -61870,12 +61995,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLSTALLEDPATTERN openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLSTALLEDPATTERN openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLSTALLEDPATTERN openAndFill: internal error");
+             throw new IllegalStateException("CDLSTALLEDPATTERN openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLSTALLEDPATTERN openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLSTALLEDPATTERN openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -62160,8 +62285,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -62187,13 +62311,16 @@ class Core {
           int cs_Equal_avgPeriod;
           double cs_Equal_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlStickSandwichStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlStickSandwichOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlStickSandwichOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -62556,12 +62683,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLSTICKSANDWICH open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLSTICKSANDWICH open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLSTICKSANDWICH open: internal error");
+             throw new IllegalStateException("CDLSTICKSANDWICH open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLSTICKSANDWICH open: " + retCode);
+          throw new IllegalArgumentException("CDLSTICKSANDWICH open: " + retCode);
        }
        /**
         * Open a live CDLSTICKSANDWICH stream over the warm-up history; the handle's
@@ -62597,12 +62724,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLSTICKSANDWICH openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLSTICKSANDWICH openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLSTICKSANDWICH openAndFill: internal error");
+             throw new IllegalStateException("CDLSTICKSANDWICH openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLSTICKSANDWICH openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLSTICKSANDWICH openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -62953,8 +63080,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -62991,13 +63117,16 @@ class Core {
           int cs_ShadowVeryShort_avgPeriod;
           double cs_ShadowVeryShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlTakuriStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlTakuriOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlTakuriOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -63493,12 +63622,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLTAKURI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLTAKURI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLTAKURI open: internal error");
+             throw new IllegalStateException("CDLTAKURI open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLTAKURI open: " + retCode);
+          throw new IllegalArgumentException("CDLTAKURI open: " + retCode);
        }
        /**
         * Open a live CDLTAKURI stream over the warm-up history; the handle's
@@ -63534,12 +63663,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLTAKURI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLTAKURI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLTAKURI openAndFill: internal error");
+             throw new IllegalStateException("CDLTAKURI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLTAKURI openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLTAKURI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -63844,8 +63973,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -63869,13 +63997,16 @@ class Core {
           int cs_Near_avgPeriod;
           double cs_Near_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlTasukiGapStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlTasukiGapOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlTasukiGapOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -64258,12 +64389,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLTASUKIGAP open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLTASUKIGAP open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLTASUKIGAP open: internal error");
+             throw new IllegalStateException("CDLTASUKIGAP open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLTASUKIGAP open: " + retCode);
+          throw new IllegalArgumentException("CDLTASUKIGAP open: " + retCode);
        }
        /**
         * Open a live CDLTASUKIGAP stream over the warm-up history; the handle's
@@ -64299,12 +64430,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLTASUKIGAP openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLTASUKIGAP openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLTASUKIGAP openAndFill: internal error");
+             throw new IllegalStateException("CDLTASUKIGAP openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLTASUKIGAP openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLTASUKIGAP openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -64633,8 +64764,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -64667,13 +64797,16 @@ class Core {
           int cs_Equal_avgPeriod;
           double cs_Equal_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlThrustingStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlThrustingOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlThrustingOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -65143,12 +65276,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLTHRUSTING open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLTHRUSTING open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLTHRUSTING open: internal error");
+             throw new IllegalStateException("CDLTHRUSTING open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLTHRUSTING open: " + retCode);
+          throw new IllegalArgumentException("CDLTHRUSTING open: " + retCode);
        }
        /**
         * Open a live CDLTHRUSTING stream over the warm-up history; the handle's
@@ -65184,12 +65317,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLTHRUSTING openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLTHRUSTING openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLTHRUSTING openAndFill: internal error");
+             throw new IllegalStateException("CDLTHRUSTING openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLTHRUSTING openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLTHRUSTING openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -65498,8 +65631,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -65524,13 +65656,16 @@ class Core {
           int cs_BodyDoji_avgPeriod;
           double cs_BodyDoji_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlTristarStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlTristarOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlTristarOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -65894,12 +66029,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLTRISTAR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLTRISTAR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLTRISTAR open: internal error");
+             throw new IllegalStateException("CDLTRISTAR open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLTRISTAR open: " + retCode);
+          throw new IllegalArgumentException("CDLTRISTAR open: " + retCode);
        }
        /**
         * Open a live CDLTRISTAR stream over the warm-up history; the handle's
@@ -65935,12 +66070,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLTRISTAR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLTRISTAR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLTRISTAR openAndFill: internal error");
+             throw new IllegalStateException("CDLTRISTAR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLTRISTAR openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLTRISTAR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -66261,8 +66396,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -66297,13 +66431,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlUnique3RiverStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlUnique3RiverOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlUnique3RiverOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -66758,12 +66895,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLUNIQUE3RIVER open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLUNIQUE3RIVER open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLUNIQUE3RIVER open: internal error");
+             throw new IllegalStateException("CDLUNIQUE3RIVER open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLUNIQUE3RIVER open: " + retCode);
+          throw new IllegalArgumentException("CDLUNIQUE3RIVER open: " + retCode);
        }
        /**
         * Open a live CDLUNIQUE3RIVER stream over the warm-up history; the handle's
@@ -66799,12 +66936,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLUNIQUE3RIVER openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLUNIQUE3RIVER openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLUNIQUE3RIVER openAndFill: internal error");
+             throw new IllegalStateException("CDLUNIQUE3RIVER openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLUNIQUE3RIVER openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLUNIQUE3RIVER openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -67133,8 +67270,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -67169,13 +67305,16 @@ class Core {
           int cs_BodyShort_avgPeriod;
           double cs_BodyShort_factor;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlUpsideGap2CrowsStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlUpsideGap2CrowsOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlUpsideGap2CrowsOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -67634,12 +67773,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLUPSIDEGAP2CROWS open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLUPSIDEGAP2CROWS open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLUPSIDEGAP2CROWS open: internal error");
+             throw new IllegalStateException("CDLUPSIDEGAP2CROWS open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLUPSIDEGAP2CROWS open: " + retCode);
+          throw new IllegalArgumentException("CDLUPSIDEGAP2CROWS open: " + retCode);
        }
        /**
         * Open a live CDLUPSIDEGAP2CROWS stream over the warm-up history; the handle's
@@ -67675,12 +67814,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLUPSIDEGAP2CROWS openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLUPSIDEGAP2CROWS openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLUPSIDEGAP2CROWS openAndFill: internal error");
+             throw new IllegalStateException("CDLUPSIDEGAP2CROWS openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLUPSIDEGAP2CROWS openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -67947,8 +68086,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -67959,13 +68097,16 @@ class Core {
           double lag1_inClose;
           double lag2_inClose;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CdlXSideGap3MethodsStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cdlXSideGap3MethodsOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cdlXSideGap3MethodsOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -68194,12 +68335,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLXSIDEGAP3METHODS open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLXSIDEGAP3METHODS open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLXSIDEGAP3METHODS open: internal error");
+             throw new IllegalStateException("CDLXSIDEGAP3METHODS open: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLXSIDEGAP3METHODS open: " + retCode);
+          throw new IllegalArgumentException("CDLXSIDEGAP3METHODS open: " + retCode);
        }
        /**
         * Open a live CDLXSIDEGAP3METHODS stream over the warm-up history; the handle's
@@ -68235,12 +68376,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CDLXSIDEGAP3METHODS openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CDLXSIDEGAP3METHODS openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CDLXSIDEGAP3METHODS openAndFill: internal error");
+             throw new IllegalStateException("CDLXSIDEGAP3METHODS openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CDLXSIDEGAP3METHODS openAndFill: " + retCode);
+          throw new IllegalArgumentException("CDLXSIDEGAP3METHODS openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -68410,21 +68551,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class CeilStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CeilStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#ceilOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#ceilOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -68529,12 +68672,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CEIL open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CEIL open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CEIL open: internal error");
+             throw new IllegalStateException("CEIL open: internal error");
           }
-          throw new IllegalArgumentException("TA_CEIL open: " + retCode);
+          throw new IllegalArgumentException("CEIL open: " + retCode);
        }
        /**
         * Open a live CEIL stream over the warm-up history; the handle's
@@ -68570,12 +68713,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CEIL openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CEIL openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CEIL openAndFill: internal error");
+             throw new IllegalStateException("CEIL openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CEIL openAndFill: " + retCode);
+          throw new IllegalArgumentException("CEIL openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -69025,8 +69168,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -69046,13 +69188,16 @@ class Core {
           double[] cb_mfv_flow;
           double[] cb_mfv_volume;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CmfStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cmfOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cmfOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -69441,12 +69586,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CMF open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CMF open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CMF open: internal error");
+             throw new IllegalStateException("CMF open: internal error");
           }
-          throw new IllegalArgumentException("TA_CMF open: " + retCode);
+          throw new IllegalArgumentException("CMF open: " + retCode);
        }
        /**
         * Open a live CMF stream over the warm-up history; the handle's
@@ -69482,12 +69627,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CMF openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CMF openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CMF openAndFill: internal error");
+             throw new IllegalStateException("CMF openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CMF openAndFill: " + retCode);
+          throw new IllegalArgumentException("CMF openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -69936,8 +70081,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -69948,13 +70092,16 @@ class Core {
           double prevLoss;
           double prevValue;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CmoStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cmoOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cmoOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -70394,12 +70541,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CMO open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CMO open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CMO open: internal error");
+             throw new IllegalStateException("CMO open: internal error");
           }
-          throw new IllegalArgumentException("TA_CMO open: " + retCode);
+          throw new IllegalArgumentException("CMO open: " + retCode);
        }
        /**
         * Open a live CMO stream over the warm-up history; the handle's
@@ -70435,12 +70582,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CMO openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CMO openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CMO openAndFill: internal error");
+             throw new IllegalStateException("CMO openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CMO openAndFill: " + retCode);
+          throw new IllegalArgumentException("CMO openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -70825,8 +70972,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -70842,13 +70988,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CmouStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cmouOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cmouOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -71243,12 +71392,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CMOU open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CMOU open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CMOU open: internal error");
+             throw new IllegalStateException("CMOU open: internal error");
           }
-          throw new IllegalArgumentException("TA_CMOU open: " + retCode);
+          throw new IllegalArgumentException("CMOU open: " + retCode);
        }
        /**
         * Open a live CMOU stream over the warm-up history; the handle's
@@ -71284,12 +71433,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CMOU openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CMOU openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CMOU openAndFill: internal error");
+             throw new IllegalStateException("CMOU openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CMOU openAndFill: " + retCode);
+          throw new IllegalArgumentException("CMOU openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -71653,8 +71802,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -71676,13 +71824,16 @@ class Core {
           double[] ring_trailingIdx_inReal0;
           double[] ring_trailingIdx_inReal1;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CorrelStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#correlOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#correlOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -72055,12 +72206,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CORREL open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CORREL open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CORREL open: internal error");
+             throw new IllegalStateException("CORREL open: internal error");
           }
-          throw new IllegalArgumentException("TA_CORREL open: " + retCode);
+          throw new IllegalArgumentException("CORREL open: " + retCode);
        }
        /**
         * Open a live CORREL stream over the warm-up history; the handle's
@@ -72096,12 +72247,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_CORREL openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("CORREL openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_CORREL openAndFill: internal error");
+             throw new IllegalStateException("CORREL openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_CORREL openAndFill: " + retCode);
+          throw new IllegalArgumentException("CORREL openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -72277,21 +72428,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class CosStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CosStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#cosOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#cosOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -72396,12 +72549,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_COS open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("COS open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_COS open: internal error");
+             throw new IllegalStateException("COS open: internal error");
           }
-          throw new IllegalArgumentException("TA_COS open: " + retCode);
+          throw new IllegalArgumentException("COS open: " + retCode);
        }
        /**
         * Open a live COS stream over the warm-up history; the handle's
@@ -72437,12 +72590,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_COS openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("COS openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_COS openAndFill: internal error");
+             throw new IllegalStateException("COS openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_COS openAndFill: " + retCode);
+          throw new IllegalArgumentException("COS openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -72616,21 +72769,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class CoshStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           CoshStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#coshOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#coshOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -72735,12 +72890,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_COSH open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("COSH open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_COSH open: internal error");
+             throw new IllegalStateException("COSH open: internal error");
           }
-          throw new IllegalArgumentException("TA_COSH open: " + retCode);
+          throw new IllegalArgumentException("COSH open: " + retCode);
        }
        /**
         * Open a live COSH stream over the warm-up history; the handle's
@@ -72776,12 +72931,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_COSH openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("COSH openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_COSH openAndFill: internal error");
+             throw new IllegalStateException("COSH openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_COSH openAndFill: " + retCode);
+          throw new IllegalArgumentException("COSH openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -73146,8 +73301,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -73158,13 +73312,16 @@ class Core {
           double prevEMA2;
           double optInK_1;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           DemaStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#demaOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#demaOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -73507,12 +73664,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_DEMA open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("DEMA open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_DEMA open: internal error");
+             throw new IllegalStateException("DEMA open: internal error");
           }
-          throw new IllegalArgumentException("TA_DEMA open: " + retCode);
+          throw new IllegalArgumentException("DEMA open: " + retCode);
        }
        /**
         * Open a live DEMA stream over the warm-up history; the handle's
@@ -73548,12 +73705,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_DEMA openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("DEMA openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_DEMA openAndFill: internal error");
+             throw new IllegalStateException("DEMA openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_DEMA openAndFill: " + retCode);
+          throw new IllegalArgumentException("DEMA openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -73733,21 +73890,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class DivStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           DivStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#divOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#divOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -73852,12 +74011,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_DIV open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("DIV open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_DIV open: internal error");
+             throw new IllegalStateException("DIV open: internal error");
           }
-          throw new IllegalArgumentException("TA_DIV open: " + retCode);
+          throw new IllegalArgumentException("DIV open: " + retCode);
        }
        /**
         * Open a live DIV stream over the warm-up history; the handle's
@@ -73893,12 +74052,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_DIV openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("DIV openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_DIV openAndFill: internal error");
+             throw new IllegalStateException("DIV openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_DIV openAndFill: " + retCode);
+          throw new IllegalArgumentException("DIV openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -74568,8 +74727,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -74589,13 +74747,16 @@ class Core {
           double plusDI;
           double lastOut_outReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           DxStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#dxOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#dxOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -75348,12 +75509,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_DX open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("DX open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_DX open: internal error");
+             throw new IllegalStateException("DX open: internal error");
           }
-          throw new IllegalArgumentException("TA_DX open: " + retCode);
+          throw new IllegalArgumentException("DX open: " + retCode);
        }
        /**
         * Open a live DX stream over the warm-up history; the handle's
@@ -75389,12 +75550,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_DX openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("DX openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_DX openAndFill: internal error");
+             throw new IllegalStateException("DX openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_DX openAndFill: " + retCode);
+          throw new IllegalArgumentException("DX openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -75771,8 +75932,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -75782,13 +75942,16 @@ class Core {
           double optInK_1;
           double prevMA;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           EmaStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#emaOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#emaOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -76047,12 +76210,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_EMA open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("EMA open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_EMA open: internal error");
+             throw new IllegalStateException("EMA open: internal error");
           }
-          throw new IllegalArgumentException("TA_EMA open: " + retCode);
+          throw new IllegalArgumentException("EMA open: " + retCode);
        }
        /**
         * Open a live EMA stream over the warm-up history; the handle's
@@ -76088,12 +76251,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_EMA openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("EMA openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_EMA openAndFill: internal error");
+             throw new IllegalStateException("EMA openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_EMA openAndFill: " + retCode);
+          throw new IllegalArgumentException("EMA openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -76265,21 +76428,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class ExpStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           ExpStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#expOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#expOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -76384,12 +76549,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_EXP open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("EXP open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_EXP open: internal error");
+             throw new IllegalStateException("EXP open: internal error");
           }
-          throw new IllegalArgumentException("TA_EXP open: " + retCode);
+          throw new IllegalArgumentException("EXP open: " + retCode);
        }
        /**
         * Open a live EXP stream over the warm-up history; the handle's
@@ -76425,12 +76590,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_EXP openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("EXP openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_EXP openAndFill: internal error");
+             throw new IllegalStateException("EXP openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_EXP openAndFill: " + retCode);
+          throw new IllegalArgumentException("EXP openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -76600,21 +76765,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class FloorStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           FloorStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#floorOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#floorOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -76719,12 +76886,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_FLOOR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("FLOOR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_FLOOR open: internal error");
+             throw new IllegalStateException("FLOOR open: internal error");
           }
-          throw new IllegalArgumentException("TA_FLOOR open: " + retCode);
+          throw new IllegalArgumentException("FLOOR open: " + retCode);
        }
        /**
         * Open a live FLOOR stream over the warm-up history; the handle's
@@ -76760,12 +76927,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_FLOOR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("FLOOR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_FLOOR openAndFill: internal error");
+             throw new IllegalStateException("FLOOR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_FLOOR openAndFill: " + retCode);
+          throw new IllegalArgumentException("FLOOR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -77338,8 +77505,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -77374,13 +77540,16 @@ class Core {
           double[] ring_trailingIdxHalf_inReal;
           int cbSize_dRing;
           double[] cb_dRing;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           HmaStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#hmaOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#hmaOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -78318,12 +78487,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HMA open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HMA open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HMA open: internal error");
+             throw new IllegalStateException("HMA open: internal error");
           }
-          throw new IllegalArgumentException("TA_HMA open: " + retCode);
+          throw new IllegalArgumentException("HMA open: " + retCode);
        }
        /**
         * Open a live HMA stream over the warm-up history; the handle's
@@ -78359,12 +78528,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HMA openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HMA openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HMA openAndFill: internal error");
+             throw new IllegalStateException("HMA openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_HMA openAndFill: " + retCode);
+          throw new IllegalArgumentException("HMA openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -79128,8 +79297,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -79191,13 +79359,16 @@ class Core {
           int ringCap_trailingWMAIdx;
           double[] ring_trailingWMAIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           HtDcPeriodStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#htDcPeriodOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#htDcPeriodOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -80261,12 +80432,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HT_DCPERIOD open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HT_DCPERIOD open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HT_DCPERIOD open: internal error");
+             throw new IllegalStateException("HT_DCPERIOD open: internal error");
           }
-          throw new IllegalArgumentException("TA_HT_DCPERIOD open: " + retCode);
+          throw new IllegalArgumentException("HT_DCPERIOD open: " + retCode);
        }
        /**
         * Open a live HT_DCPERIOD stream over the warm-up history; the handle's
@@ -80302,12 +80473,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HT_DCPERIOD openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HT_DCPERIOD openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HT_DCPERIOD openAndFill: internal error");
+             throw new IllegalStateException("HT_DCPERIOD openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_HT_DCPERIOD openAndFill: " + retCode);
+          throw new IllegalArgumentException("HT_DCPERIOD openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -81206,8 +81377,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -81281,13 +81451,16 @@ class Core {
           int cbSize_smoothPrice;
           double[] cb_smoothPrice;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           HtDcPhaseStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#htDcPhaseOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#htDcPhaseOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -82578,12 +82751,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HT_DCPHASE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HT_DCPHASE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HT_DCPHASE open: internal error");
+             throw new IllegalStateException("HT_DCPHASE open: internal error");
           }
-          throw new IllegalArgumentException("TA_HT_DCPHASE open: " + retCode);
+          throw new IllegalArgumentException("HT_DCPHASE open: " + retCode);
        }
        /**
         * Open a live HT_DCPHASE stream over the warm-up history; the handle's
@@ -82619,12 +82792,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HT_DCPHASE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HT_DCPHASE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HT_DCPHASE openAndFill: internal error");
+             throw new IllegalStateException("HT_DCPHASE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_HT_DCPHASE openAndFill: " + retCode);
+          throw new IllegalArgumentException("HT_DCPHASE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -83415,8 +83588,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -83479,13 +83651,16 @@ class Core {
           double cur_outInPhase;
           double cur_outQuadrature;
           Value cachedValue;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           HtPhasorStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#htPhasorOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#htPhasorOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -83551,29 +83726,18 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double inPhase;
-             public final double quadrature;
-             Value( double inPhase, double quadrature ) {
-                this.inPhase = inPhase;
-                this.quadrature = quadrature;
-             }
-             @Override public String toString() {
-                return "Value[" + "inPhase=" + inPhase + ", " + "quadrature=" + quadrature + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.inPhase) == Double.doubleToLongBits(v.inPhase) && Double.doubleToLongBits(this.quadrature) == Double.doubleToLongBits(v.quadrature);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(inPhase);
-                h = 31 * h + Double.hashCode(quadrature);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param inPhase In-phase component (detrender delayed 3 bars)
+           * @param quadrature Quadrature component (Q1 of the Hilbert Transform)
+           */
+          public record Value(double inPhase, double quadrature) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -84586,12 +84750,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HT_PHASOR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HT_PHASOR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HT_PHASOR open: internal error");
+             throw new IllegalStateException("HT_PHASOR open: internal error");
           }
-          throw new IllegalArgumentException("TA_HT_PHASOR open: " + retCode);
+          throw new IllegalArgumentException("HT_PHASOR open: " + retCode);
        }
        /**
         * Open a live HT_PHASOR stream over the warm-up history; the handle's
@@ -84627,12 +84791,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HT_PHASOR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HT_PHASOR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HT_PHASOR openAndFill: internal error");
+             throw new IllegalStateException("HT_PHASOR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_HT_PHASOR openAndFill: " + retCode);
+          throw new IllegalArgumentException("HT_PHASOR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -85545,8 +85709,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -85623,13 +85786,16 @@ class Core {
           double cur_outSine;
           double cur_outLeadSine;
           Value cachedValue;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           HtSineStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#htSineOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#htSineOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -85709,29 +85875,18 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double sine;
-             public final double leadSine;
-             Value( double sine, double leadSine ) {
-                this.sine = sine;
-                this.leadSine = leadSine;
-             }
-             @Override public String toString() {
-                return "Value[" + "sine=" + sine + ", " + "leadSine=" + leadSine + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.sine) == Double.doubleToLongBits(v.sine) && Double.doubleToLongBits(this.leadSine) == Double.doubleToLongBits(v.leadSine);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(sine);
-                h = 31 * h + Double.hashCode(leadSine);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param sine Sine of the dominant-cycle phase.
+           * @param leadSine Sine of the phase advanced 45 degrees (lead)
+           */
+          public record Value(double sine, double leadSine) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -86962,12 +87117,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HT_SINE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HT_SINE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HT_SINE open: internal error");
+             throw new IllegalStateException("HT_SINE open: internal error");
           }
-          throw new IllegalArgumentException("TA_HT_SINE open: " + retCode);
+          throw new IllegalArgumentException("HT_SINE open: " + retCode);
        }
        /**
         * Open a live HT_SINE stream over the warm-up history; the handle's
@@ -87003,12 +87158,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HT_SINE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HT_SINE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HT_SINE openAndFill: internal error");
+             throw new IllegalStateException("HT_SINE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_HT_SINE openAndFill: " + retCode);
+          throw new IllegalArgumentException("HT_SINE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -87850,8 +88005,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -87922,13 +88076,16 @@ class Core {
           int winCap_i;
           double[] win_i_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           HtTrendlineStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#htTrendlineOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#htTrendlineOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -89144,12 +89301,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HT_TRENDLINE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HT_TRENDLINE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HT_TRENDLINE open: internal error");
+             throw new IllegalStateException("HT_TRENDLINE open: internal error");
           }
-          throw new IllegalArgumentException("TA_HT_TRENDLINE open: " + retCode);
+          throw new IllegalArgumentException("HT_TRENDLINE open: " + retCode);
        }
        /**
         * Open a live HT_TRENDLINE stream over the warm-up history; the handle's
@@ -89185,12 +89342,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HT_TRENDLINE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HT_TRENDLINE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HT_TRENDLINE openAndFill: internal error");
+             throw new IllegalStateException("HT_TRENDLINE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_HT_TRENDLINE openAndFill: " + retCode);
+          throw new IllegalArgumentException("HT_TRENDLINE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -90231,8 +90388,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -90322,13 +90478,16 @@ class Core {
           int cbSize_smoothPrice;
           double[] cb_smoothPrice;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           HtTrendModeStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#htTrendModeOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#htTrendModeOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -91895,12 +92054,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HT_TRENDMODE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HT_TRENDMODE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HT_TRENDMODE open: internal error");
+             throw new IllegalStateException("HT_TRENDMODE open: internal error");
           }
-          throw new IllegalArgumentException("TA_HT_TRENDMODE open: " + retCode);
+          throw new IllegalArgumentException("HT_TRENDMODE open: " + retCode);
        }
        /**
         * Open a live HT_TRENDMODE stream over the warm-up history; the handle's
@@ -91936,12 +92095,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_HT_TRENDMODE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("HT_TRENDMODE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_HT_TRENDMODE openAndFill: internal error");
+             throw new IllegalStateException("HT_TRENDMODE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_HT_TRENDMODE openAndFill: " + retCode);
+          throw new IllegalArgumentException("HT_TRENDMODE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -92210,8 +92369,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -92223,13 +92381,16 @@ class Core {
           double[] win_i_inOpen;
           double[] win_i_inClose;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           ImiStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#imiOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#imiOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -92459,12 +92620,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_IMI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("IMI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_IMI open: internal error");
+             throw new IllegalStateException("IMI open: internal error");
           }
-          throw new IllegalArgumentException("TA_IMI open: " + retCode);
+          throw new IllegalArgumentException("IMI open: " + retCode);
        }
        /**
         * Open a live IMI stream over the warm-up history; the handle's
@@ -92500,12 +92661,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_IMI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("IMI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_IMI openAndFill: internal error");
+             throw new IllegalStateException("IMI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_IMI openAndFill: " + retCode);
+          throw new IllegalArgumentException("IMI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -92989,8 +93150,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -93007,13 +93167,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           KamaStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#kamaOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#kamaOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -93532,12 +93695,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_KAMA open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("KAMA open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_KAMA open: internal error");
+             throw new IllegalStateException("KAMA open: internal error");
           }
-          throw new IllegalArgumentException("TA_KAMA open: " + retCode);
+          throw new IllegalArgumentException("KAMA open: " + retCode);
        }
        /**
         * Open a live KAMA stream over the warm-up history; the handle's
@@ -93573,12 +93736,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_KAMA openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("KAMA openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_KAMA openAndFill: internal error");
+             throw new IllegalStateException("KAMA openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_KAMA openAndFill: " + retCode);
+          throw new IllegalArgumentException("KAMA openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -93901,8 +94064,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -93918,13 +94080,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           LinearRegStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#linearRegOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#linearRegOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -94251,12 +94416,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_LINEARREG open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("LINEARREG open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_LINEARREG open: internal error");
+             throw new IllegalStateException("LINEARREG open: internal error");
           }
-          throw new IllegalArgumentException("TA_LINEARREG open: " + retCode);
+          throw new IllegalArgumentException("LINEARREG open: " + retCode);
        }
        /**
         * Open a live LINEARREG stream over the warm-up history; the handle's
@@ -94292,12 +94457,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_LINEARREG openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("LINEARREG openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_LINEARREG openAndFill: internal error");
+             throw new IllegalStateException("LINEARREG openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_LINEARREG openAndFill: " + retCode);
+          throw new IllegalArgumentException("LINEARREG openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -94627,8 +94792,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -94644,13 +94808,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           LinearRegAngleStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#linearRegAngleOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#linearRegAngleOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -94969,12 +95136,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_LINEARREG_ANGLE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("LINEARREG_ANGLE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_LINEARREG_ANGLE open: internal error");
+             throw new IllegalStateException("LINEARREG_ANGLE open: internal error");
           }
-          throw new IllegalArgumentException("TA_LINEARREG_ANGLE open: " + retCode);
+          throw new IllegalArgumentException("LINEARREG_ANGLE open: " + retCode);
        }
        /**
         * Open a live LINEARREG_ANGLE stream over the warm-up history; the handle's
@@ -95010,12 +95177,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_LINEARREG_ANGLE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("LINEARREG_ANGLE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_LINEARREG_ANGLE openAndFill: internal error");
+             throw new IllegalStateException("LINEARREG_ANGLE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_LINEARREG_ANGLE openAndFill: " + retCode);
+          throw new IllegalArgumentException("LINEARREG_ANGLE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -95344,8 +95511,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -95361,13 +95527,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           LinearRegInterceptStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#linearRegInterceptOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#linearRegInterceptOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -95686,12 +95855,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_LINEARREG_INTERCEPT open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("LINEARREG_INTERCEPT open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_LINEARREG_INTERCEPT open: internal error");
+             throw new IllegalStateException("LINEARREG_INTERCEPT open: internal error");
           }
-          throw new IllegalArgumentException("TA_LINEARREG_INTERCEPT open: " + retCode);
+          throw new IllegalArgumentException("LINEARREG_INTERCEPT open: " + retCode);
        }
        /**
         * Open a live LINEARREG_INTERCEPT stream over the warm-up history; the handle's
@@ -95727,12 +95896,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_LINEARREG_INTERCEPT openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("LINEARREG_INTERCEPT openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_LINEARREG_INTERCEPT openAndFill: internal error");
+             throw new IllegalStateException("LINEARREG_INTERCEPT openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_LINEARREG_INTERCEPT openAndFill: " + retCode);
+          throw new IllegalArgumentException("LINEARREG_INTERCEPT openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -96057,8 +96226,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -96074,13 +96242,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           LinearRegSlopeStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#linearRegSlopeOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#linearRegSlopeOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -96391,12 +96562,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_LINEARREG_SLOPE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("LINEARREG_SLOPE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_LINEARREG_SLOPE open: internal error");
+             throw new IllegalStateException("LINEARREG_SLOPE open: internal error");
           }
-          throw new IllegalArgumentException("TA_LINEARREG_SLOPE open: " + retCode);
+          throw new IllegalArgumentException("LINEARREG_SLOPE open: " + retCode);
        }
        /**
         * Open a live LINEARREG_SLOPE stream over the warm-up history; the handle's
@@ -96432,12 +96603,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_LINEARREG_SLOPE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("LINEARREG_SLOPE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_LINEARREG_SLOPE openAndFill: internal error");
+             throw new IllegalStateException("LINEARREG_SLOPE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_LINEARREG_SLOPE openAndFill: " + retCode);
+          throw new IllegalArgumentException("LINEARREG_SLOPE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -96611,21 +96782,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class LnStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           LnStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#lnOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#lnOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -96730,12 +96903,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_LN open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("LN open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_LN open: internal error");
+             throw new IllegalStateException("LN open: internal error");
           }
-          throw new IllegalArgumentException("TA_LN open: " + retCode);
+          throw new IllegalArgumentException("LN open: " + retCode);
        }
        /**
         * Open a live LN stream over the warm-up history; the handle's
@@ -96771,12 +96944,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_LN openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("LN openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_LN openAndFill: internal error");
+             throw new IllegalStateException("LN openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_LN openAndFill: " + retCode);
+          throw new IllegalArgumentException("LN openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -96948,21 +97121,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class Log10Stream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           Log10Stream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#log10OpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#log10OpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -97067,12 +97242,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_LOG10 open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("LOG10 open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_LOG10 open: internal error");
+             throw new IllegalStateException("LOG10 open: internal error");
           }
-          throw new IllegalArgumentException("TA_LOG10 open: " + retCode);
+          throw new IllegalArgumentException("LOG10 open: " + retCode);
        }
        /**
         * Open a live LOG10 stream over the warm-up history; the handle's
@@ -97108,12 +97283,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_LOG10 openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("LOG10 openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_LOG10 openAndFill: internal error");
+             throw new IllegalStateException("LOG10 openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_LOG10 openAndFill: " + retCode);
+          throw new IllegalArgumentException("LOG10 openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -97490,8 +97665,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -97502,13 +97676,16 @@ class Core {
           double cur_outReal;
           // Sub-stream, tagged by optInMAType; null on the identity path.
           Object sub;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MovingAverageStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#movingAverageOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#movingAverageOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -97636,7 +97813,7 @@ class Core {
           }
           case Mama: {
              MamaStream.Value subValue = ((MamaStream) sp.sub).update(inReal);
-             sp.cur_outReal = subValue.mama;
+             sp.cur_outReal = subValue.mama();
              break;
           }
           case T3: {
@@ -97875,12 +98052,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MA open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MA open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MA open: internal error");
+             throw new IllegalStateException("MA open: internal error");
           }
-          throw new IllegalArgumentException("TA_MA open: " + retCode);
+          throw new IllegalArgumentException("MA open: " + retCode);
        }
        /**
         * Open a live MA stream over the warm-up history; the handle's
@@ -97916,12 +98093,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MA openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MA openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MA openAndFill: internal error");
+             throw new IllegalStateException("MA openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MA openAndFill: " + retCode);
+          throw new IllegalArgumentException("MA openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -98467,8 +98644,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -98487,13 +98663,16 @@ class Core {
           double cur_outMACDSignal;
           double cur_outMACDHist;
           Value cachedValue;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MacdStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#macdOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#macdOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -98515,32 +98694,19 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double macd;
-             public final double macdSignal;
-             public final double macdHist;
-             Value( double macd, double macdSignal, double macdHist ) {
-                this.macd = macd;
-                this.macdSignal = macdSignal;
-                this.macdHist = macdHist;
-             }
-             @Override public String toString() {
-                return "Value[" + "macd=" + macd + ", " + "macdSignal=" + macdSignal + ", " + "macdHist=" + macdHist + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.macd) == Double.doubleToLongBits(v.macd) && Double.doubleToLongBits(this.macdSignal) == Double.doubleToLongBits(v.macdSignal) && Double.doubleToLongBits(this.macdHist) == Double.doubleToLongBits(v.macdHist);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(macd);
-                h = 31 * h + Double.hashCode(macdSignal);
-                h = 31 * h + Double.hashCode(macdHist);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param macd Fast EMA minus slow EMA.
+           * @param macdSignal EMA of the MACD line.
+           * @param macdHist MACD minus signal line.
+           */
+          public record Value(double macd, double macdSignal, double macdHist) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -98995,12 +99161,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MACD open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MACD open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MACD open: internal error");
+             throw new IllegalStateException("MACD open: internal error");
           }
-          throw new IllegalArgumentException("TA_MACD open: " + retCode);
+          throw new IllegalArgumentException("MACD open: " + retCode);
        }
        /**
         * Open a live MACD stream over the warm-up history; the handle's
@@ -99036,12 +99202,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MACD openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MACD openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MACD openAndFill: internal error");
+             throw new IllegalStateException("MACD openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MACD openAndFill: " + retCode);
+          throw new IllegalArgumentException("MACD openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -99560,8 +99726,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -99580,13 +99745,16 @@ class Core {
           MovingAverageStream sub0;
           MovingAverageStream sub1;
           MovingAverageStream sub2;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MacdExtStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#macdExtOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#macdExtOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -99608,32 +99776,19 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double macd;
-             public final double macdSignal;
-             public final double macdHist;
-             Value( double macd, double macdSignal, double macdHist ) {
-                this.macd = macd;
-                this.macdSignal = macdSignal;
-                this.macdHist = macdHist;
-             }
-             @Override public String toString() {
-                return "Value[" + "macd=" + macd + ", " + "macdSignal=" + macdSignal + ", " + "macdHist=" + macdHist + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.macd) == Double.doubleToLongBits(v.macd) && Double.doubleToLongBits(this.macdSignal) == Double.doubleToLongBits(v.macdSignal) && Double.doubleToLongBits(this.macdHist) == Double.doubleToLongBits(v.macdHist);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(macd);
-                h = 31 * h + Double.hashCode(macdSignal);
-                h = 31 * h + Double.hashCode(macdHist);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param macd MACD line: fast MA minus slow MA.
+           * @param macdSignal Signal line: MA of the MACD line.
+           * @param macdHist Histogram: MACD minus signal.
+           */
+          public record Value(double macd, double macdSignal, double macdHist) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -99729,6 +99884,9 @@ class Core {
              optInSignalPeriod = 9;
           } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( historyLen < macdExtLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
           }
           double[] sc_outMACD = new double[historyLen];
           double[] sc_outMACDSignal = new double[historyLen];
@@ -99893,6 +100051,9 @@ class Core {
           if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
              return RetCode.BadParam;
           }
+          if( historyLen < macdExtLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
           double[] sc_outMACD = new double[historyLen];
           double[] sc_outMACDSignal = new double[historyLen];
           double[] sc_outMACDHist = new double[historyLen];
@@ -100029,12 +100190,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MACDEXT open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MACDEXT open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MACDEXT open: internal error");
+             throw new IllegalStateException("MACDEXT open: internal error");
           }
-          throw new IllegalArgumentException("TA_MACDEXT open: " + retCode);
+          throw new IllegalArgumentException("MACDEXT open: " + retCode);
        }
        /**
         * Open a live MACDEXT stream over the warm-up history; the handle's
@@ -100070,12 +100231,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MACDEXT openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MACDEXT openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MACDEXT openAndFill: internal error");
+             throw new IllegalStateException("MACDEXT openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MACDEXT openAndFill: " + retCode);
+          throw new IllegalArgumentException("MACDEXT openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -100533,8 +100694,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -100551,13 +100711,16 @@ class Core {
           double cur_outMACDSignal;
           double cur_outMACDHist;
           Value cachedValue;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MacdFixStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#macdFixOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#macdFixOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -100577,32 +100740,19 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double macd;
-             public final double macdSignal;
-             public final double macdHist;
-             Value( double macd, double macdSignal, double macdHist ) {
-                this.macd = macd;
-                this.macdSignal = macdSignal;
-                this.macdHist = macdHist;
-             }
-             @Override public String toString() {
-                return "Value[" + "macd=" + macd + ", " + "macdSignal=" + macdSignal + ", " + "macdHist=" + macdHist + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.macd) == Double.doubleToLongBits(v.macd) && Double.doubleToLongBits(this.macdSignal) == Double.doubleToLongBits(v.macdSignal) && Double.doubleToLongBits(this.macdHist) == Double.doubleToLongBits(v.macdHist);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(macd);
-                h = 31 * h + Double.hashCode(macdSignal);
-                h = 31 * h + Double.hashCode(macdHist);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param macd Fixed EMA12 minus EMA26.
+           * @param macdSignal EMA of the MACD line.
+           * @param macdHist MACD minus signal.
+           */
+          public record Value(double macd, double macdSignal, double macdHist) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -101007,12 +101157,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MACDFIX open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MACDFIX open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MACDFIX open: internal error");
+             throw new IllegalStateException("MACDFIX open: internal error");
           }
-          throw new IllegalArgumentException("TA_MACDFIX open: " + retCode);
+          throw new IllegalArgumentException("MACDFIX open: " + retCode);
        }
        /**
         * Open a live MACDFIX stream over the warm-up history; the handle's
@@ -101048,12 +101198,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MACDFIX openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MACDFIX openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MACDFIX openAndFill: internal error");
+             throw new IllegalStateException("MACDFIX openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MACDFIX openAndFill: " + retCode);
+          throw new IllegalArgumentException("MACDFIX openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -101089,12 +101239,12 @@ class Core {
         */
        public int mamaLookback( double optInFastLimit, double optInSlowLimit )
        {
-          if( optInFastLimit == TA_REAL_DEFAULT ) {
+          if( optInFastLimit == REAL_DEFAULT ) {
              optInFastLimit = 5e-1;
           } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
              return -1;
           }
-          if( optInSlowLimit == TA_REAL_DEFAULT ) {
+          if( optInSlowLimit == REAL_DEFAULT ) {
              optInSlowLimit = 5e-2;
           } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
              return -1;
@@ -101198,12 +101348,12 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInFastLimit == TA_REAL_DEFAULT ) {
+          if( optInFastLimit == REAL_DEFAULT ) {
              optInFastLimit = 5e-1;
           } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
              return RetCode.BadParam;
           }
-          if( optInSlowLimit == TA_REAL_DEFAULT ) {
+          if( optInSlowLimit == REAL_DEFAULT ) {
              optInSlowLimit = 5e-2;
           } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
              return RetCode.BadParam;
@@ -101593,12 +101743,12 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInFastLimit == TA_REAL_DEFAULT ) {
+          if( optInFastLimit == REAL_DEFAULT ) {
              optInFastLimit = 5e-1;
           } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
              return RetCode.BadParam;
           }
-          if( optInSlowLimit == TA_REAL_DEFAULT ) {
+          if( optInSlowLimit == REAL_DEFAULT ) {
              optInSlowLimit = 5e-2;
           } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
              return RetCode.BadParam;
@@ -101980,8 +102130,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -102049,13 +102198,16 @@ class Core {
           double cur_outMAMA;
           double cur_outFAMA;
           Value cachedValue;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MamaStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#mamaOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#mamaOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -102126,29 +102278,18 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double mama;
-             public final double fama;
-             Value( double mama, double fama ) {
-                this.mama = mama;
-                this.fama = fama;
-             }
-             @Override public String toString() {
-                return "Value[" + "mama=" + mama + ", " + "fama=" + fama + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.mama) == Double.doubleToLongBits(v.mama) && Double.doubleToLongBits(this.fama) == Double.doubleToLongBits(v.fama);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(mama);
-                h = 31 * h + Double.hashCode(fama);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param mama Adaptive moving average (fast line)
+           * @param fama Following adaptive moving average, using half the alpha (slow line)
+           */
+          public record Value(double mama, double fama) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -102443,12 +102584,12 @@ class Core {
           if( historyLen < 1 ) {
              return RetCode.BadParam;
           }
-          if( optInFastLimit == TA_REAL_DEFAULT ) {
+          if( optInFastLimit == REAL_DEFAULT ) {
              optInFastLimit = 5e-1;
           } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
              return RetCode.BadParam;
           }
-          if( optInSlowLimit == TA_REAL_DEFAULT ) {
+          if( optInSlowLimit == REAL_DEFAULT ) {
              optInSlowLimit = 5e-2;
           } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
              return RetCode.BadParam;
@@ -102897,12 +103038,12 @@ class Core {
           if( historyLen < 1 ) {
              return RetCode.BadParam;
           }
-          if( optInFastLimit == TA_REAL_DEFAULT ) {
+          if( optInFastLimit == REAL_DEFAULT ) {
              optInFastLimit = 5e-1;
           } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
              return RetCode.BadParam;
           }
-          if( optInSlowLimit == TA_REAL_DEFAULT ) {
+          if( optInSlowLimit == REAL_DEFAULT ) {
              optInSlowLimit = 5e-2;
           } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
              return RetCode.BadParam;
@@ -103295,12 +103436,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MAMA open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MAMA open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MAMA open: internal error");
+             throw new IllegalStateException("MAMA open: internal error");
           }
-          throw new IllegalArgumentException("TA_MAMA open: " + retCode);
+          throw new IllegalArgumentException("MAMA open: " + retCode);
        }
        /**
         * Open a live MAMA stream over the warm-up history; the handle's
@@ -103336,12 +103477,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MAMA openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MAMA openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MAMA openAndFill: internal error");
+             throw new IllegalStateException("MAMA openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MAMA openAndFill: " + retCode);
+          throw new IllegalArgumentException("MAMA openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -103970,8 +104111,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -103983,13 +104123,16 @@ class Core {
           double cur_outReal;
           // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
           MovingAverageStream[] bank;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MovingAverageVariablePeriodStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#movingAverageVariablePeriodOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#movingAverageVariablePeriodOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -104184,12 +104327,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MAVP open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MAVP open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MAVP open: internal error");
+             throw new IllegalStateException("MAVP open: internal error");
           }
-          throw new IllegalArgumentException("TA_MAVP open: " + retCode);
+          throw new IllegalArgumentException("MAVP open: " + retCode);
        }
        /**
         * Open a live MAVP stream over the warm-up history; the handle's
@@ -104225,12 +104368,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MAVP openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MAVP openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MAVP openAndFill: internal error");
+             throw new IllegalStateException("MAVP openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MAVP openAndFill: " + retCode);
+          throw new IllegalArgumentException("MAVP openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -104524,8 +104667,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -104540,13 +104682,16 @@ class Core {
           int xCap;
           double[] x_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MaxStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#maxOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#maxOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -104834,12 +104979,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MAX open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MAX open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MAX open: internal error");
+             throw new IllegalStateException("MAX open: internal error");
           }
-          throw new IllegalArgumentException("TA_MAX open: " + retCode);
+          throw new IllegalArgumentException("MAX open: " + retCode);
        }
        /**
         * Open a live MAX stream over the warm-up history; the handle's
@@ -104875,12 +105020,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MAX openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MAX openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MAX openAndFill: internal error");
+             throw new IllegalStateException("MAX openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MAX openAndFill: " + retCode);
+          throw new IllegalArgumentException("MAX openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -105185,8 +105330,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -105201,13 +105345,16 @@ class Core {
           int xCap;
           double[] x_inReal;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MaxIndexStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#maxIndexOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#maxIndexOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -105495,12 +105642,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MAXINDEX open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MAXINDEX open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MAXINDEX open: internal error");
+             throw new IllegalStateException("MAXINDEX open: internal error");
           }
-          throw new IllegalArgumentException("TA_MAXINDEX open: " + retCode);
+          throw new IllegalArgumentException("MAXINDEX open: " + retCode);
        }
        /**
         * Open a live MAXINDEX stream over the warm-up history; the handle's
@@ -105536,12 +105683,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MAXINDEX openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MAXINDEX openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MAXINDEX openAndFill: internal error");
+             throw new IllegalStateException("MAXINDEX openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MAXINDEX openAndFill: " + retCode);
+          throw new IllegalArgumentException("MAXINDEX openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -105735,21 +105882,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class MedPriceStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MedPriceStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#medPriceOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#medPriceOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -105868,12 +106017,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MEDPRICE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MEDPRICE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MEDPRICE open: internal error");
+             throw new IllegalStateException("MEDPRICE open: internal error");
           }
-          throw new IllegalArgumentException("TA_MEDPRICE open: " + retCode);
+          throw new IllegalArgumentException("MEDPRICE open: " + retCode);
        }
        /**
         * Open a live MEDPRICE stream over the warm-up history; the handle's
@@ -105909,12 +106058,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MEDPRICE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MEDPRICE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MEDPRICE openAndFill: internal error");
+             throw new IllegalStateException("MEDPRICE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MEDPRICE openAndFill: " + retCode);
+          throw new IllegalArgumentException("MEDPRICE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -106346,8 +106495,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -106366,13 +106514,16 @@ class Core {
           double[] cb_mflow_positive;
           double[] cb_mflow_negative;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MfiStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#mfiOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#mfiOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -106776,12 +106927,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MFI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MFI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MFI open: internal error");
+             throw new IllegalStateException("MFI open: internal error");
           }
-          throw new IllegalArgumentException("TA_MFI open: " + retCode);
+          throw new IllegalArgumentException("MFI open: " + retCode);
        }
        /**
         * Open a live MFI stream over the warm-up history; the handle's
@@ -106817,12 +106968,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MFI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MFI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MFI openAndFill: internal error");
+             throw new IllegalStateException("MFI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MFI openAndFill: " + retCode);
+          throw new IllegalArgumentException("MFI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -107184,8 +107335,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -107204,13 +107354,16 @@ class Core {
           int xCap;
           double[] x_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MidPointStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#midPointOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#midPointOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -107614,12 +107767,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MIDPOINT open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MIDPOINT open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MIDPOINT open: internal error");
+             throw new IllegalStateException("MIDPOINT open: internal error");
           }
-          throw new IllegalArgumentException("TA_MIDPOINT open: " + retCode);
+          throw new IllegalArgumentException("MIDPOINT open: " + retCode);
        }
        /**
         * Open a live MIDPOINT stream over the warm-up history; the handle's
@@ -107655,12 +107808,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MIDPOINT openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MIDPOINT openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MIDPOINT openAndFill: internal error");
+             throw new IllegalStateException("MIDPOINT openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MIDPOINT openAndFill: " + retCode);
+          throw new IllegalArgumentException("MIDPOINT openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -108078,8 +108231,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -108097,13 +108249,16 @@ class Core {
           double[] x_inHigh;
           double[] x_inLow;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MidPriceStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#midPriceOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#midPriceOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -108523,12 +108678,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MIDPRICE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MIDPRICE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MIDPRICE open: internal error");
+             throw new IllegalStateException("MIDPRICE open: internal error");
           }
-          throw new IllegalArgumentException("TA_MIDPRICE open: " + retCode);
+          throw new IllegalArgumentException("MIDPRICE open: " + retCode);
        }
        /**
         * Open a live MIDPRICE stream over the warm-up history; the handle's
@@ -108564,12 +108719,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MIDPRICE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MIDPRICE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MIDPRICE openAndFill: internal error");
+             throw new IllegalStateException("MIDPRICE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MIDPRICE openAndFill: " + retCode);
+          throw new IllegalArgumentException("MIDPRICE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -108861,8 +109016,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -108877,13 +109031,16 @@ class Core {
           int xCap;
           double[] x_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MinStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#minOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#minOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -109171,12 +109328,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MIN open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MIN open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MIN open: internal error");
+             throw new IllegalStateException("MIN open: internal error");
           }
-          throw new IllegalArgumentException("TA_MIN open: " + retCode);
+          throw new IllegalArgumentException("MIN open: " + retCode);
        }
        /**
         * Open a live MIN stream over the warm-up history; the handle's
@@ -109212,12 +109369,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MIN openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MIN openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MIN openAndFill: internal error");
+             throw new IllegalStateException("MIN openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MIN openAndFill: " + retCode);
+          throw new IllegalArgumentException("MIN openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -109522,8 +109679,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -109538,13 +109694,16 @@ class Core {
           int xCap;
           double[] x_inReal;
           int cur_outInteger;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MinIndexStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#minIndexOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#minIndexOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -109832,12 +109991,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MININDEX open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MININDEX open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MININDEX open: internal error");
+             throw new IllegalStateException("MININDEX open: internal error");
           }
-          throw new IllegalArgumentException("TA_MININDEX open: " + retCode);
+          throw new IllegalArgumentException("MININDEX open: " + retCode);
        }
        /**
         * Open a live MININDEX stream over the warm-up history; the handle's
@@ -109873,12 +110032,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MININDEX openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MININDEX openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MININDEX openAndFill: internal error");
+             throw new IllegalStateException("MININDEX openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MININDEX openAndFill: " + retCode);
+          throw new IllegalArgumentException("MININDEX openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -110226,8 +110385,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -110248,13 +110406,16 @@ class Core {
           double cur_outMin;
           double cur_outMax;
           Value cachedValue;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MinMaxStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#minMaxOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#minMaxOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -110278,29 +110439,18 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double min;
-             public final double max;
-             Value( double min, double max ) {
-                this.min = min;
-                this.max = max;
-             }
-             @Override public String toString() {
-                return "Value[" + "min=" + min + ", " + "max=" + max + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.min) == Double.doubleToLongBits(v.min) && Double.doubleToLongBits(this.max) == Double.doubleToLongBits(v.max);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(min);
-                h = 31 * h + Double.hashCode(max);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param min Lowest value in each rolling window.
+           * @param max Highest value in each rolling window.
+           */
+          public record Value(double min, double max) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -110649,12 +110799,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MINMAX open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MINMAX open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MINMAX open: internal error");
+             throw new IllegalStateException("MINMAX open: internal error");
           }
-          throw new IllegalArgumentException("TA_MINMAX open: " + retCode);
+          throw new IllegalArgumentException("MINMAX open: " + retCode);
        }
        /**
         * Open a live MINMAX stream over the warm-up history; the handle's
@@ -110690,12 +110840,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MINMAX openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MINMAX openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MINMAX openAndFill: internal error");
+             throw new IllegalStateException("MINMAX openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MINMAX openAndFill: " + retCode);
+          throw new IllegalArgumentException("MINMAX openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -111057,8 +111207,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -111079,13 +111228,16 @@ class Core {
           int cur_outMinIdx;
           int cur_outMaxIdx;
           Value cachedValue;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MinMaxIndexStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#minMaxIndexOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#minMaxIndexOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -111109,29 +111261,18 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final int minIdx;
-             public final int maxIdx;
-             Value( int minIdx, int maxIdx ) {
-                this.minIdx = minIdx;
-                this.maxIdx = maxIdx;
-             }
-             @Override public String toString() {
-                return "Value[" + "minIdx=" + minIdx + ", " + "maxIdx=" + maxIdx + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return this.minIdx == v.minIdx && this.maxIdx == v.maxIdx;
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + minIdx;
-                h = 31 * h + maxIdx;
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param minIdx Absolute index (into inReal) of the window minimum.
+           * @param maxIdx Absolute index (into inReal) of the window maximum.
+           */
+          public record Value(int minIdx, int maxIdx) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -111480,12 +111621,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MINMAXINDEX open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MINMAXINDEX open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MINMAXINDEX open: internal error");
+             throw new IllegalStateException("MINMAXINDEX open: internal error");
           }
-          throw new IllegalArgumentException("TA_MINMAXINDEX open: " + retCode);
+          throw new IllegalArgumentException("MINMAXINDEX open: " + retCode);
        }
        /**
         * Open a live MINMAXINDEX stream over the warm-up history; the handle's
@@ -111521,12 +111662,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MINMAXINDEX openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MINMAXINDEX openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MINMAXINDEX openAndFill: internal error");
+             throw new IllegalStateException("MINMAXINDEX openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MINMAXINDEX openAndFill: " + retCode);
+          throw new IllegalArgumentException("MINMAXINDEX openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -112228,8 +112369,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -112245,13 +112385,16 @@ class Core {
           double prevMinusDM;
           double prevTR;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MinusDIStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#minusDIOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#minusDIOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -113327,12 +113470,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MINUS_DI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MINUS_DI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MINUS_DI open: internal error");
+             throw new IllegalStateException("MINUS_DI open: internal error");
           }
-          throw new IllegalArgumentException("TA_MINUS_DI open: " + retCode);
+          throw new IllegalArgumentException("MINUS_DI open: " + retCode);
        }
        /**
         * Open a live MINUS_DI stream over the warm-up history; the handle's
@@ -113368,12 +113511,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MINUS_DI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MINUS_DI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MINUS_DI openAndFill: internal error");
+             throw new IllegalStateException("MINUS_DI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MINUS_DI openAndFill: " + retCode);
+          throw new IllegalArgumentException("MINUS_DI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -113877,8 +114020,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -113892,13 +114034,16 @@ class Core {
           double diffM;
           double prevMinusDM;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MinusDMStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#minusDMOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#minusDMOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -114644,12 +114789,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MINUS_DM open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MINUS_DM open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MINUS_DM open: internal error");
+             throw new IllegalStateException("MINUS_DM open: internal error");
           }
-          throw new IllegalArgumentException("TA_MINUS_DM open: " + retCode);
+          throw new IllegalArgumentException("MINUS_DM open: " + retCode);
        }
        /**
         * Open a live MINUS_DM stream over the warm-up history; the handle's
@@ -114685,12 +114830,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MINUS_DM openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MINUS_DM openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MINUS_DM openAndFill: internal error");
+             throw new IllegalStateException("MINUS_DM openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MINUS_DM openAndFill: " + retCode);
+          throw new IllegalArgumentException("MINUS_DM openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -114959,8 +115104,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -114971,13 +115115,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MomStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#momOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#momOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -115230,12 +115377,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MOM open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MOM open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MOM open: internal error");
+             throw new IllegalStateException("MOM open: internal error");
           }
-          throw new IllegalArgumentException("TA_MOM open: " + retCode);
+          throw new IllegalArgumentException("MOM open: " + retCode);
        }
        /**
         * Open a live MOM stream over the warm-up history; the handle's
@@ -115271,12 +115418,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MOM openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MOM openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MOM openAndFill: internal error");
+             throw new IllegalStateException("MOM openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MOM openAndFill: " + retCode);
+          throw new IllegalArgumentException("MOM openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -115464,21 +115611,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class MultStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           MultStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#multOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#multOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -115591,12 +115740,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MULT open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MULT open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MULT open: internal error");
+             throw new IllegalStateException("MULT open: internal error");
           }
-          throw new IllegalArgumentException("TA_MULT open: " + retCode);
+          throw new IllegalArgumentException("MULT open: " + retCode);
        }
        /**
         * Open a live MULT stream over the warm-up history; the handle's
@@ -115632,12 +115781,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_MULT openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("MULT openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_MULT openAndFill: internal error");
+             throw new IllegalStateException("MULT openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_MULT openAndFill: " + retCode);
+          throw new IllegalArgumentException("MULT openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -116149,8 +116298,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -116162,13 +116310,16 @@ class Core {
           double val3;
           double lag1_inClose;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           NatrStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#natrOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#natrOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -116687,12 +116838,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_NATR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("NATR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_NATR open: internal error");
+             throw new IllegalStateException("NATR open: internal error");
           }
-          throw new IllegalArgumentException("TA_NATR open: " + retCode);
+          throw new IllegalArgumentException("NATR open: " + retCode);
        }
        /**
         * Open a live NATR stream over the warm-up history; the handle's
@@ -116728,12 +116879,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_NATR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("NATR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_NATR openAndFill: internal error");
+             throw new IllegalStateException("NATR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_NATR openAndFill: " + retCode);
+          throw new IllegalArgumentException("NATR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -116965,8 +117116,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -116976,13 +117126,16 @@ class Core {
           double prevClose;
           double prevVolume;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           NviStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#nviOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#nviOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -117155,12 +117308,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_NVI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("NVI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_NVI open: internal error");
+             throw new IllegalStateException("NVI open: internal error");
           }
-          throw new IllegalArgumentException("TA_NVI open: " + retCode);
+          throw new IllegalArgumentException("NVI open: " + retCode);
        }
        /**
         * Open a live NVI stream over the warm-up history; the handle's
@@ -117196,12 +117349,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_NVI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("NVI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_NVI openAndFill: internal error");
+             throw new IllegalStateException("NVI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_NVI openAndFill: " + retCode);
+          throw new IllegalArgumentException("NVI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -117406,8 +117559,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -117416,13 +117568,16 @@ class Core {
           double prevReal;
           double prevOBV;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           ObvStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#obvOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#obvOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -117567,12 +117722,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_OBV open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("OBV open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_OBV open: internal error");
+             throw new IllegalStateException("OBV open: internal error");
           }
-          throw new IllegalArgumentException("TA_OBV open: " + retCode);
+          throw new IllegalArgumentException("OBV open: " + retCode);
        }
        /**
         * Open a live OBV stream over the warm-up history; the handle's
@@ -117608,12 +117763,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_OBV openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("OBV openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_OBV openAndFill: internal error");
+             throw new IllegalStateException("OBV openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_OBV openAndFill: " + retCode);
+          throw new IllegalArgumentException("OBV openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -118323,8 +118478,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -118340,13 +118494,16 @@ class Core {
           double prevPlusDM;
           double prevTR;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           PlusDIStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#plusDIOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#plusDIOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -119422,12 +119579,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_PLUS_DI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("PLUS_DI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_PLUS_DI open: internal error");
+             throw new IllegalStateException("PLUS_DI open: internal error");
           }
-          throw new IllegalArgumentException("TA_PLUS_DI open: " + retCode);
+          throw new IllegalArgumentException("PLUS_DI open: " + retCode);
        }
        /**
         * Open a live PLUS_DI stream over the warm-up history; the handle's
@@ -119463,12 +119620,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_PLUS_DI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("PLUS_DI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_PLUS_DI openAndFill: internal error");
+             throw new IllegalStateException("PLUS_DI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_PLUS_DI openAndFill: " + retCode);
+          throw new IllegalArgumentException("PLUS_DI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -119971,8 +120128,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -119986,13 +120142,16 @@ class Core {
           double diffM;
           double prevPlusDM;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           PlusDMStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#plusDMOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#plusDMOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -120738,12 +120897,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_PLUS_DM open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("PLUS_DM open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_PLUS_DM open: internal error");
+             throw new IllegalStateException("PLUS_DM open: internal error");
           }
-          throw new IllegalArgumentException("TA_PLUS_DM open: " + retCode);
+          throw new IllegalArgumentException("PLUS_DM open: " + retCode);
        }
        /**
         * Open a live PLUS_DM stream over the warm-up history; the handle's
@@ -120779,12 +120938,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_PLUS_DM openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("PLUS_DM openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_PLUS_DM openAndFill: internal error");
+             throw new IllegalStateException("PLUS_DM openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_PLUS_DM openAndFill: " + retCode);
+          throw new IllegalArgumentException("PLUS_DM openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -121097,8 +121256,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -121110,13 +121268,16 @@ class Core {
           double cur_outReal;
           MovingAverageStream sub0;
           MovingAverageStream sub1;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           PpoStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#ppoOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#ppoOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -121214,6 +121375,9 @@ class Core {
           } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( historyLen < ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
           double[] sc_outReal = new double[historyLen];
           /* Allocate an intermediate buffer. */
           tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -121297,6 +121461,9 @@ class Core {
           if( (Object)outReal == (Object)inReal ) {
              return RetCode.BadParam;
           }
+          if( historyLen < ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
           double[] sc_outReal = new double[historyLen];
           /* Allocate an intermediate buffer. */
           tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -121361,12 +121528,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_PPO open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("PPO open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_PPO open: internal error");
+             throw new IllegalStateException("PPO open: internal error");
           }
-          throw new IllegalArgumentException("TA_PPO open: " + retCode);
+          throw new IllegalArgumentException("PPO open: " + retCode);
        }
        /**
         * Open a live PPO stream over the warm-up history; the handle's
@@ -121402,12 +121569,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_PPO openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("PPO openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_PPO openAndFill: internal error");
+             throw new IllegalStateException("PPO openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_PPO openAndFill: " + retCode);
+          throw new IllegalArgumentException("PPO openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -121639,8 +121806,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -121650,13 +121816,16 @@ class Core {
           double prevClose;
           double prevVolume;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           PviStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#pviOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#pviOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -121829,12 +121998,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_PVI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("PVI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_PVI open: internal error");
+             throw new IllegalStateException("PVI open: internal error");
           }
-          throw new IllegalArgumentException("TA_PVI open: " + retCode);
+          throw new IllegalArgumentException("PVI open: " + retCode);
        }
        /**
         * Open a live PVI stream over the warm-up history; the handle's
@@ -121870,12 +122039,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_PVI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("PVI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_PVI openAndFill: internal error");
+             throw new IllegalStateException("PVI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_PVI openAndFill: " + retCode);
+          throw new IllegalArgumentException("PVI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -122186,8 +122355,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -122199,13 +122367,16 @@ class Core {
           double cur_outReal;
           MovingAverageStream sub0;
           MovingAverageStream sub1;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           PvoStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#pvoOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#pvoOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -122303,6 +122474,9 @@ class Core {
           } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( historyLen < pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
           double[] sc_outReal = new double[historyLen];
           /* Allocate an intermediate buffer. */
           tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -122386,6 +122560,9 @@ class Core {
           if( (Object)outReal == (Object)inVolume ) {
              return RetCode.BadParam;
           }
+          if( historyLen < pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
           double[] sc_outReal = new double[historyLen];
           /* Allocate an intermediate buffer. */
           tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -122450,12 +122627,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_PVO open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("PVO open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_PVO open: internal error");
+             throw new IllegalStateException("PVO open: internal error");
           }
-          throw new IllegalArgumentException("TA_PVO open: " + retCode);
+          throw new IllegalArgumentException("PVO open: " + retCode);
        }
        /**
         * Open a live PVO stream over the warm-up history; the handle's
@@ -122491,12 +122668,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_PVO openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("PVO openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_PVO openAndFill: internal error");
+             throw new IllegalStateException("PVO openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_PVO openAndFill: " + retCode);
+          throw new IllegalArgumentException("PVO openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -122778,8 +122955,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -122790,13 +122966,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           RocStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#rocOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#rocOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -123063,12 +123242,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ROC open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ROC open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ROC open: internal error");
+             throw new IllegalStateException("ROC open: internal error");
           }
-          throw new IllegalArgumentException("TA_ROC open: " + retCode);
+          throw new IllegalArgumentException("ROC open: " + retCode);
        }
        /**
         * Open a live ROC stream over the warm-up history; the handle's
@@ -123104,12 +123283,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ROC openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ROC openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ROC openAndFill: internal error");
+             throw new IllegalStateException("ROC openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ROC openAndFill: " + retCode);
+          throw new IllegalArgumentException("ROC openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -123389,8 +123568,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -123401,13 +123579,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           RocPStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#rocPOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#rocPOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -123674,12 +123855,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ROCP open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ROCP open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ROCP open: internal error");
+             throw new IllegalStateException("ROCP open: internal error");
           }
-          throw new IllegalArgumentException("TA_ROCP open: " + retCode);
+          throw new IllegalArgumentException("ROCP open: " + retCode);
        }
        /**
         * Open a live ROCP stream over the warm-up history; the handle's
@@ -123715,12 +123896,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ROCP openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ROCP openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ROCP openAndFill: internal error");
+             throw new IllegalStateException("ROCP openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ROCP openAndFill: " + retCode);
+          throw new IllegalArgumentException("ROCP openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -124003,8 +124184,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -124015,13 +124195,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           RocRStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#rocROpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#rocROpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -124288,12 +124471,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ROCR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ROCR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ROCR open: internal error");
+             throw new IllegalStateException("ROCR open: internal error");
           }
-          throw new IllegalArgumentException("TA_ROCR open: " + retCode);
+          throw new IllegalArgumentException("ROCR open: " + retCode);
        }
        /**
         * Open a live ROCR stream over the warm-up history; the handle's
@@ -124329,12 +124512,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ROCR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ROCR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ROCR openAndFill: internal error");
+             throw new IllegalStateException("ROCR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ROCR openAndFill: " + retCode);
+          throw new IllegalArgumentException("ROCR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -124619,8 +124802,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -124631,13 +124813,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           RocR100Stream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#rocR100OpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#rocR100OpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -124904,12 +125089,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ROCR100 open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ROCR100 open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ROCR100 open: internal error");
+             throw new IllegalStateException("ROCR100 open: internal error");
           }
-          throw new IllegalArgumentException("TA_ROCR100 open: " + retCode);
+          throw new IllegalArgumentException("ROCR100 open: " + retCode);
        }
        /**
         * Open a live ROCR100 stream over the warm-up history; the handle's
@@ -124945,12 +125130,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ROCR100 openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ROCR100 openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ROCR100 openAndFill: internal error");
+             throw new IllegalStateException("ROCR100 openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ROCR100 openAndFill: " + retCode);
+          throw new IllegalArgumentException("ROCR100 openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -125435,8 +125620,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -125447,13 +125631,16 @@ class Core {
           double prevLoss;
           double prevValue;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           RsiStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#rsiOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#rsiOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -125907,12 +126094,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_RSI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("RSI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_RSI open: internal error");
+             throw new IllegalStateException("RSI open: internal error");
           }
-          throw new IllegalArgumentException("TA_RSI open: " + retCode);
+          throw new IllegalArgumentException("RSI open: " + retCode);
        }
        /**
         * Open a live RSI stream over the warm-up history; the handle's
@@ -125948,12 +126135,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_RSI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("RSI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_RSI openAndFill: internal error");
+             throw new IllegalStateException("RSI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_RSI openAndFill: " + retCode);
+          throw new IllegalArgumentException("RSI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -125987,14 +126174,14 @@ class Core {
         */
        public int sarLookback( double optInAcceleration, double optInMaximum )
        {
-          if( optInAcceleration == TA_REAL_DEFAULT ) {
+          if( optInAcceleration == REAL_DEFAULT ) {
              optInAcceleration = 2e-2;
-          } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
+          } else if( optInAcceleration < 0e0 || optInAcceleration > REAL_MAX ) {
              return -1;
           }
-          if( optInMaximum == TA_REAL_DEFAULT ) {
+          if( optInMaximum == REAL_DEFAULT ) {
              optInMaximum = 2e-1;
-          } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
+          } else if( optInMaximum < 0e0 || optInMaximum > REAL_MAX ) {
              return -1;
           }
           /* SAR always sacrify one price bar to establish the
@@ -126032,14 +126219,14 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInAcceleration == TA_REAL_DEFAULT ) {
+          if( optInAcceleration == REAL_DEFAULT ) {
              optInAcceleration = 2e-2;
-          } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
+          } else if( optInAcceleration < 0e0 || optInAcceleration > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInMaximum == TA_REAL_DEFAULT ) {
+          if( optInMaximum == REAL_DEFAULT ) {
              optInMaximum = 2e-1;
-          } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
+          } else if( optInMaximum < 0e0 || optInMaximum > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* > 0 indicates long. == 0 indicates short */
@@ -126287,14 +126474,14 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInAcceleration == TA_REAL_DEFAULT ) {
+          if( optInAcceleration == REAL_DEFAULT ) {
              optInAcceleration = 2e-2;
-          } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
+          } else if( optInAcceleration < 0e0 || optInAcceleration > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInMaximum == TA_REAL_DEFAULT ) {
+          if( optInMaximum == REAL_DEFAULT ) {
              optInMaximum = 2e-1;
-          } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
+          } else if( optInMaximum < 0e0 || optInMaximum > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( startIdx < 1 ) {
@@ -126545,8 +126732,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -126561,13 +126747,16 @@ class Core {
           double ep;
           double sar;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           SarStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#sarOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#sarOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -126765,14 +126954,14 @@ class Core {
           if( historyLen < 1 || inLow.length != inHigh.length ) {
              return RetCode.BadParam;
           }
-          if( optInAcceleration == TA_REAL_DEFAULT ) {
+          if( optInAcceleration == REAL_DEFAULT ) {
              optInAcceleration = 2e-2;
-          } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
+          } else if( optInAcceleration < 0e0 || optInAcceleration > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInMaximum == TA_REAL_DEFAULT ) {
+          if( optInMaximum == REAL_DEFAULT ) {
              optInMaximum = 2e-1;
-          } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
+          } else if( optInMaximum < 0e0 || optInMaximum > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* > 0 indicates long. == 0 indicates short */
@@ -127022,14 +127211,14 @@ class Core {
           if( historyLen < 1 || inLow.length != inHigh.length ) {
              return RetCode.BadParam;
           }
-          if( optInAcceleration == TA_REAL_DEFAULT ) {
+          if( optInAcceleration == REAL_DEFAULT ) {
              optInAcceleration = 2e-2;
-          } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
+          } else if( optInAcceleration < 0e0 || optInAcceleration > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInMaximum == TA_REAL_DEFAULT ) {
+          if( optInMaximum == REAL_DEFAULT ) {
              optInMaximum = 2e-1;
-          } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
+          } else if( optInMaximum < 0e0 || optInMaximum > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
@@ -127270,12 +127459,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SAR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SAR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SAR open: internal error");
+             throw new IllegalStateException("SAR open: internal error");
           }
-          throw new IllegalArgumentException("TA_SAR open: " + retCode);
+          throw new IllegalArgumentException("SAR open: " + retCode);
        }
        /**
         * Open a live SAR stream over the warm-up history; the handle's
@@ -127311,12 +127500,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SAR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SAR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SAR openAndFill: internal error");
+             throw new IllegalStateException("SAR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_SAR openAndFill: " + retCode);
+          throw new IllegalArgumentException("SAR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -127365,44 +127554,44 @@ class Core {
         */
        public int sarExtLookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
        {
-          if( optInStartValue == TA_REAL_DEFAULT ) {
+          if( optInStartValue == REAL_DEFAULT ) {
              optInStartValue = 0e0;
-          } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+          } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
              return -1;
           }
-          if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+          if( optInOffsetOnReverse == REAL_DEFAULT ) {
              optInOffsetOnReverse = 0e0;
-          } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+          } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
              return -1;
           }
-          if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationInitLong == REAL_DEFAULT ) {
              optInAccelerationInitLong = 2e-2;
-          } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
              return -1;
           }
-          if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationLong == REAL_DEFAULT ) {
              optInAccelerationLong = 2e-2;
-          } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
              return -1;
           }
-          if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationMaxLong == REAL_DEFAULT ) {
              optInAccelerationMaxLong = 2e-1;
-          } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
              return -1;
           }
-          if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationInitShort == REAL_DEFAULT ) {
              optInAccelerationInitShort = 2e-2;
-          } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
              return -1;
           }
-          if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationShort == REAL_DEFAULT ) {
              optInAccelerationShort = 2e-2;
-          } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
              return -1;
           }
-          if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationMaxShort == REAL_DEFAULT ) {
              optInAccelerationMaxShort = 2e-1;
-          } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
              return -1;
           }
           /* SAR always sacrifices one price bar to establish the
@@ -127447,44 +127636,44 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInStartValue == TA_REAL_DEFAULT ) {
+          if( optInStartValue == REAL_DEFAULT ) {
              optInStartValue = 0e0;
-          } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+          } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+          if( optInOffsetOnReverse == REAL_DEFAULT ) {
              optInOffsetOnReverse = 0e0;
-          } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+          } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationInitLong == REAL_DEFAULT ) {
              optInAccelerationInitLong = 2e-2;
-          } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationLong == REAL_DEFAULT ) {
              optInAccelerationLong = 2e-2;
-          } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationMaxLong == REAL_DEFAULT ) {
              optInAccelerationMaxLong = 2e-1;
-          } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationInitShort == REAL_DEFAULT ) {
              optInAccelerationInitShort = 2e-2;
-          } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationShort == REAL_DEFAULT ) {
              optInAccelerationShort = 2e-2;
-          } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationMaxShort == REAL_DEFAULT ) {
              optInAccelerationMaxShort = 2e-1;
-          } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* > 0 indicates long. == 0 indicates short */
@@ -127796,44 +127985,44 @@ class Core {
           if( (endIdx < 0) || (endIdx < startIdx)) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          if( optInStartValue == TA_REAL_DEFAULT ) {
+          if( optInStartValue == REAL_DEFAULT ) {
              optInStartValue = 0e0;
-          } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+          } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+          if( optInOffsetOnReverse == REAL_DEFAULT ) {
              optInOffsetOnReverse = 0e0;
-          } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+          } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationInitLong == REAL_DEFAULT ) {
              optInAccelerationInitLong = 2e-2;
-          } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationLong == REAL_DEFAULT ) {
              optInAccelerationLong = 2e-2;
-          } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationMaxLong == REAL_DEFAULT ) {
              optInAccelerationMaxLong = 2e-1;
-          } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationInitShort == REAL_DEFAULT ) {
              optInAccelerationInitShort = 2e-2;
-          } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationShort == REAL_DEFAULT ) {
              optInAccelerationShort = 2e-2;
-          } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationMaxShort == REAL_DEFAULT ) {
              optInAccelerationMaxShort = 2e-1;
-          } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( startIdx < 1 ) {
@@ -128147,8 +128336,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -128170,13 +128358,16 @@ class Core {
           double ep;
           double sar;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           SarExtStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#sarExtOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#sarExtOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -128388,44 +128579,44 @@ class Core {
           if( historyLen < 1 || inLow.length != inHigh.length ) {
              return RetCode.BadParam;
           }
-          if( optInStartValue == TA_REAL_DEFAULT ) {
+          if( optInStartValue == REAL_DEFAULT ) {
              optInStartValue = 0e0;
-          } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+          } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+          if( optInOffsetOnReverse == REAL_DEFAULT ) {
              optInOffsetOnReverse = 0e0;
-          } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+          } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationInitLong == REAL_DEFAULT ) {
              optInAccelerationInitLong = 2e-2;
-          } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationLong == REAL_DEFAULT ) {
              optInAccelerationLong = 2e-2;
-          } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationMaxLong == REAL_DEFAULT ) {
              optInAccelerationMaxLong = 2e-1;
-          } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationInitShort == REAL_DEFAULT ) {
              optInAccelerationInitShort = 2e-2;
-          } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationShort == REAL_DEFAULT ) {
              optInAccelerationShort = 2e-2;
-          } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationMaxShort == REAL_DEFAULT ) {
              optInAccelerationMaxShort = 2e-1;
-          } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* > 0 indicates long. == 0 indicates short */
@@ -128740,44 +128931,44 @@ class Core {
           if( historyLen < 1 || inLow.length != inHigh.length ) {
              return RetCode.BadParam;
           }
-          if( optInStartValue == TA_REAL_DEFAULT ) {
+          if( optInStartValue == REAL_DEFAULT ) {
              optInStartValue = 0e0;
-          } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+          } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+          if( optInOffsetOnReverse == REAL_DEFAULT ) {
              optInOffsetOnReverse = 0e0;
-          } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+          } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationInitLong == REAL_DEFAULT ) {
              optInAccelerationInitLong = 2e-2;
-          } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationLong == REAL_DEFAULT ) {
              optInAccelerationLong = 2e-2;
-          } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+          if( optInAccelerationMaxLong == REAL_DEFAULT ) {
              optInAccelerationMaxLong = 2e-1;
-          } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+          } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationInitShort == REAL_DEFAULT ) {
              optInAccelerationInitShort = 2e-2;
-          } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationShort == REAL_DEFAULT ) {
              optInAccelerationShort = 2e-2;
-          } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
              return RetCode.BadParam;
           }
-          if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+          if( optInAccelerationMaxShort == REAL_DEFAULT ) {
              optInAccelerationMaxShort = 2e-1;
-          } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+          } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
@@ -129082,12 +129273,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SAREXT open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SAREXT open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SAREXT open: internal error");
+             throw new IllegalStateException("SAREXT open: internal error");
           }
-          throw new IllegalArgumentException("TA_SAREXT open: " + retCode);
+          throw new IllegalArgumentException("SAREXT open: " + retCode);
        }
        /**
         * Open a live SAREXT stream over the warm-up history; the handle's
@@ -129123,12 +129314,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SAREXT openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SAREXT openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SAREXT openAndFill: internal error");
+             throw new IllegalStateException("SAREXT openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_SAREXT openAndFill: " + retCode);
+          throw new IllegalArgumentException("SAREXT openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -129302,21 +129493,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class SinStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           SinStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#sinOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#sinOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -129421,12 +129614,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SIN open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SIN open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SIN open: internal error");
+             throw new IllegalStateException("SIN open: internal error");
           }
-          throw new IllegalArgumentException("TA_SIN open: " + retCode);
+          throw new IllegalArgumentException("SIN open: " + retCode);
        }
        /**
         * Open a live SIN stream over the warm-up history; the handle's
@@ -129462,12 +129655,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SIN openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SIN openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SIN openAndFill: internal error");
+             throw new IllegalStateException("SIN openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_SIN openAndFill: " + retCode);
+          throw new IllegalArgumentException("SIN openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -129639,21 +129832,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class SinhStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           SinhStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#sinhOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#sinhOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -129758,12 +129953,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SINH open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SINH open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SINH open: internal error");
+             throw new IllegalStateException("SINH open: internal error");
           }
-          throw new IllegalArgumentException("TA_SINH open: " + retCode);
+          throw new IllegalArgumentException("SINH open: " + retCode);
        }
        /**
         * Open a live SINH stream over the warm-up history; the handle's
@@ -129799,12 +129994,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SINH openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SINH openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SINH openAndFill: internal error");
+             throw new IllegalStateException("SINH openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_SINH openAndFill: " + retCode);
+          throw new IllegalArgumentException("SINH openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -130089,8 +130284,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -130103,13 +130297,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           SmaStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#smaOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#smaOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -130353,12 +130550,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SMA open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SMA open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SMA open: internal error");
+             throw new IllegalStateException("SMA open: internal error");
           }
-          throw new IllegalArgumentException("TA_SMA open: " + retCode);
+          throw new IllegalArgumentException("SMA open: " + retCode);
        }
        /**
         * Open a live SMA stream over the warm-up history; the handle's
@@ -130394,12 +130591,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SMA openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SMA openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SMA openAndFill: internal error");
+             throw new IllegalStateException("SMA openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_SMA openAndFill: " + retCode);
+          throw new IllegalArgumentException("SMA openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -130565,21 +130762,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class SqrtStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           SqrtStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#sqrtOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#sqrtOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -130684,12 +130883,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SQRT open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SQRT open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SQRT open: internal error");
+             throw new IllegalStateException("SQRT open: internal error");
           }
-          throw new IllegalArgumentException("TA_SQRT open: " + retCode);
+          throw new IllegalArgumentException("SQRT open: " + retCode);
        }
        /**
         * Open a live SQRT stream over the warm-up history; the handle's
@@ -130725,12 +130924,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SQRT openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SQRT openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SQRT openAndFill: internal error");
+             throw new IllegalStateException("SQRT openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_SQRT openAndFill: " + retCode);
+          throw new IllegalArgumentException("SQRT openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -130769,9 +130968,9 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return -1;
           }
-          if( optInNbDev == TA_REAL_DEFAULT ) {
+          if( optInNbDev == REAL_DEFAULT ) {
              optInNbDev = 1e0;
-          } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+          } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
              return -1;
           }
           /* Lookback is driven by the variance. */
@@ -130801,9 +131000,9 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInNbDev == TA_REAL_DEFAULT ) {
+          if( optInNbDev == REAL_DEFAULT ) {
              optInNbDev = 1e0;
-          } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+          } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* Calculate the variance. */
@@ -130860,9 +131059,9 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInNbDev == TA_REAL_DEFAULT ) {
+          if( optInNbDev == REAL_DEFAULT ) {
              optInNbDev = 1e0;
-          } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+          } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
              return RetCode.BadParam;
           }
           retCode = varianceInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
@@ -131011,8 +131210,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -131022,13 +131220,16 @@ class Core {
           double optInNbDev;
           double cur_outReal;
           VarianceStream sub0;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           StdDevStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#stdDevOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#stdDevOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -131121,10 +131322,13 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInNbDev == TA_REAL_DEFAULT ) {
+          if( optInNbDev == REAL_DEFAULT ) {
              optInNbDev = 1e0;
-          } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+          } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
              return RetCode.BadParam;
+          }
+          if( historyLen < stdDevLookback(optInTimePeriod, optInNbDev) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
           }
           double[] sc_outReal = new double[historyLen];
           /* Calculate the variance. */
@@ -131185,13 +131389,16 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInNbDev == TA_REAL_DEFAULT ) {
+          if( optInNbDev == REAL_DEFAULT ) {
              optInNbDev = 1e0;
-          } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+          } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( (Object)outReal == (Object)inReal ) {
              return RetCode.BadParam;
+          }
+          if( historyLen < stdDevLookback(optInTimePeriod, optInNbDev) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
           }
           double[] sc_outReal = new double[historyLen];
           /* Calculate the variance. */
@@ -131246,12 +131453,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_STDDEV open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("STDDEV open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_STDDEV open: internal error");
+             throw new IllegalStateException("STDDEV open: internal error");
           }
-          throw new IllegalArgumentException("TA_STDDEV open: " + retCode);
+          throw new IllegalArgumentException("STDDEV open: " + retCode);
        }
        /**
         * Open a live STDDEV stream over the warm-up history; the handle's
@@ -131287,12 +131494,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_STDDEV openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("STDDEV openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_STDDEV openAndFill: internal error");
+             throw new IllegalStateException("STDDEV openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_STDDEV openAndFill: " + retCode);
+          throw new IllegalArgumentException("STDDEV openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -131923,8 +132130,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -131952,13 +132158,16 @@ class Core {
           Value cachedValue;
           MovingAverageStream sub0;
           MovingAverageStream sub1;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           StochStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#stochOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#stochOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -131989,29 +132198,18 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double slowK;
-             public final double slowD;
-             Value( double slowK, double slowD ) {
-                this.slowK = slowK;
-                this.slowD = slowD;
-             }
-             @Override public String toString() {
-                return "Value[" + "slowK=" + slowK + ", " + "slowD=" + slowD + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.slowK) == Double.doubleToLongBits(v.slowK) && Double.doubleToLongBits(this.slowD) == Double.doubleToLongBits(v.slowD);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(slowK);
-                h = 31 * h + Double.hashCode(slowD);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param slowK Raw FastK smoothed by SlowK_Period MA.
+           * @param slowD Signal line: SlowK smoothed by SlowD_Period MA.
+           */
+          public record Value(double slowK, double slowD) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -132164,6 +132362,9 @@ class Core {
              optInSlowD_Period = 3;
           } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( historyLen < stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
           }
           double[] sc_outSlowK = new double[historyLen];
           double[] sc_outSlowD = new double[historyLen];
@@ -132438,6 +132639,9 @@ class Core {
           if( (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD ) {
              return RetCode.BadParam;
           }
+          if( historyLen < stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
           double[] sc_outSlowK = new double[historyLen];
           double[] sc_outSlowD = new double[historyLen];
           /* With stochastic, there is a total of 4 different lines that
@@ -132679,12 +132883,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_STOCH open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("STOCH open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_STOCH open: internal error");
+             throw new IllegalStateException("STOCH open: internal error");
           }
-          throw new IllegalArgumentException("TA_STOCH open: " + retCode);
+          throw new IllegalArgumentException("STOCH open: " + retCode);
        }
        /**
         * Open a live STOCH stream over the warm-up history; the handle's
@@ -132720,12 +132924,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_STOCH openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("STOCH openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_STOCH openAndFill: internal error");
+             throw new IllegalStateException("STOCH openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_STOCH openAndFill: " + retCode);
+          throw new IllegalArgumentException("STOCH openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -133299,8 +133503,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -133325,13 +133528,16 @@ class Core {
           double cur_outFastD;
           Value cachedValue;
           MovingAverageStream sub0;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           StochFStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#stochFOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#stochFOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -133359,29 +133565,18 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double fastK;
-             public final double fastD;
-             Value( double fastK, double fastD ) {
-                this.fastK = fastK;
-                this.fastD = fastD;
-             }
-             @Override public String toString() {
-                return "Value[" + "fastK=" + fastK + ", " + "fastD=" + fastD + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.fastK) == Double.doubleToLongBits(v.fastK) && Double.doubleToLongBits(this.fastD) == Double.doubleToLongBits(v.fastD);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(fastK);
-                h = 31 * h + Double.hashCode(fastD);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param fastK Raw %K stochastic line.
+           * @param fastD MA-smoothed %K (signal line)
+           */
+          public record Value(double fastK, double fastD) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -133527,6 +133722,9 @@ class Core {
              optInFastD_Period = 3;
           } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( historyLen < stochFLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
           }
           double[] sc_outFastK = new double[historyLen];
           double[] sc_outFastD = new double[historyLen];
@@ -133782,6 +133980,9 @@ class Core {
           if( (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD ) {
              return RetCode.BadParam;
           }
+          if( historyLen < stochFLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
           double[] sc_outFastK = new double[historyLen];
           double[] sc_outFastD = new double[historyLen];
           /* With stochastic, there is a total of 4 different lines that
@@ -134010,12 +134211,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_STOCHF open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("STOCHF open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_STOCHF open: internal error");
+             throw new IllegalStateException("STOCHF open: internal error");
           }
-          throw new IllegalArgumentException("TA_STOCHF open: " + retCode);
+          throw new IllegalArgumentException("STOCHF open: " + retCode);
        }
        /**
         * Open a live STOCHF stream over the warm-up history; the handle's
@@ -134051,12 +134252,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_STOCHF openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("STOCHF openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_STOCHF openAndFill: internal error");
+             throw new IllegalStateException("STOCHF openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_STOCHF openAndFill: " + retCode);
+          throw new IllegalArgumentException("STOCHF openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -134444,8 +134645,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -134460,13 +134660,16 @@ class Core {
           Value cachedValue;
           RsiStream sub0;
           StochFStream sub1;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           StochRsiStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#stochRsiOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#stochRsiOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -134484,29 +134687,18 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** One output set, in batch output order. Immutable. */
-          public static final class Value {
-             public final double fastK;
-             public final double fastD;
-             Value( double fastK, double fastD ) {
-                this.fastK = fastK;
-                this.fastD = fastD;
-             }
-             @Override public String toString() {
-                return "Value[" + "fastK=" + fastK + ", " + "fastD=" + fastD + "]";
-             }
-             @Override public boolean equals( Object o ) {
-                if( !(o instanceof Value) ) return false;
-                Value v = (Value) o;
-                return Double.doubleToLongBits(this.fastK) == Double.doubleToLongBits(v.fastK) && Double.doubleToLongBits(this.fastD) == Double.doubleToLongBits(v.fastD);
-             }
-             @Override public int hashCode() {
-                int h = 17;
-                h = 31 * h + Double.hashCode(fastK);
-                h = 31 * h + Double.hashCode(fastD);
-                return h;
-             }
-          }
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param fastK Unsmoothed stochastic of the RSI (raw %K)
+           * @param fastD %K smoothed over FastD_Period (signal line)
+           */
+          public record Value(double fastK, double fastD) { }
 
           /**
            * Commit one closed bar; always produces the new current value.
@@ -134557,8 +134749,8 @@ class Core {
           cur_tempRSIBuffer = sp.sub0.update(inReal);
           {
              StochFStream.Value subOut1 = sp.sub1.update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
-             cur_outFastK = subOut1.fastK;
-             cur_outFastD = subOut1.fastD;
+             cur_outFastK = subOut1.fastK();
+             cur_outFastD = subOut1.fastD();
           }
           sp.cur_outFastK = cur_outFastK;
           sp.cur_outFastD = cur_outFastD;
@@ -134594,6 +134786,9 @@ class Core {
              optInFastD_Period = 3;
           } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( historyLen < stochRsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
           }
           double[] sc_outFastK = new double[historyLen];
           double[] sc_outFastD = new double[historyLen];
@@ -134705,6 +134900,9 @@ class Core {
           if( (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD ) {
              return RetCode.BadParam;
           }
+          if( historyLen < stochRsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
           double[] sc_outFastK = new double[historyLen];
           double[] sc_outFastD = new double[historyLen];
           /* Stochastic RSI
@@ -134792,12 +134990,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_STOCHRSI open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("STOCHRSI open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_STOCHRSI open: internal error");
+             throw new IllegalStateException("STOCHRSI open: internal error");
           }
-          throw new IllegalArgumentException("TA_STOCHRSI open: " + retCode);
+          throw new IllegalArgumentException("STOCHRSI open: " + retCode);
        }
        /**
         * Open a live STOCHRSI stream over the warm-up history; the handle's
@@ -134833,12 +135031,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_STOCHRSI openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("STOCHRSI openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_STOCHRSI openAndFill: internal error");
+             throw new IllegalStateException("STOCHRSI openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_STOCHRSI openAndFill: " + retCode);
+          throw new IllegalArgumentException("STOCHRSI openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -135019,21 +135217,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class SubStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           SubStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#subOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#subOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -135140,12 +135340,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SUB open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SUB open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SUB open: internal error");
+             throw new IllegalStateException("SUB open: internal error");
           }
-          throw new IllegalArgumentException("TA_SUB open: " + retCode);
+          throw new IllegalArgumentException("SUB open: " + retCode);
        }
        /**
         * Open a live SUB stream over the warm-up history; the handle's
@@ -135181,12 +135381,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SUB openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SUB openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SUB openAndFill: internal error");
+             throw new IllegalStateException("SUB openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_SUB openAndFill: " + retCode);
+          throw new IllegalArgumentException("SUB openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -135446,8 +135646,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -135460,13 +135659,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           SumStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#sumOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#sumOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -135702,12 +135904,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SUM open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SUM open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SUM open: internal error");
+             throw new IllegalStateException("SUM open: internal error");
           }
-          throw new IllegalArgumentException("TA_SUM open: " + retCode);
+          throw new IllegalArgumentException("SUM open: " + retCode);
        }
        /**
         * Open a live SUM stream over the warm-up history; the handle's
@@ -135743,12 +135945,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_SUM openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("SUM openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_SUM openAndFill: internal error");
+             throw new IllegalStateException("SUM openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_SUM openAndFill: " + retCode);
+          throw new IllegalArgumentException("SUM openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -135799,7 +136001,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return -1;
           }
-          if( optInVFactor == TA_REAL_DEFAULT ) {
+          if( optInVFactor == REAL_DEFAULT ) {
              optInVFactor = 7e-1;
           } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
              return -1;
@@ -135844,7 +136046,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInVFactor == TA_REAL_DEFAULT ) {
+          if( optInVFactor == REAL_DEFAULT ) {
              optInVFactor = 7e-1;
           } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
              return RetCode.BadParam;
@@ -136017,7 +136219,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInVFactor == TA_REAL_DEFAULT ) {
+          if( optInVFactor == REAL_DEFAULT ) {
              optInVFactor = 7e-1;
           } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
              return RetCode.BadParam;
@@ -136248,8 +136450,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -136270,13 +136471,16 @@ class Core {
           double c3;
           double c4;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           T3Stream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#t3OpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#t3OpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -136385,7 +136589,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInVFactor == TA_REAL_DEFAULT ) {
+          if( optInVFactor == REAL_DEFAULT ) {
              optInVFactor = 7e-1;
           } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
              return RetCode.BadParam;
@@ -136578,7 +136782,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInVFactor == TA_REAL_DEFAULT ) {
+          if( optInVFactor == REAL_DEFAULT ) {
              optInVFactor = 7e-1;
           } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
              return RetCode.BadParam;
@@ -136759,12 +136963,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_T3 open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("T3 open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_T3 open: internal error");
+             throw new IllegalStateException("T3 open: internal error");
           }
-          throw new IllegalArgumentException("TA_T3 open: " + retCode);
+          throw new IllegalArgumentException("T3 open: " + retCode);
        }
        /**
         * Open a live T3 stream over the warm-up history; the handle's
@@ -136800,12 +137004,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_T3 openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("T3 openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_T3 openAndFill: internal error");
+             throw new IllegalStateException("T3 openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_T3 openAndFill: " + retCode);
+          throw new IllegalArgumentException("T3 openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -136981,21 +137185,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class TanStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           TanStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#tanOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#tanOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -137100,12 +137306,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TAN open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TAN open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TAN open: internal error");
+             throw new IllegalStateException("TAN open: internal error");
           }
-          throw new IllegalArgumentException("TA_TAN open: " + retCode);
+          throw new IllegalArgumentException("TAN open: " + retCode);
        }
        /**
         * Open a live TAN stream over the warm-up history; the handle's
@@ -137141,12 +137347,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TAN openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TAN openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TAN openAndFill: internal error");
+             throw new IllegalStateException("TAN openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_TAN openAndFill: " + retCode);
+          throw new IllegalArgumentException("TAN openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -137318,21 +137524,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class TanhStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           TanhStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#tanhOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#tanhOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -137437,12 +137645,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TANH open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TANH open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TANH open: internal error");
+             throw new IllegalStateException("TANH open: internal error");
           }
-          throw new IllegalArgumentException("TA_TANH open: " + retCode);
+          throw new IllegalArgumentException("TANH open: " + retCode);
        }
        /**
         * Open a live TANH stream over the warm-up history; the handle's
@@ -137478,12 +137686,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TANH openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TANH openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TANH openAndFill: internal error");
+             throw new IllegalStateException("TANH openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_TANH openAndFill: " + retCode);
+          throw new IllegalArgumentException("TANH openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -137919,8 +138127,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -137932,13 +138139,16 @@ class Core {
           double prevEMA3;
           double optInK_1;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           TemaStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#temaOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#temaOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -138379,12 +138589,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TEMA open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TEMA open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TEMA open: internal error");
+             throw new IllegalStateException("TEMA open: internal error");
           }
-          throw new IllegalArgumentException("TA_TEMA open: " + retCode);
+          throw new IllegalArgumentException("TEMA open: " + retCode);
        }
        /**
         * Open a live TEMA stream over the warm-up history; the handle's
@@ -138420,12 +138630,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TEMA openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TEMA openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TEMA openAndFill: internal error");
+             throw new IllegalStateException("TEMA openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_TEMA openAndFill: " + retCode);
+          throw new IllegalArgumentException("TEMA openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -138700,8 +138910,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -138710,13 +138919,16 @@ class Core {
           double val3;
           double lag1_inClose;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           TrueRangeStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#trueRangeOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#trueRangeOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -138943,12 +139155,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TRANGE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TRANGE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TRANGE open: internal error");
+             throw new IllegalStateException("TRANGE open: internal error");
           }
-          throw new IllegalArgumentException("TA_TRANGE open: " + retCode);
+          throw new IllegalArgumentException("TRANGE open: " + retCode);
        }
        /**
         * Open a live TRANGE stream over the warm-up history; the handle's
@@ -138984,12 +139196,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TRANGE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TRANGE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TRANGE openAndFill: internal error");
+             throw new IllegalStateException("TRANGE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_TRANGE openAndFill: " + retCode);
+          throw new IllegalArgumentException("TRANGE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -139557,8 +139769,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -139577,13 +139788,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           TrimaStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#trimaOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#trimaOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -140620,12 +140834,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TRIMA open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TRIMA open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TRIMA open: internal error");
+             throw new IllegalStateException("TRIMA open: internal error");
           }
-          throw new IllegalArgumentException("TA_TRIMA open: " + retCode);
+          throw new IllegalArgumentException("TRIMA open: " + retCode);
        }
        /**
         * Open a live TRIMA stream over the warm-up history; the handle's
@@ -140661,12 +140875,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TRIMA openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TRIMA openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TRIMA openAndFill: internal error");
+             throw new IllegalStateException("TRIMA openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_TRIMA openAndFill: " + retCode);
+          throw new IllegalArgumentException("TRIMA openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -141055,8 +141269,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -141068,13 +141281,16 @@ class Core {
           double prevEMA3;
           double optInK_1;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           TrixStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#trixOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#trixOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -141413,12 +141629,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TRIX open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TRIX open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TRIX open: internal error");
+             throw new IllegalStateException("TRIX open: internal error");
           }
-          throw new IllegalArgumentException("TA_TRIX open: " + retCode);
+          throw new IllegalArgumentException("TRIX open: " + retCode);
        }
        /**
         * Open a live TRIX stream over the warm-up history; the handle's
@@ -141454,12 +141670,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TRIX openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TRIX openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TRIX openAndFill: internal error");
+             throw new IllegalStateException("TRIX openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_TRIX openAndFill: " + retCode);
+          throw new IllegalArgumentException("TRIX openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -141790,8 +142006,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -141807,13 +142022,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           TsfStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#tsfOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#tsfOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -142140,12 +142358,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TSF open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TSF open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TSF open: internal error");
+             throw new IllegalStateException("TSF open: internal error");
           }
-          throw new IllegalArgumentException("TA_TSF open: " + retCode);
+          throw new IllegalArgumentException("TSF open: " + retCode);
        }
        /**
         * Open a live TSF stream over the warm-up history; the handle's
@@ -142181,12 +142399,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TSF openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TSF openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TSF openAndFill: internal error");
+             throw new IllegalStateException("TSF openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_TSF openAndFill: " + retCode);
+          throw new IllegalArgumentException("TSF openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -142379,21 +142597,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class TypPriceStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           TypPriceStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#typPriceOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#typPriceOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -142502,12 +142722,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TYPPRICE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TYPPRICE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TYPPRICE open: internal error");
+             throw new IllegalStateException("TYPPRICE open: internal error");
           }
-          throw new IllegalArgumentException("TA_TYPPRICE open: " + retCode);
+          throw new IllegalArgumentException("TYPPRICE open: " + retCode);
        }
        /**
         * Open a live TYPPRICE stream over the warm-up history; the handle's
@@ -142543,12 +142763,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_TYPPRICE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("TYPPRICE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_TYPPRICE openAndFill: internal error");
+             throw new IllegalStateException("TYPPRICE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_TYPPRICE openAndFill: " + retCode);
+          throw new IllegalArgumentException("TYPPRICE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -143194,8 +143414,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -143220,13 +143439,16 @@ class Core {
           double[] cb_term_closeMinusTrueLow;
           double[] cb_term_trueRange;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           UltOscStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#ultOscOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#ultOscOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -143887,12 +144109,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ULTOSC open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ULTOSC open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ULTOSC open: internal error");
+             throw new IllegalStateException("ULTOSC open: internal error");
           }
-          throw new IllegalArgumentException("TA_ULTOSC open: " + retCode);
+          throw new IllegalArgumentException("ULTOSC open: " + retCode);
        }
        /**
         * Open a live ULTOSC stream over the warm-up history; the handle's
@@ -143928,12 +144150,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_ULTOSC openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("ULTOSC openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_ULTOSC openAndFill: internal error");
+             throw new IllegalStateException("ULTOSC openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_ULTOSC openAndFill: " + retCode);
+          throw new IllegalArgumentException("ULTOSC openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -143973,9 +144195,9 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return -1;
           }
-          if( optInNbDev == TA_REAL_DEFAULT ) {
+          if( optInNbDev == REAL_DEFAULT ) {
              optInNbDev = 1e0;
-          } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+          } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
              return -1;
           }
           return optInTimePeriod - 1 ;
@@ -144015,9 +144237,9 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInNbDev == TA_REAL_DEFAULT ) {
+          if( optInNbDev == REAL_DEFAULT ) {
              optInNbDev = 1e0;
-          } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+          } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* Identify the minimum number of price bar needed to calculate
@@ -144153,9 +144375,9 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInNbDev == TA_REAL_DEFAULT ) {
+          if( optInNbDev == REAL_DEFAULT ) {
              optInNbDev = 1e0;
-          } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+          } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
              return RetCode.BadParam;
           }
           nbInitialElementNeeded = optInTimePeriod - 1;
@@ -144345,8 +144567,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -144369,13 +144590,16 @@ class Core {
           int xCap;
           double[] x_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           VarianceStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#varianceOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#varianceOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -144536,9 +144760,9 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInNbDev == TA_REAL_DEFAULT ) {
+          if( optInNbDev == REAL_DEFAULT ) {
              optInNbDev = 1e0;
-          } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+          } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
              return RetCode.BadParam;
           }
           /* Identify the minimum number of price bar needed to calculate
@@ -144693,9 +144917,9 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInNbDev == TA_REAL_DEFAULT ) {
+          if( optInNbDev == REAL_DEFAULT ) {
              optInNbDev = 1e0;
-          } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+          } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
              return RetCode.BadParam;
           }
           if( (Object)outReal == (Object)inReal ) {
@@ -144835,12 +145059,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_VAR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("VAR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_VAR open: internal error");
+             throw new IllegalStateException("VAR open: internal error");
           }
-          throw new IllegalArgumentException("TA_VAR open: " + retCode);
+          throw new IllegalArgumentException("VAR open: " + retCode);
        }
        /**
         * Open a live VAR stream over the warm-up history; the handle's
@@ -144876,12 +145100,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_VAR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("VAR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_VAR openAndFill: internal error");
+             throw new IllegalStateException("VAR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_VAR openAndFill: " + retCode);
+          throw new IllegalArgumentException("VAR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -145222,8 +145446,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -145239,13 +145462,16 @@ class Core {
           double[] ring_trailingIdx_inReal;
           double[] ring_trailingIdx_inVolume;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           VwmaStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#vwmaOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#vwmaOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -145563,12 +145789,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_VWMA open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("VWMA open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_VWMA open: internal error");
+             throw new IllegalStateException("VWMA open: internal error");
           }
-          throw new IllegalArgumentException("TA_VWMA open: " + retCode);
+          throw new IllegalArgumentException("VWMA open: " + retCode);
        }
        /**
         * Open a live VWMA stream over the warm-up history; the handle's
@@ -145604,12 +145830,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_VWMA openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("VWMA openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_VWMA openAndFill: internal error");
+             throw new IllegalStateException("VWMA openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_VWMA openAndFill: " + retCode);
+          throw new IllegalArgumentException("VWMA openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -145802,21 +146028,23 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
        public static final class WclPriceStream {
           final Core core;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           WclPriceStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#wclPriceOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#wclPriceOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -145925,12 +146153,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_WCLPRICE open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("WCLPRICE open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_WCLPRICE open: internal error");
+             throw new IllegalStateException("WCLPRICE open: internal error");
           }
-          throw new IllegalArgumentException("TA_WCLPRICE open: " + retCode);
+          throw new IllegalArgumentException("WCLPRICE open: " + retCode);
        }
        /**
         * Open a live WCLPRICE stream over the warm-up history; the handle's
@@ -145966,12 +146194,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_WCLPRICE openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("WCLPRICE openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_WCLPRICE openAndFill: internal error");
+             throw new IllegalStateException("WCLPRICE openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_WCLPRICE openAndFill: " + retCode);
+          throw new IllegalArgumentException("WCLPRICE openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -146344,8 +146572,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -146365,13 +146592,16 @@ class Core {
           double[] x_inLow;
           double[] x_inClose;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           WillRStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#willROpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#willROpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -146779,12 +147009,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_WILLR open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("WILLR open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_WILLR open: internal error");
+             throw new IllegalStateException("WILLR open: internal error");
           }
-          throw new IllegalArgumentException("TA_WILLR open: " + retCode);
+          throw new IllegalArgumentException("WILLR open: " + retCode);
        }
        /**
         * Open a live WILLR stream over the warm-up history; the handle's
@@ -146820,12 +147050,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_WILLR openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("WILLR openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_WILLR openAndFill: internal error");
+             throw new IllegalStateException("WILLR openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_WILLR openAndFill: " + retCode);
+          throw new IllegalArgumentException("WILLR openAndFill: " + retCode);
        }
     /* List of contributors:
      *
@@ -147188,8 +147418,7 @@ class Core {
         * the same handle. With no concurrent {@code update}, {@code peek}/
         * {@code value}/{@code copy} never write the handle and may be called
         * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent. Do not mutate the owning
-        * {@link Core}'s settings while streams opened from it are live.
+        * {@code copy()} results) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -147204,13 +147433,16 @@ class Core {
           int ringCap_trailingIdx;
           double[] ring_trailingIdx_inReal;
           double cur_outReal;
-          OutRange fillRange;
+          OutRange fillRange = OutRange.EMPTY;
 
           WmaStream( Core core ) { this.core = core; }
 
           /**
-           * The range filled by {@link Core#wmaOpenAndFill}, or {@code null}
-           * when this handle came from a plain {@code open} (which fills nothing).
+           * The range filled by {@link Core#wmaOpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
            */
           public OutRange fillRange() { return fillRange; }
 
@@ -147606,12 +147838,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_WMA open: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("WMA open: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_WMA open: internal error");
+             throw new IllegalStateException("WMA open: internal error");
           }
-          throw new IllegalArgumentException("TA_WMA open: " + retCode);
+          throw new IllegalArgumentException("WMA open: " + retCode);
        }
        /**
         * Open a live WMA stream over the warm-up history; the handle's
@@ -147647,12 +147879,12 @@ class Core {
              return sp;
           }
           if( retCode == RetCode.OutOfRangeEndIndex ) {
-             throw new InsufficientHistoryException("TA_WMA openAndFill: history shorter than lookback + 1");
+             throw new InsufficientHistoryException("WMA openAndFill: history shorter than lookback + 1");
           }
           if( retCode == RetCode.InternalError ) {
-             throw new IllegalStateException("TA_WMA openAndFill: internal error");
+             throw new IllegalStateException("WMA openAndFill: internal error");
           }
-          throw new IllegalArgumentException("TA_WMA openAndFill: " + retCode);
+          throw new IllegalArgumentException("WMA openAndFill: " + retCode);
        }
 }
 
@@ -161083,25 +161315,25 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.AccbandsStream.Value v0 = st.value();
-                if (svXtierNe(v0.realUpperBand, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.realMiddleBand, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
-                if (svXtierNe(v0.realLowerBand, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                if (svXtierNe(v0.realUpperBand(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.realMiddleBand(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.realLowerBand(), b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.AccbandsStream.Value pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
                         Core.AccbandsStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svBne(pk.realUpperBand, up.realUpperBand)) peekAll = false;
-                        if (svBne(pk.realMiddleBand, up.realMiddleBand)) peekAll = false;
-                        if (svBne(pk.realLowerBand, up.realLowerBand)) peekAll = false;
+                        if (svBne(pk.realUpperBand(), up.realUpperBand())) peekAll = false;
+                        if (svBne(pk.realMiddleBand(), up.realMiddleBand())) peekAll = false;
+                        if (svBne(pk.realLowerBand(), up.realLowerBand())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand)) + "\""; }
-                        if (svXtierNe(up.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand)) + "\""; }
-                        if (svXtierNe(up.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand)) + "\""; }
+                        if (svXtierNe(up.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand())) + "\""; }
+                        if (svXtierNe(up.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand())) + "\""; }
+                        if (svXtierNe(up.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand())) + "\""; }
                     } else {
                         Core.AccbandsStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svXtierNe(up.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand)) + "\""; }
-                        if (svXtierNe(up.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand)) + "\""; }
-                        if (svXtierNe(up.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand)) + "\""; }
+                        if (svXtierNe(up.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand())) + "\""; }
+                        if (svXtierNe(up.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand())) + "\""; }
+                        if (svXtierNe(up.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand())) + "\""; }
                     }
                 }
             }
@@ -161116,9 +161348,9 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.AccbandsStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             Core.AccbandsStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA.realUpperBand, uB.realUpperBand) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realMiddleBand, uB.realMiddleBand) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realLowerBand, uB.realLowerBand) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realUpperBand(), uB.realUpperBand()) || svXtierNe(uA.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realMiddleBand(), uB.realMiddleBand()) || svXtierNe(uA.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realLowerBand(), uB.realLowerBand()) || svXtierNe(uA.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -161131,9 +161363,9 @@ public class TaCodegenServe {
             try {
                 Core.AccbandsStream sD = c2.accbandsOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
                 Core.AccbandsStream sE = c2.accbandsOpen(fz_h, fz_l, fz_c, 20);
-                if (svBne(sD.value().realUpperBand, sE.value().realUpperBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().realMiddleBand, sE.value().realMiddleBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().realLowerBand, sE.value().realLowerBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().realUpperBand(), sE.value().realUpperBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().realMiddleBand(), sE.value().realMiddleBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().realLowerBand(), sE.value().realLowerBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
         }
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
@@ -161946,21 +162178,21 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.AroonStream.Value v0 = st.value();
-                if (svXtierNe(v0.aroonDown, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.aroonUp, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.aroonDown(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.aroonUp(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.AroonStream.Value pk = st.peek(fz_h[t], fz_l[t]);
                         Core.AroonStream.Value up = st.update(fz_h[t], fz_l[t]);
-                        if (svBne(pk.aroonDown, up.aroonDown)) peekAll = false;
-                        if (svBne(pk.aroonUp, up.aroonUp)) peekAll = false;
+                        if (svBne(pk.aroonDown(), up.aroonDown())) peekAll = false;
+                        if (svBne(pk.aroonUp(), up.aroonUp())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.aroonDown, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonDown)) + "\""; }
-                        if (svXtierNe(up.aroonUp, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonUp)) + "\""; }
+                        if (svXtierNe(up.aroonDown(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonDown())) + "\""; }
+                        if (svXtierNe(up.aroonUp(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonUp())) + "\""; }
                     } else {
                         Core.AroonStream.Value up = st.update(fz_h[t], fz_l[t]);
-                        if (svXtierNe(up.aroonDown, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonDown)) + "\""; }
-                        if (svXtierNe(up.aroonUp, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonUp)) + "\""; }
+                        if (svXtierNe(up.aroonDown(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonDown())) + "\""; }
+                        if (svXtierNe(up.aroonUp(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonUp())) + "\""; }
                     }
                 }
             }
@@ -161975,8 +162207,8 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.AroonStream.Value uA = sA.update(fz_h[t], fz_l[t]);
                             Core.AroonStream.Value uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA.aroonDown, uB.aroonDown) || svXtierNe(uA.aroonDown, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.aroonUp, uB.aroonUp) || svXtierNe(uA.aroonUp, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.aroonDown(), uB.aroonDown()) || svXtierNe(uA.aroonDown(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.aroonUp(), uB.aroonUp()) || svXtierNe(uA.aroonUp(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -161989,8 +162221,8 @@ public class TaCodegenServe {
             try {
                 Core.AroonStream sD = c2.aroonOpen(fz_h, fz_l, Integer.MIN_VALUE);
                 Core.AroonStream sE = c2.aroonOpen(fz_h, fz_l, 14);
-                if (svBne(sD.value().aroonDown, sE.value().aroonDown)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().aroonUp, sE.value().aroonUp)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().aroonDown(), sE.value().aroonDown())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().aroonUp(), sE.value().aroonUp())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
         }
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
@@ -162698,25 +162930,25 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.BbandsStream.Value v0 = st.value();
-                if (svXtierNe(v0.realUpperBand, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.realMiddleBand, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
-                if (svXtierNe(v0.realLowerBand, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                if (svXtierNe(v0.realUpperBand(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.realMiddleBand(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.realLowerBand(), b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.BbandsStream.Value pk = st.peek(fz_c[t]);
                         Core.BbandsStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.realUpperBand, up.realUpperBand)) peekAll = false;
-                        if (svBne(pk.realMiddleBand, up.realMiddleBand)) peekAll = false;
-                        if (svBne(pk.realLowerBand, up.realLowerBand)) peekAll = false;
+                        if (svBne(pk.realUpperBand(), up.realUpperBand())) peekAll = false;
+                        if (svBne(pk.realMiddleBand(), up.realMiddleBand())) peekAll = false;
+                        if (svBne(pk.realLowerBand(), up.realLowerBand())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand)) + "\""; }
-                        if (svXtierNe(up.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand)) + "\""; }
-                        if (svXtierNe(up.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand)) + "\""; }
+                        if (svXtierNe(up.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand())) + "\""; }
+                        if (svXtierNe(up.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand())) + "\""; }
+                        if (svXtierNe(up.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand())) + "\""; }
                     } else {
                         Core.BbandsStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand)) + "\""; }
-                        if (svXtierNe(up.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand)) + "\""; }
-                        if (svXtierNe(up.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand)) + "\""; }
+                        if (svXtierNe(up.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand())) + "\""; }
+                        if (svXtierNe(up.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand())) + "\""; }
+                        if (svXtierNe(up.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand())) + "\""; }
                     }
                 }
             }
@@ -162731,9 +162963,9 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.BbandsStream.Value uA = sA.update(fz_c[t]);
                             Core.BbandsStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.realUpperBand, uB.realUpperBand) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realMiddleBand, uB.realMiddleBand) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realLowerBand, uB.realLowerBand) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realUpperBand(), uB.realUpperBand()) || svXtierNe(uA.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realMiddleBand(), uB.realMiddleBand()) || svXtierNe(uA.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realLowerBand(), uB.realLowerBand()) || svXtierNe(uA.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -162746,9 +162978,9 @@ public class TaCodegenServe {
             try {
                 Core.BbandsStream sD = c2.bbandsOpen(fz_c, Integer.MIN_VALUE, optInNbDevUp, optInNbDevDn, optInMAType);
                 Core.BbandsStream sE = c2.bbandsOpen(fz_c, 20, optInNbDevUp, optInNbDevDn, optInMAType);
-                if (svBne(sD.value().realUpperBand, sE.value().realUpperBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().realMiddleBand, sE.value().realMiddleBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().realLowerBand, sE.value().realLowerBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().realUpperBand(), sE.value().realUpperBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().realMiddleBand(), sE.value().realMiddleBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().realLowerBand(), sE.value().realLowerBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
         }
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
@@ -171077,21 +171309,21 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.HtPhasorStream.Value v0 = st.value();
-                if (svXtierNe(v0.inPhase, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.quadrature, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.inPhase(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.quadrature(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.HtPhasorStream.Value pk = st.peek(fz_c[t]);
                         Core.HtPhasorStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.inPhase, up.inPhase)) peekAll = false;
-                        if (svBne(pk.quadrature, up.quadrature)) peekAll = false;
+                        if (svBne(pk.inPhase(), up.inPhase())) peekAll = false;
+                        if (svBne(pk.quadrature(), up.quadrature())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.inPhase, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.inPhase)) + "\""; }
-                        if (svXtierNe(up.quadrature, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.quadrature)) + "\""; }
+                        if (svXtierNe(up.inPhase(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.inPhase())) + "\""; }
+                        if (svXtierNe(up.quadrature(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.quadrature())) + "\""; }
                     } else {
                         Core.HtPhasorStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.inPhase, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.inPhase)) + "\""; }
-                        if (svXtierNe(up.quadrature, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.quadrature)) + "\""; }
+                        if (svXtierNe(up.inPhase(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.inPhase())) + "\""; }
+                        if (svXtierNe(up.quadrature(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.quadrature())) + "\""; }
                     }
                 }
             }
@@ -171106,8 +171338,8 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.HtPhasorStream.Value uA = sA.update(fz_c[t]);
                             Core.HtPhasorStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.inPhase, uB.inPhase) || svXtierNe(uA.inPhase, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.quadrature, uB.quadrature) || svXtierNe(uA.quadrature, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.inPhase(), uB.inPhase()) || svXtierNe(uA.inPhase(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.quadrature(), uB.quadrature()) || svXtierNe(uA.quadrature(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -171188,21 +171420,21 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.HtSineStream.Value v0 = st.value();
-                if (svXtierNe(v0.sine, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.leadSine, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.sine(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.leadSine(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.HtSineStream.Value pk = st.peek(fz_c[t]);
                         Core.HtSineStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.sine, up.sine)) peekAll = false;
-                        if (svBne(pk.leadSine, up.leadSine)) peekAll = false;
+                        if (svBne(pk.sine(), up.sine())) peekAll = false;
+                        if (svBne(pk.leadSine(), up.leadSine())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.sine, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.sine)) + "\""; }
-                        if (svXtierNe(up.leadSine, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.leadSine)) + "\""; }
+                        if (svXtierNe(up.sine(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.sine())) + "\""; }
+                        if (svXtierNe(up.leadSine(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.leadSine())) + "\""; }
                     } else {
                         Core.HtSineStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.sine, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.sine)) + "\""; }
-                        if (svXtierNe(up.leadSine, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.leadSine)) + "\""; }
+                        if (svXtierNe(up.sine(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.sine())) + "\""; }
+                        if (svXtierNe(up.leadSine(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.leadSine())) + "\""; }
                     }
                 }
             }
@@ -171217,8 +171449,8 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.HtSineStream.Value uA = sA.update(fz_c[t]);
                             Core.HtSineStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.sine, uB.sine) || svXtierNe(uA.sine, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.leadSine, uB.leadSine) || svXtierNe(uA.leadSine, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.sine(), uB.sine()) || svXtierNe(uA.sine(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.leadSine(), uB.leadSine()) || svXtierNe(uA.leadSine(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -172460,25 +172692,25 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.MacdStream.Value v0 = st.value();
-                if (svXtierNe(v0.macd, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.macdSignal, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
-                if (svXtierNe(v0.macdHist, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                if (svXtierNe(v0.macd(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdSignal(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdHist(), b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.MacdStream.Value pk = st.peek(fz_c[t]);
                         Core.MacdStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.macd, up.macd)) peekAll = false;
-                        if (svBne(pk.macdSignal, up.macdSignal)) peekAll = false;
-                        if (svBne(pk.macdHist, up.macdHist)) peekAll = false;
+                        if (svBne(pk.macd(), up.macd())) peekAll = false;
+                        if (svBne(pk.macdSignal(), up.macdSignal())) peekAll = false;
+                        if (svBne(pk.macdHist(), up.macdHist())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd)) + "\""; }
-                        if (svXtierNe(up.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal)) + "\""; }
-                        if (svXtierNe(up.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist)) + "\""; }
+                        if (svXtierNe(up.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd())) + "\""; }
+                        if (svXtierNe(up.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal())) + "\""; }
+                        if (svXtierNe(up.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist())) + "\""; }
                     } else {
                         Core.MacdStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd)) + "\""; }
-                        if (svXtierNe(up.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal)) + "\""; }
-                        if (svXtierNe(up.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist)) + "\""; }
+                        if (svXtierNe(up.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd())) + "\""; }
+                        if (svXtierNe(up.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal())) + "\""; }
+                        if (svXtierNe(up.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist())) + "\""; }
                     }
                 }
             }
@@ -172493,9 +172725,9 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.MacdStream.Value uA = sA.update(fz_c[t]);
                             Core.MacdStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.macd, uB.macd) || svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdSignal, uB.macdSignal) || svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdHist, uB.macdHist) || svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macd(), uB.macd()) || svXtierNe(uA.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdSignal(), uB.macdSignal()) || svXtierNe(uA.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdHist(), uB.macdHist()) || svXtierNe(uA.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -172508,9 +172740,9 @@ public class TaCodegenServe {
             try {
                 Core.MacdStream sD = c2.macdOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
                 Core.MacdStream sE = c2.macdOpen(fz_c, 12, 26, 9);
-                if (svBne(sD.value().macd, sE.value().macd)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().macdSignal, sE.value().macdSignal)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().macdHist, sE.value().macdHist)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().macd(), sE.value().macd())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().macdSignal(), sE.value().macdSignal())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().macdHist(), sE.value().macdHist())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
         }
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
@@ -172613,25 +172845,25 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.MacdExtStream.Value v0 = st.value();
-                if (svXtierNe(v0.macd, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.macdSignal, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
-                if (svXtierNe(v0.macdHist, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                if (svXtierNe(v0.macd(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdSignal(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdHist(), b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.MacdExtStream.Value pk = st.peek(fz_c[t]);
                         Core.MacdExtStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.macd, up.macd)) peekAll = false;
-                        if (svBne(pk.macdSignal, up.macdSignal)) peekAll = false;
-                        if (svBne(pk.macdHist, up.macdHist)) peekAll = false;
+                        if (svBne(pk.macd(), up.macd())) peekAll = false;
+                        if (svBne(pk.macdSignal(), up.macdSignal())) peekAll = false;
+                        if (svBne(pk.macdHist(), up.macdHist())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd)) + "\""; }
-                        if (svXtierNe(up.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal)) + "\""; }
-                        if (svXtierNe(up.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist)) + "\""; }
+                        if (svXtierNe(up.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd())) + "\""; }
+                        if (svXtierNe(up.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal())) + "\""; }
+                        if (svXtierNe(up.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist())) + "\""; }
                     } else {
                         Core.MacdExtStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd)) + "\""; }
-                        if (svXtierNe(up.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal)) + "\""; }
-                        if (svXtierNe(up.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist)) + "\""; }
+                        if (svXtierNe(up.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd())) + "\""; }
+                        if (svXtierNe(up.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal())) + "\""; }
+                        if (svXtierNe(up.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist())) + "\""; }
                     }
                 }
             }
@@ -172646,9 +172878,9 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.MacdExtStream.Value uA = sA.update(fz_c[t]);
                             Core.MacdExtStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.macd, uB.macd) || svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdSignal, uB.macdSignal) || svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdHist, uB.macdHist) || svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macd(), uB.macd()) || svXtierNe(uA.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdSignal(), uB.macdSignal()) || svXtierNe(uA.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdHist(), uB.macdHist()) || svXtierNe(uA.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -172661,9 +172893,9 @@ public class TaCodegenServe {
             try {
                 Core.MacdExtStream sD = c2.macdExtOpen(fz_c, Integer.MIN_VALUE, optInFastMAType, Integer.MIN_VALUE, optInSlowMAType, Integer.MIN_VALUE, optInSignalMAType);
                 Core.MacdExtStream sE = c2.macdExtOpen(fz_c, 12, optInFastMAType, 26, optInSlowMAType, 9, optInSignalMAType);
-                if (svBne(sD.value().macd, sE.value().macd)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().macdSignal, sE.value().macdSignal)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().macdHist, sE.value().macdHist)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().macd(), sE.value().macd())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().macdSignal(), sE.value().macdSignal())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().macdHist(), sE.value().macdHist())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
         }
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
@@ -172740,25 +172972,25 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.MacdFixStream.Value v0 = st.value();
-                if (svXtierNe(v0.macd, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.macdSignal, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
-                if (svXtierNe(v0.macdHist, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                if (svXtierNe(v0.macd(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdSignal(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdHist(), b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.MacdFixStream.Value pk = st.peek(fz_c[t]);
                         Core.MacdFixStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.macd, up.macd)) peekAll = false;
-                        if (svBne(pk.macdSignal, up.macdSignal)) peekAll = false;
-                        if (svBne(pk.macdHist, up.macdHist)) peekAll = false;
+                        if (svBne(pk.macd(), up.macd())) peekAll = false;
+                        if (svBne(pk.macdSignal(), up.macdSignal())) peekAll = false;
+                        if (svBne(pk.macdHist(), up.macdHist())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd)) + "\""; }
-                        if (svXtierNe(up.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal)) + "\""; }
-                        if (svXtierNe(up.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist)) + "\""; }
+                        if (svXtierNe(up.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd())) + "\""; }
+                        if (svXtierNe(up.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal())) + "\""; }
+                        if (svXtierNe(up.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist())) + "\""; }
                     } else {
                         Core.MacdFixStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd)) + "\""; }
-                        if (svXtierNe(up.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal)) + "\""; }
-                        if (svXtierNe(up.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist)) + "\""; }
+                        if (svXtierNe(up.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd())) + "\""; }
+                        if (svXtierNe(up.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal())) + "\""; }
+                        if (svXtierNe(up.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist())) + "\""; }
                     }
                 }
             }
@@ -172773,9 +173005,9 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.MacdFixStream.Value uA = sA.update(fz_c[t]);
                             Core.MacdFixStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.macd, uB.macd) || svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdSignal, uB.macdSignal) || svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdHist, uB.macdHist) || svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macd(), uB.macd()) || svXtierNe(uA.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdSignal(), uB.macdSignal()) || svXtierNe(uA.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdHist(), uB.macdHist()) || svXtierNe(uA.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -172788,9 +173020,9 @@ public class TaCodegenServe {
             try {
                 Core.MacdFixStream sD = c2.macdFixOpen(fz_c, Integer.MIN_VALUE);
                 Core.MacdFixStream sE = c2.macdFixOpen(fz_c, 9);
-                if (svBne(sD.value().macd, sE.value().macd)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().macdSignal, sE.value().macdSignal)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().macdHist, sE.value().macdHist)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().macd(), sE.value().macd())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().macdSignal(), sE.value().macdSignal())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().macdHist(), sE.value().macdHist())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
         }
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
@@ -172865,21 +173097,21 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.MamaStream.Value v0 = st.value();
-                if (svXtierNe(v0.mama, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.fama, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.mama(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.fama(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.MamaStream.Value pk = st.peek(fz_c[t]);
                         Core.MamaStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.mama, up.mama)) peekAll = false;
-                        if (svBne(pk.fama, up.fama)) peekAll = false;
+                        if (svBne(pk.mama(), up.mama())) peekAll = false;
+                        if (svBne(pk.fama(), up.fama())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.mama, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.mama)) + "\""; }
-                        if (svXtierNe(up.fama, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fama)) + "\""; }
+                        if (svXtierNe(up.mama(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.mama())) + "\""; }
+                        if (svXtierNe(up.fama(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fama())) + "\""; }
                     } else {
                         Core.MamaStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.mama, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.mama)) + "\""; }
-                        if (svXtierNe(up.fama, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fama)) + "\""; }
+                        if (svXtierNe(up.mama(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.mama())) + "\""; }
+                        if (svXtierNe(up.fama(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fama())) + "\""; }
                     }
                 }
             }
@@ -172894,8 +173126,8 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.MamaStream.Value uA = sA.update(fz_c[t]);
                             Core.MamaStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.mama, uB.mama) || svXtierNe(uA.mama, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.fama, uB.fama) || svXtierNe(uA.fama, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.mama(), uB.mama()) || svXtierNe(uA.mama(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fama(), uB.fama()) || svXtierNe(uA.fama(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -173935,21 +174167,21 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.MinMaxStream.Value v0 = st.value();
-                if (svXtierNe(v0.min, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.max, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.min(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.max(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.MinMaxStream.Value pk = st.peek(fz_c[t]);
                         Core.MinMaxStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.min, up.min)) peekAll = false;
-                        if (svBne(pk.max, up.max)) peekAll = false;
+                        if (svBne(pk.min(), up.min())) peekAll = false;
+                        if (svBne(pk.max(), up.max())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.min, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.min)) + "\""; }
-                        if (svXtierNe(up.max, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.max)) + "\""; }
+                        if (svXtierNe(up.min(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.min())) + "\""; }
+                        if (svXtierNe(up.max(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.max())) + "\""; }
                     } else {
                         Core.MinMaxStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.min, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.min)) + "\""; }
-                        if (svXtierNe(up.max, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.max)) + "\""; }
+                        if (svXtierNe(up.min(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.min())) + "\""; }
+                        if (svXtierNe(up.max(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.max())) + "\""; }
                     }
                 }
             }
@@ -173964,8 +174196,8 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.MinMaxStream.Value uA = sA.update(fz_c[t]);
                             Core.MinMaxStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.min, uB.min) || svXtierNe(uA.min, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.max, uB.max) || svXtierNe(uA.max, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.min(), uB.min()) || svXtierNe(uA.min(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.max(), uB.max()) || svXtierNe(uA.max(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -173978,8 +174210,8 @@ public class TaCodegenServe {
             try {
                 Core.MinMaxStream sD = c2.minMaxOpen(fz_c, Integer.MIN_VALUE);
                 Core.MinMaxStream sE = c2.minMaxOpen(fz_c, 30);
-                if (svBne(sD.value().min, sE.value().min)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().max, sE.value().max)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().min(), sE.value().min())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().max(), sE.value().max())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
         }
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
@@ -174050,21 +174282,21 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.MinMaxIndexStream.Value v0 = st.value();
-                if (v0.minIdx != b0[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (v0.maxIdx != b1[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (v0.minIdx() != b0[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (v0.maxIdx() != b1[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.MinMaxIndexStream.Value pk = st.peek(fz_c[t]);
                         Core.MinMaxIndexStream.Value up = st.update(fz_c[t]);
-                        if (pk.minIdx != up.minIdx) peekAll = false;
-                        if (pk.maxIdx != up.maxIdx) peekAll = false;
+                        if (pk.minIdx() != up.minIdx()) peekAll = false;
+                        if (pk.maxIdx() != up.maxIdx()) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (up.minIdx != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg.value] + "\",\"streamv\":\"" + up.minIdx + "\""; }
-                        if (up.maxIdx != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.maxIdx + "\""; }
+                        if (up.minIdx() != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg.value] + "\",\"streamv\":\"" + up.minIdx() + "\""; }
+                        if (up.maxIdx() != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.maxIdx() + "\""; }
                     } else {
                         Core.MinMaxIndexStream.Value up = st.update(fz_c[t]);
-                        if (up.minIdx != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg.value] + "\",\"streamv\":\"" + up.minIdx + "\""; }
-                        if (up.maxIdx != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.maxIdx + "\""; }
+                        if (up.minIdx() != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg.value] + "\",\"streamv\":\"" + up.minIdx() + "\""; }
+                        if (up.maxIdx() != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.maxIdx() + "\""; }
                     }
                 }
             }
@@ -174079,8 +174311,8 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.MinMaxIndexStream.Value uA = sA.update(fz_c[t]);
                             Core.MinMaxIndexStream.Value uB = sB.update(fz_c[t]);
-                            if (uA.minIdx != uB.minIdx || uA.minIdx != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.maxIdx != uB.maxIdx || uA.maxIdx != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.minIdx() != uB.minIdx() || uA.minIdx() != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.maxIdx() != uB.maxIdx() || uA.maxIdx() != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -174093,8 +174325,8 @@ public class TaCodegenServe {
             try {
                 Core.MinMaxIndexStream sD = c2.minMaxIndexOpen(fz_c, Integer.MIN_VALUE);
                 Core.MinMaxIndexStream sE = c2.minMaxIndexOpen(fz_c, 30);
-                if (sD.value().minIdx != sE.value().minIdx) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (sD.value().maxIdx != sE.value().maxIdx) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (sD.value().minIdx() != sE.value().minIdx()) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (sD.value().maxIdx() != sE.value().maxIdx()) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
         }
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
@@ -176718,21 +176950,21 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.StochStream.Value v0 = st.value();
-                if (svXtierNe(v0.slowK, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.slowD, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.slowK(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.slowD(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.StochStream.Value pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
                         Core.StochStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svBne(pk.slowK, up.slowK)) peekAll = false;
-                        if (svBne(pk.slowD, up.slowD)) peekAll = false;
+                        if (svBne(pk.slowK(), up.slowK())) peekAll = false;
+                        if (svBne(pk.slowD(), up.slowD())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.slowK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowK)) + "\""; }
-                        if (svXtierNe(up.slowD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowD)) + "\""; }
+                        if (svXtierNe(up.slowK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowK())) + "\""; }
+                        if (svXtierNe(up.slowD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowD())) + "\""; }
                     } else {
                         Core.StochStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svXtierNe(up.slowK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowK)) + "\""; }
-                        if (svXtierNe(up.slowD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowD)) + "\""; }
+                        if (svXtierNe(up.slowK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowK())) + "\""; }
+                        if (svXtierNe(up.slowD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowD())) + "\""; }
                     }
                 }
             }
@@ -176747,8 +176979,8 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.StochStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             Core.StochStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA.slowK, uB.slowK) || svXtierNe(uA.slowK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.slowD, uB.slowD) || svXtierNe(uA.slowD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.slowK(), uB.slowK()) || svXtierNe(uA.slowK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.slowD(), uB.slowD()) || svXtierNe(uA.slowD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -176761,8 +176993,8 @@ public class TaCodegenServe {
             try {
                 Core.StochStream sD = c2.stochOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInSlowK_MAType, Integer.MIN_VALUE, optInSlowD_MAType);
                 Core.StochStream sE = c2.stochOpen(fz_h, fz_l, fz_c, 5, 3, optInSlowK_MAType, 3, optInSlowD_MAType);
-                if (svBne(sD.value().slowK, sE.value().slowK)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().slowD, sE.value().slowD)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().slowK(), sE.value().slowK())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().slowD(), sE.value().slowD())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
         }
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
@@ -176847,21 +177079,21 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.StochFStream.Value v0 = st.value();
-                if (svXtierNe(v0.fastK, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.fastD, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.fastK(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.fastD(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.StochFStream.Value pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
                         Core.StochFStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svBne(pk.fastK, up.fastK)) peekAll = false;
-                        if (svBne(pk.fastD, up.fastD)) peekAll = false;
+                        if (svBne(pk.fastK(), up.fastK())) peekAll = false;
+                        if (svBne(pk.fastD(), up.fastD())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK)) + "\""; }
-                        if (svXtierNe(up.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD)) + "\""; }
+                        if (svXtierNe(up.fastK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK())) + "\""; }
+                        if (svXtierNe(up.fastD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD())) + "\""; }
                     } else {
                         Core.StochFStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svXtierNe(up.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK)) + "\""; }
-                        if (svXtierNe(up.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD)) + "\""; }
+                        if (svXtierNe(up.fastK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK())) + "\""; }
+                        if (svXtierNe(up.fastD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD())) + "\""; }
                     }
                 }
             }
@@ -176876,8 +177108,8 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.StochFStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             Core.StochFStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA.fastK, uB.fastK) || svXtierNe(uA.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.fastD, uB.fastD) || svXtierNe(uA.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fastK(), uB.fastK()) || svXtierNe(uA.fastK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fastD(), uB.fastD()) || svXtierNe(uA.fastD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -176890,8 +177122,8 @@ public class TaCodegenServe {
             try {
                 Core.StochFStream sD = c2.stochFOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInFastD_MAType);
                 Core.StochFStream sE = c2.stochFOpen(fz_h, fz_l, fz_c, 5, 3, optInFastD_MAType);
-                if (svBne(sD.value().fastK, sE.value().fastK)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().fastD, sE.value().fastD)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().fastK(), sE.value().fastK())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().fastD(), sE.value().fastD())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
         }
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
@@ -176978,21 +177210,21 @@ public class TaCodegenServe {
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.StochRsiStream.Value v0 = st.value();
-                if (svXtierNe(v0.fastK, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.fastD, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.fastK(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.fastD(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
                         Core.StochRsiStream.Value pk = st.peek(fz_c[t]);
                         Core.StochRsiStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.fastK, up.fastK)) peekAll = false;
-                        if (svBne(pk.fastD, up.fastD)) peekAll = false;
+                        if (svBne(pk.fastK(), up.fastK())) peekAll = false;
+                        if (svBne(pk.fastD(), up.fastD())) peekAll = false;
                         if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK)) + "\""; }
-                        if (svXtierNe(up.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD)) + "\""; }
+                        if (svXtierNe(up.fastK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK())) + "\""; }
+                        if (svXtierNe(up.fastD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD())) + "\""; }
                     } else {
                         Core.StochRsiStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK)) + "\""; }
-                        if (svXtierNe(up.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD)) + "\""; }
+                        if (svXtierNe(up.fastK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK())) + "\""; }
+                        if (svXtierNe(up.fastD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD())) + "\""; }
                     }
                 }
             }
@@ -177007,8 +177239,8 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.StochRsiStream.Value uA = sA.update(fz_c[t]);
                             Core.StochRsiStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.fastK, uB.fastK) || svXtierNe(uA.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.fastD, uB.fastD) || svXtierNe(uA.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fastK(), uB.fastK()) || svXtierNe(uA.fastK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fastD(), uB.fastD()) || svXtierNe(uA.fastD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -177021,8 +177253,8 @@ public class TaCodegenServe {
             try {
                 Core.StochRsiStream sD = c2.stochRsiOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, optInFastD_MAType);
                 Core.StochRsiStream sE = c2.stochRsiOpen(fz_c, 14, 5, 3, optInFastD_MAType);
-                if (svBne(sD.value().fastK, sE.value().fastK)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().fastD, sE.value().fastD)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().fastK(), sE.value().fastK())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().fastD(), sE.value().fastD())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
         }
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";

@@ -36,9 +36,9 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
          return -1;
       }
       return optInTimePeriod - 1 ;
@@ -78,9 +78,9 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed to calculate
@@ -216,9 +216,9 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
          return RetCode.BadParam;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;
@@ -408,8 +408,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent. Do not mutate the owning
-    * {@link Core}'s settings while streams opened from it are live.
+    * {@code copy()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -432,13 +431,16 @@
       int xCap;
       double[] x_inReal;
       double cur_outReal;
-      OutRange fillRange;
+      OutRange fillRange = OutRange.EMPTY;
 
       VarianceStream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#varianceOpenAndFill}, or {@code null}
-       * when this handle came from a plain {@code open} (which fills nothing).
+       * The range filled by {@link Core#varianceOpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
        */
       public OutRange fillRange() { return fillRange; }
 
@@ -599,9 +601,9 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed to calculate
@@ -756,9 +758,9 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
          return RetCode.BadParam;
       }
       if( (Object)outReal == (Object)inReal ) {
@@ -898,12 +900,12 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_VAR open: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("VAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_VAR open: internal error");
+         throw new IllegalStateException("VAR open: internal error");
       }
-      throw new IllegalArgumentException("TA_VAR open: " + retCode);
+      throw new IllegalArgumentException("VAR open: " + retCode);
    }
    /**
     * Open a live VAR stream over the warm-up history; the handle's
@@ -939,10 +941,10 @@
          return sp;
       }
       if( retCode == RetCode.OutOfRangeEndIndex ) {
-         throw new InsufficientHistoryException("TA_VAR openAndFill: history shorter than lookback + 1");
+         throw new InsufficientHistoryException("VAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TA_VAR openAndFill: internal error");
+         throw new IllegalStateException("VAR openAndFill: internal error");
       }
-      throw new IllegalArgumentException("TA_VAR openAndFill: " + retCode);
+      throw new IllegalArgumentException("VAR openAndFill: " + retCode);
    }
