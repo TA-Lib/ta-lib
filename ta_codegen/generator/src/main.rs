@@ -1371,12 +1371,24 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
         }
     }
 
+    if !check_java_doc_examples(&src_root, &class_dir, bin_dir) {
+        return false;
+    }
+
     // Run every test class DISCOVERED in the sources, not a hardcoded list: a
     // hardcoded roster is how the retired `AllTests` suite went vacuous (it
     // named one class, which a later change deleted, and `ant test` kept
     // passing). A new *Test.java with a main() is picked up automatically; one
     // without a main() is a hard error rather than a silent skip.
-    let tests = discover_java_tests(&sources);
+    let (tests, unrunnable) = discover_java_tests(&sources);
+    if !unrunnable.is_empty() {
+        println!(
+            "  Building Java library... FAILED ({} test class(es) with no main(): {})",
+            unrunnable.len(),
+            unrunnable.join(", ")
+        );
+        return false;
+    }
     if tests.is_empty() {
         println!("  Building Java library... FAILED (no test classes discovered)");
         return false;
@@ -1403,14 +1415,157 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
     true
 }
 
-/// Every `*Test.java` in the shipped library's test package, in a stable order.
+/// Compile the Java examples embedded in the shipped javadoc.
+///
+/// `-Xdoclint` does not look inside `<pre>{@code ...}</pre>`, so an example can
+/// call a method that does not exist and every other gate stays green. That is
+/// exactly how `setRealInput`/`setRealOutput` — names `ParamHolder` has never
+/// had — reached the metadata package's landing page. These blocks are the first
+/// thing a user copies, and a published javadoc jar cannot be corrected, so they
+/// are compiled like any other source.
+///
+/// Scope is the hand-written scaffolding plus the two package pages, listed in
+/// `DOC_EXAMPLE_FILES`. `Core.java` contributes only its hand-written region:
+/// the 233 blocks inside the GENCODE markers are each function's **Formula**
+/// from its canonical `.md`, which is algebra and deliberately not Java.
+///
+/// A snippet may use `close` and `out`; anything else fails, which is the point
+/// — the alternative is a preamble that quietly grows until the gate compiles
+/// something no reader could.
+fn check_java_doc_examples(src_root: &Path, class_dir: &Path, bin_dir: &Path) -> bool {
+    const DOC_EXAMPLE_FILES: &[&str] = &[
+        "main/java/io/github/talib/package-info.java",
+        "main/java/io/github/talib/CoreBuilder.java",
+        "main/java/io/github/talib/metadata/package-info.java",
+        "main/java/io/github/talib/metadata/Functions.java",
+        "main/java/io/github/talib/metadata/ParamHolder.java",
+    ];
+    const CORE_GENCODE_START: &str = "/**** START GENCODE SECTION 1";
+
+    let mut snippets: Vec<(String, String)> = Vec::new();
+    for rel in DOC_EXAMPLE_FILES {
+        let path = src_root.join(rel);
+        let Ok(text) = std::fs::read_to_string(&path) else {
+            println!("  Checking Java doc examples... FAILED (cannot read {})", path.display());
+            return false;
+        };
+        for (i, body) in extract_doc_code_blocks(&text).into_iter().enumerate() {
+            snippets.push((format!("{rel}#{i}"), body));
+        }
+    }
+    // Core.java: everything before the generated section.
+    let core_path = src_root.join("main/java/io/github/talib/Core.java");
+    if let Ok(text) = std::fs::read_to_string(&core_path) {
+        let head = text.split(CORE_GENCODE_START).next().unwrap_or("");
+        for (i, body) in extract_doc_code_blocks(head).into_iter().enumerate() {
+            snippets.push((format!("Core.java(hand-written)#{i}"), body));
+        }
+    }
+
+    print!("  Checking Java doc examples ({})... ", snippets.len());
+    if snippets.is_empty() {
+        // The scaffolding always carries examples; none found means the
+        // extractor stopped matching, not that the docs got simpler.
+        println!("FAILED (no <pre>{{@code ...}}</pre> blocks found — extractor out of step?)");
+        return false;
+    }
+
+    let dir = bin_dir.join("ta_codegen_java_docex");
+    let _ = std::fs::remove_dir_all(&dir);
+    if std::fs::create_dir_all(&dir).is_err() {
+        println!("FAILED (cannot create {})", dir.display());
+        return false;
+    }
+    let mut files: Vec<std::path::PathBuf> = Vec::new();
+    for (n, (origin, body)) in snippets.iter().enumerate() {
+        let indented: String =
+            body.lines().map(|l| format!("         {l}\n")).collect::<String>();
+        // The free variables are FIELDS, not parameters: a snippet that declares
+        // its own `out` shadows a field legally, where a parameter of the same
+        // name is a compile error the snippet is not responsible for.
+        let src = format!(
+            "import io.github.talib.*;\n\
+             import io.github.talib.metadata.*;\n\
+             /** From {origin} — generated by the doc-example gate, not shipped. */\n\
+             public class DocExample{n} {{\n\
+             \x20  static double[] close = new double[300];\n\
+             \x20  static double[] out = new double[300];\n\
+             \x20  @SuppressWarnings(\"unused\")\n\
+             \x20  static void snippet() throws Exception {{\n\
+             {indented}\
+             \x20  }}\n\
+             }}\n"
+        );
+        let f = dir.join(format!("DocExample{n}.java"));
+        if std::fs::write(&f, src).is_err() {
+            println!("FAILED (cannot write {})", f.display());
+            return false;
+        }
+        files.push(f);
+    }
+
+    let mut cmd = std::process::Command::new("javac");
+    cmd.arg("--release").arg(JAVA_RELEASE).arg("-nowarn").arg("-cp").arg(class_dir);
+    cmd.arg("-d").arg(dir.join("classes"));
+    for f in &files {
+        cmd.arg(f);
+    }
+    match cmd.output() {
+        Ok(o) if o.status.success() => {
+            println!("OK");
+            true
+        }
+        Ok(o) => {
+            println!("FAILED");
+            for (n, (origin, _)) in snippets.iter().enumerate() {
+                println!("    DocExample{n} = {origin}");
+            }
+            print!("{}", String::from_utf8_lossy(&o.stderr));
+            false
+        }
+        Err(e) => {
+            println!("FAILED (javac not found: {e})");
+            false
+        }
+    }
+}
+
+/// The bodies of every `<pre>{@code ... }</pre>` block in `text`, with the
+/// javadoc `*` margin stripped.
+fn extract_doc_code_blocks(text: &str) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    let mut cur: Option<Vec<String>> = None;
+    for line in text.lines() {
+        let t = line.trim_start();
+        let t = t.strip_prefix('*').map_or(t, str::trim_start);
+        if cur.is_none() {
+            if t.contains("<pre>{@code") {
+                cur = Some(Vec::new());
+            }
+            continue;
+        }
+        if t.starts_with("}</pre>") {
+            out.push(cur.take().unwrap_or_default().join("\n"));
+            continue;
+        }
+        if let Some(buf) = cur.as_mut() {
+            buf.push(t.to_string());
+        }
+    }
+    out
+}
+
+/// Every `*Test.java` in the shipped library's test package, in a stable order,
+/// paired with the ones that cannot be run.
 ///
 /// Discovered rather than listed so a new suite cannot be compiled-but-never-run
-/// (the `AllTests` trap). A `*Test.java` without a `main()` is reported and
-/// counted as a failure: silently skipping it would recreate exactly the vacuity
-/// this replaces.
-fn discover_java_tests(sources: &[std::path::PathBuf]) -> Vec<String> {
+/// (the `AllTests` trap). A `*Test.java` without a `main()` is returned in the
+/// second vec and fails the build: silently skipping it would recreate exactly
+/// the vacuity this replaces, and `tests.is_empty()` cannot catch it — one
+/// surviving suite masks any number of skipped ones.
+fn discover_java_tests(sources: &[std::path::PathBuf]) -> (Vec<String>, Vec<String>) {
     let mut out: Vec<String> = Vec::new();
+    let mut unrunnable: Vec<String> = Vec::new();
     for src in sources {
         let Some(stem) = src.file_stem().map(|s| s.to_string_lossy().to_string()) else {
             continue;
@@ -1419,14 +1574,40 @@ fn discover_java_tests(sources: &[std::path::PathBuf]) -> Vec<String> {
             continue;
         }
         let text = std::fs::read_to_string(src).unwrap_or_default();
-        if text.contains("public static void main(") {
+        if has_java_main(&text) {
             out.push(stem);
         } else {
-            println!("  WARNING: {stem} looks like a test but has no main() — not run");
+            unrunnable.push(stem);
         }
     }
     out.sort();
-    out
+    unrunnable.sort();
+    (out, unrunnable)
+}
+
+/// Whether `text` declares a `public static void main(...)`.
+///
+/// Tolerant of the modifier order and of whitespace before the parenthesis,
+/// because the caller now FAILS the build on a miss rather than warning: an
+/// exact-substring match would turn `static public void main(` — legal Java —
+/// into a hard failure of the whole Java build, which is a worse bug than the
+/// silent skip it replaced.
+fn has_java_main(text: &str) -> bool {
+    for line in text.lines() {
+        let Some(head) = line.split("main").next().filter(|_| line.contains("main")) else {
+            continue;
+        };
+        // The token right after `main` must open the parameter list.
+        let after = &line[head.len() + "main".len()..];
+        if !after.trim_start().starts_with('(') {
+            continue;
+        }
+        let has = |kw: &str| head.split_whitespace().any(|w| w == kw);
+        if has("public") && has("static") && has("void") {
+            return true;
+        }
+    }
+    false
 }
 
 /// JDK floor for everything Java this tool compiles, kept in one place so the
