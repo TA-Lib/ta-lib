@@ -13,6 +13,7 @@
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  070526 MF,CC  Speed optimization: compute both EMA in a single
  *                lockstep pass (bit-exact, no temporary buffers).
+ *  080926 MF,CC  Explicit no-smoothing copy at a period of 1.
  */
 
    /**
@@ -101,6 +102,24 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
+         return RetCode.Success ;
+      }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit and separate
+       * from TA_EMA's own copy because the two EMA below are inlined here,
+       * not delegated -- at period 1 they reduce to (x-prev)+prev, which
+       * loses the input as soon as consecutive values differ by more than a
+       * factor of two, and 2*e1 - e2 then propagates the residue rather
+       * than cancelling it.
+       */
+      if( optInTimePeriod == 1 ) {
+         outBegIdx.value = startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx ) {
+            outReal[outIdx++] = inReal[today++];
+         }
+         outNBElement.value = outIdx;
          return RetCode.Success ;
       }
       /* Both EMA are computed in a single lockstep pass: each new
@@ -210,6 +229,16 @@
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
+         return RetCode.Success ;
+      }
+      if( optInTimePeriod == 1 ) {
+         outBegIdx.value = startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx ) {
+            outReal[outIdx++] = (double)inReal[today++];
+         }
+         outNBElement.value = outIdx;
          return RetCode.Success ;
       }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
@@ -436,6 +465,10 @@
    }
    void DEMA_StreamStep( DEMA_Stream sp, double inReal )
    {
+      if( sp.optInTimePeriod == 1 ) {
+         sp.cur_outReal = inReal;
+         return ;
+      }
       sp.prevEMA1 = Math.fma(inReal - sp.prevEMA1, sp.optInK_1, sp.prevEMA1);
       sp.prevEMA2 = Math.fma(sp.prevEMA1 - sp.prevEMA2, sp.optInK_1, sp.prevEMA2);
       sp.cur_outReal = 2.0 * sp.prevEMA1 - sp.prevEMA2;
@@ -466,6 +499,17 @@
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( optInTimePeriod == 1 ) {
+         if( historyLen < DEMA_Lookback(optInTimePeriod) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.prevEMA1 = 0.0;
+         sp.prevEMA2 = 0.0;
+         sp.optInK_1 = 0.0;
+         sp.cur_outReal = inReal[historyLen - 1];
+         return RetCode.Success;
       }
       /* For an explanation of this function, please read
        *
@@ -503,6 +547,14 @@
       if( startIdx > endIdx ) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit and separate
+       * from TA_EMA's own copy because the two EMA below are inlined here,
+       * not delegated -- at period 1 they reduce to (x-prev)+prev, which
+       * loses the input as soon as consecutive values differ by more than a
+       * factor of two, and 2*e1 - e2 then propagates the residue rather
+       * than cancelling it.
+       */
       /* Both EMA are computed in a single lockstep pass: each new
        * EMA1 value is immediately fed into EMA2. No temporary
        * buffers are needed.
@@ -608,6 +660,23 @@
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
+      if( optInTimePeriod == 1 ) {
+         if( historyLen < DEMA_Lookback(optInTimePeriod) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.prevEMA1 = 0.0;
+         sp.prevEMA2 = 0.0;
+         sp.optInK_1 = 0.0;
+         int fillLb = DEMA_Lookback(optInTimePeriod);
+         outBegIdx.value = fillLb;
+         outNBElement.value = historyLen - fillLb;
+         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         }
+         sp.cur_outReal = outReal[outNBElement.value - 1];
+         return RetCode.Success;
+      }
       /* For an explanation of this function, please read
        *
        * Stocks & Commodities V. 12:1 (11-19):
@@ -644,6 +713,14 @@
       if( startIdx > endIdx ) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit and separate
+       * from TA_EMA's own copy because the two EMA below are inlined here,
+       * not delegated -- at period 1 they reduce to (x-prev)+prev, which
+       * loses the input as soon as consecutive values differ by more than a
+       * factor of two, and 2*e1 - e2 then propagates the residue rather
+       * than cancelling it.
+       */
       /* Both EMA are computed in a single lockstep pass: each new
        * EMA1 value is immediately fed into EMA2. No temporary
        * buffers are needed.

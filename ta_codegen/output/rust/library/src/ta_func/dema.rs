@@ -54,6 +54,7 @@
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  070526 MF,CC  Speed optimization: compute both EMA in a single
  *                lockstep pass (bit-exact, no temporary buffers).
+ *  080926 MF,CC  Explicit no-smoothing copy at a period of 1.
  */
 
 // Import types from parent module
@@ -253,6 +254,24 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        // No smoothing at period of 1: the output is a copy of the input
+        // (same convention as TA_MA for every MAType). Explicit and separate
+        // from TA_EMA's own copy because the two EMA below are inlined here,
+        // not delegated -- at period 1 they reduce to (x-prev)+prev, which
+        // loses the input as soon as consecutive values differ by more than a
+        // factor of two, and 2*e1 - e2 then propagates the residue rather
+        // than cancelling it.
+        if optInTimePeriod == 1 {
+            (*outBegIdx) = startIdx;
+            outIdx = 0;
+            today = startIdx;
+            while today <= endIdx {
+                outReal[outIdx] = ((inReal[{ let _v = today; today += 1; _v }]) as f64);
+                outIdx += 1;
+            }
+            (*outNBElement) = outIdx;
+            return RetCode::Success;
+        }
         // Both EMA are computed in a single lockstep pass: each new
         // EMA1 value is immediately fed into EMA2. No temporary
         // buffers are needed.
@@ -361,6 +380,10 @@ struct DEMA_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn DEMA_step_internal(&self, sp: &mut DEMA_StreamState, inReal: f64, outReal: &mut f64) {
+        if sp.optInTimePeriod == 1 {
+            (*outReal) = inReal;
+            return;
+        }
         sp.prevEMA1 = (inReal - sp.prevEMA1 as f64).mul_add(sp.optInK_1, sp.prevEMA1);
         sp.prevEMA2 = (sp.prevEMA1 - sp.prevEMA2 as f64).mul_add(sp.optInK_1, sp.prevEMA2);
         (*outReal) = 2.0 * sp.prevEMA1 - sp.prevEMA2;
@@ -387,6 +410,18 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut lastValue_outReal: f64 = 0.0_f64;
+        if optInTimePeriod == 1 {
+            if historyLen < self.DEMA_Lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = DEMA_StreamState {
+                optInTimePeriod: optInTimePeriod,
+                prevEMA1: 0.0_f64,
+                prevEMA2: 0.0_f64,
+                optInK_1: 0.0_f64,
+            };
+            return Ok((DEMA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
+        }
         let mut prevEMA1: f64 = 0.0_f64;
         let mut prevEMA2: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -431,6 +466,13 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::BadParam);
         }
+        // No smoothing at period of 1: the output is a copy of the input
+        // (same convention as TA_MA for every MAType). Explicit and separate
+        // from TA_EMA's own copy because the two EMA below are inlined here,
+        // not delegated -- at period 1 they reduce to (x-prev)+prev, which
+        // loses the input as soon as consecutive values differ by more than a
+        // factor of two, and 2*e1 - e2 then propagates the residue rather
+        // than cancelling it.
         // Both EMA are computed in a single lockstep pass: each new
         // EMA1 value is immediately fed into EMA2. No temporary
         // buffers are needed.
@@ -562,6 +604,26 @@ impl Core {
         let mut startIdx: usize = 0;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
+        if optInTimePeriod == 1 {
+            if historyLen < self.DEMA_Lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = DEMA_StreamState {
+                optInTimePeriod: optInTimePeriod,
+                prevEMA1: 0.0_f64,
+                prevEMA2: 0.0_f64,
+                optInK_1: 0.0_f64,
+            };
+            let fillLb: usize = self.DEMA_Lookback(optInTimePeriod);
+            (*outBegIdx) = fillLb;
+            (*outNBElement) = historyLen - fillLb;
+            let mut fillIdx: usize = 0;
+            while fillIdx < historyLen - fillLb {
+                outReal[fillIdx] = inReal[fillLb + fillIdx];
+                fillIdx += 1;
+            }
+            return Ok(DEMA_Stream { core: self.clone(), state });
+        }
         let mut prevEMA1: f64 = 0.0_f64;
         let mut prevEMA2: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -606,6 +668,13 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::BadParam);
         }
+        // No smoothing at period of 1: the output is a copy of the input
+        // (same convention as TA_MA for every MAType). Explicit and separate
+        // from TA_EMA's own copy because the two EMA below are inlined here,
+        // not delegated -- at period 1 they reduce to (x-prev)+prev, which
+        // loses the input as soon as consecutive values differ by more than a
+        // factor of two, and 2*e1 - e2 then propagates the residue rather
+        // than cancelling it.
         // Both EMA are computed in a single lockstep pass: each new
         // EMA1 value is immediately fed into EMA2. No temporary
         // buffers are needed.

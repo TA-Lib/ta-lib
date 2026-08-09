@@ -57,6 +57,7 @@
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  070526 MF,CC  Speed optimization: compute both EMA in a single
  *                lockstep pass (bit-exact, no temporary buffers).
+ *  080926 MF,CC  Explicit no-smoothing copy at a period of 1.
  */
 
 TA_LIB_API int TA_DEMA_Lookback( int optInTimePeriod )
@@ -140,6 +141,26 @@ TA_LIB_API TA_RetCode TA_DEMA( int    startIdx,
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
+      return TA_SUCCESS;
+   }
+   /* No smoothing at period of 1: the output is a copy of the input
+    * (same convention as TA_MA for every MAType). Explicit and separate
+    * from TA_EMA's own copy because the two EMA below are inlined here,
+    * not delegated -- at period 1 they reduce to (x-prev)+prev, which
+    * loses the input as soon as consecutive values differ by more than a
+    * factor of two, and 2*e1 - e2 then propagates the residue rather
+    * than cancelling it.
+    */
+   if( optInTimePeriod == 1 )
+   {
+      *outBegIdx= startIdx;
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+      {
+         outReal[outIdx++] = inReal[today++];
+      }
+      *outNBElement= outIdx;
       return TA_SUCCESS;
    }
    /* Both EMA are computed in a single lockstep pass: each new
@@ -280,6 +301,18 @@ TA_RetCode TA_S_DEMA( int    startIdx,
    {
       return TA_SUCCESS;
    }
+   if( optInTimePeriod == 1 )
+   {
+      *outBegIdx= startIdx;
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+      {
+         outReal[outIdx++] = (double)inReal[today++];
+      }
+      *outNBElement= outIdx;
+      return TA_SUCCESS;
+   }
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
    if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
@@ -344,6 +377,11 @@ struct TA_DEMA_Stream {
 /* Private function, not in public API. */
 static void TA_DEMA_StepInternal( struct TA_DEMA_Stream *sp, double inReal, double *outReal )
 {
+   if( sp->optInTimePeriod == 1 )
+   {
+      *outReal= inReal;
+      return;
+   }
    sp->prevEMA1 = fma(inReal - sp->prevEMA1, sp->optInK_1, sp->prevEMA1);
    sp->prevEMA2 = fma(sp->prevEMA1 - sp->prevEMA2, sp->optInK_1, sp->prevEMA2);
    *outReal= 2.0 * sp->prevEMA1 - sp->prevEMA2;
@@ -373,6 +411,18 @@ TA_RetCode TA_DEMA_OpenInternal( struct TA_DEMA_Stream **stream, const double in
    dummyNBElement = 0;
    lastValue_outReal = 0.0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   if( optInTimePeriod == 1 )
+   {
+      if( historyLen < TA_DEMA_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      sp = (struct TA_DEMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      *outReal = inReal[historyLen - 1];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
 
    {
       double prevEMA1 = 0.0;
@@ -420,6 +470,26 @@ TA_RetCode TA_DEMA_OpenInternal( struct TA_DEMA_Stream **stream, const double in
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
+         return TA_BAD_PARAM;
+      }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit and separate
+       * from TA_EMA's own copy because the two EMA below are inlined here,
+       * not delegated -- at period 1 they reduce to (x-prev)+prev, which
+       * loses the input as soon as consecutive values differ by more than a
+       * factor of two, and 2*e1 - e2 then propagates the residue rather
+       * than cancelling it.
+       */
+      if( optInTimePeriod == 1 )
+      {
+         dummyBegIdx = startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx )
+         {
+            lastValue_outReal = inReal[today++];
+         }
+         dummyNBElement = outIdx;
          return TA_BAD_PARAM;
       }
       /* Both EMA are computed in a single lockstep pass: each new
@@ -557,6 +627,27 @@ TA_LIB_API TA_RetCode TA_DEMA_OpenAndFill( TA_DEMA_Stream **stream, const double
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
 
+   if( optInTimePeriod == 1 )
+   {
+      if( historyLen < TA_DEMA_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      sp = (struct TA_DEMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      {
+         int fillLb = TA_DEMA_Lookback( optInTimePeriod );
+         int fillIdx;
+         *outBegIdx = fillLb;
+         *outNBElement = historyLen - fillLb;
+         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
+         {
+            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         }
+      }
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+
    {
       double prevEMA1 = 0.0;
       double prevEMA2 = 0.0;
@@ -603,6 +694,26 @@ TA_LIB_API TA_RetCode TA_DEMA_OpenAndFill( TA_DEMA_Stream **stream, const double
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
+         return TA_BAD_PARAM;
+      }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit and separate
+       * from TA_EMA's own copy because the two EMA below are inlined here,
+       * not delegated -- at period 1 they reduce to (x-prev)+prev, which
+       * loses the input as soon as consecutive values differ by more than a
+       * factor of two, and 2*e1 - e2 then propagates the residue rather
+       * than cancelling it.
+       */
+      if( optInTimePeriod == 1 )
+      {
+         *outBegIdx= startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx )
+         {
+            outReal[outIdx++] = inReal[today++];
+         }
+         *outNBElement= outIdx;
          return TA_BAD_PARAM;
       }
       /* Both EMA are computed in a single lockstep pass: each new

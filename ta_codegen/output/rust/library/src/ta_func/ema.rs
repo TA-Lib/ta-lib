@@ -52,6 +52,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
  */
 
 // Import types from parent module
@@ -217,6 +218,9 @@ impl Core {
         //
         // These values are going to be related by this equation 99.9% of the
         // time... but there is some exception, this is why both must be provided.
+        //
+        // Exception to the exception: at optInTimePeriod == 1 the period wins.
+        // The no-smoothing copy below is taken whatever optInK_1 says.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.EMA_Lookback(optInTimePeriod);
@@ -229,6 +233,24 @@ impl Core {
         if startIdx > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
+            return RetCode::Success;
+        }
+        // No smoothing at period of 1: the output is a copy of the input
+        // (same convention as TA_MA for every MAType). Explicit because at
+        // period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+        // (x-prev)+prev -- which returns x only while consecutive values stay
+        // within a factor of two of each other. Two-decimal prices already
+        // spend a full mantissa, so a single 3x move breaks it. The unstable
+        // period still delays the first output.
+        if optInTimePeriod == 1 {
+            (*outBegIdx) = startIdx;
+            outIdx = 0;
+            today = startIdx;
+            while today <= endIdx {
+                outReal[outIdx] = ((inReal[{ let _v = today; today += 1; _v }]) as f64);
+                outIdx += 1;
+            }
+            (*outNBElement) = outIdx;
             return RetCode::Success;
         }
         (*outBegIdx) = startIdx;
@@ -307,6 +329,10 @@ struct EMA_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn EMA_step_internal(&self, sp: &mut EMA_StreamState, inReal: f64, outReal: &mut f64) {
+        if sp.optInTimePeriod == 1 {
+            (*outReal) = inReal;
+            return;
+        }
         sp.prevMA = (inReal - sp.prevMA) * ((sp.optInK_1) as f64) + sp.prevMA;
         (*outReal) = sp.prevMA;
     }
@@ -333,6 +359,17 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut lastValue_outReal: f64 = 0.0_f64;
         let mut optInK_1: f64 = 2.0 / ((optInTimePeriod + 1) as f64);
+        if optInTimePeriod == 1 {
+            if historyLen < self.EMA_Lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = EMA_StreamState {
+                optInTimePeriod: optInTimePeriod,
+                optInK_1: optInK_1,
+                prevMA: 0.0_f64,
+            };
+            return Ok((EMA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
+        }
         let mut tempReal: f64 = 0.0_f64;
         let mut prevMA: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -350,6 +387,9 @@ impl Core {
         //
         // These values are going to be related by this equation 99.9% of the
         // time... but there is some exception, this is why both must be provided.
+        //
+        // Exception to the exception: at optInTimePeriod == 1 the period wins.
+        // The no-smoothing copy below is taken whatever optInK_1 says.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.EMA_Lookback(optInTimePeriod);
@@ -364,6 +404,13 @@ impl Core {
             dummyNBElement = 0;
             return Err(RetCode::BadParam);
         }
+        // No smoothing at period of 1: the output is a copy of the input
+        // (same convention as TA_MA for every MAType). Explicit because at
+        // period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+        // (x-prev)+prev -- which returns x only while consecutive values stay
+        // within a factor of two of each other. Two-decimal prices already
+        // spend a full mantissa, so a single 3x move breaks it. The unstable
+        // period still delays the first output.
         dummyBegIdx = startIdx;
         // Do the EMA calculation using tight loops.
         // The first EMA is calculated differently. It
@@ -464,6 +511,25 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut optInK_1: f64 = 2.0 / ((optInTimePeriod + 1) as f64);
+        if optInTimePeriod == 1 {
+            if historyLen < self.EMA_Lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = EMA_StreamState {
+                optInTimePeriod: optInTimePeriod,
+                optInK_1: optInK_1,
+                prevMA: 0.0_f64,
+            };
+            let fillLb: usize = self.EMA_Lookback(optInTimePeriod);
+            (*outBegIdx) = fillLb;
+            (*outNBElement) = historyLen - fillLb;
+            let mut fillIdx: usize = 0;
+            while fillIdx < historyLen - fillLb {
+                outReal[fillIdx] = inReal[fillLb + fillIdx];
+                fillIdx += 1;
+            }
+            return Ok(EMA_Stream { core: self.clone(), state });
+        }
         let mut tempReal: f64 = 0.0_f64;
         let mut prevMA: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -481,6 +547,9 @@ impl Core {
         //
         // These values are going to be related by this equation 99.9% of the
         // time... but there is some exception, this is why both must be provided.
+        //
+        // Exception to the exception: at optInTimePeriod == 1 the period wins.
+        // The no-smoothing copy below is taken whatever optInK_1 says.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.EMA_Lookback(optInTimePeriod);
@@ -495,6 +564,13 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
+        // No smoothing at period of 1: the output is a copy of the input
+        // (same convention as TA_MA for every MAType). Explicit because at
+        // period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+        // (x-prev)+prev -- which returns x only while consecutive values stay
+        // within a factor of two of each other. Two-decimal prices already
+        // spend a full mantissa, so a single 3x move breaks it. The unstable
+        // period still delays the first output.
         (*outBegIdx) = startIdx;
         // Do the EMA calculation using tight loops.
         // The first EMA is calculated differently. It

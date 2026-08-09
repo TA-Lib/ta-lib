@@ -55,6 +55,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
  */
 
 TA_LIB_API int TA_EMA_Lookback( int optInTimePeriod )
@@ -93,6 +94,9 @@ static TA_RetCode TA_EMA_Private( int    startIdx,
     *
     * These values are going to be related by this equation 99.9% of the
     * time... but there is some exception, this is why both must be provided.
+    *
+    * Exception to the exception: at optInTimePeriod == 1 the period wins.
+    * The no-smoothing copy below is taken whatever optInK_1 says.
     */
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -110,6 +114,26 @@ static TA_RetCode TA_EMA_Private( int    startIdx,
    {
       *outBegIdx= 0;
       *outNBElement= 0;
+      return TA_SUCCESS;
+   }
+   /* No smoothing at period of 1: the output is a copy of the input
+    * (same convention as TA_MA for every MAType). Explicit because at
+    * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+    * (x-prev)+prev -- which returns x only while consecutive values stay
+    * within a factor of two of each other. Two-decimal prices already
+    * spend a full mantissa, so a single 3x move breaks it. The unstable
+    * period still delays the first output.
+    */
+   if( optInTimePeriod == 1 )
+   {
+      *outBegIdx= startIdx;
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+      {
+         outReal[outIdx++] = inReal[today++];
+      }
+      *outNBElement= outIdx;
       return TA_SUCCESS;
    }
    *outBegIdx= startIdx;
@@ -236,6 +260,18 @@ TA_RetCode TA_S_EMA( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
+   if( optInTimePeriod == 1 )
+   {
+      *outBegIdx= startIdx;
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+      {
+         outReal[outIdx++] = (double)inReal[today++];
+      }
+      *outNBElement= outIdx;
+      return TA_SUCCESS;
+   }
    *outBegIdx= startIdx;
    if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
    {
@@ -278,6 +314,11 @@ struct TA_EMA_Stream {
 /* Private function, not in public API. */
 static void TA_EMA_StepInternal( struct TA_EMA_Stream *sp, double inReal, double *outReal )
 {
+   if( sp->optInTimePeriod == 1 )
+   {
+      *outReal= inReal;
+      return;
+   }
    sp->prevMA = (inReal - sp->prevMA) * sp->optInK_1 + sp->prevMA;
    *outReal= sp->prevMA;
 }
@@ -309,6 +350,19 @@ TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inRe
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
 
+   if( optInTimePeriod == 1 )
+   {
+      if( historyLen < TA_EMA_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      sp = (struct TA_EMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->optInK_1 = optInK_1;
+      *outReal = inReal[historyLen - 1];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+
    {
       double tempReal;
       double prevMA = 0.0;
@@ -327,6 +381,9 @@ TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inRe
        *
        * These values are going to be related by this equation 99.9% of the
        * time... but there is some exception, this is why both must be provided.
+       *
+       * Exception to the exception: at optInTimePeriod == 1 the period wins.
+       * The no-smoothing copy below is taken whatever optInK_1 says.
        */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -344,6 +401,26 @@ TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inRe
       {
          dummyBegIdx = 0;
          dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because at
+       * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+       * (x-prev)+prev -- which returns x only while consecutive values stay
+       * within a factor of two of each other. Two-decimal prices already
+       * spend a full mantissa, so a single 3x move breaks it. The unstable
+       * period still delays the first output.
+       */
+      if( optInTimePeriod == 1 )
+      {
+         dummyBegIdx = startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx )
+         {
+            lastValue_outReal = inReal[today++];
+         }
+         dummyNBElement = outIdx;
          return TA_BAD_PARAM;
       }
       dummyBegIdx = startIdx;
@@ -441,6 +518,28 @@ TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double i
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
 
+   if( optInTimePeriod == 1 )
+   {
+      if( historyLen < TA_EMA_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      sp = (struct TA_EMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->optInK_1 = optInK_1;
+      {
+         int fillLb = TA_EMA_Lookback( optInTimePeriod );
+         int fillIdx;
+         *outBegIdx = fillLb;
+         *outNBElement = historyLen - fillLb;
+         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
+         {
+            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         }
+      }
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+
    {
       double tempReal;
       double prevMA = 0.0;
@@ -459,6 +558,9 @@ TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double i
        *
        * These values are going to be related by this equation 99.9% of the
        * time... but there is some exception, this is why both must be provided.
+       *
+       * Exception to the exception: at optInTimePeriod == 1 the period wins.
+       * The no-smoothing copy below is taken whatever optInK_1 says.
        */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -476,6 +578,26 @@ TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double i
       {
          *outBegIdx= 0;
          *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because at
+       * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+       * (x-prev)+prev -- which returns x only while consecutive values stay
+       * within a factor of two of each other. Two-decimal prices already
+       * spend a full mantissa, so a single 3x move breaks it. The unstable
+       * period still delays the first output.
+       */
+      if( optInTimePeriod == 1 )
+      {
+         *outBegIdx= startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx )
+         {
+            outReal[outIdx++] = inReal[today++];
+         }
+         *outNBElement= outIdx;
          return TA_BAD_PARAM;
       }
       *outBegIdx= startIdx;

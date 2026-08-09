@@ -11,6 +11,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
  */
 
    /**
@@ -64,6 +65,9 @@
        *
        * These values are going to be related by this equation 99.9% of the
        * time... but there is some exception, this is why both must be provided.
+       *
+       * Exception to the exception: at optInTimePeriod == 1 the period wins.
+       * The no-smoothing copy below is taken whatever optInK_1 says.
        */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -79,6 +83,24 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because at
+       * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+       * (x-prev)+prev -- which returns x only while consecutive values stay
+       * within a factor of two of each other. Two-decimal prices already
+       * spend a full mantissa, so a single 3x move breaks it. The unstable
+       * period still delays the first output.
+       */
+      if( optInTimePeriod == 1 ) {
+         outBegIdx.value = startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx ) {
+            outReal[outIdx++] = inReal[today++];
+         }
+         outNBElement.value = outIdx;
          return RetCode.Success ;
       }
       outBegIdx.value = startIdx;
@@ -144,6 +166,16 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      if( optInTimePeriod == 1 ) {
+         outBegIdx.value = startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx ) {
+            outReal[outIdx++] = (double)inReal[today++];
+         }
+         outNBElement.value = outIdx;
          return RetCode.Success ;
       }
       outBegIdx.value = startIdx;
@@ -224,6 +256,16 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      if( optInTimePeriod == 1 ) {
+         outBegIdx.value = startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx ) {
+            outReal[outIdx++] = (double)inReal[today++];
+         }
+         outNBElement.value = outIdx;
          return RetCode.Success ;
       }
       outBegIdx.value = startIdx;
@@ -446,6 +488,10 @@
    }
    void EMA_StreamStep( EMA_Stream sp, double inReal )
    {
+      if( sp.optInTimePeriod == 1 ) {
+         sp.cur_outReal = inReal;
+         return ;
+      }
       sp.prevMA = (inReal - sp.prevMA) * sp.optInK_1 + sp.prevMA;
       sp.cur_outReal = sp.prevMA;
    }
@@ -474,6 +520,16 @@
          return RetCode.BadParam;
       }
       double optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      if( optInTimePeriod == 1 ) {
+         if( historyLen < EMA_Lookback(optInTimePeriod) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.optInK_1 = optInK_1;
+         sp.prevMA = 0.0;
+         sp.cur_outReal = inReal[historyLen - 1];
+         return RetCode.Success;
+      }
       /* Internal implementation can be called from any other TA function.
        *
        * Faster because there is no parameter check, but it is a double
@@ -485,6 +541,9 @@
        *
        * These values are going to be related by this equation 99.9% of the
        * time... but there is some exception, this is why both must be provided.
+       *
+       * Exception to the exception: at optInTimePeriod == 1 the period wins.
+       * The no-smoothing copy below is taken whatever optInK_1 says.
        */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -502,6 +561,14 @@
          outNBElement.value = 0;
          return RetCode.OutOfRangeEndIndex ;
       }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because at
+       * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+       * (x-prev)+prev -- which returns x only while consecutive values stay
+       * within a factor of two of each other. Two-decimal prices already
+       * spend a full mantissa, so a single 3x move breaks it. The unstable
+       * period still delays the first output.
+       */
       outBegIdx.value = startIdx;
       /* Do the EMA calculation using tight loops. */
       /* The first EMA is calculated differently. It
@@ -574,6 +641,22 @@
          return RetCode.BadParam;
       }
       double optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      if( optInTimePeriod == 1 ) {
+         if( historyLen < EMA_Lookback(optInTimePeriod) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.optInK_1 = optInK_1;
+         sp.prevMA = 0.0;
+         int fillLb = EMA_Lookback(optInTimePeriod);
+         outBegIdx.value = fillLb;
+         outNBElement.value = historyLen - fillLb;
+         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         }
+         sp.cur_outReal = outReal[outNBElement.value - 1];
+         return RetCode.Success;
+      }
       /* Internal implementation can be called from any other TA function.
        *
        * Faster because there is no parameter check, but it is a double
@@ -585,6 +668,9 @@
        *
        * These values are going to be related by this equation 99.9% of the
        * time... but there is some exception, this is why both must be provided.
+       *
+       * Exception to the exception: at optInTimePeriod == 1 the period wins.
+       * The no-smoothing copy below is taken whatever optInK_1 says.
        */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -602,6 +688,14 @@
          outNBElement.value = 0;
          return RetCode.OutOfRangeEndIndex ;
       }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because at
+       * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+       * (x-prev)+prev -- which returns x only while consecutive values stay
+       * within a factor of two of each other. Two-decimal prices already
+       * spend a full mantissa, so a single 3x move breaks it. The unstable
+       * period still delays the first output.
+       */
       outBegIdx.value = startIdx;
       /* Do the EMA calculation using tight loops. */
       /* The first EMA is calculated differently. It

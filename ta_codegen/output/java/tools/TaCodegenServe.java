@@ -73476,6 +73476,7 @@ class Core {
      *  052603 MF     Adapt code to compile with .NET Managed C++
      *  070526 MF,CC  Speed optimization: compute both EMA in a single
      *                lockstep pass (bit-exact, no temporary buffers).
+     *  080926 MF,CC  Explicit no-smoothing copy at a period of 1.
      */
 
        /**
@@ -73564,6 +73565,24 @@ class Core {
           }
           /* Make sure there is still something to evaluate. */
           if( startIdx > endIdx ) {
+             return RetCode.Success ;
+          }
+          /* No smoothing at period of 1: the output is a copy of the input
+           * (same convention as TA_MA for every MAType). Explicit and separate
+           * from TA_EMA's own copy because the two EMA below are inlined here,
+           * not delegated -- at period 1 they reduce to (x-prev)+prev, which
+           * loses the input as soon as consecutive values differ by more than a
+           * factor of two, and 2*e1 - e2 then propagates the residue rather
+           * than cancelling it.
+           */
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             while( today <= endIdx ) {
+                outReal[outIdx++] = inReal[today++];
+             }
+             outNBElement.value = outIdx;
              return RetCode.Success ;
           }
           /* Both EMA are computed in a single lockstep pass: each new
@@ -73673,6 +73692,16 @@ class Core {
              startIdx = lookbackTotal;
           }
           if( startIdx > endIdx ) {
+             return RetCode.Success ;
+          }
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             while( today <= endIdx ) {
+                outReal[outIdx++] = (double)inReal[today++];
+             }
+             outNBElement.value = outIdx;
              return RetCode.Success ;
           }
           optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
@@ -73899,6 +73928,10 @@ class Core {
        }
        void DEMA_StreamStep( DEMA_Stream sp, double inReal )
        {
+          if( sp.optInTimePeriod == 1 ) {
+             sp.cur_outReal = inReal;
+             return ;
+          }
           sp.prevEMA1 = Math.fma(inReal - sp.prevEMA1, sp.optInK_1, sp.prevEMA1);
           sp.prevEMA2 = Math.fma(sp.prevEMA1 - sp.prevEMA2, sp.optInK_1, sp.prevEMA2);
           sp.cur_outReal = 2.0 * sp.prevEMA1 - sp.prevEMA2;
@@ -73929,6 +73962,17 @@ class Core {
              optInTimePeriod = 30;
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( optInTimePeriod == 1 ) {
+             if( historyLen < DEMA_Lookback(optInTimePeriod) + 1 ) {
+                return RetCode.OutOfRangeEndIndex;
+             }
+             sp.optInTimePeriod = optInTimePeriod;
+             sp.prevEMA1 = 0.0;
+             sp.prevEMA2 = 0.0;
+             sp.optInK_1 = 0.0;
+             sp.cur_outReal = inReal[historyLen - 1];
+             return RetCode.Success;
           }
           /* For an explanation of this function, please read
            *
@@ -73966,6 +74010,14 @@ class Core {
           if( startIdx > endIdx ) {
              return RetCode.OutOfRangeEndIndex ;
           }
+          /* No smoothing at period of 1: the output is a copy of the input
+           * (same convention as TA_MA for every MAType). Explicit and separate
+           * from TA_EMA's own copy because the two EMA below are inlined here,
+           * not delegated -- at period 1 they reduce to (x-prev)+prev, which
+           * loses the input as soon as consecutive values differ by more than a
+           * factor of two, and 2*e1 - e2 then propagates the residue rather
+           * than cancelling it.
+           */
           /* Both EMA are computed in a single lockstep pass: each new
            * EMA1 value is immediately fed into EMA2. No temporary
            * buffers are needed.
@@ -74071,6 +74123,23 @@ class Core {
           if( (Object)outReal == (Object)inReal ) {
              return RetCode.BadParam;
           }
+          if( optInTimePeriod == 1 ) {
+             if( historyLen < DEMA_Lookback(optInTimePeriod) + 1 ) {
+                return RetCode.OutOfRangeEndIndex;
+             }
+             sp.optInTimePeriod = optInTimePeriod;
+             sp.prevEMA1 = 0.0;
+             sp.prevEMA2 = 0.0;
+             sp.optInK_1 = 0.0;
+             int fillLb = DEMA_Lookback(optInTimePeriod);
+             outBegIdx.value = fillLb;
+             outNBElement.value = historyLen - fillLb;
+             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                outReal[fillIdx] = inReal[fillLb + fillIdx];
+             }
+             sp.cur_outReal = outReal[outNBElement.value - 1];
+             return RetCode.Success;
+          }
           /* For an explanation of this function, please read
            *
            * Stocks & Commodities V. 12:1 (11-19):
@@ -74107,6 +74176,14 @@ class Core {
           if( startIdx > endIdx ) {
              return RetCode.OutOfRangeEndIndex ;
           }
+          /* No smoothing at period of 1: the output is a copy of the input
+           * (same convention as TA_MA for every MAType). Explicit and separate
+           * from TA_EMA's own copy because the two EMA below are inlined here,
+           * not delegated -- at period 1 they reduce to (x-prev)+prev, which
+           * loses the input as soon as consecutive values differ by more than a
+           * factor of two, and 2*e1 - e2 then propagates the residue rather
+           * than cancelling it.
+           */
           /* Both EMA are computed in a single lockstep pass: each new
            * EMA1 value is immediately fed into EMA2. No temporary
            * buffers are needed.
@@ -76111,6 +76188,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  112400 MF   Template creation.
      *  052603 MF   Adapt code to compile with .NET Managed C++
+     *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
      */
 
        /**
@@ -76164,6 +76242,9 @@ class Core {
            *
            * These values are going to be related by this equation 99.9% of the
            * time... but there is some exception, this is why both must be provided.
+           *
+           * Exception to the exception: at optInTimePeriod == 1 the period wins.
+           * The no-smoothing copy below is taken whatever optInK_1 says.
            */
           /* Identify the minimum number of price bar needed
            * to calculate at least one output.
@@ -76179,6 +76260,24 @@ class Core {
           if( startIdx > endIdx ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          /* No smoothing at period of 1: the output is a copy of the input
+           * (same convention as TA_MA for every MAType). Explicit because at
+           * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+           * (x-prev)+prev -- which returns x only while consecutive values stay
+           * within a factor of two of each other. Two-decimal prices already
+           * spend a full mantissa, so a single 3x move breaks it. The unstable
+           * period still delays the first output.
+           */
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             while( today <= endIdx ) {
+                outReal[outIdx++] = inReal[today++];
+             }
+             outNBElement.value = outIdx;
              return RetCode.Success ;
           }
           outBegIdx.value = startIdx;
@@ -76244,6 +76343,16 @@ class Core {
           if( startIdx > endIdx ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             while( today <= endIdx ) {
+                outReal[outIdx++] = (double)inReal[today++];
+             }
+             outNBElement.value = outIdx;
              return RetCode.Success ;
           }
           outBegIdx.value = startIdx;
@@ -76324,6 +76433,16 @@ class Core {
           if( startIdx > endIdx ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             while( today <= endIdx ) {
+                outReal[outIdx++] = (double)inReal[today++];
+             }
+             outNBElement.value = outIdx;
              return RetCode.Success ;
           }
           outBegIdx.value = startIdx;
@@ -76546,6 +76665,10 @@ class Core {
        }
        void EMA_StreamStep( EMA_Stream sp, double inReal )
        {
+          if( sp.optInTimePeriod == 1 ) {
+             sp.cur_outReal = inReal;
+             return ;
+          }
           sp.prevMA = (inReal - sp.prevMA) * sp.optInK_1 + sp.prevMA;
           sp.cur_outReal = sp.prevMA;
        }
@@ -76574,6 +76697,16 @@ class Core {
              return RetCode.BadParam;
           }
           double optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+          if( optInTimePeriod == 1 ) {
+             if( historyLen < EMA_Lookback(optInTimePeriod) + 1 ) {
+                return RetCode.OutOfRangeEndIndex;
+             }
+             sp.optInTimePeriod = optInTimePeriod;
+             sp.optInK_1 = optInK_1;
+             sp.prevMA = 0.0;
+             sp.cur_outReal = inReal[historyLen - 1];
+             return RetCode.Success;
+          }
           /* Internal implementation can be called from any other TA function.
            *
            * Faster because there is no parameter check, but it is a double
@@ -76585,6 +76718,9 @@ class Core {
            *
            * These values are going to be related by this equation 99.9% of the
            * time... but there is some exception, this is why both must be provided.
+           *
+           * Exception to the exception: at optInTimePeriod == 1 the period wins.
+           * The no-smoothing copy below is taken whatever optInK_1 says.
            */
           /* Identify the minimum number of price bar needed
            * to calculate at least one output.
@@ -76602,6 +76738,14 @@ class Core {
              outNBElement.value = 0;
              return RetCode.OutOfRangeEndIndex ;
           }
+          /* No smoothing at period of 1: the output is a copy of the input
+           * (same convention as TA_MA for every MAType). Explicit because at
+           * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+           * (x-prev)+prev -- which returns x only while consecutive values stay
+           * within a factor of two of each other. Two-decimal prices already
+           * spend a full mantissa, so a single 3x move breaks it. The unstable
+           * period still delays the first output.
+           */
           outBegIdx.value = startIdx;
           /* Do the EMA calculation using tight loops. */
           /* The first EMA is calculated differently. It
@@ -76674,6 +76818,22 @@ class Core {
              return RetCode.BadParam;
           }
           double optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+          if( optInTimePeriod == 1 ) {
+             if( historyLen < EMA_Lookback(optInTimePeriod) + 1 ) {
+                return RetCode.OutOfRangeEndIndex;
+             }
+             sp.optInTimePeriod = optInTimePeriod;
+             sp.optInK_1 = optInK_1;
+             sp.prevMA = 0.0;
+             int fillLb = EMA_Lookback(optInTimePeriod);
+             outBegIdx.value = fillLb;
+             outNBElement.value = historyLen - fillLb;
+             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                outReal[fillIdx] = inReal[fillLb + fillIdx];
+             }
+             sp.cur_outReal = outReal[outNBElement.value - 1];
+             return RetCode.Success;
+          }
           /* Internal implementation can be called from any other TA function.
            *
            * Faster because there is no parameter check, but it is a double
@@ -76685,6 +76845,9 @@ class Core {
            *
            * These values are going to be related by this equation 99.9% of the
            * time... but there is some exception, this is why both must be provided.
+           *
+           * Exception to the exception: at optInTimePeriod == 1 the period wins.
+           * The no-smoothing copy below is taken whatever optInK_1 says.
            */
           /* Identify the minimum number of price bar needed
            * to calculate at least one output.
@@ -76702,6 +76865,14 @@ class Core {
              outNBElement.value = 0;
              return RetCode.OutOfRangeEndIndex ;
           }
+          /* No smoothing at period of 1: the output is a copy of the input
+           * (same convention as TA_MA for every MAType). Explicit because at
+           * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+           * (x-prev)+prev -- which returns x only while consecutive values stay
+           * within a factor of two of each other. Two-decimal prices already
+           * spend a full mantissa, so a single 3x move breaks it. The unstable
+           * period still delays the first output.
+           */
           outBegIdx.value = startIdx;
           /* Do the EMA calculation using tight loops. */
           /* The first EMA is calculated differently. It

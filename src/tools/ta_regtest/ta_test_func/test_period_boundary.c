@@ -898,6 +898,64 @@ static ErrorNumber pbFillRoundTripHostileHistory( TA_History *h )
    return TA_TEST_PASS;
 }
 
+/* An input the EMA-family recursion cannot round-trip.
+ *
+ * At a period of 1 the EMA factor k = 2/(1+1) is exactly 1.0, so the recursion
+ * reduces to (x - prev) + prev. That returns x only while (x - prev) is exactly
+ * representable -- guaranteed by Sterbenz's lemma while prev/2 <= x <= 2*prev,
+ * and easily lost outside it. Two-decimal prices are not dyadic, so they already
+ * spend a full mantissa and a single 3x move is enough; the round-trip-hostile
+ * series above cannot show this because its bar-to-bar moves are small.
+ *
+ * Like that series, the hostility is ASSERTED, not claimed: soften the moves (or
+ * pick dyadic values, which is exactly how this went unnoticed) and this fails
+ * rather than quietly becoming a third benign sweep.
+ */
+#define PB_STERBENZ_MIN_DIVERGENT 32
+
+static ErrorNumber pbFillSterbenzHostileHistory( TA_History *h )
+{
+   static TA_Real open[PB_DATA_SIZE], high[PB_DATA_SIZE], low[PB_DATA_SIZE];
+   static TA_Real close[PB_DATA_SIZE], volume[PB_DATA_SIZE];
+   int i, nbDivergent = 0;
+   TA_Real prev;
+
+   for( i = 0; i < PB_DATA_SIZE; i++ )
+   {
+      /* Alternating ~3x, two-decimal, never dyadic. */
+      close[i]  = (i & 1) ? 41.37 : 124.11;
+      open[i]   = (i & 1) ? 41.53 : 123.67;
+      high[i]   = (close[i] > open[i] ? close[i] : open[i]) + 0.11;
+      low[i]    = (close[i] < open[i] ? close[i] : open[i]) - 0.11;
+      volume[i] = (TA_Real)(100003 + (i * 104729) % 899993);
+   }
+
+   /* The naive period-1 EMA step, spelled out: a bar where it does not give
+    * back the input is a bar on which the sweep has something to say. */
+   prev = close[0];
+   for( i = 1; i < PB_DATA_SIZE; i++ )
+   {
+      prev = ((close[i] - prev) * 1.0) + prev;
+      if( prev != close[i] )
+         nbDivergent++;
+   }
+
+   if( nbDivergent < PB_STERBENZ_MIN_DIVERGENT )
+   {
+      printf( "\nFail: the Sterbenz-hostile series is not hostile: the period-1 "
+              "EMA step returns its input on all but %d of %d bars (need at "
+              "least %d divergent)\n",
+              nbDivergent, PB_DATA_SIZE - 1, PB_STERBENZ_MIN_DIVERGENT );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   h->nbBars = PB_DATA_SIZE;
+   h->open = open;   h->high = high;  h->low = low;
+   h->close = close; h->volume = volume;
+   h->openInterest = NULL;
+   return TA_TEST_PASS;
+}
+
 static ErrorNumber pbSweepMaIdentity( const TA_History *history, const char *what )
 {
    const TA_FuncHandle *maHandle;
@@ -983,6 +1041,13 @@ static ErrorNumber testEveryMovingAverageIdentity( const TA_History *history )
    if( errNb != TA_TEST_PASS )
       return errNb;
    errNb = pbSweepMaIdentity( &hostile, "round-trip-hostile series" );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+
+   errNb = pbFillSterbenzHostileHistory( &hostile );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+   errNb = pbSweepMaIdentity( &hostile, "Sterbenz-hostile series" );
    if( errNb != TA_TEST_PASS )
       return errNb;
 

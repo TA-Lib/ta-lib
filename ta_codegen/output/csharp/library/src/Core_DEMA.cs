@@ -57,6 +57,7 @@ public partial class Core
     *  052603 MF     Adapt code to compile with .NET Managed C++
     *  070526 MF,CC  Speed optimization: compute both EMA in a single
     *                lockstep pass (bit-exact, no temporary buffers).
+    *  080926 MF,CC  Explicit no-smoothing copy at a period of 1.
     */
    /// <summary>
    /// Number of leading input bars <c>DEMA</c> consumes before it can produce
@@ -147,6 +148,24 @@ public partial class Core
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
+         return RetCode.Success ;
+      }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit and separate
+       * from TA_EMA's own copy because the two EMA below are inlined here,
+       * not delegated -- at period 1 they reduce to (x-prev)+prev, which
+       * loses the input as soon as consecutive values differ by more than a
+       * factor of two, and 2*e1 - e2 then propagates the residue rather
+       * than cancelling it.
+       */
+      if( optInTimePeriod == 1 ) {
+         outBegIdx = startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx ) {
+            outReal[outIdx++] = inReal[today++];
+         }
+         outNBElement = outIdx;
          return RetCode.Success ;
       }
       /* Both EMA are computed in a single lockstep pass: each new
@@ -258,6 +277,16 @@ public partial class Core
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
+         return RetCode.Success ;
+      }
+      if( optInTimePeriod == 1 ) {
+         outBegIdx = startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx ) {
+            outReal[outIdx++] = (double)inReal[today++];
+         }
+         outNBElement = outIdx;
          return RetCode.Success ;
       }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);

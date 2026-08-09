@@ -11,6 +11,7 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
  *
  */
 
@@ -53,6 +54,9 @@ TA_RetCode ema_private(int startIdx, int endIdx,
     *
     * These values are going to be related by this equation 99.9% of the
     * time... but there is some exception, this is why both must be provided.
+    *
+    * Exception to the exception: at optInTimePeriod == 1 the period wins.
+    * The no-smoothing copy below is taken whatever optInK_1 says.
     */
 
    /* Identify the minimum number of price bar needed
@@ -73,6 +77,26 @@ TA_RetCode ema_private(int startIdx, int endIdx,
       *outNBElement = 0;
       return TA_SUCCESS;
    }
+
+   /* No smoothing at period of 1: the output is a copy of the input
+    * (same convention as TA_MA for every MAType). Explicit because at
+    * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
+    * (x-prev)+prev -- which returns x only while consecutive values stay
+    * within a factor of two of each other. Two-decimal prices already
+    * spend a full mantissa, so a single 3x move breaks it. The unstable
+    * period still delays the first output.
+    */
+   if( optInTimePeriod == 1 )
+   {
+      *outBegIdx = startIdx;
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+         outReal[outIdx++] = inReal[today++];
+      *outNBElement = outIdx;
+      return TA_SUCCESS;
+   }
+
    *outBegIdx = startIdx;
 
    /* Do the EMA calculation using tight loops. */
