@@ -106,12 +106,42 @@ fn parse_param_type(s: &str, price_components: Option<Vec<String>>) -> ParamType
     }
 }
 
+/// True for non-indicator subdirectories of `ta_codegen/input/` (shared
+/// `helpers/`, library scaffolding `lib/`) that never carry a `<name>.yaml`
+/// indicator definition and therefore contribute nothing to generated output.
+///
+/// Lives here, next to [`parse_yaml`], because every walker of the input tree
+/// has to agree on it: one that skips a directory the other parses is how a
+/// non-indicator directory reaches a check written for indicators.
+pub fn is_reserved_dir(name: &str) -> bool {
+    matches!(name, "helpers" | "lib")
+}
+
 pub fn parse_yaml(path: &Path) -> FuncDef {
     let content = std::fs::read_to_string(path)
         .unwrap_or_else(|e| panic!("Failed to read {}: {}", path.display(), e));
 
     let yaml: YamlFunc = serde_yaml::from_str(&content)
         .unwrap_or_else(|e| panic!("Failed to parse {}: {}", path.display(), e));
+
+    // The directory IS the name, lower-cased. Several derivations lean on that —
+    // the Rust module path and file name, the registry's dir-keyed lookups, and
+    // the `<dir>/<dir>.yaml` convention that located this file. Nothing used to
+    // check it, so a mismatch would not fail here: it would surface far away as
+    // a module that does not resolve, or a cross-indicator call to a name no
+    // backend defines. Checked at parse time so every loader inherits it rather
+    // than whichever one happens to run first.
+    if let Some(dir) = path.parent().and_then(std::path::Path::file_name) {
+        let dir = dir.to_string_lossy();
+        assert!(
+            dir == yaml.name.to_lowercase(),
+            "{}: directory `{dir}` does not match `name: {}` — the directory must be the \
+             name lower-cased (`{}`)",
+            path.display(),
+            yaml.name,
+            yaml.name.to_lowercase()
+        );
+    }
 
     // A `type: price` input is one `ta_abstract` descriptor but several function
     // arguments, so it expands here. Each expanded argument keeps a `PriceRef` back to

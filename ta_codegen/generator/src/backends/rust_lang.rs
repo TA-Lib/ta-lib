@@ -58,7 +58,8 @@ pub(crate) const RESERVED_WORDS: &[&str] = &[
     "use",
     "where",
     "while",
-    "Self",
+    // `Self` is not listed: the match is case-insensitive, so `self` above
+    // already covers it.
     // --- reserved for future use ---
     "abstract",
     "become",

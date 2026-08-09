@@ -125,10 +125,31 @@ pub trait LanguageBackend {
     /// [`reserved_words`](Self::reserved_words) entry". A backend with a rule
     /// that a word list cannot express overrides this wholesale; the returned
     /// string is the reason, phrased to be readable after `name`.
+    ///
+    /// The comparison is **case-insensitive, and deliberately stricter than the
+    /// compilers.** `NEW`, `Double`, `In` and `Out` are legal identifiers in all
+    /// four targets, and all four are rejected here anyway.
+    ///
+    /// That is a house rule about legibility, not a legality constraint, so
+    /// "but it compiles" is not a reason to relax it: these names are read in
+    /// four languages at once, and one that reads as a keyword in any of them —
+    /// `Core.NEW(..)`, a local called `Double` — is worse to read than the
+    /// distinct abbreviation the author could have picked instead. An indicator
+    /// is free to be called `SMA` or `HT_DCPERIOD`; nothing real needs to be
+    /// called `In`.
+    ///
+    /// The cost is nil in practice: `shipped_input_tree_passes` sweeps every
+    /// name, argument and local in `ta_codegen/input/` and none of them trips
+    /// this. Contextual keywords stay legal, which is what keeps `VAR` — the
+    /// variance function — spelling itself.
     fn check_name(&self, name: &str, kind: NameKind) -> Result<(), String> {
         let rendered = self.rendered_name(name, kind);
-        if self.reserved_words().contains(&rendered.as_str()) {
-            return Err(reserved_word_reason(self.name(), name, &rendered));
+        if let Some(word) = self
+            .reserved_words()
+            .iter()
+            .find(|w| w.eq_ignore_ascii_case(&rendered))
+        {
+            return Err(reserved_word_reason(self.name(), name, &rendered, word));
         }
         Ok(())
     }
@@ -377,13 +398,28 @@ impl LanguageBackend for CSharpBackend {
 
 /// The reason string a backend's default [`LanguageBackend::check_name`]
 /// returns, spelling out the mangling when the rendered form differs from the
-/// authored one (`LOOP` is not itself a keyword; `loop` is).
-pub(crate) fn reserved_word_reason(backend: &str, name: &str, rendered: &str) -> String {
-    if rendered == name {
+/// authored one (`LOOP` is not itself a keyword; `loop` is), and the case fold
+/// when it does not (`NEW` appears in no keyword list; `new` does).
+pub(crate) fn reserved_word_reason(
+    backend: &str,
+    name: &str,
+    rendered: &str,
+    word: &str,
+) -> String {
+    if rendered != name {
+        format!(
+            "it renders as `{rendered}` in the {backend} backend, which is the reserved \
+             word `{word}` there"
+        )
+    } else if rendered == word {
         format!("`{name}` is a reserved word in the {backend} backend")
     } else {
+        // Case-only match. Say so plainly — `NEW` is in no keyword list, so
+        // "`NEW` is a reserved word" reads as a contradiction and invites the
+        // reader to go looking for a bug that is not there.
         format!(
-            "it renders as `{rendered}` in the {backend} backend, which is a reserved word there"
+            "`{name}` differs only by case from `{word}`, a reserved word in the \
+             {backend} backend; pick a distinct abbreviation"
         )
     }
 }

@@ -402,24 +402,59 @@ mod tests {
         }
     }
 
-    /// A function name is spelled verbatim by Rust, Java and C#, so it is the
-    /// authored spelling that has to clear all three; C's `TA_` prefix puts its
-    /// own rendering out of every keyword's reach.
+    /// A name that reads as a keyword in any target is rejected, whatever its
+    /// case — and this is **deliberately stricter than the compilers**.
+    ///
+    /// `NEW`, `Double`, `In` and `Out` all compile in all four languages. They
+    /// are rejected anyway: these names are read in four languages at once, and
+    /// `Core.NEW(..)` or a local called `Double` costs the reader more than the
+    /// distinct abbreviation the author could have written. So "but it compiles"
+    /// is not grounds to relax this, and the accept list below is the guard
+    /// against relaxing it by accident.
     #[test]
-    fn function_names_are_checked_in_their_rendered_spelling() {
-        // `BASE` is fine everywhere: C prefixes it, Rust's module is `base`,
-        // and Java/C# spell it verbatim. None of those is a keyword.
-        assert!(is_valid_name("BASE", FUNC));
-        // `LOOP` is not. Rust carries the function as `mod loop;` / `loop.rs`,
-        // and the lower-cased module path is what collides — the verbatim method
-        // `LOOP` would have been fine. C would be fine too (`TA_LOOP`), which is
-        // exactly why the check asks every backend rather than trusting the one
-        // it happens to build first.
-        let err = check_name("LOOP", FUNC).expect_err("`loop` is a Rust module keyword");
-        assert!(err.contains("rust") && err.contains("`loop`"), "got: {err}");
-        // Authored lower-case, the keyword reaches Java and C# directly too.
-        assert!(check_name("new", FUNC).is_err());
-        assert!(check_name("base", FUNC).is_err());
+    fn names_that_read_as_keywords_are_rejected_whatever_their_case() {
+        // Lower-cased by a backend into a keyword — illegal as well as unclear.
+        for (name, word) in [("IF", "if"), ("LOOP", "loop"), ("STATIC", "static")] {
+            let err = check_name(name, FUNC).expect_err("a keyword module path is illegal");
+            assert!(err.contains("rust") && err.contains(word), "got: {err}");
+        }
+
+        // Legal in every target, and rejected on legibility alone. Each is a
+        // keyword somewhere; the case fold is the only thing that catches them.
+        for name in ["NEW", "BASE", "CLASS", "IMPORT", "STRUCT"] {
+            assert!(
+                check_name(name, FUNC).is_err(),
+                "`{name}` reads as a keyword and must be rejected even though it compiles"
+            );
+        }
+        for name in ["Long", "Double", "In", "Out", "Base", "New"] {
+            assert!(
+                check_name(name, VAR).is_err(),
+                "local `{name}` reads as a keyword and must be rejected"
+            );
+        }
+
+        // The message must not claim `NEW` is a reserved word — it is in no list.
+        let err = check_name("NEW", FUNC).expect_err("`new` is a keyword somewhere");
+        assert!(
+            err.contains("differs only by case") && err.contains("`new`"),
+            "a case-only match must say so: {err}"
+        );
+
+        // C's `TA_` prefix earns its keep per `NameKind`. `RESTRICT` and `UNION`
+        // are reserved by C alone, and `TA_RESTRICT` / `TA_UNION` read as
+        // nothing, so both are fine as functions and neither is fine as a local.
+        for name in ["RESTRICT", "UNION"] {
+            assert!(is_valid_name(name, FUNC), "`TA_{name}` reads as no keyword");
+            let err = check_name(name, VAR).expect_err("a C keyword, folded");
+            assert!(err.contains("the c backend"), "got: {err}");
+        }
+
+        // Not a blanket reject. Real names keep working — including `VAR`, whose
+        // `var` is contextual in Java and C# and so is in nobody's list.
+        for name in ["SMA", "HT_DCPERIOD", "BBANDS", "MINUS_DI", "VAR"] {
+            assert!(is_valid_name(name, FUNC), "`{name}` must stay legal");
+        }
     }
 
     /// Contextual keywords are legal identifiers and must not be rejected —
@@ -451,13 +486,17 @@ mod tests {
                 "backend `{}` declares no reserved words",
                 backend.name()
             );
-            let mut sorted: Vec<&str> = words.to_vec();
+            // Case-folded, because the match is: `self` and `Self` are one
+            // entry as far as `check_name` is concerned, so a list carrying
+            // both is carrying dead weight an exact dedup cannot see.
+            let mut sorted: Vec<String> =
+                words.iter().map(|w| w.to_ascii_lowercase()).collect();
             sorted.sort_unstable();
             sorted.dedup();
             assert_eq!(
                 sorted.len(),
                 words.len(),
-                "backend `{}` has a duplicate reserved word",
+                "backend `{}` has a reserved word listed twice (case-insensitively)",
                 backend.name()
             );
         }
