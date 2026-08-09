@@ -101,10 +101,10 @@ public partial class Core
       int BodyShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyShort].rangeType;
       int BodyShort_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyShort].avgPeriod;
       double BodyShort_factor = this.candleSettings[(int)CandleSettingType.BodyShort].factor;
-      if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
       /* Identify the minimum number of price bar needed
@@ -205,10 +205,10 @@ public partial class Core
       int BodyShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyShort].rangeType;
       int BodyShort_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyShort].avgPeriod;
       double BodyShort_factor = this.candleSettings[(int)CandleSettingType.BodyShort].factor;
-      if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
       lookbackTotal = CDLUNIQUE3RIVER_Lookback();
@@ -279,7 +279,7 @@ public partial class Core
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.TA_MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
@@ -331,7 +331,7 @@ public partial class Core
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.TA_MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier

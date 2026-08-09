@@ -210,7 +210,7 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 | `startIdx < 0` or `startIdx > TA_MAX_INDEX` | `TA_OUT_OF_RANGE_START_INDEX` |
 | `endIdx < 0`, `endIdx > TA_MAX_INDEX`, or `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` |
 
-<p>The limit is the same number in every language binding — <code>TA_MAX_INDEX</code> in C, Java and C#, <code>ta_lib::MAX_INDEX</code> in Rust — so a call is accepted or rejected identically whichever you use. It is a constant rather than a buffer length, so the check costs two comparisons and is done before anything is read.</p>
+<p>The limit is the same number in every language binding — <code>TA_MAX_INDEX</code> in C, <code>ta_lib::MAX_INDEX</code> in Rust, <code>Core.MAX_INDEX</code> in Java and C# — so a call is accepted or rejected identically whichever you use. It is a constant rather than a buffer length, so the check costs two comparisons and is done before anything is read.</p>
 
 <p>For context on the size: 100 million one-minute bars is about 190 years of 24/7 data, or a century of a regular equity session. Series that long are usually tick data, where the <a href="/api/stream/">streaming API</a> is the better tool anyway.</p>
 

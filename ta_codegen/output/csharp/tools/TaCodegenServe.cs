@@ -837,9 +837,9 @@ public class TaCodegenServe {
         // `n` below drives every output allocation, so validating after it
         // would turn an out-of-range request into an 800MB-per-output
         // allocation and take the server down instead of returning a code.
-        if (startIdx < 0 || startIdx > Core.TA_MAX_INDEX)
+        if (startIdx < 0 || startIdx > Core.MAX_INDEX)
             return "{\"binder\":1,\"lookback\":-1,\"retCode\":12,\"outBegIdx\":0,\"outNBElement\":0}";
-        if (endIdx < 0 || endIdx > Core.TA_MAX_INDEX || endIdx < startIdx)
+        if (endIdx < 0 || endIdx > Core.MAX_INDEX || endIdx < startIdx)
             return "{\"binder\":1,\"lookback\":-1,\"retCode\":13,\"outBegIdx\":0,\"outNBElement\":0}";
         int n = endIdx - startIdx + 1;
         if (n < 1) n = 1;

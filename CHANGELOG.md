@@ -52,7 +52,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   above it a call returns `TA_OUT_OF_RANGE_START_INDEX` / `TA_OUT_OF_RANGE_END_INDEX` instead
   of computing. 100 million bars is ~190 years of 24/7 one-minute data; series longer than
   that are tick data, better served by the streaming API. The same limit now applies in Rust
-  (`ta_lib::MAX_INDEX`), Java and C#, so a call is accepted or rejected identically in all four.
+  (`ta_lib::MAX_INDEX`) and in Java and C# (`Core.MAX_INDEX` — the managed bindings carry no
+  `TA_` prefix), so a call is accepted or rejected identically in all four.
   The streaming `OpenAndFill` entry points reject an over-long `historyLen` the same way.
   The cap bounds the valid index range only — it is not an accuracy guarantee.
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.

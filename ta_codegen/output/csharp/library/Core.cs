@@ -82,9 +82,9 @@ public partial class Core
     /// already imprecise well below this cap.</para>
     /// <para>Identical in C, Rust and Java, so the same call is accepted or
     /// rejected the same way in all four.</para></remarks>
-    public const int TA_MAX_INDEX = 100000000;
+    public const int MAX_INDEX = 100000000;
 
-    /* Sized by the id count, so the All wildcard gets no slot (#144). */
+    /* Sized by the id count, so the ALL wildcard gets no slot (#144). */
     internal readonly int[] unstablePeriod = new int[FuncUnstIds.Count];
 
     /* candleSettings[] in CandleSettingType order. Defaults from

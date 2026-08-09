@@ -9049,7 +9049,7 @@ fn ta_max_index_agrees_across_every_surface() {
         ("ta_codegen/generator/templates/rust/types.rs", "pub const MAX_INDEX: usize = "),
         ("ta_codegen/output/java/library/src/main/java/io/github/talib/Core.java",
          "public static final int MAX_INDEX = "),
-        ("ta_codegen/output/csharp/library/Core.cs", "public const int TA_MAX_INDEX = "),
+        ("ta_codegen/output/csharp/library/Core.cs", "public const int MAX_INDEX = "),
         ("ta_codegen/generator/src/server_gen.rs", "static final int MAX_INDEX = "),
     ];
 
