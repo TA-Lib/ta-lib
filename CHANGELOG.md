@@ -55,14 +55,6 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   (`ta_lib::MAX_INDEX`), Java and C#, so a call is accepted or rejected identically in all four.
   The streaming `OpenAndFill` entry points reject an over-long `historyLen` the same way.
   The cap bounds the valid index range only — it is not an accuracy guarantee.
-- (#180) Rust API: `endIdx < startIdx` now returns `RetCode::OutOfRangeEndIndex` from the batch
-  functions. They previously returned `OutOfRangeStartIndex`, disagreeing with C, with Java/C#
-  and with the crate's own abstract tier. Match on `OutOfRangeEndIndex` for an inverted range.
-- (#180) Rust API: the `*_private` variants are now `pub(crate)`. They skip the validation
-  prologue on purpose — their callers are the guarded entry points, which have already
-  validated — so exposing them let a caller reach an indicator with no parameter or index
-  checking at all. C, Java and C# already kept theirs internal. Call the guarded function
-  of the same name instead.
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
 - (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.
