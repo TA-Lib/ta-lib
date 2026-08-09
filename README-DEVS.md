@@ -60,7 +60,6 @@ cargo run -- generate                            # Generate indicator code for a
 cargo run -- generate --func=SMA --backend=rust  # Specific function + backend
 cargo run -- generate-servers                    # Generate JSON-RPC servers
 cargo run -- build                               # Compile servers
-cargo run -- extract                             # Extract indicators from C source → YAML
 ```
 
 Generated output goes to `ta_codegen/output/` organized by language.

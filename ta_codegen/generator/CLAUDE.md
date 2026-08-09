@@ -2,7 +2,7 @@
 
 ## What This Is
 
-`ta_codegen` is the Rust-based code generator that replaces the old `gen_code.c` pipeline for indicator code generation. It reads YAML function definitions extracted from the C source, produces language-specific indicator implementations, and generates JSON-RPC servers for cross-language regression testing.
+`ta_codegen` is the Rust-based code generator that replaces the old `gen_code.c` pipeline for indicator code generation. It reads the per-indicator definitions in `ta_codegen/input/` — the source of truth — produces language-specific indicator implementations, and generates JSON-RPC servers for cross-language regression testing.
 
 ## Architecture
 
@@ -59,7 +59,6 @@ touching all three.
 |--------|---------|
 | `parser` | Parses YAML metadata (via raw serde structs) into `FuncDef`; parses `.c` source directly into IR `Statement`/`Expr` (no intermediate raw-struct stage for the logic) |
 | `ir` | Intermediate representation (`FuncDef`, `ParamType`, `Statement`, `Expr`, etc.) |
-| `extractor` | Extracts indicator definitions from C source files → YAML |
 | `backends/c.rs` | Generates C indicator implementations (guarded `TA_<N>` / `TA_S_<N>`, plus `TA_<N>_Private` where declared) |
 | `backends/rust_lang.rs` | Generates Rust indicator implementations (concrete `f64`, guarded `<N>` plus `<N>_Private` where declared) |
 | `backends/rust_doc.rs` | Renders each function's canonical `<name>.md` as rustdoc on the generated Rust methods (summary/formula/notes, `# Arguments` with YAML numbers injected, `# Errors`/`# Panics`, a runnable doctest, `#[doc(alias)]`, intra-doc `# See also` links) |
@@ -90,9 +89,6 @@ cargo run -- generate-servers --backend=c    # Generate server for specific lang
 
 cargo run -- build                           # Compile generated servers into executables
 cargo run -- build --backend=c,java          # Build specific servers
-
-cargo run -- extract                         # Extract all indicators from C source → YAML
-cargo run -- extract --function=EMA          # Extract specific indicator
 ```
 
 ## Testing

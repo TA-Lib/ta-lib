@@ -17,7 +17,6 @@
 pub mod backends;
 pub mod bench_gen;
 pub mod candle_settings;
-pub mod extractor;
 pub mod flag_sync;
 pub mod formatter;
 pub mod helper_registry;

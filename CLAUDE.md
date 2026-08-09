@@ -84,7 +84,6 @@ cargo run -- generate                            # Generate indicator code for a
 cargo run -- generate --func=SMA --backend=rust  # Specific function + backend
 cargo run -- generate-servers                    # Generate JSON-RPC servers
 cargo run -- build                               # Compile servers into bin/
-cargo run -- extract                             # Extract indicators from C source → YAML
 cargo test                                       # ta_codegen's own test suite
 
 # ta_regtest directly (from bin/)

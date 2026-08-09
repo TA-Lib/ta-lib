@@ -46,6 +46,12 @@ impl Registry {
                     continue;
                 }
                 let dir_name = entry.file_name().to_string_lossy().to_string();
+                // Same skip the loaders apply, from the same predicate: a
+                // non-indicator directory must not reach `parse_yaml`, whose
+                // checks are written for indicator definitions.
+                if crate::parser::yaml::is_reserved_dir(&dir_name) {
+                    continue;
+                }
                 let yaml_path = path.join(format!("{dir_name}.yaml"));
                 if yaml_path.exists() {
                     let fd = crate::parser::yaml::parse_yaml(&yaml_path);
@@ -67,18 +73,6 @@ impl Registry {
         indicators.sort_by(|a, b| b.len().cmp(&a.len()).then(a.cmp(b)));
 
         Registry { indicators, names, callee_sigs, callee_out_names }
-    }
-
-    /// Create an empty registry (for rendering self-contained expressions that
-    /// reference no indicators or helpers, e.g. the boolean-builtin predicates
-    /// emitted into the JSON-RPC servers for the cross-language eval_predicate test).
-    pub fn empty() -> Self {
-        Registry {
-            indicators: Vec::new(),
-            names: HashMap::new(),
-            callee_sigs: HashMap::new(),
-            callee_out_names: HashMap::new(),
-        }
     }
 
     /// The output names of an indicator in signature order (empty if unknown).

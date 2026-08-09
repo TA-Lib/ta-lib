@@ -1,7 +1,4 @@
 use ta_codegen_lib::backends;
-use ta_codegen_lib::extractor::func_extractor::extract_function_source;
-use ta_codegen_lib::extractor::table_parser::{parse_shared_defs, parse_table};
-use ta_codegen_lib::extractor::TableFuncDef;
 use ta_codegen_lib::formatter;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::ir;
@@ -84,10 +81,6 @@ fn main() {
             let backend_filter = find_arg(&args, &["--backend"]);
             build_servers(backend_filter.as_deref());
         }
-        "extract" => {
-            let func_filter = find_arg(&args, &["--function", "--func"]);
-            extract(func_filter.as_deref());
-        }
         "format" => {
             let func_filter = find_arg(&args, &["--func", "--function"]);
             let check_only = args.iter().any(|a| a == "--check");
@@ -105,7 +98,6 @@ fn main() {
             eprintln!("  generate-servers  Generate JSON-RPC server wrappers for each language");
             eprintln!("  generate-bench   Generate the direct-call C benchmark binary source");
             eprintln!("  build            Compile generated server source into executables");
-            eprintln!("  extract          Extract indicators from C source to ta_codegen/input/");
             eprintln!("  format           Re-indent the ta_codegen/input/ C source of truth");
             eprintln!("  stream-census    Report the IR-derived streamability per function");
             eprintln!("                   (--seed-yaml writes `streaming: true` for clean functions)");
@@ -122,11 +114,6 @@ fn main() {
                 "  --backend=NAME[,NAME,...]    Only generate specified backends (default: all)"
             );
             eprintln!("                               Backends: c, rust, java, csharp");
-            eprintln!();
-            eprintln!("Options for 'extract':");
-            eprintln!(
-                "  --function=NAME[,NAME,...]   Only extract specified functions (default: all)"
-            );
             std::process::exit(1);
         }
     }
@@ -149,13 +136,6 @@ fn find_arg(args: &[String], prefixes: &[&str]) -> Option<String> {
         }
     }
     None
-}
-
-/// True for non-indicator subdirectories of `ta_codegen/input/` (shared `helpers/`,
-/// library scaffolding `lib/`) that never carry a `<name>.yaml` indicator
-/// definition and therefore contribute nothing to generated output.
-fn is_reserved_dir(name: &str) -> bool {
-    matches!(name, "helpers" | "lib")
 }
 
 /// Recursively collect `*.c` files under `dir`.
@@ -541,7 +521,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
             }
         }
 
-        if is_reserved_dir(&func_name_lower) {
+        if parser::yaml::is_reserved_dir(&func_name_lower) {
             continue;
         }
 
@@ -759,7 +739,7 @@ fn load_all_yaml_defs(base: &Path) -> Vec<ir::FuncDef> {
         let dir = entry.path();
         let dir_name = entry.file_name().to_string_lossy().to_string();
 
-        if is_reserved_dir(&dir_name) {
+        if parser::yaml::is_reserved_dir(&dir_name) {
             continue;
         }
 
@@ -807,7 +787,7 @@ fn load_func_defs(func_filter: Option<&str>, root: &Path) -> Vec<ir::FuncDef> {
             }
         }
 
-        if is_reserved_dir(&func_name_lower) {
+        if parser::yaml::is_reserved_dir(&func_name_lower) {
             continue;
         }
 
@@ -1795,219 +1775,6 @@ fn csharp_test_tfms(test_dir: &Path) -> Vec<String> {
         }
     }
     Vec::new()
-}
-
-fn extract(func_filter: Option<&str>) {
-    let base = repo_root();
-    let tables_dir = base.join("src/ta_abstract/tables");
-    let def_ui_path = base.join("src/ta_abstract/ta_def_ui.c");
-    let func_dir = base.join("src/ta_func");
-    let out_dir = base.join("ta_codegen/input");
-
-    // 1. Parse shared definitions
-    let def_ui_source = std::fs::read_to_string(&def_ui_path).expect("Cannot read ta_def_ui.c");
-    let shared = parse_shared_defs(&def_ui_source);
-
-    // 2. Parse all table files
-    let mut all_funcs: Vec<TableFuncDef> = Vec::new();
-    let mut table_files: Vec<_> = std::fs::read_dir(&tables_dir)
-        .expect("Cannot read tables directory")
-        .filter_map(|e| e.ok())
-        .filter(|e| {
-            let name = e.file_name().to_string_lossy().to_string();
-            name.starts_with("table_") && name.ends_with(".c")
-        })
-        .collect();
-    table_files.sort_by_key(|e| e.file_name());
-
-    for entry in &table_files {
-        let source = std::fs::read_to_string(entry.path()).unwrap();
-        let funcs = parse_table(&source, &shared);
-        all_funcs.extend(funcs);
-    }
-
-    println!("Found {} indicators in abstract tables", all_funcs.len());
-
-    // 3. Apply function filter
-    let filter_names: Option<Vec<String>> =
-        func_filter.map(|f| f.split(',').map(|s| s.trim().to_uppercase()).collect());
-
-    let mut succeeded = 0;
-    let mut failed = 0;
-    let mut skipped = 0;
-
-    for func in &all_funcs {
-        if let Some(ref names) = filter_names {
-            if !names.iter().any(|n| n == &func.name) {
-                continue;
-            }
-        }
-
-        // Read corresponding source file
-        let src_path = func_dir.join(format!("ta_{}.c", func.name));
-        if !src_path.exists() {
-            eprintln!("  SKIP {}: source file not found", func.name);
-            skipped += 1;
-            continue;
-        }
-
-        let source = match std::fs::read_to_string(&src_path) {
-            Ok(s) => s,
-            Err(e) => {
-                eprintln!("  FAIL {}: cannot read source: {}", func.name, e);
-                failed += 1;
-                continue;
-            }
-        };
-
-        // Extract C logic (catch panics and timeouts from parser)
-        let name_lower = func.name.to_lowercase();
-        let source_clone = source.clone();
-        let name_clone = name_lower.clone();
-        let (tx, rx) = std::sync::mpsc::channel();
-        std::thread::spawn(move || {
-            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                extract_function_source(&source_clone, &name_clone)
-            }));
-            let _ = tx.send(result);
-        });
-
-        let extracted_c = match rx.recv_timeout(std::time::Duration::from_secs(10)) {
-            Ok(Ok(c)) => c,
-            Ok(Err(_)) => {
-                eprintln!("  FAIL {}: extractor panicked", func.name);
-                failed += 1;
-                continue;
-            }
-            Err(_) => {
-                eprintln!("  FAIL {}: extractor timed out", func.name);
-                failed += 1;
-                continue;
-            }
-        };
-
-        if extracted_c.trim().is_empty() {
-            eprintln!("  FAIL {}: extractor produced empty output", func.name);
-            failed += 1;
-            continue;
-        }
-
-        // Generate YAML
-        let yaml = func_to_yaml(func);
-
-        // Write output
-        let indicator_dir = out_dir.join(&name_lower);
-        std::fs::create_dir_all(&indicator_dir).unwrap();
-
-        let yaml_path = indicator_dir.join(format!("{}.yaml", name_lower));
-        let c_path = indicator_dir.join(format!("{}.c", name_lower));
-
-        std::fs::write(&yaml_path, &yaml).unwrap();
-        std::fs::write(&c_path, &extracted_c).unwrap();
-
-        println!("  OK   {}", func.name);
-        succeeded += 1;
-    }
-
-    println!();
-    println!(
-        "Extracted {} indicators ({} succeeded, {} failed, {} skipped)",
-        succeeded + failed + skipped,
-        succeeded,
-        failed,
-        skipped
-    );
-}
-
-fn func_to_yaml(func: &TableFuncDef) -> String {
-    let mut out = String::new();
-
-    out.push_str(&format!("name: {}\n", func.name));
-    out.push_str(&format!("group: {}\n", func.group));
-    out.push_str(&format!("hint: {}\n", func.hint));
-
-    // flags
-    if func.flags.is_empty() {
-        out.push_str("flags: []\n");
-    } else {
-        out.push_str(&format!("flags: [{}]\n", func.flags.join(", ")));
-    }
-
-    // inputs
-    out.push_str("inputs:\n");
-    for input in &func.inputs {
-        out.push_str(&format!("  - name: {}\n", input.name));
-        out.push_str(&format!("    type: {}\n", input.param_type));
-        if input.param_type == "price" && !input.price_flags.is_empty() {
-            out.push_str(&format!(
-                "    price_components: [{}]\n",
-                input.price_flags.join(", ")
-            ));
-        }
-    }
-
-    // optional_inputs
-    if !func.optional_inputs.is_empty() {
-        out.push_str("optional_inputs:\n");
-        for opt in &func.optional_inputs {
-            out.push_str(&format!("  - name: {}\n", opt.name));
-            out.push_str(&format!("    type: {}\n", opt.param_type));
-            if !opt.display_name.is_empty() {
-                out.push_str(&format!("    display_name: {}\n", opt.display_name));
-            }
-            if !opt.hint.is_empty() {
-                out.push_str(&format!("    hint: {}\n", opt.hint));
-            }
-            if let Some((min, max)) = opt.range {
-                out.push_str(&format!(
-                    "    range: [{}, {}]\n",
-                    format_yaml_num(min),
-                    format_yaml_num(max)
-                ));
-            }
-            if let Some(default) = opt.default {
-                out.push_str(&format!("    default: {}\n", format_yaml_num(default)));
-            }
-            if let Some((start, end, inc)) = opt.suggested {
-                out.push_str(&format!(
-                    "    suggested: [{}, {}, {}]\n",
-                    format_yaml_num(start),
-                    format_yaml_num(end),
-                    format_yaml_num(inc)
-                ));
-            }
-            if !opt.flags.is_empty() {
-                out.push_str(&format!("    flags: [{}]\n", opt.flags.join(", ")));
-            }
-        }
-    }
-
-    // outputs
-    out.push_str("outputs:\n");
-    for output in &func.outputs {
-        out.push_str(&format!("  - name: {}\n", output.name));
-        out.push_str(&format!("    type: {}\n", output.param_type));
-        if !output.flags.is_empty() {
-            out.push_str(&format!("    flags: [{}]\n", output.flags.join(", ")));
-        }
-    }
-
-    out
-}
-
-/// Format a number for YAML output: integers without decimal, reals with decimal.
-fn format_yaml_num(v: f64) -> String {
-    if v <= crate::backends::common::TA_REAL_MIN {
-        return "TA_REAL_MIN".to_string();
-    }
-    if v >= crate::backends::common::TA_REAL_MAX {
-        return "TA_REAL_MAX".to_string();
-    }
-    if v == v.floor() && v.abs() < 1e15 {
-        format!("{}", v as i64)
-    } else {
-        format!("{}", v)
-    }
 }
 
 /// The hand-written Rust library sources that ship inside the generated crate,
