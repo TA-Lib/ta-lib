@@ -3383,6 +3383,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        RetCode::InternalError => 5000,\n");
     s.push_str("        RetCode::OutOfRangeStartIndex => 12,\n");
     s.push_str("        RetCode::OutOfRangeEndIndex => 13,\n");
+    s.push_str("        _ => 5000,\n");
     s.push_str("    }\n");
     s.push_str("}\n\n");
 

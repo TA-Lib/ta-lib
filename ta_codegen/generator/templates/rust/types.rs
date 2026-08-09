@@ -1,5 +1,6 @@
 /// Return codes for TA-Lib function calls.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum RetCode {
     /// Function completed successfully.
     Success,
@@ -48,6 +49,7 @@ pub(crate) enum Compatibility {
 
 /// Identifies functions that have an unstable period.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum FuncUnstId {
     ADX,
     /// Reserved: was ADXR, knob was inert (#129); kept for ABI, reusable.
@@ -169,6 +171,7 @@ impl CandleSettings {
 /// Identifies which candlestick setting to configure via
 /// [`CoreBuilder::candle_setting`]. Mirrors the C `TA_CandleSettingType`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum CandleSettingType {
     BodyLong,
     BodyVeryLong,

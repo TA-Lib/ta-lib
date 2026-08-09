@@ -30,6 +30,7 @@ use crate::FuncUnstId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(u16)]
+#[non_exhaustive]
 #[allow(non_camel_case_types)]
 pub enum FuncId {
     ACCBANDS,
@@ -214,6 +215,7 @@ impl FuncId {
 /// Function group (closed set — replaces C's runtime group-string table + linear `getGroupId`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
+#[non_exhaustive]
 pub enum Group {
     CycleIndicators,
     MathOperators,
