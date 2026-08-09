@@ -62,6 +62,9 @@
  *    are coherent (the SF bug-84 case: TA_MACD_Lookback(2,7,1)==6).
  *  - Identity: SMA/EMA/WMA/DEMA/TEMA/TRIMA/KAMA/T3/HMA/MAVP and
  *    MA(period=1, every MAType) must return the input unchanged.
+ *  - The same rule, enumerated instead of hand-listed: every function
+ *    named by the TA_MAType metadata, plus the moving averages
+ *    outside that enum (VWMA), must be a bit-exact copy at period 1.
  *  - MACD family with signalPeriod=1: the signal line equals the
  *    MACD line, the histogram is zero, and the output is aligned
  *    and complete (the #59 "repaint" regression pins).
@@ -177,10 +180,14 @@ typedef struct
 /**** Local functions declarations.    ****/
 static ErrorNumber testLookbackContract( void );
 static ErrorNumber testIdentityAtPeriodOne( const TA_History *history );
+static ErrorNumber testEveryMovingAverageIdentity( const TA_History *history );
 static ErrorNumber testMacdFamilySignalOne( const TA_History *history );
 static ErrorNumber testPeriodOnePins( const TA_History *history );
 static ErrorNumber testMinBoundarySweep( const TA_History *history );
 static ErrorNumber testLinearRegRampOverflowProbe( void );
+static int pbBuildServerInputs( const TA_FuncInfo *funcInfo,
+                                const TA_History *history,
+                                const TA_Real *inputs[], int maxInputs );
 
 /**** Local variables definitions.     ****/
 /* None */
@@ -199,6 +206,10 @@ ErrorNumber test_func_period_boundary( TA_History *history )
       return errNb;
 
    errNb = testIdentityAtPeriodOne( history );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+
+   errNb = testEveryMovingAverageIdentity( history );
    if( errNb != TA_TEST_PASS )
       return errNb;
 
@@ -412,48 +423,6 @@ static TA_RetCode pbIdentityRangeFunction( TA_Integer    startIdx,
    return retCode;
 }
 
-/* Call one single-input function at period=1 and require exact identity. */
-static ErrorNumber pbCheckIdentityCall( const char *funcName,
-                                        const TA_History *history,
-                                        TA_RetCode retCode,
-                                        TA_Integer outBegIdx,
-                                        TA_Integer outNbElement,
-                                        TA_Integer expectedBegIdx,
-                                        const TA_Real *out,
-                                        const double optParams[],
-                                        int nbOptParams )
-{
-   ErrorNumber errNb;
-   char label[128];
-
-   snprintf( label, sizeof(label), "%s period=1 identity", funcName );
-
-   errNb = pbCheckCallShape( label, retCode, outBegIdx, expectedBegIdx,
-                             outNbElement, (TA_Integer)(history->nbBars - 1) );
-   if( errNb != TA_TEST_PASS )
-      return errNb;
-
-   errNb = pbCheckSameSeries( label, out, &history->close[outBegIdx], outNbElement );
-   if( errNb != TA_TEST_PASS )
-      return errNb;
-
-   if( server_verify_active() )
-   {
-      errNb = server_verify( funcName, 0, history->nbBars - 1, history->nbBars,
-                             retCode, outBegIdx, outNbElement,
-                             (const TA_Real*[]){ history->close, NULL },
-                             optParams, nbOptParams,
-                             (const TA_Real*[]){ out, NULL }, NULL );
-      if( errNb != TA_TEST_PASS )
-      {
-         printf( "Fail: %s: server verification\n", label );
-         return errNb;
-      }
-   }
-
-   return TA_TEST_PASS;
-}
-
 static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
 {
    TA_RetCode retCode;
@@ -465,51 +434,13 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
    clearAllBuffers();
    setInputBuffer( 0, history->close, history->nbBars );
 
-   /* The 8 direct moving averages. */
-   retCode = TA_SMA( 0, endIdx, gBuffer[0].in, 1, &outBegIdx, &outNbElement, gBuffer[0].out0 );
-   errNb = pbCheckIdentityCall( "SMA", history, retCode, outBegIdx, outNbElement, 0,
-                                gBuffer[0].out0, (const double[]){ 1 }, 1 );
-   if( errNb != TA_TEST_PASS ) return errNb;
-
-   retCode = TA_EMA( 0, endIdx, gBuffer[0].in, 1, &outBegIdx, &outNbElement, gBuffer[0].out0 );
-   errNb = pbCheckIdentityCall( "EMA", history, retCode, outBegIdx, outNbElement, 0,
-                                gBuffer[0].out0, (const double[]){ 1 }, 1 );
-   if( errNb != TA_TEST_PASS ) return errNb;
-
-   retCode = TA_WMA( 0, endIdx, gBuffer[0].in, 1, &outBegIdx, &outNbElement, gBuffer[0].out0 );
-   errNb = pbCheckIdentityCall( "WMA", history, retCode, outBegIdx, outNbElement, 0,
-                                gBuffer[0].out0, (const double[]){ 1 }, 1 );
-   if( errNb != TA_TEST_PASS ) return errNb;
-
-   retCode = TA_DEMA( 0, endIdx, gBuffer[0].in, 1, &outBegIdx, &outNbElement, gBuffer[0].out0 );
-   errNb = pbCheckIdentityCall( "DEMA", history, retCode, outBegIdx, outNbElement, 0,
-                                gBuffer[0].out0, (const double[]){ 1 }, 1 );
-   if( errNb != TA_TEST_PASS ) return errNb;
-
-   retCode = TA_TEMA( 0, endIdx, gBuffer[0].in, 1, &outBegIdx, &outNbElement, gBuffer[0].out0 );
-   errNb = pbCheckIdentityCall( "TEMA", history, retCode, outBegIdx, outNbElement, 0,
-                                gBuffer[0].out0, (const double[]){ 1 }, 1 );
-   if( errNb != TA_TEST_PASS ) return errNb;
-
-   retCode = TA_TRIMA( 0, endIdx, gBuffer[0].in, 1, &outBegIdx, &outNbElement, gBuffer[0].out0 );
-   errNb = pbCheckIdentityCall( "TRIMA", history, retCode, outBegIdx, outNbElement, 0,
-                                gBuffer[0].out0, (const double[]){ 1 }, 1 );
-   if( errNb != TA_TEST_PASS ) return errNb;
-
-   retCode = TA_KAMA( 0, endIdx, gBuffer[0].in, 1, &outBegIdx, &outNbElement, gBuffer[0].out0 );
-   errNb = pbCheckIdentityCall( "KAMA", history, retCode, outBegIdx, outNbElement, 0,
-                                gBuffer[0].out0, (const double[]){ 1 }, 1 );
-   if( errNb != TA_TEST_PASS ) return errNb;
-
-   retCode = TA_T3( 0, endIdx, gBuffer[0].in, 1, 0.7, &outBegIdx, &outNbElement, gBuffer[0].out0 );
-   errNb = pbCheckIdentityCall( "T3", history, retCode, outBegIdx, outNbElement, 0,
-                                gBuffer[0].out0, (const double[]){ 1, 0.7 }, 2 );
-   if( errNb != TA_TEST_PASS ) return errNb;
-
-   retCode = TA_HMA( 0, endIdx, gBuffer[0].in, 1, &outBegIdx, &outNbElement, gBuffer[0].out0 );
-   errNb = pbCheckIdentityCall( "HMA", history, retCode, outBegIdx, outNbElement, 0,
-                                gBuffer[0].out0, (const double[]){ 1 }, 1 );
-   if( errNb != TA_TEST_PASS ) return errNb;
+   /* The direct moving averages (SMA/EMA/WMA/DEMA/TEMA/TRIMA/KAMA/T3/HMA) are
+    * NOT called here: testEveryMovingAverageIdentity below drives every one of
+    * them off the TA_MAType metadata, on two input series, with the same
+    * shape/value/server checks — a superset of what a hand list can state, and
+    * one that a new MAType cannot slip past. What follows is the part that
+    * sweep does not reach.
+    */
 
    /* MA(period=1) for every MAType: the documented "just copy" path
     * (includes TA_MAType_DISABLED, whose copy is period-independent). */
@@ -683,6 +614,379 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
    /* doRangeTest varies the unstable period and leaves it set. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
+   return TA_TEST_PASS;
+}
+
+/****************************************************************/
+/* Sub-test: EVERY moving average copies its input at period 1  */
+/****************************************************************/
+
+/* The contract: a moving average of period 1 performs no smoothing, so its
+ * lookback is 0 and its output is a BIT-EXACT copy of its input.
+ *
+ * The list is the TA_MAType enumeration itself, read from the abstract
+ * metadata — MA's optInMAType list pairs each enum value with the NAME of the
+ * function it dispatches to — so a MAType added later is held to this without
+ * anyone remembering to edit a table here. That is the whole point of driving
+ * it off the enum: testIdentityAtPeriodOne above hand-lists its calls, and a
+ * hand list cannot notice a new arrival.
+ *
+ * Two kinds of entry cannot be driven to a period of 1, and both must be named
+ * here with the reason. An exemption the table does NOT list is a failure, not
+ * a skip: without that, renaming a MAType label to something that resolves to
+ * no function (or a function losing its period parameter) drops it from the
+ * gate silently, and the accounting below still balances because every entry
+ * increments exactly one counter either way.
+ *
+ * PB_EXTRA_MA carries the moving averages that are NOT MAType-selectable and
+ * would otherwise escape the rule entirely; a name there that resolves to no
+ * function is likewise a failure. MAVP is deliberately absent: its period is a
+ * per-bar input array, pinned by its own case above.
+ *
+ * Every count is printed and asserted, so the sweep cannot pass by checking
+ * nothing.
+ */
+static const char * const PB_EXTRA_MA[] = { "VWMA" };
+
+static const struct { const char *name; const char *why; } PB_MA_EXEMPT[] =
+{
+   { "DISABLED", "dispatch-only sentinel: no function of that name (the "
+                 "MA(period=1) loop covers it)" },
+   { "MAMA",     "no integer-range parameter: its two parameters are the real "
+                 "fast/slow limits" },
+};
+
+/* The reason this name is allowed to escape the sweep, or NULL if it is not. */
+static const char *pbMaExemptReason( const char *name )
+{
+   unsigned int i;
+   for( i = 0; i < sizeof(PB_MA_EXEMPT)/sizeof(PB_MA_EXEMPT[0]); i++ )
+      if( strcmp( PB_MA_EXEMPT[i].name, name ) == 0 )
+         return PB_MA_EXEMPT[i].why;
+   return NULL;
+}
+
+/* Call `name` with its first integer-range parameter set to 1, every other
+ * parameter left at its default, and require lookback 0 plus a bit-exact copy
+ * of the close series over the whole output range. Increments *checked when the
+ * call ran, *exempt when the metadata says there is nothing to set to 1.
+ * `mustExist` makes an unresolvable name a failure instead of an exemption. */
+static ErrorNumber pbCheckMaIdentityByName( const char *name,
+                                            const TA_History *history,
+                                            int mustExist,
+                                            int *checked,
+                                            int *exempt )
+{
+   const TA_FuncHandle *handle;
+   const TA_FuncInfo *funcInfo;
+   const TA_InputParameterInfo *inputInfo;
+   const TA_OptInputParameterInfo *optInfo;
+   TA_ParamHolder *paramHolder;
+   TA_RetCode retCode;
+   TA_Integer outBegIdx = -1, outNbElement = -1;
+   int lookback = -1;
+   int endIdx = (TA_Integer)history->nbBars - 1;
+   int periodParam = -1;
+   unsigned int i;
+   double optParams[PB_MAX_OPT];
+   const TA_Real *serverInputs[PB_MAX_INPUT];
+   char label[128];
+
+   if( TA_GetFuncHandle( name, &handle ) != TA_SUCCESS )
+   {
+      if( mustExist || !pbMaExemptReason( name ) )
+      {
+         printf( "\nFail: period-1 MA identity: no function named '%s', and it "
+                 "is not a documented exemption\n", name );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+      (*exempt)++;
+      return TA_TEST_PASS;
+   }
+   if( TA_GetFuncInfo( handle, &funcInfo ) != TA_SUCCESS )
+   {
+      printf( "\nFail: period-1 MA identity: TA_GetFuncInfo(%s)\n", name );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   /* The parameter to drive: the first integer RANGE (a choice list is a type
+    * selector, not a period). No such parameter means nothing to set to 1. */
+   for( i = 0; i < funcInfo->nbOptInput && i < PB_MAX_OPT; i++ )
+   {
+      TA_GetOptInputParameterInfo( handle, i, &optInfo );
+      optParams[i] = optInfo->defaultValue;
+      if( periodParam < 0 && optInfo->type == TA_OptInput_IntegerRange )
+         periodParam = (int)i;
+   }
+   if( funcInfo->nbOptInput > PB_MAX_OPT )
+   {
+      printf( "\nFail: period-1 MA identity: %s has %u optional params (max %d)\n",
+              name, funcInfo->nbOptInput, PB_MAX_OPT );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   if( periodParam < 0 )
+   {
+      if( !pbMaExemptReason( name ) )
+      {
+         printf( "\nFail: period-1 MA identity: %s has no integer-range "
+                 "parameter to set to 1, and it is not a documented exemption\n",
+                 name );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+      (*exempt)++;
+      return TA_TEST_PASS;
+   }
+   optParams[periodParam] = 1.0;
+
+   /* One real output: a moving average produces one series. Anything else is
+    * a new shape someone must classify, not something to compare blindly. */
+   if( funcInfo->nbOutput != 1 )
+   {
+      printf( "\nFail: period-1 MA identity: %s has %u outputs, expected 1\n",
+              name, funcInfo->nbOutput );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   /* pbSweepOutReal is PB_DATA_SIZE wide and shared with the sweep below,
+    * which runs after this sub-test — so its own bound check cannot protect
+    * this one. */
+   if( (int)history->nbBars > PB_DATA_SIZE )
+   {
+      printf( "\nFail: period-1 MA identity: history has %u bars, buffer holds %d\n",
+              history->nbBars, PB_DATA_SIZE );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   snprintf( label, sizeof(label), "%s period=1 identity", name );
+
+   retCode = TA_ParamHolderAlloc( handle, &paramHolder );
+   PB_CHECK_RC( label, retCode, TA_SUCCESS );
+
+   for( i = 0; i < funcInfo->nbInput; i++ )
+   {
+      TA_GetInputParameterInfo( handle, i, &inputInfo );
+      switch( inputInfo->type )
+      {
+      case TA_Input_Price:
+         TA_SetInputParamPricePtr( paramHolder, i,
+            inputInfo->flags & TA_IN_PRICE_OPEN   ? history->open   : NULL,
+            inputInfo->flags & TA_IN_PRICE_HIGH   ? history->high   : NULL,
+            inputInfo->flags & TA_IN_PRICE_LOW    ? history->low    : NULL,
+            inputInfo->flags & TA_IN_PRICE_CLOSE  ? history->close  : NULL,
+            inputInfo->flags & TA_IN_PRICE_VOLUME ? history->volume : NULL,
+            NULL );
+         break;
+      case TA_Input_Real:
+         TA_SetInputParamRealPtr( paramHolder, i, history->close );
+         break;
+      case TA_Input_Integer:
+         break;   /* no integer-input function today */
+      }
+   }
+   TA_SetOutputParamRealPtr( paramHolder, 0, &pbSweepOutReal[0][0] );
+
+   retCode = TA_SetOptInputParamInteger( paramHolder, (unsigned int)periodParam, 1 );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nFail: %s: a period of 1 was rejected by set-param [%d]\n", label, retCode );
+      TA_ParamHolderFree( paramHolder );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   retCode = TA_CallFunc( paramHolder, 0, endIdx, &outBegIdx, &outNbElement );
+   if( retCode == TA_SUCCESS && TA_GetLookback( paramHolder, &lookback ) != TA_SUCCESS )
+      lookback = -1;
+   TA_ParamHolderFree( paramHolder );
+
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nFail: %s: retCode %d (a period of 1 must be accepted)\n", label, (int)retCode );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   if( lookback != 0 )
+   {
+      printf( "\nFail: %s: lookback %d, expected 0 (no smoothing, no warm-up)\n",
+              label, lookback );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   {
+      ErrorNumber errNb = pbCheckCallShape( label, retCode, outBegIdx, 0, outNbElement, endIdx );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+      errNb = pbCheckSameSeries( label, &pbSweepOutReal[0][0],
+                                 &history->close[outBegIdx], outNbElement );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+
+      /* Cross-language: the rule is the library's, not C's. */
+      if( server_verify_active() )
+      {
+         int nbIn = pbBuildServerInputs( funcInfo, history, serverInputs, PB_MAX_INPUT );
+         if( nbIn < 0 )
+         {
+            printf( "\nFail: %s: too many inputs for server_verify\n", label );
+            return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+         }
+         errNb = server_verify( name, 0, endIdx, history->nbBars,
+                                retCode, outBegIdx, outNbElement,
+                                serverInputs, optParams, (int)funcInfo->nbOptInput,
+                                (const TA_Real*[]){ &pbSweepOutReal[0][0], NULL }, NULL );
+         if( errNb != TA_TEST_PASS )
+         {
+            printf( "Fail: %s: server verification\n", label );
+            return errNb;
+         }
+      }
+   }
+
+   (*checked)++;
+   return TA_TEST_PASS;
+}
+
+/* An input the naive formulas cannot round-trip.
+ *
+ * The reference series does not discriminate: VWMA's (P*V)/V happens to be
+ * bit-exact on all 252 of its bars, so a gate run only there would pass while
+ * the contract was broken (it did, before this series existed). Two-decimal
+ * prices are NOT dyadic, so P already spends a full mantissa; multiplying by a
+ * six-digit integer volume overflows it and the division cannot come back.
+ * Ordinary equity data, in other words, not a pathological one: the reference
+ * series is the lucky case, not this.
+ *
+ * The hostility is ASSERTED here, not asserted-by-comment: tweak a constant so
+ * every bar round-trips and this fails, instead of quietly turning the sweep
+ * below into a second copy of the reference run. That is the whole value of
+ * the series -- it is the only leg that can see a VWMA period-1 regression.
+ *
+ * OHLC is kept valid (low <= open,close <= high) so a price-bundle input is fed
+ * something coherent.
+ */
+#define PB_HOSTILE_MIN_DIVERGENT 8
+
+static ErrorNumber pbFillRoundTripHostileHistory( TA_History *h )
+{
+   static TA_Real open[PB_DATA_SIZE], high[PB_DATA_SIZE], low[PB_DATA_SIZE];
+   static TA_Real close[PB_DATA_SIZE], volume[PB_DATA_SIZE];
+   int i, nbDivergent = 0;
+
+   for( i = 0; i < PB_DATA_SIZE; i++ )
+   {
+      close[i]  = (TA_Real)(10000 + (i * 7919) % 20000) / 100.0;
+      open[i]   = (TA_Real)(10000 + (i * 5417) % 20000) / 100.0;
+      high[i]   = (close[i] > open[i] ? close[i] : open[i]) + 0.25;
+      low[i]    = (close[i] < open[i] ? close[i] : open[i]) - 0.25;
+      volume[i] = (TA_Real)(100003 + (i * 104729) % 899993);
+
+      /* The naive period-1 form, spelled out: a bar where it does NOT return
+       * the price is a bar on which the gate below has something to say. */
+      if( (close[i] * volume[i]) / volume[i] != close[i] )
+         nbDivergent++;
+   }
+
+   if( nbDivergent < PB_HOSTILE_MIN_DIVERGENT )
+   {
+      printf( "\nFail: the round-trip-hostile series is not hostile: (P*V)/V "
+              "returns P on %d of %d bars (need at least %d divergent)\n",
+              PB_DATA_SIZE - nbDivergent, PB_DATA_SIZE, PB_HOSTILE_MIN_DIVERGENT );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   h->nbBars = PB_DATA_SIZE;
+   h->open = open;   h->high = high;  h->low = low;
+   h->close = close; h->volume = volume;
+   h->openInterest = NULL;
+   return TA_TEST_PASS;
+}
+
+static ErrorNumber pbSweepMaIdentity( const TA_History *history, const char *what )
+{
+   const TA_FuncHandle *maHandle;
+   const TA_FuncInfo *maInfo;
+   const TA_OptInputParameterInfo *optInfo;
+   const TA_IntegerList *maTypeList = NULL;
+   ErrorNumber errNb;
+   unsigned int i;
+   int checked = 0, exempt = 0, extra = 0;
+
+   /* The enumeration, straight from the metadata TA_MA publishes. */
+   PB_CHECK_RC( "TA_GetFuncHandle(MA)", TA_GetFuncHandle( "MA", &maHandle ), TA_SUCCESS );
+   PB_CHECK_RC( "TA_GetFuncInfo(MA)", TA_GetFuncInfo( maHandle, &maInfo ), TA_SUCCESS );
+   for( i = 0; i < maInfo->nbOptInput; i++ )
+   {
+      TA_GetOptInputParameterInfo( maHandle, i, &optInfo );
+      if( optInfo->type == TA_OptInput_IntegerList )
+      {
+         maTypeList = (const TA_IntegerList *)optInfo->dataSet;
+         break;
+      }
+   }
+   if( !maTypeList || maTypeList->nbElement == 0 )
+   {
+      printf( "\nFail: period-1 MA identity: MA publishes no MAType list\n" );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   for( i = 0; i < maTypeList->nbElement; i++ )
+   {
+      errNb = pbCheckMaIdentityByName( maTypeList->data[i].string, history,
+                                       0 /*mustExist*/, &checked, &exempt );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+   }
+
+   /* The moving averages outside the enumeration. */
+   for( i = 0; i < sizeof(PB_EXTRA_MA)/sizeof(PB_EXTRA_MA[0]); i++ )
+   {
+      int before = checked;
+      errNb = pbCheckMaIdentityByName( PB_EXTRA_MA[i], history,
+                                       1 /*mustExist*/, &checked, &exempt );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+      if( checked == before )
+      {
+         printf( "\nFail: period-1 MA identity: '%s' has no period to set to 1\n",
+                 PB_EXTRA_MA[i] );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+      extra++;
+   }
+
+   /* Non-vacuity: every enum entry must have been either checked or exempted,
+    * and the checked set must be non-empty. */
+   if( checked - extra + exempt != (int)maTypeList->nbElement || checked <= extra )
+   {
+      printf( "\nFail: period-1 MA identity: %d checked (%d outside the enum), "
+              "%d exempt, %u MAType value(s) — the accounting does not add up\n",
+              checked, extra, exempt, maTypeList->nbElement );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   printf( "\n  Period-1 identity (%s): %d moving average(s) copy their input "
+           "bit-exactly (%u MAType value(s), %d exempt, %d outside the enum)",
+           what, checked, maTypeList->nbElement, exempt, extra );
+
+   return TA_TEST_PASS;
+}
+
+static ErrorNumber testEveryMovingAverageIdentity( const TA_History *history )
+{
+   TA_History hostile;
+   ErrorNumber errNb;
+
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+
+   errNb = pbSweepMaIdentity( history, "reference series" );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+
+   errNb = pbFillRoundTripHostileHistory( &hostile );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+   errNb = pbSweepMaIdentity( &hostile, "round-trip-hostile series" );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+
+   printf( "\n" );
    return TA_TEST_PASS;
 }
 

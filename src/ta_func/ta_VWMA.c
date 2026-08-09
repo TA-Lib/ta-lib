@@ -55,6 +55,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  072026 MF,CC  First version.
+ *  080926 MF,CC  Allow period of 1. Just copy input into output.
  */
 
 TA_LIB_API int TA_VWMA_Lookback( int optInTimePeriod )
@@ -117,6 +118,23 @@ TA_LIB_API TA_RetCode TA_VWMA( int    startIdx,
    {
       *outBegIdx= 0;
       *outNBElement= 0;
+      return TA_SUCCESS;
+   }
+   /* No smoothing at period of 1: the output is a copy of the input
+    * (same convention as TA_MA for every MAType). Explicit because
+    * (P*V)/V round-trips only ~97% of the time in IEEE double, and
+    * because a lone zero volume must give the price, not NaN.
+    */
+   if( optInTimePeriod == 1 )
+   {
+      *outBegIdx= startIdx;
+      outIdx = 0;
+      i = startIdx;
+      while( i <= (int)endIdx )
+      {
+         outReal[outIdx++] = inReal[i++];
+      }
+      *outNBElement= outIdx;
       return TA_SUCCESS;
    }
    /* Add-up the initial period, except for the last value.
@@ -219,6 +237,18 @@ TA_RetCode TA_S_VWMA( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
+   if( optInTimePeriod == 1 )
+   {
+      *outBegIdx= startIdx;
+      outIdx = 0;
+      i = startIdx;
+      while( i <= (int)endIdx )
+      {
+         outReal[outIdx++] = (double)inReal[i++];
+      }
+      *outNBElement= outIdx;
+      return TA_SUCCESS;
+   }
    sumPV = 0.0;
    sumV = 0.0;
    trailingIdx = startIdx - lookbackTotal;
@@ -286,6 +316,11 @@ static void TA_VWMA_StepInternal( struct TA_VWMA_Stream *sp, double inReal, doub
 {
    double tempReal;
 
+   if( sp->optInTimePeriod == 1 )
+   {
+      *outReal= inReal;
+      return;
+   }
    if( sp->ringCap_trailingIdx == 0 )
    {
       sp->ring_trailingIdx_inReal[0] = inReal;
@@ -341,6 +376,32 @@ TA_RetCode TA_VWMA_OpenInternal( struct TA_VWMA_Stream **stream, const double in
    lastValue_outReal = 0.0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
 
+   if( optInTimePeriod == 1 )
+   {
+      if( historyLen < TA_VWMA_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      sp = (struct TA_VWMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->ringCap_trailingIdx = 0;
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+        sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inReal ) { TA_VWMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_VWMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memset( sp->ring_trailingIdx_inReal, 0, sizeof(double) * allocN );
+        sp->ring_trailingIdx_inVolume = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inVolume ) { TA_VWMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inVolume = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inVolume ) { TA_VWMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memset( sp->ring_trailingIdx_inVolume, 0, sizeof(double) * allocN );
+      }
+      sp->ringPos_trailingIdx = 0;
+      *outReal = inReal[historyLen - 1];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+
    {
       double sumPV = 0.0;
       double sumV = 0.0;
@@ -367,6 +428,23 @@ TA_RetCode TA_VWMA_OpenInternal( struct TA_VWMA_Stream **stream, const double in
       {
          dummyBegIdx = 0;
          dummyNBElement = 0;
+         return TA_BAD_PARAM;
+      }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because
+       * (P*V)/V round-trips only ~97% of the time in IEEE double, and
+       * because a lone zero volume must give the price, not NaN.
+       */
+      if( optInTimePeriod == 1 )
+      {
+         dummyBegIdx = startIdx;
+         outIdx = 0;
+         i = startIdx;
+         while( i <= (int)endIdx )
+         {
+            lastValue_outReal = inReal[i++];
+         }
+         dummyNBElement = outIdx;
          return TA_BAD_PARAM;
       }
       /* Add-up the initial period, except for the last value.
@@ -481,6 +559,41 @@ TA_LIB_API TA_RetCode TA_VWMA_OpenAndFill( TA_VWMA_Stream **stream, const double
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
 
+   if( optInTimePeriod == 1 )
+   {
+      if( historyLen < TA_VWMA_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      sp = (struct TA_VWMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->ringCap_trailingIdx = 0;
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+        sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inReal ) { TA_VWMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_VWMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memset( sp->ring_trailingIdx_inReal, 0, sizeof(double) * allocN );
+        sp->ring_trailingIdx_inVolume = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdx_inVolume ) { TA_VWMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdx_inVolume = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdx_inVolume ) { TA_VWMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memset( sp->ring_trailingIdx_inVolume, 0, sizeof(double) * allocN );
+      }
+      sp->ringPos_trailingIdx = 0;
+      {
+         int fillLb = TA_VWMA_Lookback( optInTimePeriod );
+         int fillIdx;
+         *outBegIdx = fillLb;
+         *outNBElement = historyLen - fillLb;
+         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
+         {
+            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         }
+      }
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+
    {
       double sumPV = 0.0;
       double sumV = 0.0;
@@ -507,6 +620,23 @@ TA_LIB_API TA_RetCode TA_VWMA_OpenAndFill( TA_VWMA_Stream **stream, const double
       {
          *outBegIdx= 0;
          *outNBElement= 0;
+         return TA_BAD_PARAM;
+      }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because
+       * (P*V)/V round-trips only ~97% of the time in IEEE double, and
+       * because a lone zero volume must give the price, not NaN.
+       */
+      if( optInTimePeriod == 1 )
+      {
+         *outBegIdx= startIdx;
+         outIdx = 0;
+         i = startIdx;
+         while( i <= (int)endIdx )
+         {
+            outReal[outIdx++] = inReal[i++];
+         }
+         *outNBElement= outIdx;
          return TA_BAD_PARAM;
       }
       /* Add-up the initial period, except for the last value.

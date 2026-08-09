@@ -55,6 +55,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  072026 MF,CC  First version.
+    *  080926 MF,CC  Allow period of 1. Just copy input into output.
     */
    /// <summary>
    /// Number of leading input bars <c>VWMA</c> consumes before it can produce
@@ -123,6 +124,21 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
+         return RetCode.Success ;
+      }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because
+       * (P*V)/V round-trips only ~97% of the time in IEEE double, and
+       * because a lone zero volume must give the price, not NaN.
+       */
+      if( optInTimePeriod == 1 ) {
+         outBegIdx = startIdx;
+         outIdx = 0;
+         i = startIdx;
+         while( i <= (int)endIdx ) {
+            outReal[outIdx++] = inReal[i++];
+         }
+         outNBElement = outIdx;
          return RetCode.Success ;
       }
       /* Add-up the initial period, except for the last value.
@@ -215,6 +231,16 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
+      if( optInTimePeriod == 1 ) {
+         outBegIdx = startIdx;
+         outIdx = 0;
+         i = startIdx;
+         while( i <= (int)endIdx ) {
+            outReal[outIdx++] = (double)inReal[i++];
+         }
+         outNBElement = outIdx;
+         return RetCode.Success ;
+      }
       sumPV = 0.0;
       sumV = 0.0;
       trailingIdx = startIdx - lookbackTotal;
@@ -261,11 +287,11 @@ public partial class Core
    /// <b>Formula</b>
    /// <code>
    /// VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
-   /// Equivalently, and bit-identically so in TA-Lib, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
+   /// Equivalently, and bit-identically so in TA-Lib for N of 2 or more, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
    /// </code>
    /// <list type="bullet">
-   /// <item><description>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. Only a window in which *every* volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</description></item>
-   /// <item><description>A period of 1 reduces to <c>(P * V) / V</c>. That is the price arithmetically, but not a guaranteed IEEE round trip, so unlike SMA of period 1 it must not be relied upon as an exact copy of the input.</description></item>
+   /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input, whatever the volume.</description></item>
+   /// <item><description>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. At a period of 2 or more, a window in which *every* volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -319,11 +345,11 @@ public partial class Core
    /// <b>Formula</b>
    /// <code>
    /// VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
-   /// Equivalently, and bit-identically so in TA-Lib, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
+   /// Equivalently, and bit-identically so in TA-Lib for N of 2 or more, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
    /// </code>
    /// <list type="bullet">
-   /// <item><description>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. Only a window in which *every* volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</description></item>
-   /// <item><description>A period of 1 reduces to <c>(P * V) / V</c>. That is the price arithmetically, but not a guaranteed IEEE round trip, so unlike SMA of period 1 it must not be relied upon as an exact copy of the input.</description></item>
+   /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input, whatever the volume.</description></item>
+   /// <item><description>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. At a period of 2 or more, a window in which *every* volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

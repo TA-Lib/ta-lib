@@ -166,6 +166,7 @@ static ErrorNumber test_pvo_differential( const TA_History *history );
 static ErrorNumber test_pvo_oracle( const TA_History *history );
 static ErrorNumber test_pvo_default_is_ema( const TA_History *history );
 static ErrorNumber test_vwma_differential( const TA_History *history );
+static ErrorNumber test_vwma_period_one( void );
 static ErrorNumber test_vwma_oracle( const TA_History *history );
 static ErrorNumber test_vwma_inplace( const TA_History *history );
 static ErrorNumber test_vwma_tulip_vectors( void );
@@ -203,6 +204,10 @@ ErrorNumber test_func_composite( TA_History *history )
       return retValue;
 
    retValue = test_vwma_differential( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_vwma_period_one();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -485,11 +490,22 @@ static ErrorNumber test_pvo_default_is_ema( const TA_History *history )
  * equivalence holds BIT-FOR-BIT rather than approximately. If the differential
  * below ever needs a tolerance, the implementation has drifted from the spec --
  * do not paper over it with an epsilon.
+ *
+ * The equivalence holds for every period EXCEPT 1, which is not governed by
+ * this formula at all: a moving average of period 1 is the no-smoothing copy
+ * of its input, the rule the whole TA_MAType family obeys. (P*V)/V is that
+ * value in real arithmetic but round-trips only ~97% of the time in IEEE
+ * double, so the copy is explicit in vwma.c and the composition would disagree
+ * with it. Period 1 is out of the grid below and pinned by leg (1b) instead --
+ * in THIS test group, because `--function=VWMA` matches on the DO_TEST tag and
+ * would otherwise reach no period-1 value assertion at all (the enum-wide gate
+ * in test_period_boundary.c is tagged PERIOD1/BOUNDARY; it is the broader net,
+ * not a substitute for VWMA's own).
  */
 
 /* VWMA period grid: the boundary period, the two oracle-vector periods, the
- * shipped default, and a long window. */
-static const int vwmaGrid[] = { 1, 2, 3, 4, 5, 14, 30, 100 };
+ * shipped default, and a long window. Starts at 2 -- see (1b) for 1. */
+static const int vwmaGrid[] = { 2, 3, 4, 5, 14, 30, 100 };
 #define NB_VWMA_GRID (sizeof(vwmaGrid)/sizeof(vwmaGrid[0]))
 
 /* VWMA external-oracle golden values.
@@ -589,6 +605,67 @@ static ErrorNumber test_vwma_differential( const TA_History *history )
    return TA_TEST_PASS;
 }
 
+/* (1b) PERIOD 1: the no-smoothing copy, on data (1) cannot use.
+ *
+ * Two properties the composition above cannot state, both bit-exact:
+ *   - the output IS the input, on a series where (P*V)/V is demonstrably not
+ *     (the assertion below fails if that stops being true of this data), and
+ *   - a zero-volume bar carries the price, not the NaN a period >= 2 window of
+ *     zero volumes gives -- one bar's weight cancels.
+ */
+static ErrorNumber test_vwma_period_one( void )
+{
+#define P1_N 120
+   static TA_Real in[P1_N], vol[P1_N], out[OUT_CAP];
+   int i, nbNaive = 0;
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+
+   /* Two-decimal prices are not dyadic, so P spends a full mantissa; a
+    * six-digit integer volume pushes the product past it and the division
+    * cannot come back. Bar 7 has no volume at all. */
+   for( i = 0; i < P1_N; i++ )
+   {
+      in[i]  = (TA_Real)(10000 + (i * 7919) % 20000) / 100.0;
+      vol[i] = (TA_Real)(100003 + (i * 104729) % 899993);
+      if( (in[i] * vol[i]) / vol[i] != in[i] )
+         nbNaive++;
+   }
+   vol[7] = 0.0;
+
+   if( nbNaive < 3 )
+   {
+      printf( "VWMA period-1 Fail: this data no longer discriminates -- (P*V)/V "
+              "returns P on all but %d of %d bars\n", nbNaive, P1_N );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   if( TA_VWMA_Lookback( 1 ) != 0 )
+   {
+      printf( "VWMA period-1 Fail: TA_VWMA_Lookback(1) = %d, expected 0\n",
+              TA_VWMA_Lookback( 1 ) );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   rc = TA_VWMA( 0, P1_N - 1, in, vol, 1, &beg, &nb, out );
+   if( rc != TA_SUCCESS || beg != 0 || nb != P1_N )
+   {
+      printf( "VWMA period-1 Fail: rc=%d beg=%d nb=%d expected 0/0/%d\n",
+              (int)rc, (int)beg, (int)nb, P1_N );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   for( i = 0; i < nb; i++ )
+      if( memcmp( &out[i], &in[i], sizeof(double) ) != 0 )
+      {
+         printf( "VWMA period-1 Fail at out[%d]: got %.17g expected %.17g%s\n",
+                 i, out[i], in[i], i == 7 ? " (the zero-volume bar)" : "" );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+   return TA_TEST_PASS;
+#undef P1_N
+}
+
 /* (2) EXTERNAL ORACLE: the composition is the RIGHT formula, which (1) cannot
  * show -- both sides of (1) could share the same wrong formula. */
 static ErrorNumber test_vwma_oracle( const TA_History *history )
@@ -635,10 +712,17 @@ static ErrorNumber test_vwma_oracle( const TA_History *history )
  * input and the output. VWMA reads both trailing values before storing, so this
  * must hold for the output aliased over EITHER input -- and each is a distinct
  * risk, since the two reads are separate statements. See issue #130 for the
- * functions where this invariant is currently broken. */
+ * functions where this invariant is currently broken.
+ *
+ * Run at period 1 as well as the default: the period-1 copy is its own loop,
+ * writing the slot it just read, so it is a second aliasing surface and not
+ * covered by the windowed path above it. */
+static const int vwmaInPlaceGrid[] = { 1, 30 };
+
 static ErrorNumber test_vwma_inplace( const TA_History *history )
 {
-   int i, nbBars, period = 30;
+   int i, nbBars;
+   unsigned int g;
    TA_RetCode rc;
    TA_Integer begR, nbR, beg, nb;
    static TA_Real ref[OUT_CAP];
@@ -647,43 +731,51 @@ static ErrorNumber test_vwma_inplace( const TA_History *history )
 
    nbBars = (int)history->nbBars;
 
-   rc = TA_VWMA( 0, nbBars - 1, history->close, history->volume, period, &begR, &nbR, ref );
-   if( rc != TA_SUCCESS )
-      return TA_TESTUTIL_TFRR_BAD_RETCODE;
-
-   /* (a) output aliased over the price input. */
-   for( i = 0; i < nbBars; i++ ) work[i] = history->close[i];
-   rc = TA_VWMA( 0, nbBars - 1, work, history->volume, period, &beg, &nb, work );
-   if( rc != TA_SUCCESS || beg != begR || nb != nbR )
+   for( g = 0; g < sizeof(vwmaInPlaceGrid)/sizeof(vwmaInPlaceGrid[0]); g++ )
    {
-      printf( "VWMA in-place(price) Fail: rc=%d range(%d,%d) vs (%d,%d)\n",
-              (int)rc, (int)beg, (int)nb, (int)begR, (int)nbR );
-      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
-   }
-   for( i = 0; i < nb; i++ )
-      if( memcmp( &work[i], &ref[i], sizeof(double) ) != 0 )
-      {
-         printf( "VWMA in-place(price) Fail at out[%d]: got %.17g expected %.17g\n",
-                 i, work[i], ref[i] );
-         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-      }
+      int period = vwmaInPlaceGrid[g];
 
-   /* (b) output aliased over the volume input. */
-   for( i = 0; i < nbBars; i++ ) vol[i] = history->volume[i];
-   rc = TA_VWMA( 0, nbBars - 1, history->close, vol, period, &beg, &nb, vol );
-   if( rc != TA_SUCCESS || beg != begR || nb != nbR )
-   {
-      printf( "VWMA in-place(volume) Fail: rc=%d range(%d,%d) vs (%d,%d)\n",
-              (int)rc, (int)beg, (int)nb, (int)begR, (int)nbR );
-      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
-   }
-   for( i = 0; i < nb; i++ )
-      if( memcmp( &vol[i], &ref[i], sizeof(double) ) != 0 )
+      rc = TA_VWMA( 0, nbBars - 1, history->close, history->volume, period, &begR, &nbR, ref );
+      if( rc != TA_SUCCESS )
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+
+      /* (a) output aliased over the price input. */
+      for( i = 0; i < nbBars; i++ ) work[i] = history->close[i];
+      rc = TA_VWMA( 0, nbBars - 1, work, history->volume, period, &beg, &nb, work );
+      if( rc != TA_SUCCESS || beg != begR || nb != nbR )
       {
-         printf( "VWMA in-place(volume) Fail at out[%d]: got %.17g expected %.17g\n",
-                 i, vol[i], ref[i] );
-         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         printf( "VWMA in-place(price) Fail [period %d]: rc=%d range(%d,%d) vs (%d,%d)\n",
+                 period, (int)rc, (int)beg, (int)nb, (int)begR, (int)nbR );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
       }
+      for( i = 0; i < nb; i++ )
+         if( memcmp( &work[i], &ref[i], sizeof(double) ) != 0 )
+         {
+            printf( "VWMA in-place(price) Fail [period %d] at out[%d]: got %.17g expected %.17g\n",
+                    period, i, work[i], ref[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+
+      /* (b) output aliased over the volume input. Not at period 1: that path
+       * never reads inVolume, so the check would be true by construction. */
+      if( period == 1 )
+         continue;
+      for( i = 0; i < nbBars; i++ ) vol[i] = history->volume[i];
+      rc = TA_VWMA( 0, nbBars - 1, history->close, vol, period, &beg, &nb, vol );
+      if( rc != TA_SUCCESS || beg != begR || nb != nbR )
+      {
+         printf( "VWMA in-place(volume) Fail [period %d]: rc=%d range(%d,%d) vs (%d,%d)\n",
+                 period, (int)rc, (int)beg, (int)nb, (int)begR, (int)nbR );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      for( i = 0; i < nb; i++ )
+         if( memcmp( &vol[i], &ref[i], sizeof(double) ) != 0 )
+         {
+            printf( "VWMA in-place(volume) Fail [period %d] at out[%d]: got %.17g expected %.17g\n",
+                    period, i, vol[i], ref[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+   }
 
    return TA_TEST_PASS;
 }

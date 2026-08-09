@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  072026 MF,CC  First version.
+ *  080926 MF,CC  Allow period of 1. Just copy input into output.
  */
 
 // Import types from parent module
@@ -97,20 +98,20 @@ impl Core {
     /// ```text
     /// VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
     ///
-    /// Equivalently, and bit-identically so in TA-Lib, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
+    /// Equivalently, and bit-identically so in TA-Lib for N of 2 or more, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
     /// ```
     ///
     /// # Notes
     ///
+    /// * A period of 1 performs no smoothing: the output is a copy of the input, whatever the
+    ///   volume.
     /// * Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that
     ///   did not trade simply carries no weight, and the average stays well defined as long as some
-    ///   bar in the window has volume. Only a window in which *every* volume is zero has no weights
-    ///   at all; the weighted mean is then undefined and that element is NaN, as it is in every
-    ///   other implementation. Series carrying no volume on any bar, such as cash-index feeds, are
-    ///   outside what a volume-weighted average can describe — use SMA or WMA there.
-    /// * A period of 1 reduces to `(P * V) / V`. That is the price arithmetically, but not a
-    ///   guaranteed IEEE round trip, so unlike SMA of period 1 it must not be relied upon as an
-    ///   exact copy of the input.
+    ///   bar in the window has volume. At a period of 2 or more, a window in which *every* volume
+    ///   is zero has no weights at all; the weighted mean is then undefined and that element is
+    ///   NaN, as it is in every other implementation. Series carrying no volume on any bar, such as
+    ///   cash-index feeds, are outside what a volume-weighted average can describe — use SMA or
+    ///   WMA there.
     ///
     /// # Arguments
     ///
@@ -228,6 +229,21 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        // No smoothing at period of 1: the output is a copy of the input
+        // (same convention as TA_MA for every MAType). Explicit because
+        // (P*V)/V round-trips only ~97% of the time in IEEE double, and
+        // because a lone zero volume must give the price, not NaN.
+        if optInTimePeriod == 1 {
+            (*outBegIdx) = startIdx;
+            outIdx = 0;
+            i = startIdx;
+            while i <= (endIdx as usize) {
+                outReal[outIdx] = ((inReal[{ let _v = i; i += 1; _v }]) as f64);
+                outIdx += 1;
+            }
+            (*outNBElement) = outIdx;
+            return RetCode::Success;
+        }
         // Add-up the initial period, except for the last value.
         //
         // The price*volume product is kept in its own statement so no compiler may
@@ -311,6 +327,10 @@ struct VWMA_StreamState {
 impl Core {
     fn VWMA_step_internal(&self, sp: &mut VWMA_StreamState, inReal: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
+        if sp.optInTimePeriod == 1 {
+            (*outReal) = inReal;
+            return;
+        }
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
             sp.ring_trailingIdx_inVolume[0] = inVolume;
@@ -358,6 +378,23 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut lastValue_outReal: f64 = 0.0_f64;
+        if optInTimePeriod == 1 {
+            if historyLen < self.VWMA_Lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = VWMA_StreamState {
+                optInTimePeriod: optInTimePeriod,
+                sumPV: 0.0_f64,
+                sumV: 0.0_f64,
+                tempPV: 0.0_f64,
+                tempV: 0.0_f64,
+                ringPos_trailingIdx: 0_usize,
+                ringCap_trailingIdx: 0_usize,
+                ring_trailingIdx_inReal: vec![0.0_f64; 1],
+                ring_trailingIdx_inVolume: vec![0.0_f64; 1],
+            };
+            return Ok((VWMA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
+        }
         let mut sumPV: f64 = 0.0_f64;
         let mut sumV: f64 = 0.0_f64;
         let mut tempPV: f64 = 0.0_f64;
@@ -381,6 +418,10 @@ impl Core {
             dummyNBElement = 0;
             return Err(RetCode::BadParam);
         }
+        // No smoothing at period of 1: the output is a copy of the input
+        // (same convention as TA_MA for every MAType). Explicit because
+        // (P*V)/V round-trips only ~97% of the time in IEEE double, and
+        // because a lone zero volume must give the price, not NaN.
         // Add-up the initial period, except for the last value.
         //
         // The price*volume product is kept in its own statement so no compiler may
@@ -501,6 +542,31 @@ impl Core {
         let mut startIdx: usize = 0;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
+        if optInTimePeriod == 1 {
+            if historyLen < self.VWMA_Lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = VWMA_StreamState {
+                optInTimePeriod: optInTimePeriod,
+                sumPV: 0.0_f64,
+                sumV: 0.0_f64,
+                tempPV: 0.0_f64,
+                tempV: 0.0_f64,
+                ringPos_trailingIdx: 0_usize,
+                ringCap_trailingIdx: 0_usize,
+                ring_trailingIdx_inReal: vec![0.0_f64; 1],
+                ring_trailingIdx_inVolume: vec![0.0_f64; 1],
+            };
+            let fillLb: usize = self.VWMA_Lookback(optInTimePeriod);
+            (*outBegIdx) = fillLb;
+            (*outNBElement) = historyLen - fillLb;
+            let mut fillIdx: usize = 0;
+            while fillIdx < historyLen - fillLb {
+                outReal[fillIdx] = inReal[fillLb + fillIdx];
+                fillIdx += 1;
+            }
+            return Ok(VWMA_Stream { core: self.clone(), state });
+        }
         let mut sumPV: f64 = 0.0_f64;
         let mut sumV: f64 = 0.0_f64;
         let mut tempPV: f64 = 0.0_f64;
@@ -524,6 +590,10 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
+        // No smoothing at period of 1: the output is a copy of the input
+        // (same convention as TA_MA for every MAType). Explicit because
+        // (P*V)/V round-trips only ~97% of the time in IEEE double, and
+        // because a lone zero volume must give the price, not NaN.
         // Add-up the initial period, except for the last value.
         //
         // The price*volume product is kept in its own statement so no compiler may

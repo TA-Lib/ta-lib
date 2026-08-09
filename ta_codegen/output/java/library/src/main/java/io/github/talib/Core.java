@@ -146421,6 +146421,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  072026 MF,CC  First version.
+ *  080926 MF,CC  Allow period of 1. Just copy input into output.
  */
 
    /**
@@ -146487,6 +146488,21 @@ public final class Core {
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because
+       * (P*V)/V round-trips only ~97% of the time in IEEE double, and
+       * because a lone zero volume must give the price, not NaN.
+       */
+      if( optInTimePeriod == 1 ) {
+         outBegIdx.value = startIdx;
+         outIdx = 0;
+         i = startIdx;
+         while( i <= (int)endIdx ) {
+            outReal[outIdx++] = inReal[i++];
+         }
+         outNBElement.value = outIdx;
          return RetCode.Success ;
       }
       /* Add-up the initial period, except for the last value.
@@ -146577,6 +146593,16 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.Success ;
       }
+      if( optInTimePeriod == 1 ) {
+         outBegIdx.value = startIdx;
+         outIdx = 0;
+         i = startIdx;
+         while( i <= (int)endIdx ) {
+            outReal[outIdx++] = (double)inReal[i++];
+         }
+         outNBElement.value = outIdx;
+         return RetCode.Success ;
+      }
       sumPV = 0.0;
       sumV = 0.0;
       trailingIdx = startIdx - lookbackTotal;
@@ -146621,12 +146647,12 @@ public final class Core {
     * <p><b>Formula</b>
     * <pre>{@code
     * VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
-    * Equivalently, and bit-identically so in TA-Lib, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
+    * Equivalently, and bit-identically so in TA-Lib for N of 2 or more, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. Only a window in which *every* volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</li>
-    * <li>A period of 1 reduces to {@code (P * V) / V}. That is the price arithmetically, but not a guaranteed IEEE round trip, so unlike SMA of period 1 it must not be relied upon as an exact copy of the input.</li>
+    * <li>A period of 1 performs no smoothing: the output is a copy of the input, whatever the volume.</li>
+    * <li>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. At a period of 2 or more, a window in which *every* volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -146683,12 +146709,12 @@ public final class Core {
     * <p><b>Formula</b>
     * <pre>{@code
     * VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
-    * Equivalently, and bit-identically so in TA-Lib, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
+    * Equivalently, and bit-identically so in TA-Lib for N of 2 or more, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. Only a window in which *every* volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</li>
-    * <li>A period of 1 reduces to {@code (P * V) / V}. That is the price arithmetically, but not a guaranteed IEEE round trip, so unlike SMA of period 1 it must not be relied upon as an exact copy of the input.</li>
+    * <li>A period of 1 performs no smoothing: the output is a copy of the input, whatever the volume.</li>
+    * <li>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. At a period of 2 or more, a window in which *every* volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -146833,6 +146859,10 @@ public final class Core {
    void VWMA_StreamStep( VWMA_Stream sp, double inReal, double inVolume )
    {
       double tempReal = 0.0;
+      if( sp.optInTimePeriod == 1 ) {
+         sp.cur_outReal = inReal;
+         return ;
+      }
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;
          sp.ring_trailingIdx_inVolume[0] = inVolume;
@@ -146887,6 +146917,22 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( optInTimePeriod == 1 ) {
+         if( historyLen < VWMA_Lookback(optInTimePeriod) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.sumPV = 0.0;
+         sp.sumV = 0.0;
+         sp.tempPV = 0.0;
+         sp.tempV = 0.0;
+         sp.ringPos_trailingIdx = 0;
+         sp.ringCap_trailingIdx = 0;
+         sp.ring_trailingIdx_inReal = new double[1];
+         sp.ring_trailingIdx_inVolume = new double[1];
+         sp.cur_outReal = inReal[historyLen - 1];
+         return RetCode.Success;
+      }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -146903,6 +146949,11 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.OutOfRangeEndIndex ;
       }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because
+       * (P*V)/V round-trips only ~97% of the time in IEEE double, and
+       * because a lone zero volume must give the price, not NaN.
+       */
       /* Add-up the initial period, except for the last value.
        *
        * The price*volume product is kept in its own statement so no compiler may
@@ -147001,6 +147052,28 @@ public final class Core {
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
+      if( optInTimePeriod == 1 ) {
+         if( historyLen < VWMA_Lookback(optInTimePeriod) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.sumPV = 0.0;
+         sp.sumV = 0.0;
+         sp.tempPV = 0.0;
+         sp.tempV = 0.0;
+         sp.ringPos_trailingIdx = 0;
+         sp.ringCap_trailingIdx = 0;
+         sp.ring_trailingIdx_inReal = new double[1];
+         sp.ring_trailingIdx_inVolume = new double[1];
+         int fillLb = VWMA_Lookback(optInTimePeriod);
+         outBegIdx.value = fillLb;
+         outNBElement.value = historyLen - fillLb;
+         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         }
+         sp.cur_outReal = outReal[outNBElement.value - 1];
+         return RetCode.Success;
+      }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -147017,6 +147090,11 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.OutOfRangeEndIndex ;
       }
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because
+       * (P*V)/V round-trips only ~97% of the time in IEEE double, and
+       * because a lone zero volume must give the price, not NaN.
+       */
       /* Add-up the initial period, except for the last value.
        *
        * The price*volume product is kept in its own statement so no compiler may

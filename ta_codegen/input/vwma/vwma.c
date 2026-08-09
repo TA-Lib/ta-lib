@@ -11,6 +11,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  072026 MF,CC  First version.
+ *  080926 MF,CC  Allow period of 1. Just copy input into output.
  *
  */
 
@@ -53,6 +54,22 @@ TA_RetCode vwma(int startIdx, int endIdx,
    {
       *outBegIdx = 0;
       *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+
+   /* No smoothing at period of 1: the output is a copy of the input
+    * (same convention as TA_MA for every MAType). Explicit because
+    * (P*V)/V round-trips only ~97% of the time in IEEE double, and
+    * because a lone zero volume must give the price, not NaN.
+    */
+   if( optInTimePeriod == 1 )
+   {
+      *outBegIdx = startIdx;
+      outIdx = 0;
+      i = startIdx;
+      while( i <= (size_t)endIdx )
+         outReal[outIdx++] = inReal[i++];
+      *outNBElement = outIdx;
       return TA_SUCCESS;
    }
 
