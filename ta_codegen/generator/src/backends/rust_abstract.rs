@@ -33,7 +33,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &
 
     // --- FuncId enum (fieldless; doubles as the dense index into FUNCS) ---
     o.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]\n");
-    o.push_str("#[repr(u16)]\n#[allow(non_camel_case_types)]\npub enum FuncId {\n");
+    o.push_str("#[repr(u16)]\n#[non_exhaustive]\n#[allow(non_camel_case_types)]\npub enum FuncId {\n");
     for f in &sorted {
         let _ = writeln!(o, "    {},", f.name);
     }
@@ -947,6 +947,7 @@ use crate::FuncUnstId;
 const MODEL: &str = r#"/// Function group (closed set — replaces C's runtime group-string table + linear `getGroupId`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
+#[non_exhaustive]
 pub enum Group {
     CycleIndicators,
     MathOperators,

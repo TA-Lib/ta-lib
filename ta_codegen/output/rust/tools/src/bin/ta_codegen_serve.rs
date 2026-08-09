@@ -770,6 +770,7 @@ fn retcode_to_int(rc: RetCode) -> i32 {
         RetCode::InternalError => 5000,
         RetCode::OutOfRangeStartIndex => 12,
         RetCode::OutOfRangeEndIndex => 13,
+        _ => 5000,
     }
 }
 
