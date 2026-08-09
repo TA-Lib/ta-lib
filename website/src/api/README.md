@@ -13,7 +13,7 @@ toc: false
 <blockquote>
 <p><a href="#init">3.1 Initialize and Shutdown</a><br>
 <a href="#direct_call">3.2 Batch Processing</a><br>
-<a href="#output_size">3.3 Output Size</a><br>
+<a href="#output_size">3.3 Output Size and Lookback</a><br>
 <a href="#retcode">3.4 Return Codes</a><br></p>
 </blockquote>
 
@@ -152,7 +152,7 @@ retCode = TA_MA( <span class="ta-arg-range">0</span>, <span class="ta-arg-range"
                  <span class="ta-arg-out">&amp;outBeg</span>, <span class="ta-arg-out">&amp;outNBElement</span>, <span class="ta-arg-out">&amp;buffer[0]</span> );</pre>
 <p>Of course, the input is overwritten, but this avoids allocating a temporary buffer. All TA functions support this.</p>
 
-### 3.3 Output Size {#output_size}
+### 3.3 Output Size and Lookback {#output_size}
 
 <p>
 It is important that the output array is large enough. Here are three ways to determine the allocation size; all of them work for every TA function:</p>
