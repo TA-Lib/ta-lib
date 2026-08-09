@@ -1557,7 +1557,9 @@ pub fn analyze_region_scoped<'a>(
 ///
 /// Tried only AFTER the single-loop [`analyze`] fails, so an ordinary function
 /// with a leading `period == 1` identity path (T3) — which analyzes cleanly as
-/// a Loop carrying an [`IdentityPath`] — is never misclassified here.
+/// a Loop carrying an [`IdentityPath`] — is never misclassified here. A
+/// dual-mode body may carry one too (HMA): it is recognized, excluded from the
+/// arm scan, and attached to BOTH modes.
 pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError> {
     let body: &[Statement] = if func.has_explicit_private {
         &func.private_body
@@ -1566,6 +1568,14 @@ pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError
     };
     let params: BTreeSet<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
+
+    // A leading `param == 1` identity path (HMA) is recognized here rather than
+    // mistaken for mode A: it has the early-return arm's shape (param-pure
+    // guard, a copy loop, `return SUCCESS`). Both arms carry it, so each mode's
+    // transition short-circuits on it and each Open emits the same fast path.
+    let param_list: Vec<String> = params.iter().cloned().collect();
+    let (identity, identity_idx) =
+        detect_identity_path(body, &input_array_names(func), &outputs, &param_list);
 
     let ends_in_success = |b: &[Statement]| {
         matches!(
@@ -1594,6 +1604,9 @@ pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError
     // condition (it references startIdx/endIdx).
     let mut found: Option<(usize, bool)> = None; // (index, is_if_else)
     for (i, s) in body.iter().enumerate() {
+        if Some(i) == identity_idx {
+            continue;
+        }
         let Statement::If {
             condition,
             then_body,
@@ -1656,8 +1669,13 @@ pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError
         } else {
             (then_body, &body[arm_idx + 1..], &[])
         };
-    let mode_a = analyze_region_scoped(func, then_region, body, outputs.clone())?;
-    let mode_b = analyze_region_scoped(func, alt_region, body, outputs)?;
+    let mut mode_a = analyze_region_scoped(func, then_region, body, outputs.clone())?;
+    let mut mode_b = analyze_region_scoped(func, alt_region, body, outputs)?;
+    // The identity lives in the shared prologue, so neither region-scoped
+    // analysis can see it; hand it to both so every mode-selected surface
+    // (step, Open, OpenAndFill) short-circuits exactly as the batch does.
+    mode_a.identity.clone_from(&identity);
+    mode_b.identity = identity;
 
     Ok(DualModePlan {
         func,

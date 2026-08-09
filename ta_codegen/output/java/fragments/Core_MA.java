@@ -233,7 +233,7 @@
       return retCode ;
    }
    /**
-    * Generic moving-average dispatcher that forwards the job to a concrete MA
+    * Generic moving-average dispatcher that forwards the job to the MA
     * implementation selected by optInMAType. Single uniform interface over all
     * TA-Lib moving averages.
     * <p><b>Formula</b>
@@ -296,7 +296,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Generic moving-average dispatcher that forwards the job to a concrete MA
+    * Generic moving-average dispatcher that forwards the job to the MA
     * implementation selected by optInMAType. Single uniform interface over all
     * TA-Lib moving averages.
     * <p><b>Formula</b>

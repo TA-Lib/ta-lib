@@ -16,7 +16,7 @@ All three averages are the standard linearly-weighted moving average (TA-Lib's W
 
 - The two derived periods `n/2` and `sqrt(n)` are **truncated** to integers, exactly as in Alan Hull's own statement of the formula (`Integer()`); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.
 - The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default TA-Lib matches charting platforms regardless of their rounding convention.
-- The period range starts at 2: a period of 1 would make the half-period WMA degenerate (`Integer(1/2) = 0`).
+- A period of 1 performs no smoothing: the output is a copy of the input.
 
 ## Inputs
 

@@ -2052,6 +2052,13 @@ fn emit_dual_mode(
         "   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;"
     );
 
+    // Identity (HMA period 1) short-circuits ahead of the predicate: the handle
+    // is memset, so both modes' buffers sit at NULL/0, and both transitions
+    // short-circuit on the same guard — which arm the predicate would have
+    // picked is moot. (The batch's own copy of this branch still rides the
+    // transcribed prologue below; it is unreachable dead code there.)
+    emit_identity_fast_path(o, func, ma, registry, helpers, counter, OutMode::Scalar);
+
     // Each mode transcribes the SHARED PROLOGUE, then its own arm body, then the
     // SHARED EPILOGUE (empty for the early-return form; the out-meta + return tail
     // for the if/else form). The prologue computes the mode-appropriate lookback/
@@ -2078,10 +2085,10 @@ fn emit_dual_mode(
     emit_open_wrapper(o, func);
 
     // --- OpenAndFill: same predicate + arms, fill mode. The head reuses
-    // emit_open_head (dual-mode models carry no identity, so it renders the
-    // same decls the scalar head inlines — including the union circ hoist —
-    // plus the fill signature + startIdx local + aliasing guards). Reuses
-    // body_a/body_b/pred_bare above. -----------------------------------------
+    // emit_open_head, which renders the same decls the scalar head inlines —
+    // including the union circ hoist and the identity fast path — plus the fill
+    // signature + startIdx local + aliasing guards. Reuses body_a/body_b/
+    // pred_bare above. -------------------------------------------------------
     emit_open_head(o, func, ma, &union_circs, registry, helpers, counter, OutMode::Fill);
     let _ = writeln!(o, "\n   if( {pred_bare} )\n   {{");
     emit_open_arm(o, func, ma, &body_a, enums, registry, helpers, counter, OutMode::Fill);

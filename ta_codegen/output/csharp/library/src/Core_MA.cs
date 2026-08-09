@@ -290,7 +290,7 @@ public partial class Core
       return retCode ;
    }
    /// <summary>
-   /// Generic moving-average dispatcher that forwards the job to a concrete MA
+   /// Generic moving-average dispatcher that forwards the job to the MA
    /// implementation selected by optInMAType. Single uniform interface over all
    /// TA-Lib moving averages.
    /// </summary>
@@ -343,7 +343,7 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Generic moving-average dispatcher that forwards the job to a concrete MA
+   /// Generic moving-average dispatcher that forwards the job to the MA
    /// implementation selected by optInMAType. Single uniform interface over all
    /// TA-Lib moving averages.
    /// </summary>

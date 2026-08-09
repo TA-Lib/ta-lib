@@ -1778,11 +1778,6 @@ fn emit_dual_mode(
 ) {
     let ma = &dmp.mode_a;
     let mb = &dmp.mode_b;
-    assert!(
-        ma.identity.is_none() && mb.identity.is_none(),
-        "{}: dual-mode arms must not carry an identity path",
-        func.name
-    );
     let mut step_settings = detect_candle_settings(&ma.steady_stmts);
     step_settings.extend(detect_candle_settings(&mb.steady_stmts));
 
@@ -1819,6 +1814,10 @@ fn emit_dual_mode(
         emit_open_body_sig(o, func, mode);
         emit_open_head(o, func, &ma.outputs, mode);
         emit_open_validation(o, func, mode);
+        // Identity (HMA period 1) short-circuits ahead of the predicate: the
+        // whole union sits at its defaults, and both modes' steps short-circuit
+        // on the same guard, so which arm the predicate would pick is moot.
+        emit_identity_fast_path(o, func, ma, &fields, registry, helpers, stream_fma, counter, mode);
         let pred = render_predicate(&dmp.predicate, &ctx, registry, helpers);
         let _ = writeln!(o, "      if( {pred} ) {{");
         for (k, arm) in [ma, mb].into_iter().enumerate() {

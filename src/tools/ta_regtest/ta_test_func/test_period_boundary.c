@@ -60,7 +60,7 @@
  *  - Lookback contract: TA_INTEGER_DEFAULT maps to the default
  *    period, out-of-range params return -1, and period=1 lookbacks
  *    are coherent (the SF bug-84 case: TA_MACD_Lookback(2,7,1)==6).
- *  - Identity: SMA/EMA/WMA/DEMA/TEMA/TRIMA/KAMA/T3/MAVP and
+ *  - Identity: SMA/EMA/WMA/DEMA/TEMA/TRIMA/KAMA/T3/HMA/MAVP and
  *    MA(period=1, every MAType) must return the input unchanged.
  *  - MACD family with signalPeriod=1: the signal line equals the
  *    MACD line, the histogram is zero, and the output is aligned
@@ -312,6 +312,7 @@ static ErrorNumber testLookbackContract( void )
    PB_CHECK_INT( "TA_TRIMA_Lookback(1)", TA_TRIMA_Lookback( 1 ), 0 );
    PB_CHECK_INT( "TA_KAMA_Lookback(1)",  TA_KAMA_Lookback( 1 ),  0 );
    PB_CHECK_INT( "TA_T3_Lookback(1)",    TA_T3_Lookback( 1, 0.7 ), 0 );
+   PB_CHECK_INT( "TA_HMA_Lookback(1)",   TA_HMA_Lookback( 1 ),   0 );
    PB_CHECK_INT( "TA_EMA_Lookback(2)",   TA_EMA_Lookback( 2 ),   1 );
 
    /* The SourceForge bug-84 report, verbatim. */
@@ -503,6 +504,11 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
    retCode = TA_T3( 0, endIdx, gBuffer[0].in, 1, 0.7, &outBegIdx, &outNbElement, gBuffer[0].out0 );
    errNb = pbCheckIdentityCall( "T3", history, retCode, outBegIdx, outNbElement, 0,
                                 gBuffer[0].out0, (const double[]){ 1, 0.7 }, 2 );
+   if( errNb != TA_TEST_PASS ) return errNb;
+
+   retCode = TA_HMA( 0, endIdx, gBuffer[0].in, 1, &outBegIdx, &outNbElement, gBuffer[0].out0 );
+   errNb = pbCheckIdentityCall( "HMA", history, retCode, outBegIdx, outNbElement, 0,
+                                gBuffer[0].out0, (const double[]){ 1 }, 1 );
    if( errNb != TA_TEST_PASS ) return errNb;
 
    /* MA(period=1) for every MAType: the documented "just copy" path

@@ -5023,7 +5023,7 @@ TA_LIB_API TA_RetCode TA_FLOOR_OpenAndFill( TA_FLOOR_Stream **stream, const doub
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod:(From 2 to 100000)
+ * optInTimePeriod:(From 1 to 100000)
  *    Time period
  * 
  * 
@@ -5031,7 +5031,7 @@ TA_LIB_API TA_RetCode TA_FLOOR_OpenAndFill( TA_FLOOR_Stream **stream, const doub
 TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
                               int    endIdx,
                                          const double inReal[],
-                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int           optInTimePeriod, /* From 1 to 100000 */
                                          int          *outBegIdx,
                                          int          *outNBElement,
                                          double        outReal[] );
@@ -5039,12 +5039,12 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
 TA_LIB_API TA_RetCode TA_S_HMA( int    startIdx,
                                 int    endIdx,
                                            const float  inReal[],
-                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int           optInTimePeriod, /* From 1 to 100000 */
                                            int          *outBegIdx,
                                            int          *outNBElement,
                                            double        outReal[] );
 
-TA_LIB_API int TA_HMA_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_HMA_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
 
 
 

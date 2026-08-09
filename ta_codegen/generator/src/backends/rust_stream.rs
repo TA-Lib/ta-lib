@@ -893,7 +893,8 @@ fn emit_open_internal(
     emit_open_validation_head(o, func, mode);
     emit_open_inits(o, func, &model.outputs, typing, registry, helpers, mode);
 
-    emit_identity_fast_path(o, func, model, typing, registry, helpers, counter, mode);
+    let fields = state_fields(func, model, typing);
+    emit_identity_fast_path(o, func, model, &fields, typing, registry, helpers, counter, mode);
 
     // --- transcribed batch body --------------------------------------------
     let open_body = build_open_body_rust(model, body, mode);
@@ -1227,6 +1228,7 @@ fn emit_identity_fast_path(
     o: &mut String,
     func: &FuncDef,
     model: &StreamModel,
+    fields: &[(String, String, String)],
     typing: &Typing,
     registry: &Registry,
     helpers: &HelperRegistry,
@@ -1254,7 +1256,7 @@ fn emit_identity_fast_path(
     // Identity state: params captured, everything else deterministic defaults
     // (1-slot buffers keep the transition's cap-0 guard well-defined).
     let _ = writeln!(o, "            let state = {state} {{");
-    for (name, _, default) in state_fields(func, model, typing) {
+    for (name, _, default) in fields {
         let _ = writeln!(o, "                {name}: {default},");
     }
     let _ = writeln!(o, "            }};");
@@ -1847,11 +1849,6 @@ fn emit_dual_mode(
 ) {
     let ma = &dmp.mode_a;
     let mb = &dmp.mode_b;
-    assert!(
-        ma.identity.is_none() && mb.identity.is_none(),
-        "{}: dual-mode arms must not carry an identity path",
-        func.name
-    );
 
     // Typing over the whole reconstructed body (prologue + both arms +
     // epilogue) so the inference sees the same statement population as batch.
@@ -1937,6 +1934,11 @@ fn emit_dual_open(
     // in this arm's state literal (the struct is the union of both modes).
     let fields_a = state_fields_from(func, ma, typing, union_scalars);
     let fields_b = state_fields_from(func, mb, typing, union_scalars);
+    // Identity (HMA period 1) short-circuits ahead of the predicate: the whole
+    // union sits at its defaults, and both modes' transitions short-circuit on
+    // the same guard, so which arm the predicate would have picked is moot.
+    let union_fields = dual_union_fields(func, &fields_a, &fields_b);
+    emit_identity_fast_path(o, func, ma, &union_fields, typing, registry, helpers, counter, mode);
     let _ = writeln!(o, "        if {pred} {{");
     for (k, arm) in [ma, mb].into_iter().enumerate() {
         if k == 1 {

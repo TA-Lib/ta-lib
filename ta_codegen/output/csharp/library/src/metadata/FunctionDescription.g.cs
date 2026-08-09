@@ -3930,7 +3930,7 @@ public static class FunctionDescription
 				<ShortDescription>Time period</ShortDescription>
 				<Type>Integer</Type>
 				<Range>
-					<Minimum>2</Minimum>
+					<Minimum>1</Minimum>
 					<Maximum>100000</Maximum>
 					<SuggestedStart>100000</SuggestedStart>
 					<SuggestedEnd>100000</SuggestedEnd>

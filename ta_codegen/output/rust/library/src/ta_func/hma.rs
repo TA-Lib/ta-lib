@@ -54,6 +54,7 @@
  *  072226 MF,CC  First version (issue #139).
  *  072326 MF,CC  Fused single-pass rewrite: rolling sums + sqrt(n)-sized
  *                CIRCBUF, no whole-range temporaries (issue #139).
+ *  080926 MF,CC  Allow period of 1. Just copy input into output.
  */
 
 // Import types from parent module
@@ -72,7 +73,7 @@ impl Core {
     /// # Arguments
     ///
     /// * `optInTimePeriod` — Number of bars in the full-period WMA; the half and square-root
-    ///   periods derive from it (default 20, range 2..=100000)
+    ///   periods derive from it (default 20, range 1..=100000)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -80,7 +81,7 @@ impl Core {
     pub fn HMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
         let mut sqrtPeriod: usize = 0_usize;
@@ -118,8 +119,7 @@ impl Core {
     ///   truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47
     ///   truncates and rounds to 4), so at the default TA-Lib matches charting platforms regardless
     ///   of their rounding convention.
-    /// * The period range starts at 2: a period of 1 would make the half-period WMA degenerate
-    ///   (`Integer(1/2) = 0`).
+    /// * A period of 1 performs no smoothing: the output is a copy of the input.
     ///
     /// # Arguments
     ///
@@ -127,7 +127,7 @@ impl Core {
     /// * `endIdx` — End index of the requested calculation range (inclusive).
     /// * `inReal` — Source price series, close by convention.
     /// * `optInTimePeriod` — Number of bars in the full-period WMA; the half and square-root
-    ///   periods derive from it (default 20, range 2..=100000)
+    ///   periods derive from it (default 20, range 1..=100000)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — Hull moving average of the input.
@@ -194,7 +194,7 @@ impl Core {
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
         let _assertLb = self.HMA_Lookback(optInTimePeriod);
@@ -252,6 +252,21 @@ impl Core {
         // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
         // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
         // differential in test_composite.c holds it to that, memcmp-exact.
+        // No smoothing at period of 1: the output is a copy of the input
+        // (same convention as TA_MA for every MAType). Explicit because the
+        // formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+        // arm below would leave a cancellation residual instead of a copy.
+        if optInTimePeriod == 1 {
+            (*outBegIdx) = startIdx;
+            outIdx = 0;
+            today = startIdx;
+            while today <= endIdx {
+                outReal[outIdx] = ((inReal[{ let _v = today; today += 1; _v }]) as f64);
+                outIdx += 1;
+            }
+            (*outNBElement) = outIdx;
+            return RetCode::Success;
+        }
         halfPeriod = (optInTimePeriod / 2) as usize;
         sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
         lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32);
@@ -464,6 +479,10 @@ impl Core {
     fn HMA_step_internal(&self, sp: &mut HMA_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 {
             let mut tempReal: f64 = 0.0_f64;
+            if sp.optInTimePeriod == 1 {
+                (*outReal) = inReal;
+                return;
+            }
             if sp.ringCap_trailingIdxFull == 0 {
                 sp.ring_trailingIdxFull_inReal[0] = inReal;
             }
@@ -482,6 +501,10 @@ impl Core {
             }
         } else {
             let mut tempReal: f64 = 0.0_f64;
+            if sp.optInTimePeriod == 1 {
+                (*outReal) = inReal;
+                return;
+            }
             if sp.ringCap_trailingIdxFull == 0 {
                 sp.ring_trailingIdxFull_inReal[0] = inReal;
             }
@@ -538,7 +561,7 @@ impl Core {
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
@@ -547,6 +570,42 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut lastValue_outReal: f64 = 0.0_f64;
+        if optInTimePeriod == 1 {
+            if historyLen < self.HMA_Lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = HMA_StreamState {
+                optInTimePeriod: optInTimePeriod,
+                dividerFull: 0.0_f64,
+                periodSubFull: 0.0_f64,
+                periodSumFull: 0.0_f64,
+                trailingFull: 0.0_f64,
+                fullOut: 0.0_f64,
+                halfPeriod: 0_usize,
+                sqrtPeriod: 0_usize,
+                dividerHalf: 0.0_f64,
+                dividerSqrt: 0.0_f64,
+                periodSubHalf: 0.0_f64,
+                periodSumHalf: 0.0_f64,
+                trailingHalf: 0.0_f64,
+                periodSubSqrt: 0.0_f64,
+                periodSumSqrt: 0.0_f64,
+                trailingSqrt: 0.0_f64,
+                halfOut: 0.0_f64,
+                diffReal: 0.0_f64,
+                dRing_Idx: 0_usize,
+                maxIdx_dRing: 0_usize,
+                ringPos_trailingIdxFull: 0_usize,
+                ringCap_trailingIdxFull: 0_usize,
+                ring_trailingIdxFull_inReal: vec![0.0_f64; 1],
+                ringPos_trailingIdxHalf: 0_usize,
+                ringCap_trailingIdxHalf: 0_usize,
+                ring_trailingIdxHalf_inReal: vec![0.0_f64; 1],
+                cbSize_dRing: 0_usize,
+                cb_dRing: Vec::new(),
+            };
+            return Ok((HMA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
+        }
         if optInTimePeriod == 2 || optInTimePeriod == 3 {
             let mut lookbackTotal: usize = 0_usize;
             let mut lookbackSqrt: usize = 0_usize;
@@ -596,6 +655,10 @@ impl Core {
             // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
             // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
             // differential in test_composite.c holds it to that, memcmp-exact.
+            // No smoothing at period of 1: the output is a copy of the input
+            // (same convention as TA_MA for every MAType). Explicit because the
+            // formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+            // arm below would leave a cancellation residual instead of a copy.
             halfPeriod = (optInTimePeriod / 2) as usize;
             sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
             lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32);
@@ -743,6 +806,10 @@ impl Core {
             // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
             // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
             // differential in test_composite.c holds it to that, memcmp-exact.
+            // No smoothing at period of 1: the output is a copy of the input
+            // (same convention as TA_MA for every MAType). Explicit because the
+            // formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+            // arm below would leave a cancellation residual instead of a copy.
             halfPeriod = (optInTimePeriod / 2) as usize;
             sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
             lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32);
@@ -962,7 +1029,7 @@ impl Core {
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
@@ -970,6 +1037,50 @@ impl Core {
         let mut startIdx: usize = 0;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
+        if optInTimePeriod == 1 {
+            if historyLen < self.HMA_Lookback(optInTimePeriod) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let state = HMA_StreamState {
+                optInTimePeriod: optInTimePeriod,
+                dividerFull: 0.0_f64,
+                periodSubFull: 0.0_f64,
+                periodSumFull: 0.0_f64,
+                trailingFull: 0.0_f64,
+                fullOut: 0.0_f64,
+                halfPeriod: 0_usize,
+                sqrtPeriod: 0_usize,
+                dividerHalf: 0.0_f64,
+                dividerSqrt: 0.0_f64,
+                periodSubHalf: 0.0_f64,
+                periodSumHalf: 0.0_f64,
+                trailingHalf: 0.0_f64,
+                periodSubSqrt: 0.0_f64,
+                periodSumSqrt: 0.0_f64,
+                trailingSqrt: 0.0_f64,
+                halfOut: 0.0_f64,
+                diffReal: 0.0_f64,
+                dRing_Idx: 0_usize,
+                maxIdx_dRing: 0_usize,
+                ringPos_trailingIdxFull: 0_usize,
+                ringCap_trailingIdxFull: 0_usize,
+                ring_trailingIdxFull_inReal: vec![0.0_f64; 1],
+                ringPos_trailingIdxHalf: 0_usize,
+                ringCap_trailingIdxHalf: 0_usize,
+                ring_trailingIdxHalf_inReal: vec![0.0_f64; 1],
+                cbSize_dRing: 0_usize,
+                cb_dRing: Vec::new(),
+            };
+            let fillLb: usize = self.HMA_Lookback(optInTimePeriod);
+            (*outBegIdx) = fillLb;
+            (*outNBElement) = historyLen - fillLb;
+            let mut fillIdx: usize = 0;
+            while fillIdx < historyLen - fillLb {
+                outReal[fillIdx] = inReal[fillLb + fillIdx];
+                fillIdx += 1;
+            }
+            return Ok(HMA_Stream { core: self.clone(), state });
+        }
         if optInTimePeriod == 2 || optInTimePeriod == 3 {
             let mut lookbackTotal: usize = 0_usize;
             let mut lookbackSqrt: usize = 0_usize;
@@ -1019,6 +1130,10 @@ impl Core {
             // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
             // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
             // differential in test_composite.c holds it to that, memcmp-exact.
+            // No smoothing at period of 1: the output is a copy of the input
+            // (same convention as TA_MA for every MAType). Explicit because the
+            // formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+            // arm below would leave a cancellation residual instead of a copy.
             halfPeriod = (optInTimePeriod / 2) as usize;
             sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
             lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32);
@@ -1167,6 +1282,10 @@ impl Core {
             // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
             // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
             // differential in test_composite.c holds it to that, memcmp-exact.
+            // No smoothing at period of 1: the output is a copy of the input
+            // (same convention as TA_MA for every MAType). Explicit because the
+            // formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+            // arm below would leave a cancellation residual instead of a copy.
             halfPeriod = (optInTimePeriod / 2) as usize;
             sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
             lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32);

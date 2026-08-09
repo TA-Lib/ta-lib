@@ -39,6 +39,20 @@
 #include "ta_def_ui.h"
 
 /* HMA BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_HMA_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   20,
+   "Time period",
+
+   NULL
+};
+
 static const TA_InputParameterInfo    *TA_HMA_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -52,7 +66,7 @@ static const TA_OutputParameterInfo   *TA_HMA_Outputs[]   =
 };
 
 static const TA_OptInputParameterInfo *TA_HMA_OptInputs[] =
-{ &TA_DEF_UI_TimePeriod_20_MINIMUM2,
+{ &TA_DEF_UI_D_HMA_TimePeriod,
   NULL
 };
 

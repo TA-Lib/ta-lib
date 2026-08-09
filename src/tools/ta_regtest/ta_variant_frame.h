@@ -3928,7 +3928,7 @@ static TA_RetCode TA_HMA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_HMA[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_HMA[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 20.0 },
+   { "optInTimePeriod", 0, 1.0, 100000.0, 20.0 },
 };
 
 static TA_RetCode TA_HT_DCPERIOD_VFrameD( int startIdx, int endIdx,

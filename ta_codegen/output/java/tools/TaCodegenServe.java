@@ -77508,6 +77508,7 @@ class Core {
      *  072226 MF,CC  First version (issue #139).
      *  072326 MF,CC  Fused single-pass rewrite: rolling sums + sqrt(n)-sized
      *                CIRCBUF, no whole-range temporaries (issue #139).
+     *  080926 MF,CC  Allow period of 1. Just copy input into output.
      */
 
        /**
@@ -77518,7 +77519,7 @@ class Core {
         * output.
         *
         * @param optInTimePeriod Number of bars in the full-period WMA; the half and
-        *        square-root periods derive from it (default 20; range 2..100000;
+        *        square-root periods derive from it (default 20; range 1..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -77526,7 +77527,7 @@ class Core {
        {
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 20;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return -1;
           }
           int sqrtPeriod;
@@ -77581,7 +77582,7 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 20;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
           /* The de-lagged series needs only its last sqrt(n) values, so the whole
@@ -77603,6 +77604,21 @@ class Core {
            * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
            * differential in test_composite.c holds it to that, memcmp-exact.
            */
+          /* No smoothing at period of 1: the output is a copy of the input
+           * (same convention as TA_MA for every MAType). Explicit because the
+           * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+           * arm below would leave a cancellation residual instead of a copy.
+           */
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             while( today <= endIdx ) {
+                outReal[outIdx++] = inReal[today++];
+             }
+             outNBElement.value = outIdx;
+             return RetCode.Success ;
+          }
           halfPeriod = optInTimePeriod / 2;
           sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
           lookbackSqrt = WMA_Lookback(sqrtPeriod);
@@ -77802,8 +77818,18 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 20;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             while( today <= endIdx ) {
+                outReal[outIdx++] = (double)inReal[today++];
+             }
+             outNBElement.value = outIdx;
+             return RetCode.Success ;
           }
           halfPeriod = optInTimePeriod / 2;
           sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -77941,7 +77967,7 @@ class Core {
         * <ul>
         * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are **truncated** to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
         * <li>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default TA-Lib matches charting platforms regardless of their rounding convention.</li>
-        * <li>The period range starts at 2: a period of 1 would make the half-period WMA degenerate ({@code Integer(1/2) = 0}).</li>
+        * <li>A period of 1 performs no smoothing: the output is a copy of the input.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -77953,7 +77979,7 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source price series, close by convention.
         * @param optInTimePeriod Number of bars in the full-period WMA; the half and
-        *        square-root periods derive from it (default 20; range 2..100000;
+        *        square-root periods derive from it (default 20; range 1..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Hull moving average of the input. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -78006,7 +78032,7 @@ class Core {
         * <ul>
         * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are **truncated** to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
         * <li>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default TA-Lib matches charting platforms regardless of their rounding convention.</li>
-        * <li>The period range starts at 2: a period of 1 would make the half-period WMA degenerate ({@code Integer(1/2) = 0}).</li>
+        * <li>A period of 1 performs no smoothing: the output is a copy of the input.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -78021,7 +78047,7 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source price series, close by convention.
         * @param optInTimePeriod Number of bars in the full-period WMA; the half and
-        *        square-root periods derive from it (default 20; range 2..100000;
+        *        square-root periods derive from it (default 20; range 1..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Hull moving average of the input. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -78189,6 +78215,10 @@ class Core {
        {
           if( sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 ) {
              double tempReal = 0.0;
+             if( sp.optInTimePeriod == 1 ) {
+                sp.cur_outReal = inReal;
+                return ;
+             }
              if( sp.ringCap_trailingIdxFull == 0 ) {
                 sp.ring_trailingIdxFull_inReal[0] = inReal;
              }
@@ -78207,6 +78237,10 @@ class Core {
              }
           } else {
              double tempReal = 0.0;
+             if( sp.optInTimePeriod == 1 ) {
+                sp.cur_outReal = inReal;
+                return ;
+             }
              if( sp.ringCap_trailingIdxFull == 0 ) {
                 sp.ring_trailingIdxFull_inReal[0] = inReal;
              }
@@ -78265,8 +78299,43 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 20;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( optInTimePeriod == 1 ) {
+             if( historyLen < HMA_Lookback(optInTimePeriod) + 1 ) {
+                return RetCode.OutOfRangeEndIndex;
+             }
+             sp.optInTimePeriod = optInTimePeriod;
+             sp.dividerFull = 0.0;
+             sp.periodSubFull = 0.0;
+             sp.periodSumFull = 0.0;
+             sp.trailingFull = 0.0;
+             sp.fullOut = 0.0;
+             sp.halfPeriod = 0;
+             sp.sqrtPeriod = 0;
+             sp.dividerHalf = 0.0;
+             sp.dividerSqrt = 0.0;
+             sp.periodSubHalf = 0.0;
+             sp.periodSumHalf = 0.0;
+             sp.trailingHalf = 0.0;
+             sp.periodSubSqrt = 0.0;
+             sp.periodSumSqrt = 0.0;
+             sp.trailingSqrt = 0.0;
+             sp.halfOut = 0.0;
+             sp.diffReal = 0.0;
+             sp.dRing_Idx = 0;
+             sp.maxIdx_dRing = 0;
+             sp.ringPos_trailingIdxFull = 0;
+             sp.ringCap_trailingIdxFull = 0;
+             sp.ring_trailingIdxFull_inReal = new double[1];
+             sp.ringPos_trailingIdxHalf = 0;
+             sp.ringCap_trailingIdxHalf = 0;
+             sp.ring_trailingIdxHalf_inReal = new double[1];
+             sp.cbSize_dRing = 0;
+             sp.cb_dRing = new double[1];
+             sp.cur_outReal = inReal[historyLen - 1];
+             return RetCode.Success;
           }
           if( optInTimePeriod == 2 || optInTimePeriod == 3 ) {
              int lookbackTotal = 0;
@@ -78318,6 +78387,11 @@ class Core {
               * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
               * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
               * differential in test_composite.c holds it to that, memcmp-exact.
+              */
+             /* No smoothing at period of 1: the output is a copy of the input
+              * (same convention as TA_MA for every MAType). Explicit because the
+              * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+              * arm below would leave a cancellation residual instead of a copy.
               */
              halfPeriod = optInTimePeriod / 2;
              sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -78465,6 +78539,11 @@ class Core {
               * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
               * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
               * differential in test_composite.c holds it to that, memcmp-exact.
+              */
+             /* No smoothing at period of 1: the output is a copy of the input
+              * (same convention as TA_MA for every MAType). Explicit because the
+              * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+              * arm below would leave a cancellation residual instead of a copy.
               */
              halfPeriod = optInTimePeriod / 2;
              sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -78659,11 +78738,52 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 20;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
           if( (Object)outReal == (Object)inReal ) {
              return RetCode.BadParam;
+          }
+          if( optInTimePeriod == 1 ) {
+             if( historyLen < HMA_Lookback(optInTimePeriod) + 1 ) {
+                return RetCode.OutOfRangeEndIndex;
+             }
+             sp.optInTimePeriod = optInTimePeriod;
+             sp.dividerFull = 0.0;
+             sp.periodSubFull = 0.0;
+             sp.periodSumFull = 0.0;
+             sp.trailingFull = 0.0;
+             sp.fullOut = 0.0;
+             sp.halfPeriod = 0;
+             sp.sqrtPeriod = 0;
+             sp.dividerHalf = 0.0;
+             sp.dividerSqrt = 0.0;
+             sp.periodSubHalf = 0.0;
+             sp.periodSumHalf = 0.0;
+             sp.trailingHalf = 0.0;
+             sp.periodSubSqrt = 0.0;
+             sp.periodSumSqrt = 0.0;
+             sp.trailingSqrt = 0.0;
+             sp.halfOut = 0.0;
+             sp.diffReal = 0.0;
+             sp.dRing_Idx = 0;
+             sp.maxIdx_dRing = 0;
+             sp.ringPos_trailingIdxFull = 0;
+             sp.ringCap_trailingIdxFull = 0;
+             sp.ring_trailingIdxFull_inReal = new double[1];
+             sp.ringPos_trailingIdxHalf = 0;
+             sp.ringCap_trailingIdxHalf = 0;
+             sp.ring_trailingIdxHalf_inReal = new double[1];
+             sp.cbSize_dRing = 0;
+             sp.cb_dRing = new double[1];
+             int fillLb = HMA_Lookback(optInTimePeriod);
+             outBegIdx.value = fillLb;
+             outNBElement.value = historyLen - fillLb;
+             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                outReal[fillIdx] = inReal[fillLb + fillIdx];
+             }
+             sp.cur_outReal = outReal[outNBElement.value - 1];
+             return RetCode.Success;
           }
           if( optInTimePeriod == 2 || optInTimePeriod == 3 ) {
              int lookbackTotal = 0;
@@ -78715,6 +78835,11 @@ class Core {
               * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
               * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
               * differential in test_composite.c holds it to that, memcmp-exact.
+              */
+             /* No smoothing at period of 1: the output is a copy of the input
+              * (same convention as TA_MA for every MAType). Explicit because the
+              * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+              * arm below would leave a cancellation residual instead of a copy.
               */
              halfPeriod = optInTimePeriod / 2;
              sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -78862,6 +78987,11 @@ class Core {
               * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
               * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
               * differential in test_composite.c holds it to that, memcmp-exact.
+              */
+             /* No smoothing at period of 1: the output is a copy of the input
+              * (same convention as TA_MA for every MAType). Explicit because the
+              * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+              * arm below would leave a cancellation residual instead of a copy.
               */
              halfPeriod = optInTimePeriod / 2;
              sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -98174,7 +98304,7 @@ class Core {
           return retCode ;
        }
        /**
-        * Generic moving-average dispatcher that forwards the job to a concrete MA
+        * Generic moving-average dispatcher that forwards the job to the MA
         * implementation selected by optInMAType. Single uniform interface over all
         * TA-Lib moving averages.
         * <p><b>Formula</b>
@@ -98237,7 +98367,7 @@ class Core {
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
        /**
-        * Generic moving-average dispatcher that forwards the job to a concrete MA
+        * Generic moving-average dispatcher that forwards the job to the MA
         * implementation selected by optInMAType. Single uniform interface over all
         * TA-Lib moving averages.
         * <p><b>Formula</b>
@@ -149418,7 +149548,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("HMA", new AbsFunc("HMA", "Overlap Studies", "Hull Moving Average", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("HT_DCPERIOD", new AbsFunc("HT_DCPERIOD", "Cycle Indicators", "Hilbert Transform - Dominant Cycle Period", 167772160,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },

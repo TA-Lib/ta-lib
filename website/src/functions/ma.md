@@ -1,11 +1,11 @@
 ---
 title: "Moving average (MA)"
-description: "Generic moving-average dispatcher that forwards the job to a concrete MA implementation selected by optInMAType."
+description: "Generic moving-average dispatcher that forwards the job to the MA implementation selected by optInMAType."
 ---
 
 ## Summary
 
-Generic moving-average dispatcher that forwards the job to a concrete MA implementation selected by optInMAType. Single uniform interface over all TA-Lib moving averages.
+Generic moving-average dispatcher that forwards the job to the MA implementation selected by optInMAType. Single uniform interface over all TA-Lib moving averages.
 
 ## Formula
 

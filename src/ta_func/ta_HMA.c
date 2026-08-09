@@ -57,6 +57,7 @@
  *  072226 MF,CC  First version (issue #139).
  *  072326 MF,CC  Fused single-pass rewrite: rolling sums + sqrt(n)-sized
  *                CIRCBUF, no whole-range temporaries (issue #139).
+ *  080926 MF,CC  Allow period of 1. Just copy input into output.
  */
 
 TA_LIB_API int TA_HMA_Lookback( int optInTimePeriod )
@@ -64,7 +65,7 @@ TA_LIB_API int TA_HMA_Lookback( int optInTimePeriod )
    int sqrtPeriod;
    if( (int)optInTimePeriod == (int)0x80000000 )
       optInTimePeriod = 20;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return -1;
    sqrtPeriod = (int)sqrt((double)optInTimePeriod);
    return TA_WMA_Lookback(optInTimePeriod) + TA_WMA_Lookback(sqrtPeriod);
@@ -120,7 +121,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
       return TA_BAD_PARAM;
    if( (int)optInTimePeriod == (int)0x80000000 )
       optInTimePeriod = 20;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -144,6 +145,23 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
     * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
     * differential in test_composite.c holds it to that, memcmp-exact.
     */
+   /* No smoothing at period of 1: the output is a copy of the input
+    * (same convention as TA_MA for every MAType). Explicit because the
+    * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+    * arm below would leave a cancellation residual instead of a copy.
+    */
+   if( optInTimePeriod == 1 )
+   {
+      *outBegIdx= startIdx;
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+      {
+         outReal[outIdx++] = inReal[today++];
+      }
+      *outNBElement= outIdx;
+      return TA_SUCCESS;
+   }
    halfPeriod = optInTimePeriod / 2;
    sqrtPeriod = (int)sqrt((double)optInTimePeriod);
    lookbackSqrt = TA_WMA_Lookback(sqrtPeriod);
@@ -368,11 +386,23 @@ TA_RetCode TA_S_HMA( int    startIdx,
       return TA_BAD_PARAM;
    if( (int)optInTimePeriod == (int)0x80000000 )
       optInTimePeriod = 20;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
 
+   if( optInTimePeriod == 1 )
+   {
+      *outBegIdx= startIdx;
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+      {
+         outReal[outIdx++] = (double)inReal[today++];
+      }
+      *outNBElement= outIdx;
+      return TA_SUCCESS;
+   }
    halfPeriod = optInTimePeriod / 2;
    sqrtPeriod = (int)sqrt((double)optInTimePeriod);
    lookbackSqrt = TA_WMA_Lookback(sqrtPeriod);
@@ -565,6 +595,11 @@ static void TA_HMA_StepInternal( struct TA_HMA_Stream *sp, double inReal, double
    {
       double tempReal;
 
+      if( sp->optInTimePeriod == 1 )
+      {
+         *outReal= inReal;
+         return;
+      }
       if( sp->ringCap_trailingIdxFull == 0 )
       {
          sp->ring_trailingIdxFull_inReal[0] = inReal;
@@ -588,6 +623,11 @@ static void TA_HMA_StepInternal( struct TA_HMA_Stream *sp, double inReal, double
    {
       double tempReal;
 
+      if( sp->optInTimePeriod == 1 )
+      {
+         *outReal= inReal;
+         return;
+      }
       if( sp->ringCap_trailingIdxFull == 0 )
       {
          sp->ring_trailingIdxFull_inReal[0] = inReal;
@@ -657,7 +697,7 @@ TA_RetCode TA_HMA_OpenInternal( struct TA_HMA_Stream **stream, const double inRe
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (int)optInTimePeriod == (int)0x80000000 )
       optInTimePeriod = 20;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
@@ -665,6 +705,27 @@ TA_RetCode TA_HMA_OpenInternal( struct TA_HMA_Stream **stream, const double inRe
    dummyNBElement = 0;
    lastValue_outReal = 0.0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   if( optInTimePeriod == 1 )
+   {
+      if( historyLen < TA_HMA_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      sp = (struct TA_HMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->ringCap_trailingIdxFull = 0;
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
+        sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdxFull_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memset( sp->ring_trailingIdxFull_inReal, 0, sizeof(double) * allocN );
+      }
+      sp->ringPos_trailingIdxFull = 0;
+      *outReal = inReal[historyLen - 1];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
 
    if( optInTimePeriod == 2 || optInTimePeriod == 3 )
    {
@@ -705,6 +766,23 @@ TA_RetCode TA_HMA_OpenInternal( struct TA_HMA_Stream **stream, const double inRe
        * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
        * differential in test_composite.c holds it to that, memcmp-exact.
        */
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because the
+       * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+       * arm below would leave a cancellation residual instead of a copy.
+       */
+      if( optInTimePeriod == 1 )
+      {
+         dummyBegIdx = startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx )
+         {
+            lastValue_outReal = inReal[today++];
+         }
+         dummyNBElement = outIdx;
+         return TA_BAD_PARAM;
+      }
       halfPeriod = optInTimePeriod / 2;
       sqrtPeriod = (int)sqrt((double)optInTimePeriod);
       lookbackSqrt = TA_WMA_Lookback(sqrtPeriod);
@@ -847,6 +925,23 @@ TA_RetCode TA_HMA_OpenInternal( struct TA_HMA_Stream **stream, const double inRe
        * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
        * differential in test_composite.c holds it to that, memcmp-exact.
        */
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because the
+       * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+       * arm below would leave a cancellation residual instead of a copy.
+       */
+      if( optInTimePeriod == 1 )
+      {
+         dummyBegIdx = startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx )
+         {
+            lastValue_outReal = inReal[today++];
+         }
+         dummyNBElement = outIdx;
+         return TA_BAD_PARAM;
+      }
       halfPeriod = optInTimePeriod / 2;
       sqrtPeriod = (int)sqrt((double)optInTimePeriod);
       lookbackSqrt = TA_WMA_Lookback(sqrtPeriod);
@@ -1080,7 +1175,7 @@ TA_LIB_API TA_RetCode TA_HMA_OpenAndFill( TA_HMA_Stream **stream, const double i
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == (int)0x80000000 )
       optInTimePeriod = 20;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
@@ -1088,6 +1183,36 @@ TA_LIB_API TA_RetCode TA_HMA_OpenAndFill( TA_HMA_Stream **stream, const double i
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   if( optInTimePeriod == 1 )
+   {
+      if( historyLen < TA_HMA_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      sp = (struct TA_HMA_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->ringCap_trailingIdxFull = 0;
+      { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
+        sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingIdxFull_inReal ) { TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        memset( sp->ring_trailingIdxFull_inReal, 0, sizeof(double) * allocN );
+      }
+      sp->ringPos_trailingIdxFull = 0;
+      {
+         int fillLb = TA_HMA_Lookback( optInTimePeriod );
+         int fillIdx;
+         *outBegIdx = fillLb;
+         *outNBElement = historyLen - fillLb;
+         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
+         {
+            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         }
+      }
+      *stream = sp;
+      return TA_SUCCESS;
+   }
 
    if( optInTimePeriod == 2 || optInTimePeriod == 3 )
    {
@@ -1128,6 +1253,23 @@ TA_LIB_API TA_RetCode TA_HMA_OpenAndFill( TA_HMA_Stream **stream, const double i
        * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
        * differential in test_composite.c holds it to that, memcmp-exact.
        */
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because the
+       * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+       * arm below would leave a cancellation residual instead of a copy.
+       */
+      if( optInTimePeriod == 1 )
+      {
+         *outBegIdx= startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx )
+         {
+            outReal[outIdx++] = inReal[today++];
+         }
+         *outNBElement= outIdx;
+         return TA_BAD_PARAM;
+      }
       halfPeriod = optInTimePeriod / 2;
       sqrtPeriod = (int)sqrt((double)optInTimePeriod);
       lookbackSqrt = TA_WMA_Lookback(sqrtPeriod);
@@ -1269,6 +1411,23 @@ TA_LIB_API TA_RetCode TA_HMA_OpenAndFill( TA_HMA_Stream **stream, const double i
        * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
        * differential in test_composite.c holds it to that, memcmp-exact.
        */
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because the
+       * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+       * arm below would leave a cancellation residual instead of a copy.
+       */
+      if( optInTimePeriod == 1 )
+      {
+         *outBegIdx= startIdx;
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx )
+         {
+            outReal[outIdx++] = inReal[today++];
+         }
+         *outNBElement= outIdx;
+         return TA_BAD_PARAM;
+      }
       halfPeriod = optInTimePeriod / 2;
       sqrtPeriod = (int)sqrt((double)optInTimePeriod);
       lookbackSqrt = TA_WMA_Lookback(sqrtPeriod);

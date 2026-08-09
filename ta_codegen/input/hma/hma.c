@@ -13,6 +13,7 @@
  *  072226 MF,CC  First version (issue #139).
  *  072326 MF,CC  Fused single-pass rewrite: rolling sums + sqrt(n)-sized
  *                CIRCBUF, no whole-range temporaries (issue #139).
+ *  080926 MF,CC  Allow period of 1. Just copy input into output.
  *
  */
 
@@ -62,6 +63,23 @@ TA_RetCode hma(int startIdx, int endIdx,
     * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
     * differential in test_composite.c holds it to that, memcmp-exact.
     */
+
+   /* No smoothing at period of 1: the output is a copy of the input
+    * (same convention as TA_MA for every MAType). Explicit because the
+    * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+    * arm below would leave a cancellation residual instead of a copy.
+    */
+   if( optInTimePeriod == 1 )
+   {
+      *outBegIdx = startIdx;
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+         outReal[outIdx++] = inReal[today++];
+      *outNBElement = outIdx;
+      return TA_SUCCESS;
+   }
+
    halfPeriod = optInTimePeriod / 2;
    sqrtPeriod = (int)sqrt((double)optInTimePeriod);
 

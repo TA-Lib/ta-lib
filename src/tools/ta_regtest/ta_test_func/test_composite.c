@@ -1417,18 +1417,41 @@ static ErrorNumber test_hma_single_element( const TA_History *history )
    return TA_TEST_PASS;
 }
 
-/* (7) PARAMETER FLOOR (#139): the smallest legal period is 2 -- period 1
- * would make the half-period WMA degenerate (Integer(1/2) = 0, a 0/0
- * divider), and 0 is out of every published definition. Both must be
- * guarded rejects, never a computed answer; the default sentinel must
- * resolve to the documented 20. */
+/* (7) PARAMETER FLOOR (#139): the smallest legal period is 1, where HMA is
+ * the same no-smoothing copy every TA-Lib moving average performs. 0 is out
+ * of every published definition and must be a guarded reject, never a
+ * computed answer; the default sentinel must resolve to the documented 20. */
 static ErrorNumber test_hma_param_reject( const TA_History *history )
 {
    TA_RetCode rc;
-   TA_Integer beg, nb;
+   TA_Integer beg, nb, i;
    static TA_Real out[OUT_CAP];
-   static const int badPeriod[] = { 0, 1, -1, 100001 };
+   static const int badPeriod[] = { 0, -1, 100001 };
    unsigned int k;
+
+   /* Period 1: bit-exact copy of the requested range, lookback 0. */
+   if( TA_HMA_Lookback( 1 ) != 0 )
+   {
+      printf( "HMA period-1 Fail: TA_HMA_Lookback(1) = %d, expected 0\n",
+              TA_HMA_Lookback( 1 ) );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   rc = TA_HMA( 0, (int)history->nbBars - 1, history->close, 1, &beg, &nb, out );
+   if( rc != TA_SUCCESS || beg != 0 || nb != (TA_Integer)history->nbBars )
+   {
+      printf( "HMA period-1 Fail: rc=%d beg=%d nb=%d expected 0/0/%d\n",
+              (int)rc, (int)beg, (int)nb, (int)history->nbBars );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   for( i = 0; i < nb; i++ )
+   {
+      if( out[i] != history->close[i] )
+      {
+         printf( "HMA period-1 Fail: [%d] got %.17g, expected %.17g\n",
+                 (int)i, out[i], history->close[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
 
    for( k = 0; k < sizeof(badPeriod)/sizeof(badPeriod[0]); k++ )
    {
