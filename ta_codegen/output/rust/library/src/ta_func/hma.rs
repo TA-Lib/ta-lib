@@ -117,8 +117,8 @@ impl Core {
     ///   tolerance-level difference. TA-Lib follows the author.
     /// * The default period of 20 is Alan Hull's own default. It is also a period on which the
     ///   truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47
-    ///   truncates and rounds to 4), so at the default TA-Lib matches charting platforms regardless
-    ///   of their rounding convention.
+    ///   truncates and rounds to 4), so at the default a charting platform using the other
+    ///   convention still lands on TA-Lib's values.
     /// * A period of 1 performs no smoothing: the output is a copy of the input.
     ///
     /// # Arguments

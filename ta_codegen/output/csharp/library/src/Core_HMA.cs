@@ -520,7 +520,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>The two derived periods <c>n/2</c> and <c>sqrt(n)</c> are **truncated** to integers, exactly as in Alan Hull's own statement of the formula (<c>Integer()</c>); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</description></item>
-   /// <item><description>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default TA-Lib matches charting platforms regardless of their rounding convention.</description></item>
+   /// <item><description>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default a charting platform using the other convention still lands on TA-Lib's values.</description></item>
    /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input.</description></item>
    /// </list>
    /// <para>
@@ -581,7 +581,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>The two derived periods <c>n/2</c> and <c>sqrt(n)</c> are **truncated** to integers, exactly as in Alan Hull's own statement of the formula (<c>Integer()</c>); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</description></item>
-   /// <item><description>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default TA-Lib matches charting platforms regardless of their rounding convention.</description></item>
+   /// <item><description>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default a charting platform using the other convention still lands on TA-Lib's values.</description></item>
    /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input.</description></item>
    /// </list>
    /// <para>

@@ -77790,13 +77790,10 @@ public final class Core {
        * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
        * differential in test_composite.c holds it to that, memcmp-exact.
        */
-      /* No smoothing at period of 1: the output is a copy of the input (same
-       * convention as TA_MA for every MAType). Explicit, because the formula
-       * itself is undefined there -- Integer(1/2) is 0, so the half-period WMA
-       * has no window -- and because the degenerate 2*price - WMA(price,n) arm
-       * below is not an exact copy at n = 1: its rolling accumulator carries a
-       * cancellation residual from bar to bar (the same reason TA_WMA has its
-       * own period-1 short-circuit).
+      /* No smoothing at period of 1: the output is a copy of the input
+       * (same convention as TA_MA for every MAType). Explicit because the
+       * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+       * arm below would leave a cancellation residual instead of a copy.
        */
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
@@ -78155,8 +78152,8 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are **truncated** to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
-    * <li>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default TA-Lib matches charting platforms regardless of their rounding convention.</li>
-    * <li>A period of 1 returns the input unchanged, with a lookback of 0 — the convention every TA-Lib moving average follows, and the same result [{@code MA}](/functions/ma) gives at a period of 1 for any {@code optInMAType}. It is a convention rather than a limit: the formula has no value at {@code n = 1}, because {@code Integer(1/2)} is 0 and the half-period average is then taken over an empty window.</li>
+    * <li>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default a charting platform using the other convention still lands on TA-Lib's values.</li>
+    * <li>A period of 1 performs no smoothing: the output is a copy of the input.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -78220,8 +78217,8 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are **truncated** to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
-    * <li>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default TA-Lib matches charting platforms regardless of their rounding convention.</li>
-    * <li>A period of 1 returns the input unchanged, with a lookback of 0 — the convention every TA-Lib moving average follows, and the same result [{@code MA}](/functions/ma) gives at a period of 1 for any {@code optInMAType}. It is a convention rather than a limit: the formula has no value at {@code n = 1}, because {@code Integer(1/2)} is 0 and the half-period average is then taken over an empty window.</li>
+    * <li>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default a charting platform using the other convention still lands on TA-Lib's values.</li>
+    * <li>A period of 1 performs no smoothing: the output is a copy of the input.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -78577,13 +78574,10 @@ public final class Core {
           * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
           * differential in test_composite.c holds it to that, memcmp-exact.
           */
-         /* No smoothing at period of 1: the output is a copy of the input (same
-          * convention as TA_MA for every MAType). Explicit, because the formula
-          * itself is undefined there -- Integer(1/2) is 0, so the half-period WMA
-          * has no window -- and because the degenerate 2*price - WMA(price,n) arm
-          * below is not an exact copy at n = 1: its rolling accumulator carries a
-          * cancellation residual from bar to bar (the same reason TA_WMA has its
-          * own period-1 short-circuit).
+         /* No smoothing at period of 1: the output is a copy of the input
+          * (same convention as TA_MA for every MAType). Explicit because the
+          * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+          * arm below would leave a cancellation residual instead of a copy.
           */
          halfPeriod = optInTimePeriod / 2;
          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -78732,13 +78726,10 @@ public final class Core {
           * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
           * differential in test_composite.c holds it to that, memcmp-exact.
           */
-         /* No smoothing at period of 1: the output is a copy of the input (same
-          * convention as TA_MA for every MAType). Explicit, because the formula
-          * itself is undefined there -- Integer(1/2) is 0, so the half-period WMA
-          * has no window -- and because the degenerate 2*price - WMA(price,n) arm
-          * below is not an exact copy at n = 1: its rolling accumulator carries a
-          * cancellation residual from bar to bar (the same reason TA_WMA has its
-          * own period-1 short-circuit).
+         /* No smoothing at period of 1: the output is a copy of the input
+          * (same convention as TA_MA for every MAType). Explicit because the
+          * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+          * arm below would leave a cancellation residual instead of a copy.
           */
          halfPeriod = optInTimePeriod / 2;
          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -79031,13 +79022,10 @@ public final class Core {
           * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
           * differential in test_composite.c holds it to that, memcmp-exact.
           */
-         /* No smoothing at period of 1: the output is a copy of the input (same
-          * convention as TA_MA for every MAType). Explicit, because the formula
-          * itself is undefined there -- Integer(1/2) is 0, so the half-period WMA
-          * has no window -- and because the degenerate 2*price - WMA(price,n) arm
-          * below is not an exact copy at n = 1: its rolling accumulator carries a
-          * cancellation residual from bar to bar (the same reason TA_WMA has its
-          * own period-1 short-circuit).
+         /* No smoothing at period of 1: the output is a copy of the input
+          * (same convention as TA_MA for every MAType). Explicit because the
+          * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+          * arm below would leave a cancellation residual instead of a copy.
           */
          halfPeriod = optInTimePeriod / 2;
          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -79186,13 +79174,10 @@ public final class Core {
           * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
           * differential in test_composite.c holds it to that, memcmp-exact.
           */
-         /* No smoothing at period of 1: the output is a copy of the input (same
-          * convention as TA_MA for every MAType). Explicit, because the formula
-          * itself is undefined there -- Integer(1/2) is 0, so the half-period WMA
-          * has no window -- and because the degenerate 2*price - WMA(price,n) arm
-          * below is not an exact copy at n = 1: its rolling accumulator carries a
-          * cancellation residual from bar to bar (the same reason TA_WMA has its
-          * own period-1 short-circuit).
+         /* No smoothing at period of 1: the output is a copy of the input
+          * (same convention as TA_MA for every MAType). Explicit because the
+          * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
+          * arm below would leave a cancellation residual instead of a copy.
           */
          halfPeriod = optInTimePeriod / 2;
          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
